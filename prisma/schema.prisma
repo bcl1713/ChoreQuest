@@ -1,0 +1,309 @@
+// ChoreQuest Database Schema
+// Fantasy RPG-themed family chore management system
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  GUILD_MASTER  // Parent/Guardian - full admin access
+  HERO          // Adult family member - can create and approve quests
+  YOUNG_HERO    // Child - can complete assigned quests
+}
+
+enum CharacterClass {
+  KNIGHT   // Bonus to cleaning/organizing quests
+  MAGE     // Bonus to homework/learning quests  
+  RANGER   // Bonus to outdoor/maintenance quests
+  ROGUE    // Bonus to quick/stealth quests
+  HEALER   // Bonus to helping others/family care
+}
+
+enum QuestDifficulty {
+  EASY    // 5-15 min tasks, low XP/gold
+  MEDIUM  // 15-45 min tasks, medium rewards
+  HARD    // 45+ min tasks, high rewards
+}
+
+enum QuestCategory {
+  DAILY        // Recurring daily tasks
+  WEEKLY       // Larger weekly projects
+  BOSS_BATTLE  // Collaborative family challenges
+}
+
+enum QuestStatus {
+  PENDING      // Created but not started
+  IN_PROGRESS  // Assigned and being worked on
+  COMPLETED    // Done but awaiting approval
+  APPROVED     // Completed and approved for rewards
+  EXPIRED      // Past due date without completion
+}
+
+enum BossBattleStatus {
+  ACTIVE    // Currently accepting damage
+  DEFEATED  // HP reached 0 - victory!
+  EXPIRED   // Time limit reached without defeat
+}
+
+enum TransactionType {
+  QUEST_REWARD    // XP/Gold from completing quests
+  BOSS_VICTORY    // Gems/Honor from boss battles
+  STORE_PURCHASE  // Spending currency in reward store
+  BONUS_AWARD     // Manual bonus from parents
+  SOS_HELP        // Honor points from helping family
+}
+
+enum RewardType {
+  SCREEN_TIME   // Extra device/TV time
+  PRIVILEGE     // Later bedtime, friend over, etc.
+  PURCHASE      // Money for something they want
+  EXPERIENCE    // Special outing, activity, etc.
+}
+
+// Core Models
+model Family {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique // Join code for new members
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users           User[]
+  questTemplates  QuestTemplate[]
+  questInstances  QuestInstance[]
+  bossBattles     BossBattle[]
+  rewards         Reward[]
+
+  @@map("families")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String   // Hashed
+  role      UserRole @default(YOUNG_HERO)
+  familyId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  family                Family               @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  character            Character?
+  createdQuests        QuestInstance[]      @relation("QuestCreator")
+  assignedQuests       QuestInstance[]      @relation("QuestAssignee")
+  bossBattleParticipants BossBattleParticipant[]
+  transactions         Transaction[]
+  achievements         UserAchievement[]
+  sosRequests          SOSRequest[]         @relation("SOSRequester")
+  sosHelps             SOSRequest[]         @relation("SOSHelper")
+
+  @@map("users")
+}
+
+model Character {
+  id          String         @id @default(cuid())
+  userId      String         @unique
+  name        String
+  class       CharacterClass @default(KNIGHT)
+  level       Int            @default(1)
+  xp          Int            @default(0)
+  gold        Int            @default(0)
+  gems        Int            @default(0)
+  honorPoints Int            @default(0)
+  avatarUrl   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("characters")
+}
+
+// Quest System
+model QuestTemplate {
+  id              String          @id @default(cuid())
+  title           String
+  description     String
+  xpReward        Int
+  goldReward      Int
+  difficulty      QuestDifficulty
+  category        QuestCategory
+  familyId        String
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Class bonuses (JSON field for flexibility)
+  classBonuses    Json?  // {"KNIGHT": 10, "MAGE": 0, ...}
+  
+  // Relations
+  family    Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  instances QuestInstance[]
+
+  @@map("quest_templates")
+}
+
+model QuestInstance {
+  id              String      @id @default(cuid())
+  title           String      // Can be customized from template
+  description     String
+  xpReward        Int
+  goldReward      Int
+  difficulty      QuestDifficulty
+  category        QuestCategory
+  status          QuestStatus @default(PENDING)
+  assignedToId    String?     // null = unassigned
+  createdById     String      // Who created this instance
+  familyId        String
+  templateId      String?     // null for ad-hoc quests
+  dueDate         DateTime?
+  completedAt     DateTime?
+  approvedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  family       Family         @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  template     QuestTemplate? @relation(fields: [templateId], references: [id])
+  assignedTo   User?          @relation("QuestAssignee", fields: [assignedToId], references: [id])
+  createdBy    User           @relation("QuestCreator", fields: [createdById], references: [id])
+
+  @@map("quest_instances")
+}
+
+// Boss Battle System
+model BossBattle {
+  id          String            @id @default(cuid())
+  name        String
+  description String
+  totalHp     Int
+  currentHp   Int
+  familyId    String
+  status      BossBattleStatus  @default(ACTIVE)
+  gemReward   Int               @default(50)
+  startDate   DateTime          @default(now())
+  endDate     DateTime          // When it expires
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  family       Family                   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  participants BossBattleParticipant[]
+
+  @@map("boss_battles")
+}
+
+model BossBattleParticipant {
+  id            String   @id @default(cuid())
+  bossBattleId  String
+  userId        String
+  damageDealt   Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  bossBattle BossBattle @relation(fields: [bossBattleId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bossBattleId, userId])
+  @@map("boss_battle_participants")
+}
+
+// Economy & Rewards
+model Transaction {
+  id            String          @id @default(cuid())
+  userId        String
+  type          TransactionType
+  xpChange      Int             @default(0)
+  goldChange    Int             @default(0)
+  gemsChange    Int             @default(0)
+  honorChange   Int             @default(0)
+  description   String
+  relatedId     String?         // Quest ID, Boss Battle ID, etc.
+  createdAt     DateTime        @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Reward {
+  id          String     @id @default(cuid())
+  name        String
+  description String
+  type        RewardType
+  cost        Int        // In gold
+  familyId    String
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@map("rewards")
+}
+
+// Achievement System
+model Achievement {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  condition   Json     // Flexible condition definition
+  xpReward    Int      @default(0)
+  goldReward  Int      @default(0)
+  gemReward   Int      @default(0)
+  badgeUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// Social Features
+model SOSRequest {
+  id          String    @id @default(cuid())
+  requesterId String
+  helperId    String?
+  title       String
+  description String
+  honorReward Int       @default(5)
+  isResolved  Boolean   @default(false)
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  requester User  @relation("SOSRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  helper    User? @relation("SOSHelper", fields: [helperId], references: [id])
+
+  @@map("sos_requests")
+}

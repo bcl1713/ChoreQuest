@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fantasy RPG Theme Colors */
+  --color-primary-50: #fdf2f8;
+  --color-primary-100: #fce7f3;
+  --color-primary-200: #fbcfe8;
+  --color-primary-300: #f9a8d4;
+  --color-primary-400: #f472b6;
+  --color-primary-500: #ec4899;
+  --color-primary-600: #db2777;
+  --color-primary-700: #be185d;
+  --color-primary-800: #9d174d;
+  --color-primary-900: #831843;
+  --color-primary-950: #500724;
+
+  --color-gold-50: #fffbeb;
+  --color-gold-100: #fef3c7;
+  --color-gold-200: #fde68a;
+  --color-gold-300: #fcd34d;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-700: #b45309;
+  --color-gold-800: #92400e;
+  --color-gold-900: #78350f;
+  --color-gold-950: #451a03;
+
+  --color-gem-50: #f0f9ff;
+  --color-gem-100: #e0f2fe;
+  --color-gem-200: #bae6fd;
+  --color-gem-300: #7dd3fc;
+  --color-gem-400: #38bdf8;
+  --color-gem-500: #0ea5e9;
+  --color-gem-600: #0284c7;
+  --color-gem-700: #0369a1;
+  --color-gem-800: #075985;
+  --color-gem-900: #0c4a6e;
+  --color-gem-950: #082f49;
+
+  --color-xp-50: #f0fdf4;
+  --color-xp-100: #dcfce7;
+  --color-xp-200: #bbf7d0;
+  --color-xp-300: #86efac;
+  --color-xp-400: #4ade80;
+  --color-xp-500: #22c55e;
+  --color-xp-600: #16a34a;
+  --color-xp-700: #15803d;
+  --color-xp-800: #166534;
+  --color-xp-900: #14532d;
+  --color-xp-950: #052e16;
+
+  --color-dark-50: #f8fafc;
+  --color-dark-100: #f1f5f9;
+  --color-dark-200: #e2e8f0;
+  --color-dark-300: #cbd5e1;
+  --color-dark-400: #94a3b8;
+  --color-dark-500: #64748b;
+  --color-dark-600: #475569;
+  --color-dark-700: #334155;
+  --color-dark-800: #1e293b;
+  --color-dark-900: #0f172a;
+  --color-dark-950: #020617;
+
+  /* Typography */
+  --font-fantasy: var(--font-fantasy);
+  --font-game: var(--font-game);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Background colors */
+  --color-background: #0f172a;
+  --color-foreground: #f1f5f9;
+}
+
+:root {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --primary: #ec4899;
+  --gold: #f59e0b;
+  --gem: #0ea5e9;
+  --xp: #22c55e;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #f8fafc;
+    --foreground: #1e293b;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Fantasy UI Elements */
+.fantasy-card {
+  @apply bg-gradient-to-br from-dark-800 to-dark-900 border border-dark-600 rounded-lg shadow-lg;
+}
+
+.fantasy-button {
+  @apply bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200;
+}
+
+.gold-text {
+  @apply text-gold-500 font-bold;
+}
+
+.xp-text {
+  @apply text-xp-500 font-bold;
+}
+
+.gem-text {
+  @apply text-gem-500 font-bold;
+}
+
+/* Glowing effects for special elements */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.glow-gem {
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+}
+
+.glow-xp {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
