@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
@@ -9,6 +9,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading } = useCharacter();
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -21,6 +22,14 @@ export default function Dashboard() {
       router.push('/character/create');
     }
   }, [user, character, isLoading, characterLoading, router]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading || characterLoading) {
     return (
@@ -71,6 +80,9 @@ export default function Dashboard() {
                 Guild: <span className="text-gold-400">{family.name}</span> ({family.code})
               </p>
             )}
+            <p className="text-xs text-gray-500 mt-1">
+              🕐 {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
