@@ -133,6 +133,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
               {Object.entries(CHARACTER_CLASSES).map(([classKey, classInfo]) => (
                 <div
                   key={classKey}
+                  data-testid={`class-${classKey.toLowerCase()}`}
                   className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 ${
                     selectedClass === classKey
                       ? 'border-gold-500 bg-gold-500/10'
