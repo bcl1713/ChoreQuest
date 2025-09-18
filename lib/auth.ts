@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '@/types';
+import { NextRequest } from 'next/server';
 
 export interface AuthUser extends Omit<User, 'createdAt' | 'updatedAt'> {
   createdAt: string;
@@ -93,4 +94,19 @@ export function generateFamilyCode(): string {
   const number = Math.floor(Math.random() * 999) + 1;
 
   return `${adjective}${noun}${number}`;
+}
+
+// Extract token data from request
+export async function getTokenData(req: NextRequest): Promise<{ userId: string; familyId: string; role: string } | null> {
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return null;
+    }
+
+    const token = authHeader.substring(7);
+    return verifyToken(token);
+  } catch (error) {
+    return null;
+  }
 }

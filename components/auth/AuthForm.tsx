@@ -24,7 +24,7 @@ interface CreateFamilyData {
 
 interface AuthFormProps {
   type: 'login' | 'register' | 'create-family';
-  onSubmit: (data: LoginData | RegisterData | CreateFamilyData) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
   isLoading?: boolean;
   error?: string;
 }
