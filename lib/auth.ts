@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { User } from '@/types';
 
 export interface AuthUser extends Omit<User, 'createdAt' | 'updatedAt'> {
@@ -18,4 +20,77 @@ export interface RegisterData extends LoginCredentials {
 export interface AuthResponse {
   user: AuthUser;
   token: string;
+}
+
+export interface CreateFamilyData {
+  name: string;
+  email: string;
+  password: string;
+  userName: string;
+}
+
+// Password hashing utilities
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12;
+  return bcrypt.hash(password, saltRounds);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+// JWT utilities
+export function generateToken(payload: { userId: string; familyId: string; role: string }): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+
+  return jwt.sign(
+    payload,
+    secret,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+      issuer: 'chorequest',
+      audience: 'chorequest-users'
+    }
+  );
+}
+
+export function verifyToken(token: string): { userId: string; familyId: string; role: string } {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+
+  try {
+    const decoded = jwt.verify(token, secret, {
+      issuer: 'chorequest',
+      audience: 'chorequest-users'
+    }) as jwt.JwtPayload;
+
+    if (!decoded.userId || !decoded.familyId || !decoded.role) {
+      throw new Error('Invalid token payload');
+    }
+
+    return {
+      userId: decoded.userId,
+      familyId: decoded.familyId,
+      role: decoded.role
+    };
+  } catch (err) {
+    throw new Error('Invalid or expired token');
+  }
+}
+
+// Generate a unique family code
+export function generateFamilyCode(): string {
+  const adjectives = ['Epic', 'Brave', 'Noble', 'Swift', 'Wise', 'Bold', 'Fierce', 'Loyal'];
+  const nouns = ['Knights', 'Dragons', 'Wizards', 'Rangers', 'Heroes', 'Guards', 'Legends', 'Warriors'];
+
+  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const number = Math.floor(Math.random() * 999) + 1;
+
+  return `${adjective}${noun}${number}`;
 }

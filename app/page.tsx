@@ -1,4 +1,10 @@
+'use client';
+
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
+
 export default function Home() {
+  const { user } = useAuth();
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
       {/* Header */}
@@ -23,12 +29,20 @@ export default function Home() {
             honor to your family name.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <button className="fantasy-button text-lg px-8 py-3">
-              🏰 Create Family Guild
-            </button>
-            <button className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-              ⚔️ Join Existing Guild
-            </button>
+            {user ? (
+              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block">
+                🏰 Enter Your Realm
+              </Link>
+            ) : (
+              <>
+                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block">
+                  🏰 Create Family Guild
+                </Link>
+                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block">
+                  ⚔️ Join Existing Guild
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -105,6 +119,13 @@ export default function Home() {
         <p className="text-sm mt-2">
           Ready for your family&apos;s epic adventure? The quest begins soon...
         </p>
+        {!user && (
+          <p className="text-sm mt-4">
+            <Link href="/auth/login" className="text-primary-400 hover:text-primary-300">
+              Already have an account? Login here
+            </Link>
+          </p>
+        )}
       </footer>
     </div>
   );
