@@ -189,16 +189,22 @@ When implementing features, always consider:
 - How does this integrate with the fantasy theme?
 - Always create a branch for new features and commit often.  When a feature is complete create a PR and merge to main
 
-## Development Workflow Best Practices
+## 🚨 MANDATORY Development Workflow 🚨
 
-Based on lessons learned from implementing the character creation system:
+**⚠️ CRITICAL: NO CODE CHANGES WITHOUT FOLLOWING THIS PROCESS ⚠️**
 
-### ✅ Required Development Process
-1. **Feature Branch Creation**: ALWAYS create a feature branch before starting work (`git checkout -b feature/feature-name`)
-2. **Frequent Commits**: Make focused commits with descriptive messages throughout development
-3. **End-to-End Testing**: Implement comprehensive testing BEFORE considering feature complete
-4. **Pull Request Process**: Create detailed PRs with implementation summary and test results
-5. **Clean Merge**: Use squash merge and delete feature branches to maintain clean history
+Every single code change, no matter how small (even 1-line changes), MUST follow this workflow:
+
+### ✅ MANDATORY Development Process (NO EXCEPTIONS)
+1. **Feature Branch Creation**: ALWAYS create a feature branch before ANY code changes (`git checkout -b feature/feature-name`)
+2. **Implement Changes**: Make your code changes on the feature branch
+3. **Commit Changes**: Make focused commits with descriptive messages
+4. **Test Implementation**: Verify functionality works as expected
+5. **Build Verification**: Run `npm run build` to ensure no compilation errors
+6. **Pull Request**: Create PR with implementation summary
+7. **Merge & Cleanup**: Merge to main and delete feature branch
+
+**🛑 STOP: If you find yourself making direct changes to main branch or skipping the branch creation step, STOP IMMEDIATELY and create a branch first.**
 
 ### 🧪 Testing Requirements
 - **API Testing**: Create automated test scripts for all endpoints (bash scripts work well)
@@ -228,3 +234,11 @@ Based on lessons learned from implementing the character creation system:
 - **Development Server**: Clean `.next` cache if encountering build issues
 - **Database**: Keep migrations and schema in sync
 - **Code Quality**: Address TypeScript/ESLint warnings proactively
+
+## 🚨 CRITICAL WORKFLOW REMINDER 🚨
+**BEFORE ANY CODE CHANGES:**
+1. Check current branch: `git branch`
+2. If on main branch, create feature branch IMMEDIATELY: `git checkout -b feature/feature-name`
+3. Make changes only on feature branch
+4. Follow full PR workflow (commit, test, build, PR, merge)
+5. NO EXCEPTIONS - Even single-line changes require branches and PRs
