@@ -187,3 +187,44 @@ When implementing features, always consider:
 - Does this create positive motivation?
 - Can this scale to different family sizes?
 - How does this integrate with the fantasy theme?
+- Always create a branch for new features and commit often.  When a feature is complete create a PR and merge to main
+
+## Development Workflow Best Practices
+
+Based on lessons learned from implementing the character creation system:
+
+### ✅ Required Development Process
+1. **Feature Branch Creation**: ALWAYS create a feature branch before starting work (`git checkout -b feature/feature-name`)
+2. **Frequent Commits**: Make focused commits with descriptive messages throughout development
+3. **End-to-End Testing**: Implement comprehensive testing BEFORE considering feature complete
+4. **Pull Request Process**: Create detailed PRs with implementation summary and test results
+5. **Clean Merge**: Use squash merge and delete feature branches to maintain clean history
+
+### 🧪 Testing Requirements
+- **API Testing**: Create automated test scripts for all endpoints (bash scripts work well)
+- **Edge Case Testing**: Test error conditions, validation failures, and edge cases
+- **Integration Testing**: Verify full user flows work end-to-end
+- **Test Data**: Include proper test attributes (`data-testid`) for UI testing
+- **Documentation**: Document test results in PR descriptions
+
+### 🔧 Technical Implementation Notes
+- **Prisma Setup**: Always run `npx prisma generate` after schema changes
+- **Import Paths**: Use generated Prisma client from `@/lib/generated/prisma` not `@prisma/client`
+- **Type Safety**: Create proper TypeScript interfaces instead of using `any`
+- **Error Handling**: Implement proper validation and error responses in API routes
+- **Context Management**: Use React contexts for app-wide state (auth, character, etc.)
+
+### 🚀 Deployment Checklist
+- [ ] Feature branch created and pushed
+- [ ] All tests passing (API + E2E)
+- [ ] Build compiles successfully (`npm run build`)
+- [ ] TypeScript errors resolved
+- [ ] Commit messages follow convention
+- [ ] PR created with comprehensive description
+- [ ] Feature merged and branch cleaned up
+
+### ⚡ Performance & Quality
+- **Build Verification**: Run `npm run build` to catch compilation issues early
+- **Development Server**: Clean `.next` cache if encountering build issues
+- **Database**: Keep migrations and schema in sync
+- **Code Quality**: Address TypeScript/ESLint warnings proactively
