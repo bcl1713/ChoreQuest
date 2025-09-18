@@ -3,10 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useCharacter } from '@/lib/character-context';
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, family, logout, isLoading } = useAuth();
+  const { character, isLoading: characterLoading } = useCharacter();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -14,7 +16,13 @@ export default function Dashboard() {
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading && !characterLoading && user && character === null) {
+      router.push('/character/create');
+    }
+  }, [user, character, isLoading, characterLoading, router]);
+
+  if (isLoading || characterLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
         <div className="text-center">
@@ -25,7 +33,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!user) {
+  if (!user || !character) {
     return null;
   }
 
@@ -35,6 +43,17 @@ export default function Dashboard() {
       case 'HERO': return '⚔️ Hero';
       case 'YOUNG_HERO': return '🛡️ Young Hero';
       default: return role;
+    }
+  };
+
+  const getClassDisplay = (characterClass: string) => {
+    switch (characterClass) {
+      case 'KNIGHT': return '🛡️ Knight';
+      case 'MAGE': return '🔮 Mage';
+      case 'RANGER': return '🏹 Ranger';
+      case 'ROGUE': return '🗡️ Rogue';
+      case 'HEALER': return '💚 Healer';
+      default: return characterClass;
     }
   };
 
@@ -55,8 +74,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-gray-300 font-medium">{user.name}</p>
-              <p className="text-sm text-gray-400">{getRoleDisplay(user.role)}</p>
+              <p className="text-gray-300 font-medium">{character.name}</p>
+              <p className="text-sm text-gray-400">{getClassDisplay(character.class)} • Level {character.level}</p>
+              <p className="text-xs text-gray-500">{getRoleDisplay(user.role)}</p>
             </div>
             <button
               onClick={logout}
@@ -72,29 +92,29 @@ export default function Dashboard() {
       <main className="container mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-fantasy text-gray-100 mb-4">
-            Welcome back, {user.name}!
+            Welcome back, {character.name}!
           </h2>
           <p className="text-lg text-gray-400">
             Your heroic dashboard awaits. Ready for new quests?
           </p>
         </div>
 
-        {/* Quick Stats */}
+        {/* Character Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-12">
           <div className="fantasy-card p-6 text-center">
-            <div className="text-3xl gold-text mb-2">💰 0</div>
+            <div className="text-3xl gold-text mb-2">💰 {character.gold}</div>
             <div className="text-sm text-gray-400">Gold</div>
           </div>
           <div className="fantasy-card p-6 text-center">
-            <div className="text-3xl xp-text mb-2">⚡ 0</div>
+            <div className="text-3xl xp-text mb-2">⚡ {character.xp}</div>
             <div className="text-sm text-gray-400">Experience</div>
           </div>
           <div className="fantasy-card p-6 text-center">
-            <div className="text-3xl gem-text mb-2">💎 0</div>
+            <div className="text-3xl gem-text mb-2">💎 {character.gems}</div>
             <div className="text-sm text-gray-400">Gems</div>
           </div>
           <div className="fantasy-card p-6 text-center">
-            <div className="text-3xl text-primary-400 mb-2">🏅 0</div>
+            <div className="text-3xl text-primary-400 mb-2">🏅 {character.honorPoints}</div>
             <div className="text-sm text-gray-400">Honor Points</div>
           </div>
         </div>
