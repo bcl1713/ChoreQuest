@@ -47,15 +47,14 @@ export function generateToken(payload: { userId: string; familyId: string; role:
     throw new Error('JWT_SECRET environment variable is not set');
   }
 
-  return jwt.sign(
-    payload,
-    secret,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-      issuer: 'chorequest',
-      audience: 'chorequest-users'
-    }
-  );
+  const options: jwt.SignOptions = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any,
+    issuer: 'chorequest',
+    audience: 'chorequest-users'
+  };
+
+  return jwt.sign(payload, secret, options);
 }
 
 export function verifyToken(token: string): { userId: string; familyId: string; role: string } {
@@ -79,7 +78,7 @@ export function verifyToken(token: string): { userId: string; familyId: string; 
       familyId: decoded.familyId,
       role: decoded.role
     };
-  } catch (err) {
+  } catch {
     throw new Error('Invalid or expired token');
   }
 }
@@ -106,7 +105,7 @@ export async function getTokenData(req: NextRequest): Promise<{ userId: string; 
 
     const token = authHeader.substring(7);
     return verifyToken(token);
-  } catch (error) {
+  } catch {
     return null;
   }
 }
