@@ -6,18 +6,18 @@ test.describe('Character Creation Flow', () => {
 
   test('complete character creation flow for new user', async ({ page }) => {
     // Navigate to home page
-    await page.goto('http://localhost:3002');
+    await page.goto('http://localhost:3003');
 
     // Should see the landing page
     await expect(page.locator('h1')).toContainText('ChoreQuest');
-    await expect(page.getByText('Create Family Guild')).toBeVisible();
+    await expect(page.getByText('🏰 Create Family Guild')).toBeVisible();
 
     // Click Create Family Guild
-    await page.getByText('Create Family Guild').click();
+    await page.getByText('🏰 Create Family Guild').click();
 
     // Should navigate to create family page
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
-    await expect(page.getByText('Create Your Family Guild')).toBeVisible();
+    await expect(page.getByText('Found New Guild')).toBeVisible();
 
     // Fill in family creation form
     await page.fill('input[name="name"]', 'Test Family Guild');
@@ -30,7 +30,7 @@ test.describe('Character Creation Flow', () => {
 
     // Should automatically redirect to character creation
     await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
-    await expect(page.getByText('Create Your Hero')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create Your Hero' }).first()).toBeVisible();
 
     // Should see all 5 character classes
     await expect(page.getByText('Knight')).toBeVisible();
@@ -63,10 +63,10 @@ test.describe('Character Creation Flow', () => {
 
   test('existing user redirects directly to dashboard', async ({ page }) => {
     // Navigate to home page
-    await page.goto('http://localhost:3002');
+    await page.goto('http://localhost:3003');
 
-    // Click Join Existing Guild (login)
-    await page.getByText('Join Existing Guild').click();
+    // Click login link
+    await page.getByText('Already have an account? Login here').click();
 
     // Should navigate to login page
     await expect(page).toHaveURL(/.*\/auth\/login/);
@@ -83,7 +83,7 @@ test.describe('Character Creation Flow', () => {
 
   test('character creation validation works', async ({ page }) => {
     // Navigate directly to character creation (simulate fresh user)
-    await page.goto('http://localhost:3002/character/create');
+    await page.goto('http://localhost:3003/character/create');
 
     // Try to submit without filling anything
     await page.click('button:text("Begin Adventure")');

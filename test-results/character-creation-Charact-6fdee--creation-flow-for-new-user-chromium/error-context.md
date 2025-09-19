@@ -1,0 +1,59 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8] [cursor=pointer]
+  - alert [ref=e11]
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - heading "Create Your Hero" [level=1] [ref=e15]
+      - paragraph [ref=e16]: Choose your path and begin your legendary journey
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Create Your Hero" [level=1] [ref=e20]
+        - paragraph [ref=e21]: Choose your path and begin your legendary journey
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: Hero Name
+          - textbox "Hero Name" [ref=e25]
+        - generic [ref=e26]:
+          - generic [ref=e27]: Choose Your Class
+          - generic [ref=e28]:
+            - generic [ref=e30] [cursor=pointer]:
+              - generic [ref=e31] [cursor=pointer]: ⚔️
+              - heading "Knight" [level=3] [ref=e32] [cursor=pointer]
+              - paragraph [ref=e33] [cursor=pointer]: Brave protector with exceptional leadership skills
+              - generic [ref=e34] [cursor=pointer]:
+                - strong [ref=e35] [cursor=pointer]: "Specialty:"
+                - text: +25% XP from protection and organization tasks
+            - generic [ref=e37] [cursor=pointer]:
+              - generic [ref=e38] [cursor=pointer]: 🔮
+              - heading "Mage" [level=3] [ref=e39] [cursor=pointer]
+              - paragraph [ref=e40] [cursor=pointer]: Wise scholar who excels at complex problem-solving
+              - generic [ref=e41] [cursor=pointer]:
+                - strong [ref=e42] [cursor=pointer]: "Specialty:"
+                - text: +25% XP from study and research tasks
+            - generic [ref=e44] [cursor=pointer]:
+              - generic [ref=e45] [cursor=pointer]: 🏹
+              - heading "Ranger" [level=3] [ref=e46] [cursor=pointer]
+              - paragraph [ref=e47] [cursor=pointer]: Nature-loving explorer who thrives outdoors
+              - generic [ref=e48] [cursor=pointer]:
+                - strong [ref=e49] [cursor=pointer]: "Specialty:"
+                - text: +25% XP from outdoor and maintenance tasks
+            - generic [ref=e51] [cursor=pointer]:
+              - generic [ref=e52] [cursor=pointer]: 🗡️
+              - heading "Rogue" [level=3] [ref=e53] [cursor=pointer]
+              - paragraph [ref=e54] [cursor=pointer]: Cunning adventurer skilled in stealth and creativity
+              - generic [ref=e55] [cursor=pointer]:
+                - strong [ref=e56] [cursor=pointer]: "Specialty:"
+                - text: +25% XP from cleaning and creative tasks
+            - generic [ref=e58] [cursor=pointer]:
+              - generic [ref=e59] [cursor=pointer]: 🌿
+              - heading "Healer" [level=3] [ref=e60] [cursor=pointer]
+              - paragraph [ref=e61] [cursor=pointer]: Compassionate helper who cares for others
+              - generic [ref=e62] [cursor=pointer]:
+                - strong [ref=e63] [cursor=pointer]: "Specialty:"
+                - text: +25% XP from helping and nurturing tasks
+        - button "Begin Your Quest" [disabled] [ref=e65]
+```
