@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './auth-context';
 
 interface Character {
@@ -30,7 +30,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCharacter = async () => {
+  const fetchCharacter = useCallback(async () => {
     if (!user || !token) {
       setCharacter(null);
       return;
@@ -60,11 +60,11 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, token]);
 
   useEffect(() => {
     fetchCharacter();
-  }, [user, token]);
+  }, [fetchCharacter]);
 
   const refreshCharacter = async () => {
     await fetchCharacter();

@@ -3,30 +3,12 @@
 import { useState } from 'react';
 import { z } from 'zod';
 
-interface LoginData {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  familyCode: string;
-}
-
-interface CreateFamilyData {
-  name: string;
-  email: string;
-  password: string;
-  userName: string;
-}
-
 interface AuthFormProps {
   type: 'login' | 'register' | 'create-family';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: any) => Promise<void>;
   isLoading?: boolean;
-  error?: string;
+  error?: string | null;
 }
 
 const loginSchema = z.object({

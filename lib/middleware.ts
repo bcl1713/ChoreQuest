@@ -46,7 +46,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
       }
     };
 
-  } catch (err) {
+  } catch {
     return { success: false, error: 'Invalid or expired token' };
   }
 }

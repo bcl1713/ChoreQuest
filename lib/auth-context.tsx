@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(parsed.user);
         setFamily(parsed.family);
         setToken(parsed.token);
-      } catch (error) {
+      } catch {
         localStorage.removeItem('chorequest-auth');
       }
     }
