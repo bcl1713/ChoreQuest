@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CharacterClass } from '@/lib/generated/prisma';
+import { useAuth } from '@/lib/auth-context';
 
 interface Character {
   id: string;
@@ -18,50 +19,61 @@ interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
 }
 
-const CHARACTER_CLASSES = {
-  KNIGHT: {
+const characterClasses = [
+  {
+    id: CharacterClass.KNIGHT,
     name: 'Knight',
-    emoji: '🛡️',
-    description: 'Masters of cleaning and organizing. Bonus XP for tidying quests.',
-    bonus: 'Cleaning & Organizing'
+    icon: '⚔️',
+    description: 'Brave protector with exceptional leadership skills',
+    specialty: '+25% XP from protection and organization tasks'
   },
-  MAGE: {
+  {
+    id: CharacterClass.MAGE,
     name: 'Mage',
-    emoji: '🔮',
-    description: 'Scholars of wisdom and learning. Bonus XP for homework and study quests.',
-    bonus: 'Learning & Study'
+    icon: '🔮',
+    description: 'Wise scholar who excels at complex problem-solving',
+    specialty: '+25% XP from study and research tasks'
   },
-  RANGER: {
+  {
+    id: CharacterClass.RANGER,
     name: 'Ranger',
-    emoji: '🏹',
-    description: 'Guardians of the outdoors. Bonus XP for outdoor and maintenance quests.',
-    bonus: 'Outdoor & Maintenance'
+    icon: '🏹',
+    description: 'Nature-loving explorer who thrives outdoors',
+    specialty: '+25% XP from outdoor and maintenance tasks'
   },
-  ROGUE: {
+  {
+    id: CharacterClass.ROGUE,
     name: 'Rogue',
-    emoji: '🗡️',
-    description: 'Quick and efficient taskmasters. Bonus XP for fast completion quests.',
-    bonus: 'Speed & Efficiency'
+    icon: '🗡️',
+    description: 'Cunning adventurer skilled in stealth and creativity',
+    specialty: '+25% XP from cleaning and creative tasks'
   },
-  HEALER: {
+  {
+    id: CharacterClass.HEALER,
     name: 'Healer',
-    emoji: '💚',
-    description: 'Champions of helping others. Bonus XP for family assistance quests.',
-    bonus: 'Helping Others'
+    icon: '🌿',
+    description: 'Compassionate helper who cares for others',
+    specialty: '+25% XP from helping and nurturing tasks'
   }
-};
+];
 
 export default function CharacterCreation({ onCharacterCreated }: CharacterCreationProps) {
   const [name, setName] = useState('');
   const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { token } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim() || !selectedClass) {
       setError('Please enter a character name and select a class');
+      return;
+    }
+
+    if (!token) {
+      setError('Authentication required. Please log in again.');
       return;
     }
 
@@ -73,6 +85,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: name.trim(),
@@ -117,35 +130,35 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
               id="characterName"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-dark-700 border border-dark-500 rounded-lg text-white placeholder-gray-400 focus:border-gold-500 focus:outline-none focus:ring-1 focus:ring-gold-500"
+              className="fantasy-input w-full px-4 py-3 bg-dark-800/50 border border-gold-700/30 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-gold-500 text-white placeholder-gray-400"
               placeholder="Enter your hero's name..."
               maxLength={50}
               required
             />
           </div>
 
-          {/* Character Class Selection */}
+          {/* Character Classes */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-4">
               Choose Your Class
             </label>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(CHARACTER_CLASSES).map(([classKey, classInfo]) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {characterClasses.map((characterClass) => (
                 <div
-                  key={classKey}
-                  className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 ${
-                    selectedClass === classKey
-                      ? 'border-gold-500 bg-gold-500/10'
-                      : 'border-dark-500 hover:border-dark-400 bg-dark-700'
+                  key={characterClass.id}
+                  className={`fantasy-card p-4 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-gold-500/20 ${
+                    selectedClass === characterClass.id
+                      ? 'ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50'
+                      : 'hover:border-gold-500/30'
                   }`}
-                  onClick={() => setSelectedClass(classKey as CharacterClass)}
+                  onClick={() => setSelectedClass(characterClass.id)}
                 >
                   <div className="text-center">
-                    <div className="text-4xl mb-2">{classInfo.emoji}</div>
-                    <h3 className="text-lg font-fantasy text-white mb-2">{classInfo.name}</h3>
-                    <p className="text-sm text-gray-400 mb-2">{classInfo.description}</p>
-                    <div className="text-xs text-gold-400 font-medium">
-                      Specialty: {classInfo.bonus}
+                    <div className="text-3xl mb-2">{characterClass.icon}</div>
+                    <h3 className="text-lg font-semibold text-gold-300 mb-2">{characterClass.name}</h3>
+                    <p className="text-sm text-gray-400 mb-3">{characterClass.description}</p>
+                    <div className="text-xs text-gold-400">
+                      <strong>Specialty:</strong> {characterClass.specialty}
                     </div>
                   </div>
                 </div>
@@ -153,26 +166,31 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
             </div>
           </div>
 
+          {/* Error Message */}
           {error && (
-            <div className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg p-3">
-              {error}
+            <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4">
+              <p className="text-red-300 text-sm">{error}</p>
             </div>
           )}
 
+          {/* Submit Button */}
           <div className="text-center">
             <button
               type="submit"
               disabled={isLoading || !name.trim() || !selectedClass}
-              className="fantasy-button text-lg px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="fantasy-button fantasy-button-primary px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-w-48"
             >
-              {isLoading ? 'Forging Hero...' : 'Begin Adventure'}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Creating Hero...
+                </div>
+              ) : (
+                'Begin Your Quest'
+              )}
             </button>
           </div>
         </form>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>💡 Tip: Each class provides bonus XP for specific quest types!</p>
-        </div>
       </div>
     </div>
   );
