@@ -4,7 +4,7 @@ test.describe('Character Creation Flow', () => {
   test.beforeEach(async ({ context, page }) => {
     // Clear all browser storage and cookies before each test
     await context.clearCookies();
-    await page.goto('http://localhost:3003');
+    await page.goto('/');
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -16,7 +16,7 @@ test.describe('Character Creation Flow', () => {
     const testPassword = 'testpass123';
 
     // Navigate to home page
-    await page.goto('http://localhost:3003');
+    await page.goto('/');
 
     // Should see the landing page
     await expect(page.locator('h1')).toContainText('ChoreQuest');
@@ -76,7 +76,7 @@ test.describe('Character Creation Flow', () => {
     const testPassword = 'testpass123';
 
     // First create a user with character
-    await page.goto('http://localhost:3003');
+    await page.goto('/');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -96,7 +96,7 @@ test.describe('Character Creation Flow', () => {
     // The user is already logged in and has a character,
     // so visiting the home page should show the "Enter Your Realm" button
     // which redirects directly to dashboard
-    await page.goto('http://localhost:3003');
+    await page.goto('/');
 
     // Should see the "Enter Your Realm" link since user is logged in
     await expect(page.getByText('🏰 Enter Your Realm')).toBeVisible();
@@ -114,7 +114,7 @@ test.describe('Character Creation Flow', () => {
     const testPassword = 'testpass123';
 
     // Create a user first (without character) to test validation
-    await page.goto('http://localhost:3003');
+    await page.goto('/');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
