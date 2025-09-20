@@ -146,6 +146,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
               {characterClasses.map((characterClass) => (
                 <div
                   key={characterClass.id}
+                  data-testid={`class-${characterClass.name.toLowerCase()}`}
                   className={`fantasy-card p-4 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-gold-500/20 ${
                     selectedClass === characterClass.id
                       ? 'ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50'
