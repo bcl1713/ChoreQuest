@@ -1,0 +1,233 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('Quest System', () => {
+  test.beforeEach(async ({ context, page }) => {
+    // Clear all browser storage and cookies before each test
+    await context.clearCookies();
+    await page.goto('http://localhost:3003');
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+  });
+
+  test('Guild Master can create custom quests', async ({ page }) => {
+    const testEmail = `guild-quest-${Date.now()}@example.com`;
+    const testPassword = 'testpass123';
+
+    // Create a new family and user (Guild Master)
+    await page.goto('http://localhost:3003');
+    await page.getByText('🏰 Create Family Guild').click();
+    await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+    await page.fill('input[name="name"]', 'Quest Test Family');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="userName"]', 'Quest Guild Master');
+    await page.click('button[type="submit"]');
+
+    // Complete character creation
+    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+    await page.fill('input#characterName', 'Sir QuestMaster');
+    await page.click('[data-testid="class-knight"]');
+    await page.click('button:text("Begin Your Quest")');
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+    await expect(page.getByText('Welcome back, Sir QuestMaster!')).toBeVisible();
+
+    // Verify Quest Dashboard is visible
+    await expect(page.getByText('Quest Dashboard')).toBeVisible();
+    await expect(page.getByText('🗡️ My Quests')).toBeVisible();
+
+    // Verify Guild Master has Create Quest button
+    await expect(page.getByText('⚡ Create Quest')).toBeVisible();
+
+    // Click Create Quest button
+    await page.getByText('⚡ Create Quest').click();
+
+    // Verify modal opened
+    await expect(page.getByText('Create New Quest')).toBeVisible();
+
+    // Switch to Custom Quest mode
+    await page.click('text=Custom Quest');
+
+    // Fill in quest details
+    await page.fill('input[placeholder="Enter quest title..."]', 'Test Custom Quest');
+    await page.fill('textarea[placeholder="Describe the quest..."]', 'This is a test quest for automation');
+
+    // Set difficulty to Easy (should be default)
+    await expect(page.locator('select >> option[value="EASY"][selected]')).toBeVisible();
+
+    // Set XP and Gold rewards
+    await page.fill('input[type="number"]:near(:text("XP Reward"))', '25');
+    await page.fill('input[type="number"]:near(:text("Gold Reward"))', '10');
+
+    // Create the quest
+    await page.click('button:text("⚡ Create Quest")');
+
+    // Verify quest was created and modal closed
+    await expect(page.getByText('Create New Quest')).not.toBeVisible();
+
+    // Verify quest appears in the dashboard
+    await expect(page.getByText('Test Custom Quest')).toBeVisible();
+    await expect(page.getByText('This is a test quest for automation')).toBeVisible();
+  });
+
+  test('Quest dashboard displays correctly for Guild Master', async ({ page }) => {
+    const testEmail = `dashboard-test-${Date.now()}@example.com`;
+    const testPassword = 'testpass123';
+
+    // Create a new family and user (Guild Master)
+    await page.goto('http://localhost:3003');
+    await page.getByText('🏰 Create Family Guild').click();
+    await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+    await page.fill('input[name="name"]', 'Dashboard Test Family');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="userName"]', 'Dashboard Test Master');
+    await page.click('button[type="submit"]');
+
+    // Complete character creation
+    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+    await page.fill('input#characterName', 'Sir Dashboard');
+    await page.click('[data-testid="class-mage"]');
+    await page.click('button:text("Begin Your Quest")');
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+    // Verify quest dashboard elements are present
+    await expect(page.getByText('Quest Dashboard')).toBeVisible();
+    await expect(page.getByText('🗡️ My Quests')).toBeVisible();
+
+    // For new Guild Master, should see "No active quests" message
+    await expect(page.getByText('No active quests. Ready for adventure?')).toBeVisible();
+
+    // Verify Create Quest button is visible for Guild Master
+    await expect(page.getByText('⚡ Create Quest')).toBeVisible();
+  });
+
+  test('Quest creation modal validation works', async ({ page }) => {
+    const testEmail = `validation-test-${Date.now()}@example.com`;
+    const testPassword = 'testpass123';
+
+    // Create a new family and user (Guild Master)
+    await page.goto('http://localhost:3003');
+    await page.getByText('🏰 Create Family Guild').click();
+    await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+    await page.fill('input[name="name"]', 'Validation Test Family');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="userName"]', 'Validation Test Master');
+    await page.click('button[type="submit"]');
+
+    // Complete character creation
+    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+    await page.fill('input#characterName', 'Sir Validator');
+    await page.click('[data-testid="class-ranger"]');
+    await page.click('button:text("Begin Your Quest")');
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+    // Open create quest modal
+    await page.getByText('⚡ Create Quest').click();
+    await expect(page.getByText('Create New Quest')).toBeVisible();
+
+    // Switch to Custom Quest mode
+    await page.click('text=Custom Quest');
+
+    // Try to submit empty form (should show validation error or stay open)
+    await page.click('button:text("⚡ Create Quest")');
+
+    // Modal should still be visible (validation failed)
+    await expect(page.getByText('Create New Quest')).toBeVisible();
+
+    // Fill required fields one by one
+    await page.fill('input[placeholder="Enter quest title..."]', 'Valid Quest Title');
+
+    // Try again with just title
+    await page.click('button:text("⚡ Create Quest")');
+    await expect(page.getByText('Create New Quest')).toBeVisible(); // Should still be open
+
+    // Add description
+    await page.fill('textarea[placeholder="Describe the quest..."]', 'Valid quest description');
+
+    // Now it should work
+    await page.click('button:text("⚡ Create Quest")');
+
+    // Modal should close after successful creation
+    await expect(page.getByText('Create New Quest')).not.toBeVisible();
+
+    // Verify quest was created
+    await expect(page.getByText('Valid Quest Title')).toBeVisible();
+  });
+
+  test('Quest creation modal can be cancelled', async ({ page }) => {
+    const testEmail = `cancel-test-${Date.now()}@example.com`;
+    const testPassword = 'testpass123';
+
+    // Create a new family and user (Guild Master)
+    await page.goto('http://localhost:3003');
+    await page.getByText('🏰 Create Family Guild').click();
+    await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+    await page.fill('input[name="name"]', 'Cancel Test Family');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="userName"]', 'Cancel Test Master');
+    await page.click('button[type="submit"]');
+
+    // Complete character creation
+    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+    await page.fill('input#characterName', 'Sir Cancel');
+    await page.click('[data-testid="class-healer"]');
+    await page.click('button:text("Begin Your Quest")');
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+    // Open create quest modal
+    await page.getByText('⚡ Create Quest').click();
+    await expect(page.getByText('Create New Quest')).toBeVisible();
+
+    // Fill in some data
+    await page.fill('input[placeholder="Enter quest title..."]', 'This will be cancelled');
+
+    // Cancel the modal
+    await page.click('text=Cancel');
+
+    // Modal should be closed
+    await expect(page.getByText('Create New Quest')).not.toBeVisible();
+
+    // Quest should not have been created
+    await expect(page.getByText('This will be cancelled')).not.toBeVisible();
+  });
+
+  test('Non-existent family member creation still shows quest UI', async ({ page }) => {
+    const testEmail = `basic-ui-${Date.now()}@example.com`;
+    const testPassword = 'testpass123';
+
+    // Create a new family with just one member (hero, not guild master)
+    // Note: In the current system, the first user is always the Guild Master
+    // This test verifies the UI loads correctly for any user
+    await page.goto('http://localhost:3003');
+    await page.getByText('🏰 Create Family Guild').click();
+    await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+    await page.fill('input[name="name"]', 'Basic UI Test Family');
+    await page.fill('input[name="email"]', testEmail);
+    await page.fill('input[name="password"]', testPassword);
+    await page.fill('input[name="userName"]', 'Basic UI User');
+    await page.click('button[type="submit"]');
+
+    // Complete character creation
+    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+    await page.fill('input#characterName', 'Sir Basic');
+    await page.click('[data-testid="class-rogue"]');
+    await page.click('button:text("Begin Your Quest")');
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+    // Verify basic quest dashboard elements are present
+    await expect(page.getByText('Quest Dashboard')).toBeVisible();
+    await expect(page.getByText('🗡️ My Quests')).toBeVisible();
+
+    // Since this is the Guild Master (first user), they should see Create Quest button
+    await expect(page.getByText('⚡ Create Quest')).toBeVisible();
+  });
+});
