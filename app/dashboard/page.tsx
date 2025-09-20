@@ -4,12 +4,19 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
+import QuestDashboard from '@/components/quest-dashboard';
+import QuestCreateModal from '@/components/quest-create-modal';
+import { questService } from '@/lib/quest-service';
+import { QuestTemplate } from '@/lib/generated/prisma';
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading } = useCharacter();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showCreateQuest, setShowCreateQuest] = useState(false);
+  const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -30,6 +37,30 @@ export default function Dashboard() {
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (user && character) {
+      loadQuestTemplates();
+    }
+  }, [user, character]);
+
+  const loadQuestTemplates = async () => {
+    try {
+      const result = await questService.getQuestTemplates();
+      setQuestTemplates(result.templates);
+    } catch (err) {
+      console.error('Failed to load quest templates:', err);
+    }
+  };
+
+  const handleQuestCreated = () => {
+    loadQuestTemplates();
+  };
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
+    setTimeout(() => setError(null), 5000);
+  };
 
   if (isLoading || characterLoading) {
     return (
@@ -90,6 +121,14 @@ export default function Dashboard() {
               <p className="text-sm text-gray-400">{getClassDisplay(character.class)} • Level {character.level}</p>
               <p className="text-xs text-gray-500">{getRoleDisplay(user.role)}</p>
             </div>
+            {user.role === 'GUILD_MASTER' && (
+              <button
+                onClick={() => setShowCreateQuest(true)}
+                className="bg-gold-600 hover:bg-gold-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                ⚡ Create Quest
+              </button>
+            )}
             <button
               onClick={logout}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
@@ -131,26 +170,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Coming Soon */}
-        <div className="fantasy-card p-8 text-center">
-          <h3 className="text-2xl font-fantasy text-gray-100 mb-4">🚧 Dashboard Under Construction 🚧</h3>
-          <p className="text-gray-400 mb-6">
-            Your heroic control center is being forged by our finest developers.
-            Soon you&apos;ll be able to:
-          </p>
-          <div className="grid md:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
-            <div className="space-y-2">
-              <p className="text-gray-300">🗡️ View and complete quests</p>
-              <p className="text-gray-300">👥 Manage family members</p>
-              <p className="text-gray-300">🏆 Track achievements</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-gray-300">🛒 Visit the reward store</p>
-              <p className="text-gray-300">🐉 Battle epic bosses</p>
-              <p className="text-gray-300">📊 View family leaderboards</p>
-            </div>
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6">
+            <p className="text-red-200">⚠️ {error}</p>
           </div>
-        </div>
+        )}
+
+        {/* Quest Dashboard */}
+        <QuestDashboard onError={handleError} />
+
+        {/* Quest Create Modal */}
+        <QuestCreateModal
+          isOpen={showCreateQuest}
+          onClose={() => setShowCreateQuest(false)}
+          onQuestCreated={handleQuestCreated}
+          templates={questTemplates}
+        />
       </main>
     </div>
   );
