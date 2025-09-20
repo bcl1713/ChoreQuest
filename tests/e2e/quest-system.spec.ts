@@ -4,7 +4,7 @@ test.describe('Quest System', () => {
   test.beforeEach(async ({ context, page }) => {
     // Clear all browser storage and cookies before each test
     await context.clearCookies();
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -16,7 +16,7 @@ test.describe('Quest System', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -77,7 +77,7 @@ test.describe('Quest System', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -110,7 +110,7 @@ test.describe('Quest System', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -165,7 +165,7 @@ test.describe('Quest System', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -206,7 +206,7 @@ test.describe('Quest System', () => {
     // Create a new family with just one member (hero, not guild master)
     // Note: In the current system, the first user is always the Guild Master
     // This test verifies the UI loads correctly for any user
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 

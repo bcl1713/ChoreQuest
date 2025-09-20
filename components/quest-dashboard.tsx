@@ -11,15 +11,22 @@ interface QuestDashboardProps {
 }
 
 export default function QuestDashboard({ onError }: QuestDashboardProps) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadQuests();
+    // Only load quests when user and token are available
+    if (user && token) {
+      loadQuests();
+    } else if (!user) {
+      // If no user, set error state
+      setError('User not authenticated');
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user, token]);
 
   const loadQuests = async () => {
     try {

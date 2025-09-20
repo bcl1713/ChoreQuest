@@ -4,7 +4,7 @@ test.describe('Quest System - Basic Tests', () => {
   test.beforeEach(async ({ context, page }) => {
     // Clear all browser storage and cookies before each test
     await context.clearCookies();
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -16,7 +16,7 @@ test.describe('Quest System - Basic Tests', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -35,10 +35,10 @@ test.describe('Quest System - Basic Tests', () => {
     await expect(page.getByText('Welcome back, Sir BasicTest!')).toBeVisible();
 
     // Just check that the basic dashboard loaded - don't check for quest-specific elements yet
-    await expect(page.getByText('💰')).toBeVisible(); // Gold indicator
-    await expect(page.getByText('⚡')).toBeVisible(); // XP indicator
-    await expect(page.getByText('💎')).toBeVisible(); // Gems indicator
-    await expect(page.getByText('🏅')).toBeVisible(); // Honor points indicator
+    await expect(page.getByText('💰 0')).toBeVisible(); // Gold indicator
+    await expect(page.getByText('⚡ 0')).toBeVisible(); // XP indicator
+    await expect(page.getByText('💎 0')).toBeVisible(); // Gems indicator
+    await expect(page.getByText('🏅 0')).toBeVisible(); // Honor points indicator
 
     // Take a screenshot for debugging
     await page.screenshot({ path: 'debug-dashboard.png', fullPage: true });
@@ -49,7 +49,7 @@ test.describe('Quest System - Basic Tests', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3003');
+    await page.goto('http://localhost:3000');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 

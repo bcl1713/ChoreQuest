@@ -33,13 +33,26 @@ export interface UpdateQuestStatusRequest {
 }
 
 export class QuestService {
+  private getAuthToken(): string | null {
+    // Get token from localStorage (same as auth-context)
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token');
+  }
+
   private async request(endpoint: string, options?: RequestInit) {
+    const token = this.getAuthToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(endpoint, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {
