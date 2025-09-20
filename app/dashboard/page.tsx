@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
@@ -12,11 +12,12 @@ import { QuestTemplate } from '@/lib/generated/prisma';
 export default function Dashboard() {
   const router = useRouter();
   const { user, family, logout, isLoading } = useAuth();
-  const { character, isLoading: characterLoading } = useCharacter();
+  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded } = useCharacter();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const dashboardLoadQuestsRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -25,10 +26,16 @@ export default function Dashboard() {
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (!isLoading && !characterLoading && user && character === null) {
+    // Only redirect to character creation if:
+    // 1. Auth is not loading
+    // 2. User exists
+    // 3. Character fetch has completed (hasLoaded = true)
+    // 4. No character was found (character === null)
+    // 5. No error occurred during fetch (successful "no character" response)
+    if (!isLoading && user && characterHasLoaded && character === null && !characterError) {
       router.push('/character/create');
     }
-  }, [user, character, isLoading, characterLoading, router]);
+  }, [user, character, isLoading, characterHasLoaded, characterError, router]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -53,8 +60,12 @@ export default function Dashboard() {
     }
   };
 
-  const handleQuestCreated = () => {
+  const handleQuestCreated = async () => {
     loadQuestTemplates();
+    // Also refresh the quest dashboard
+    if (dashboardLoadQuestsRef.current) {
+      await dashboardLoadQuestsRef.current();
+    }
   };
 
   const handleError = (errorMessage: string) => {
@@ -178,7 +189,12 @@ export default function Dashboard() {
         )}
 
         {/* Quest Dashboard */}
-        <QuestDashboard onError={handleError} />
+        <QuestDashboard
+          onError={handleError}
+          onLoadQuestsRef={(loadQuests) => {
+            dashboardLoadQuestsRef.current = loadQuests;
+          }}
+        />
 
         {/* Quest Create Modal */}
         <QuestCreateModal

@@ -4,7 +4,7 @@ test.describe('Quest Creation Workflow', () => {
   test.beforeEach(async ({ context, page }) => {
     // Clear all browser storage and cookies before each test
     await context.clearCookies();
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -16,7 +16,7 @@ test.describe('Quest Creation Workflow', () => {
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -59,8 +59,8 @@ test.describe('Quest Creation Workflow', () => {
     // Take screenshot before submission
     await page.screenshot({ path: 'debug-quest-form-filled.png', fullPage: true });
 
-    // Submit the quest
-    await page.click('button:text("⚡ Create Quest")');
+    // Submit the quest - use the submit button inside the form
+    await page.click('form button[type="submit"]');
 
     // Wait for modal to close
     await page.waitForTimeout(2000);
@@ -103,7 +103,7 @@ test.describe('Quest Creation Workflow', () => {
     const testPassword = 'testpass123';
 
     // Create user and get to dashboard
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.getByText('🏰 Create Family Guild').click();
     await page.fill('input[name="name"]', 'Validation Test Family');
     await page.fill('input[name="email"]', testEmail);
@@ -115,7 +115,11 @@ test.describe('Quest Creation Workflow', () => {
     await page.fill('input#characterName', 'Sir Validator');
     await page.click('[data-testid="class-healer"]');
     await page.click('button:text("Begin Your Quest")');
-    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+    // Wait for navigation with longer timeout for character creation
+    await page.waitForTimeout(1000); // Give it time to start navigation
+    await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
+    await expect(page.getByText('Welcome back, Sir Validator!')).toBeVisible();
 
     await page.waitForTimeout(2000);
 
@@ -124,8 +128,8 @@ test.describe('Quest Creation Workflow', () => {
     await page.waitForTimeout(1000);
     await page.click('text=Custom Quest');
 
-    // Try to submit without filling required fields
-    await page.click('button:text("⚡ Create Quest")');
+    // Try to submit without filling required fields - use the submit button inside the form
+    await page.click('form button[type="submit"]');
     await page.waitForTimeout(1000);
 
     // Modal should still be visible (validation prevented submission)
@@ -138,8 +142,8 @@ test.describe('Quest Creation Workflow', () => {
     await page.fill('input[placeholder="Enter quest title..."]', 'Valid Quest');
     await page.fill('textarea[placeholder="Describe the quest..."]', 'Valid description');
 
-    // Now submission should work
-    await page.click('button:text("⚡ Create Quest")');
+    // Now submission should work - use the submit button inside the form
+    await page.click('form button[type="submit"]');
     await page.waitForTimeout(2000);
 
     // Modal should close now

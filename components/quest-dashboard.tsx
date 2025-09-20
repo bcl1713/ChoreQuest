@@ -8,9 +8,10 @@ import { motion } from 'framer-motion';
 
 interface QuestDashboardProps {
   onError?: (error: string) => void;
+  onLoadQuestsRef?: (loadQuests: () => Promise<void>) => void;
 }
 
-export default function QuestDashboard({ onError }: QuestDashboardProps) {
+export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashboardProps) {
   const { user, token } = useAuth();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,14 @@ export default function QuestDashboard({ onError }: QuestDashboardProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token]);
+
+  useEffect(() => {
+    // Pass the loadQuests function to parent
+    if (onLoadQuestsRef) {
+      onLoadQuestsRef(loadQuests);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onLoadQuestsRef]);
 
   const loadQuests = async () => {
     try {

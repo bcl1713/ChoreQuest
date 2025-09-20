@@ -19,6 +19,7 @@ interface CharacterContextType {
   character: Character | null;
   isLoading: boolean;
   error: string | null;
+  hasLoaded: boolean; // true when character fetch completed (regardless of result)
   refreshCharacter: () => Promise<void>;
 }
 
@@ -27,17 +28,21 @@ const CharacterContext = createContext<CharacterContextType | undefined>(undefin
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth();
   const [character, setCharacter] = useState<Character | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
 
   const fetchCharacter = useCallback(async () => {
     if (!user || !token) {
       setCharacter(null);
+      setIsLoading(false);
+      // Don't set hasLoaded=true here - we haven't actually tried to fetch
       return;
     }
 
     setIsLoading(true);
     setError(null);
+    setHasLoaded(false);
 
     try {
       const response = await fetch('/api/character', {
@@ -59,6 +64,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       console.error('Character fetch error:', err);
     } finally {
       setIsLoading(false);
+      setHasLoaded(true); // Mark as loaded regardless of success/failure
     }
   }, [user, token]);
 
@@ -75,6 +81,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       character,
       isLoading,
       error,
+      hasLoaded,
       refreshCharacter
     }}>
       {children}

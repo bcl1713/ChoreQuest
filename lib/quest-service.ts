@@ -36,14 +36,22 @@ export class QuestService {
   private getAuthToken(): string | null {
     // Get token from localStorage (same as auth-context)
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token');
+    const stored = localStorage.getItem('chorequest-auth');
+    if (!stored) return null;
+
+    try {
+      const parsed = JSON.parse(stored);
+      return parsed.token;
+    } catch {
+      return null;
+    }
   }
 
   private async request(endpoint: string, options?: RequestInit) {
     const token = this.getAuthToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...(options?.headers as Record<string, string>),
     };
 
     if (token) {

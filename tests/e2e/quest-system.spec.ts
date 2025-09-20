@@ -41,8 +41,8 @@ test.describe('Quest System', () => {
     // Verify Guild Master has Create Quest button
     await expect(page.getByText('⚡ Create Quest')).toBeVisible();
 
-    // Click Create Quest button
-    await page.getByText('⚡ Create Quest').click();
+    // Click Create Quest button (the one in the header, not the form submit button)
+    await page.locator('header button:has-text("⚡ Create Quest")').click();
 
     // Verify modal opened
     await expect(page.getByText('Create New Quest')).toBeVisible();
@@ -54,15 +54,15 @@ test.describe('Quest System', () => {
     await page.fill('input[placeholder="Enter quest title..."]', 'Test Custom Quest');
     await page.fill('textarea[placeholder="Describe the quest..."]', 'This is a test quest for automation');
 
-    // Set difficulty to Easy (should be default)
-    await expect(page.locator('select >> option[value="EASY"][selected]')).toBeVisible();
+    // Verify difficulty is set to Easy (should be default)
+    await expect(page.locator('select').filter({ has: page.locator('option[value="EASY"]') })).toHaveValue('EASY');
 
     // Set XP and Gold rewards
     await page.fill('input[type="number"]:near(:text("XP Reward"))', '25');
     await page.fill('input[type="number"]:near(:text("Gold Reward"))', '10');
 
-    // Create the quest
-    await page.click('button:text("⚡ Create Quest")');
+    // Create the quest (click the submit button inside the modal)
+    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
 
     // Verify quest was created and modal closed
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
@@ -127,15 +127,15 @@ test.describe('Quest System', () => {
     await page.click('button:text("Begin Your Quest")');
     await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
 
-    // Open create quest modal
-    await page.getByText('⚡ Create Quest').click();
+    // Open create quest modal (click header button)
+    await page.locator('header button:has-text("⚡ Create Quest")').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
 
     // Switch to Custom Quest mode
     await page.click('text=Custom Quest');
 
     // Try to submit empty form (should show validation error or stay open)
-    await page.click('button:text("⚡ Create Quest")');
+    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
 
     // Modal should still be visible (validation failed)
     await expect(page.getByText('Create New Quest')).toBeVisible();
@@ -144,14 +144,14 @@ test.describe('Quest System', () => {
     await page.fill('input[placeholder="Enter quest title..."]', 'Valid Quest Title');
 
     // Try again with just title
-    await page.click('button:text("⚡ Create Quest")');
+    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
     await expect(page.getByText('Create New Quest')).toBeVisible(); // Should still be open
 
     // Add description
     await page.fill('textarea[placeholder="Describe the quest..."]', 'Valid quest description');
 
     // Now it should work
-    await page.click('button:text("⚡ Create Quest")');
+    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
 
     // Modal should close after successful creation
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
@@ -182,15 +182,18 @@ test.describe('Quest System', () => {
     await page.click('button:text("Begin Your Quest")');
     await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
 
-    // Open create quest modal
-    await page.getByText('⚡ Create Quest').click();
+    // Open create quest modal (click header button)
+    await page.locator('header button:has-text("⚡ Create Quest")').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
+
+    // Switch to Custom Quest mode
+    await page.click('text=Custom Quest');
 
     // Fill in some data
     await page.fill('input[placeholder="Enter quest title..."]', 'This will be cancelled');
 
-    // Cancel the modal
-    await page.click('text=Cancel');
+    // Cancel the modal - use a more specific selector to target the modal's cancel button
+    await page.locator('.fixed button:has-text("Cancel")').click();
 
     // Modal should be closed
     await expect(page.getByText('Create New Quest')).not.toBeVisible();

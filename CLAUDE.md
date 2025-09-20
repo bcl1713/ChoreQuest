@@ -295,12 +295,39 @@ npx prisma migrate dev # Apply migrations
 - **Build verification catches issues early** - don't skip this step
 - **E2E tests are valuable** - they catch real user flow problems
 
+#### From Dashboard Refresh Bug Fix:
+- **Race conditions are subtle** - auth/character context timing during page refresh
+- **Context state management needs careful sequencing** - don't set completion flags prematurely
+- **E2E tests catch real user issues** - unit tests wouldn't have found this refresh bug
+- **Debugging with targeted logging** - add console.log strategically, then remove
+- **Test isolation is critical** - each test should create its own fresh state
+
+#### From Quest Modal Test Debugging Session:
+- **Modal state matters for form interactions** - always ensure correct tab/mode is active before filling forms
+- **Generic text selectors are fragile** - `'text=Cancel'` failed when multiple elements contained "Cancel"
+- **CSS selector specificity prevents conflicts** - `.fixed button:has-text("Cancel")` targets the modal specifically
+- **Test suite timeout management** - run individual test suites to identify failures faster than waiting for full suite
+- **Incremental test fixing is more efficient** - fix one specific test, verify it passes, then run full suite
+- **Modal component architecture affects testing** - understand component structure (tabs, forms, buttons) before writing tests
+
+#### Playwright Testing Best Practices:
+- **Always run tests headless for CI/automation**: `npx playwright test --reporter=line`
+- **Use `--reporter=line` for clean output** - avoids spawning report servers that hang processes
+- **Tests should complete and terminate properly** - no hanging servers blocking workflow
+- **Use `--headed` only for debugging specific issues** - not for regular test runs
+- **Create focused tests for specific bugs** - isolate the exact scenario being fixed
+
 #### Never Do This Again:
 - ❌ Skip test writing because "tests are broken"
 - ❌ Accept linting warnings "temporarily"
 - ❌ Work around test infrastructure issues
 - ❌ Make changes without comprehensive testing
 - ❌ Create PRs with failing tests
+- ❌ Run Playwright tests without proper completion (hanging report servers)
+- ❌ Assume context loading states work correctly during page refresh
+- ❌ Use generic text selectors like `'text=Cancel'` when multiple elements contain that text
+- ❌ Forget to switch modal tabs/modes before filling form fields
+- ❌ Ignore test selector specificity - always target the exact element intended
 
 #### Always Do This:
 - ✅ Fix broken test infrastructure immediately
@@ -308,6 +335,12 @@ npx prisma migrate dev # Apply migrations
 - ✅ Maintain zero warnings/errors standard
 - ✅ Test all user scenarios end-to-end
 - ✅ Commit frequently with clear messages
+- ✅ Run Playwright tests with `--reporter=line` for proper process termination
+- ✅ Test page refresh scenarios explicitly - they often reveal race conditions
+- ✅ Verify context state management during initialization sequences
+- ✅ Use specific selectors in E2E tests - avoid generic text selectors that match multiple elements
+- ✅ Always switch to correct modal tabs/modes before interacting with form elements
+- ✅ Target modal elements with specific CSS selectors (e.g., `.fixed button:has-text("Cancel")`) to avoid conflicts
 
 ### 🎯 Success Criteria
 
