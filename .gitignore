@@ -12,7 +12,8 @@
 
 # testing
 /coverage
-/playwright-report
+/playwright-report/*
+/test-results/*
 # test screenshots and debug files
 *.png
 test-*.png
