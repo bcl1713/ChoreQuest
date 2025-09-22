@@ -38,15 +38,6 @@ test.describe("Quest Template Creation with Due Date", () => {
     await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
     await expect(page.getByText("Welcome back, Lady Sarah!")).toBeVisible();
 
-    // Complete character creation
-    console.log("✅ [Action] Completing character creation for Guild Master");
-    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
-    await page.fill("input#characterName", "Sir Template");
-    await page.click('[data-testid="class-mage"]');
-    await page.click('button:text("Begin Your Quest")');
-    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
-    await expect(page.getByText("Welcome back, Sir Template!")).toBeVisible();
-
     // Wait for dashboard to fully load
     await page.waitForTimeout(2000);
 
