@@ -29,10 +29,10 @@ test.describe("Quest Template Creation with Due Date", () => {
     // Use existing demo family with templates
     await page.goto("/");
     await page.screenshot({ path: "test-quest-template-due-date-setup.png" });
-    await page.getByText("🔐 Login").click();
+    await page.getByText("Already have an account? Login here").click();
     await expect(page).toHaveURL(/.*\/auth\/login/);
 
-    await page.fill('input[name="email"]', "parentt@demo.com");
+    await page.fill('input[name="email"]', "parent@demo.com");
     await page.fill('input[name="password"]', "password123");
     await page.click('button[type="submit"]');
     await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
