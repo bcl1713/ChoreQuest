@@ -213,14 +213,47 @@ When implementing features, always consider:
 
 Every change follows this exact sequence. No shortcuts, no "simplified testing", no workarounds.
 
+### 🛑 **STOP: BRANCH CHECK REQUIRED BEFORE ANY CODE CHANGES** 🛑
+
+**⚠️ MANDATORY PRE-WORK VERIFICATION ⚠️**
+
+Before touching ANY code, run these commands and follow the checklist:
+
+```bash
+# 1. Check current branch status
+git branch
+
+# 2. Verify you are NOT on main
+# If on main, IMMEDIATELY create feature branch
+```
+
+**MANDATORY CHECKLIST - NO EXCEPTIONS:**
+- [ ] ✅ Verified current branch with `git branch`
+- [ ] ✅ If on main: Created feature branch with `git checkout -b feature/descriptive-name`
+- [ ] ✅ Branch name follows format: `feature/descriptive-kebab-case-name`
+- [ ] ✅ Ready to start TDD process
+
+**🚨 ABSOLUTE RULE: ZERO CODE CHANGES ON MAIN BRANCH 🚨**
+- If you are on main and about to make changes, STOP immediately
+- Create a feature branch first, no matter how small the change
+- This applies to: bug fixes, features, refactoring, documentation, EVERYTHING
+
 ### ✅ MANDATORY TDD Process (STRICT ORDER)
 
 #### 1. **Identify & Branch** 🎯
 ```bash
-# Clearly identify what we're working on
-# Create feature branch immediately
+# MANDATORY: Always verify branch status first
+git branch
+
+# If on main, create feature branch immediately
 git checkout -b feature/feature-name
 ```
+
+**Required branch naming conventions:**
+- `feature/quest-system-implementation`
+- `feature/character-stats-display`
+- `bugfix/dashboard-refresh-issue`
+- `refactor/component-structure-cleanup`
 
 #### 2. **Write Tests FIRST** 🧪
 - Write failing tests for the functionality you want to implement
@@ -318,6 +351,10 @@ npx prisma migrate dev # Apply migrations
 - **Create focused tests for specific bugs** - isolate the exact scenario being fixed
 
 #### Never Do This Again:
+- ❌ **MAKE ANY CHANGES WHILE ON MAIN BRANCH** - THIS IS THE #1 VIOLATION
+- ❌ Skip the `git branch` check before starting work
+- ❌ Treat small changes as "too minor" for branching
+- ❌ Edit files directly on main "just this once"
 - ❌ Skip test writing because "tests are broken"
 - ❌ Accept linting warnings "temporarily"
 - ❌ Work around test infrastructure issues
@@ -330,6 +367,10 @@ npx prisma migrate dev # Apply migrations
 - ❌ Ignore test selector specificity - always target the exact element intended
 
 #### Always Do This:
+- ✅ **RUN `git branch` BEFORE ANY CODE CHANGES** - MANDATORY FIRST STEP
+- ✅ **CREATE FEATURE BRANCH IF ON MAIN** - NO EXCEPTIONS
+- ✅ Follow the mandatory pre-work checklist every single time
+- ✅ Use descriptive branch names with proper prefixes (feature/, bugfix/, refactor/)
 - ✅ Fix broken test infrastructure immediately
 - ✅ Write tests before implementation
 - ✅ Maintain zero warnings/errors standard
