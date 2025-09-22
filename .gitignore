@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/playwright-report
+# test screenshots and debug files
+*.png
+test-*.png
+debug-*.png
+
 
 # next.js
 /.next/
@@ -46,7 +52,3 @@ next-env.d.ts
 prisma/dev.db
 prisma/dev.db-journal
 
-# test screenshots and debug files
-*.png
-test-*.png
-debug-*.png
