@@ -9,14 +9,19 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset",
+    "db:reset": "prisma migrate reset --force",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "docker:dev": "docker compose up -d postgres redis || echo 'Docker not available - using local development setup'",
     "docker:down": "docker compose down || true",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:seed": "jest tests/api/database-seed.test.ts",
+    "test:e2e": "npx playwright test --reporter=line"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
