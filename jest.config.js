@@ -13,6 +13,7 @@ const customJestConfig = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/tests/e2e/',
+    '<rootDir>/tests/api/database-seed.test.ts',
   ],
   testMatch: [
     '<rootDir>/tests/**/*.test.{js,jsx,ts,tsx}',

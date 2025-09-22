@@ -23,7 +23,7 @@ async function main() {
 
   // Create achievements (global)
   console.log('🏆 Creating achievements...');
-  const achievements = await Promise.all([
+  await Promise.all([
     prisma.achievement.create({
       data: {
         name: "First Steps",
