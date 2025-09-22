@@ -12,11 +12,13 @@ test.describe('Quest System', () => {
   });
 
   test('Guild Master can create custom quests', async ({ page }) => {
+    console.log('✅ [Setup] Starting Guild Master custom quest creation test');
     const testEmail = `guild-quest-${Date.now()}@example.com`;
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
     await page.goto('http://localhost:3000');
+    await page.screenshot({ path: 'test-quest-system-custom-creation-setup.png' });
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -27,6 +29,7 @@ test.describe('Quest System', () => {
     await page.click('button[type="submit"]');
 
     // Complete character creation
+    console.log('✅ [Action] Completing character creation for quest master');
     await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
     await page.fill('input#characterName', 'Sir QuestMaster');
     await page.click('[data-testid="class-knight"]');
@@ -42,15 +45,19 @@ test.describe('Quest System', () => {
     await expect(page.getByText('⚡ Create Quest')).toBeVisible();
 
     // Click Create Quest button (the one in the header, not the form submit button)
+    console.log('✅ [Action] Opening quest creation modal');
     await page.locator('header button:has-text("⚡ Create Quest")').click();
 
     // Verify modal opened
+    console.log('✅ [Verification] Verifying modal opened successfully');
     await expect(page.getByText('Create New Quest')).toBeVisible();
 
     // Switch to Custom Quest mode
+    console.log('✅ [Action] Switching to Custom Quest tab');
     await page.click('text=Custom Quest');
 
     // Fill in quest details
+    console.log('✅ [Action] Filling quest creation form');
     await page.fill('input[placeholder="Enter quest title..."]', 'Test Custom Quest');
     await page.fill('textarea[placeholder="Describe the quest..."]', 'This is a test quest for automation');
 
@@ -62,22 +69,29 @@ test.describe('Quest System', () => {
     await page.fill('input[type="number"]:near(:text("Gold Reward"))', '10');
 
     // Create the quest (click the submit button inside the modal)
+    console.log('✅ [Action] Submitting quest creation form');
     await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
 
     // Verify quest was created and modal closed
+    console.log('✅ [Verification] Verifying quest creation success');
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
 
     // Verify quest appears in the dashboard
     await expect(page.getByText('Test Custom Quest')).toBeVisible();
     await expect(page.getByText('This is a test quest for automation')).toBeVisible();
+
+    await page.screenshot({ path: 'test-quest-system-custom-creation-verification.png' });
+    console.log('✅ [Verification] Custom quest creation test completed successfully');
   });
 
   test('Quest dashboard displays correctly for Guild Master', async ({ page }) => {
+    console.log('✅ [Setup] Starting quest dashboard display test');
     const testEmail = `dashboard-test-${Date.now()}@example.com`;
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
     await page.goto('http://localhost:3000');
+    await page.screenshot({ path: 'test-quest-system-dashboard-display-setup.png' });
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -95,6 +109,7 @@ test.describe('Quest System', () => {
     await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
 
     // Verify quest dashboard elements are present
+    console.log('✅ [Verification] Validating quest dashboard elements');
     await expect(page.getByText('Quest Dashboard')).toBeVisible();
     await expect(page.getByText('🗡️ My Quests')).toBeVisible();
 
@@ -103,14 +118,19 @@ test.describe('Quest System', () => {
 
     // Verify Create Quest button is visible for Guild Master
     await expect(page.getByText('⚡ Create Quest')).toBeVisible();
+
+    await page.screenshot({ path: 'test-quest-system-dashboard-display-verification.png' });
+    console.log('✅ [Verification] Quest dashboard display test completed successfully');
   });
 
   test('Quest creation modal validation works', async ({ page }) => {
+    console.log('✅ [Setup] Starting quest creation modal validation test');
     const testEmail = `validation-test-${Date.now()}@example.com`;
     const testPassword = 'testpass123';
 
     // Create a new family and user (Guild Master)
     await page.goto('http://localhost:3000');
+    await page.screenshot({ path: 'test-quest-system-validation-setup.png' });
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 

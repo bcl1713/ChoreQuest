@@ -12,11 +12,13 @@ test.describe('Quest System - Comprehensive E2E', () => {
   });
 
   test('Complete quest system integration test', async ({ page }) => {
+    console.log('✅ [Setup] Starting complete quest system integration test');
     const testEmail = `final-test-${Date.now()}@example.com`;
     const testPassword = 'testpass123';
 
     // ✅ PART 1: User Registration and Character Creation
     await page.goto('http://localhost:3000');
+    await page.screenshot({ path: 'test-quest-system-final-setup.png' });
     await page.getByText('🏰 Create Family Guild').click();
     await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
@@ -96,14 +98,14 @@ test.describe('Quest System - Comprehensive E2E', () => {
 
     // ✅ PART 5: Overall System Health
     // Take final screenshot for documentation
-    await page.screenshot({ path: 'quest-system-final-state.png', fullPage: true });
+    await page.screenshot({ path: 'test-quest-system-final-verification.png', fullPage: true });
 
     // Check that no critical JavaScript errors occurred
     // (If there were critical errors, the page wouldn't load properly)
     await expect(page.getByText('ChoreQuest')).toBeVisible(); // App header should be visible
     await expect(page.getByText('Welcome back, Sir FinalTest!')).toBeVisible(); // Welcome message
 
-    console.log('✅ Overall system health: PASSED');
-    console.log('🎉 QUEST SYSTEM INTEGRATION TEST COMPLETED SUCCESSFULLY');
+    console.log('✅ [Verification] Overall system health: PASSED');
+    console.log('✅ [Verification] Quest system integration test completed successfully');
   });
 });

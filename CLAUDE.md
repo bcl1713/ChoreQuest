@@ -354,3 +354,70 @@ Every feature completion must achieve:
 - ✅ Feature branch cleaned up
 
 **Remember: The goal is quality software through disciplined TDD practice.**
+
+## E2E Test Output Standards
+
+**🔧 Standardized Test Output Specification**
+
+All E2E tests must follow consistent output patterns for improved debugging and maintenance:
+
+### 📋 Required Output Format
+
+**Test Phase Logging:**
+- `✅ [Setup] Description` - Test initialization and user creation
+- `✅ [Action] Description` - User interactions and form submissions
+- `✅ [Verification] Description` - Assertion checks and validation
+- `❌ [Error] Description` - When operations fail
+- `🔍 [Debug] Description` - Debugging information when needed
+
+**Screenshot Standards:**
+- Naming: `test-{testName}-{phase}.png`
+- Phases: `setup`, `action`, `verification`, `error`
+- Always use descriptive test names in kebab-case
+- Example: `test-character-creation-setup.png`
+
+**Console Output Rules:**
+- Always log key test milestones for debugging traceability
+- Use structured format: `console.log('✅ [Phase] Specific action completed')`
+- Log both success and failure states clearly
+- Include relevant data when useful: `console.log('✅ [Verification] Modal state:', modalVisible)`
+
+### 🚫 Prohibited Patterns
+
+- ❌ Inconsistent emoji usage (mixing different status indicators)
+- ❌ Silent test execution (tests must log key phases)
+- ❌ Generic screenshot names (`screenshot1.png`, `debug.png`)
+- ❌ Verbose unnecessary logging (avoid console spam)
+- ❌ Mixed console.log formats within the same test
+
+### ✅ Required Elements
+
+Every E2E test must include:
+1. **Phase logging** for Setup, Action, Verification
+2. **Error handling** with `.catch()` for all async operations
+3. **Descriptive screenshots** at key phases
+4. **Consistent assertion messaging** using expect() with descriptive text
+5. **Structured debug output** when tests need to inspect state
+
+### 📝 Example Implementation
+
+```typescript
+test('standardized test example', async ({ page }) => {
+  console.log('✅ [Setup] Starting user registration flow');
+
+  // Setup phase with screenshot
+  await page.goto('/');
+  await page.screenshot({ path: 'test-user-registration-setup.png' });
+
+  console.log('✅ [Action] Filling registration form');
+  await page.fill('input[name="email"]', testEmail);
+
+  console.log('✅ [Verification] Checking dashboard redirect');
+  await expect(page).toHaveURL(/.*\/dashboard/);
+  await page.screenshot({ path: 'test-user-registration-verification.png' });
+
+  console.log('✅ [Verification] Test completed successfully');
+});
+```
+
+This specification ensures all E2E tests provide consistent, readable output for effective debugging and maintenance.
