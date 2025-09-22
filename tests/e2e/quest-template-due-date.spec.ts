@@ -57,7 +57,7 @@ test.describe("Quest Template Creation with Due Date", () => {
     // Select a quest template (should be available templates)
     console.log("✅ [Action] Selecting quest template");
     const templateSelector = page
-      .locator('select:has-text("Select a quest template")')
+      .locator('select:has-text("Choose a quest template...")')
       .first();
 
     // Wait for templates to load and check if any exist
