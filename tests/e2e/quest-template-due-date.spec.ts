@@ -26,17 +26,17 @@ test.describe("Quest Template Creation with Due Date", () => {
 
     console.log("🔍 [Debug] Due date/time for test:", dueDateTimeString);
 
-    // Create a new family and user (Guild Master)
+    // Use existing demo family with templates
     await page.goto("/");
     await page.screenshot({ path: "test-quest-template-due-date-setup.png" });
-    await page.getByText("🏰 Create Family Guild").click();
-    await expect(page).toHaveURL(/.*\/auth\/create-family/);
+    await page.getByText("🔐 Login").click();
+    await expect(page).toHaveURL(/.*\/auth\/login/);
 
-    await page.fill('input[name="name"]', "Template Due Date Family");
-    await page.fill('input[name="email"]', testEmail);
-    await page.fill('input[name="password"]', testPassword);
-    await page.fill('input[name="userName"]', "Template Master");
+    await page.fill('input[name="email"]', "parentt@demo.com");
+    await page.fill('input[name="password"]', "password123");
     await page.click('button[type="submit"]');
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+    await expect(page.getByText("Welcome back, Lady Sarah!")).toBeVisible();
 
     // Complete character creation
     console.log("✅ [Action] Completing character creation for Guild Master");
