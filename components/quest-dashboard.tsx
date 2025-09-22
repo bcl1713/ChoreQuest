@@ -82,6 +82,30 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     }
   };
 
+  cont formatDueDate = (dueDate: string | null) => {
+    if (!dueDate) return null;
+
+    const date = new Date(dueDate);
+    const now = new Date();
+    const diffTime = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Format the date
+    const month = date.getMonth + 1;
+    const day = getDate();
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (diffDays < 0) {
+      return `🚨 Overdue (${month}/${day})`;
+    } else if (diffDays === 0) {
+      return `⏰ Due Today ${time}`;
+    } else if (diffDays === 1) {
+      return `📅 Due Tomorrow ${time}`;
+    } else {
+      return `📅 Due ${month}/${day} ${time}`;
+    }
+  };
+
   const canUpdateStatus = (quest: QuestInstance, newStatus: string) => {
     if (!user) return false;
 
