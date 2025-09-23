@@ -58,7 +58,11 @@ export class QuestService {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(endpoint, {
+    // Use absolute URL for testing environment
+    const baseUrl = typeof window !== 'undefined' ? '' : 'http://localhost:3000';
+    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+
+    const response = await fetch(url, {
       ...options,
       headers,
     });
@@ -108,6 +112,75 @@ export class QuestService {
       body: JSON.stringify(data),
     });
   }
+
+  // Quest Rewards & Approval
+  async approveQuest(questId: string, approverId: string): Promise<QuestApprovalResponse> {
+    return this.request(`/api/quest-instances/${questId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ approverId }),
+    });
+  }
+
+  async getCharacterStats(characterId: string): Promise<CharacterStatsResponse> {
+    return this.request(`/api/characters/${characterId}/stats`);
+  }
+
+  async getTransactionHistory(characterId: string): Promise<TransactionResponse[]> {
+    return this.request(`/api/characters/${characterId}/transactions`);
+  }
+}
+
+// Types for quest rewards API
+export interface QuestApprovalResponse {
+  success: boolean;
+  message: string;
+  rewards?: {
+    gold: number;
+    xp: number;
+    gems: number;
+    honorPoints: number;
+  };
+  characterUpdates?: {
+    newLevel?: number;
+    leveledUp?: boolean;
+  };
+  transaction?: {
+    id: string;
+    type: 'QUEST_REWARD';
+    description: string;
+    createdAt: string;
+  };
+}
+
+export interface CharacterStatsResponse {
+  character: {
+    id: string;
+    name: string;
+    class: string;
+    level: number;
+    xp: number;
+    gold: number;
+    gems: number;
+    honorPoints: number;
+  };
+}
+
+export interface TransactionResponse {
+  id: string;
+  type: string;
+  description: string;
+  questId?: string;
+  goldChange?: number;
+  xpChange?: number;
+  gemsChange?: number;
+  honorPointsChange?: number;
+  metadata?: {
+    levelUp?: {
+      previousLevel: number;
+      newLevel: number;
+    };
+  };
+  createdAt: string;
 }
 
 export const questService = new QuestService();

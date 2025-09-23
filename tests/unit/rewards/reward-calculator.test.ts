@@ -1,7 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
 import { RewardCalculator } from "@/lib/reward-calculator";
-import { QuestDifficulty, CharacterClass } from "@/lib/generated/prisma";
-import { Character } from "@/types/index";
 import { QuestRewards } from "@/types/QuestRewards";
 
 describe("RewardCalculator", () => {
