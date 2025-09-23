@@ -180,9 +180,9 @@ describe("RewardCalculator", () => {
 
   describe("calculateLevelUp", () => {
     it("should not level up if XP requirement not met", () => {
-      const result = RewardCalculator.calculateLevelUp(800, 150, 1);
+      const result = RewardCalculator.calculateLevelUp(0, 10, 1);
 
-      // 950 total XP should not be enough for level 2 (assuming 1000 XP required)
+      // 10 total XP should not be enough for level 2 (assuming 50 XP required)
       expect(result).toBeNull();
     });
 
@@ -265,4 +265,3 @@ describe("RewardCalculator", () => {
     });
   });
 });
-

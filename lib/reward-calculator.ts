@@ -21,8 +21,18 @@ export class RewardCalculator {
     gainedXP: number,
     currentLevel: number,
   ): { newLevel: number; previousLevel: number } | null {
-    // This will be implemented later - for now return null to make tests fail
-    return null;
+    let newLevel = currentLevel;
+    while (this.getXPRequiredForLevel(newLevel + 1) <= gainedXP + currentXP) {
+      newLevel += 1;
+    }
+    if (newLevel == currentLevel) {
+      return null;
+    } else {
+      return {
+        newLevel: newLevel,
+        previousLevel: currentLevel,
+      };
+    }
   }
 
   static getDifficultyMultiplier(difficulty: QuestDifficulty): number {
