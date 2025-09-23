@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient, QuestStatus } from '@/lib/generated/prisma';
 import { getTokenData } from '@/lib/auth';
+import { RewardCalculator } from '@/lib/reward-calculator';
 
 const prisma = new PrismaClient();
 
@@ -40,7 +41,8 @@ export async function PATCH(
           include: {
             character: true
           }
-        }
+        },
+        template: true
       }
     });
 
@@ -86,7 +88,7 @@ export async function PATCH(
 
     let updatedInstance;
 
-    // If approving quest, award rewards
+    // If approving quest, calculate and award rewards
     if (status === 'APPROVED' && currentStatus === 'COMPLETED') {
       updatedInstance = await prisma.$transaction(async (tx) => {
         // Update quest status
@@ -95,13 +97,60 @@ export async function PATCH(
           data: updateData
         });
 
-        // Award rewards to character
+        // Award rewards to character with proper calculations
         if (questInstance.assignedTo?.character) {
+          const character = questInstance.assignedTo.character;
+
+          // Calculate rewards with difficulty and class bonuses
+          const baseRewards = {
+            goldReward: questInstance.goldReward,
+            xpReward: questInstance.xpReward,
+            gemsReward: 0, // Not implemented in current schema
+            honorPointsReward: 0 // Not implemented in current schema
+          };
+
+          const calculatedRewards = RewardCalculator.calculateQuestRewards(
+            baseRewards,
+            questInstance.difficulty,
+            character.class,
+            character.level
+          );
+
+          // Check for level up
+          const levelUpResult = RewardCalculator.calculateLevelUp(
+            character.xp,
+            calculatedRewards.xp,
+            character.level
+          );
+
+          const newLevel = levelUpResult?.newLevel || character.level;
+
+          // Update character stats
           await tx.character.update({
-            where: { id: questInstance.assignedTo.character.id },
+            where: { id: character.id },
             data: {
-              xp: { increment: questInstance.xpReward },
-              gold: { increment: questInstance.goldReward }
+              xp: { increment: calculatedRewards.xp },
+              gold: { increment: calculatedRewards.gold },
+              // Skip gems and honor points for now - focus on core XP/Gold system
+              level: newLevel
+            }
+          });
+
+          // Create transaction record for quest rewards (include level up info if applicable)
+          const description = levelUpResult
+            ? `Quest completed: ${questInstance.title} (Level up: ${levelUpResult.previousLevel} → ${levelUpResult.newLevel})`
+            : `Quest completed: ${questInstance.title}`;
+
+          await tx.transaction.create({
+            data: {
+              userId: questInstance.assignedTo.id,
+              type: 'QUEST_REWARD',
+              description,
+              relatedId: questInstance.id,
+              goldChange: calculatedRewards.gold,
+              xpChange: calculatedRewards.xp,
+              gemsChange: 0, // Not implemented yet
+              honorChange: 0 // Not implemented yet
             }
           });
         }
