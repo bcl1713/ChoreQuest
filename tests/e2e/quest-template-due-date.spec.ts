@@ -286,6 +286,7 @@ test.describe("Quest Template Creation with Due Date", () => {
       .locator("text=Create New Quest")
       .isVisible()
       .catch(() => false);
+    expect(modalStillVisible).toBe(true);
     console.log(
       "✅ [Verification] Modal still visible after past date submission (validation working):",
       modalStillVisible,
@@ -378,34 +379,19 @@ test.describe("Quest Template Creation with Due Date", () => {
     });
 
     // Look for various due date display formats
-    const dueDateDisplayFormats = [
-      `${targetDate.getMonth() + 1}/${targetDate.getDate()}`, // M/D format
-      `${targetDate.getMonth() + 1}/${targetDate.getDate()}/${targetDate.getFullYear()}`, // M/D/YYYY
-      targetDate.toLocaleDateString(), // Locale specific
-      "Due:", // Due date label
-      "4:30 PM", // Time portion
-      "16:30", // 24-hour time
-    ];
 
-    console.log("✅ [Verification] Checking for due date display formats");
-    let foundDisplayFormat = false;
-    for (const format of dueDateDisplayFormats) {
-      const hasFormat = await page
-        .locator(`text*=${format}`)
-        .isVisible()
-        .catch(() => false);
-      if (hasFormat) {
-        console.log("✅ [Verification] Found due date display format:", format);
-        foundDisplayFormat = true;
-      }
+    const foundDisplayFormat = await page
+      .locator(".fantasy-card")
+      .filter({ hasText: "Due" })
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (foundDisplayFormat) {
+      console.log("✅ [Verification] Found due date displayed.");
     }
-
-    console.log("✅ [Verification] Quest due date display test completed");
-    console.log("🔍 [Debug] Due date display found:", foundDisplayFormat);
 
     // This test verifies that due date appears somewhere in the UI
     // The exact format may vary, so we check multiple possibilities
     expect(foundDisplayFormat).toBe(true);
   });
 });
-
