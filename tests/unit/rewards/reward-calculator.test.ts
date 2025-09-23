@@ -21,10 +21,9 @@ describe("RewardCalculator", () => {
         1,
       );
 
-      // EASY quests should have base multiplier (1x)
-      // KNIGHT should have no special bonuses for basic test
-      expect(result.gold).toBe(50);
-      expect(result.xp).toBe(100);
+      // EASY quests should have base multiplier (1x) with KNIGHT bonus (1.05x)
+      expect(result.gold).toBe(52.5);
+      expect(result.xp).toBe(105);
       expect(result.gems).toBe(5);
       expect(result.honorPoints).toBe(10);
     });
@@ -42,9 +41,9 @@ describe("RewardCalculator", () => {
         1,
       );
 
-      // MEDIUM should be 1.5x multiplier
-      expect(result.xp).toBe(150);
-      expect(result.gold).toBe(75);
+      // MEDIUM should be 1.5x multiplier with 1.05x KNIGHT bonus
+      expect(result.xp).toBe(157.5);
+      expect(result.gold).toBe(78.75);
     });
 
     it("should apply difficulty multiplier for HARD quests", () => {
@@ -60,9 +59,9 @@ describe("RewardCalculator", () => {
         1,
       );
 
-      // HARD should be 2x multiplier
-      expect(result.xp).toBe(200);
-      expect(result.gold).toBe(100);
+      // HARD should be 2x multiplier with 1.05x KNIGHT bonus
+      expect(result.xp).toBe(210);
+      expect(result.gold).toBe(105);
     });
 
     it("should apply MAGE class XP bonus", () => {
