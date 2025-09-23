@@ -79,12 +79,26 @@ export default function QuestCreateModal({
     setError(null);
   };
 
+  const validateDueDate = (dueDate: string): boolean => {
+    if (!dueDate) return true; // Optional field
+
+    const selectedDate = new Date(dueDate);
+    const now = new Date();
+
+    return selectedDate > now;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       setLoading(true);
       setError(null);
+
+      if (dueDate && !validateDueDate(dueDate)) {
+        setError("Due date must be in the future");
+        return;
+      }
 
       if (mode === "template") {
         if (!selectedTemplateId) {
@@ -400,4 +414,3 @@ export default function QuestCreateModal({
     </AnimatePresence>
   );
 }
-
