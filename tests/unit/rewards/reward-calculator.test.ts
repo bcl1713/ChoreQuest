@@ -1,37 +1,8 @@
 import { describe, it, expect } from "@jest/globals";
 import { RewardCalculator } from "@/lib/reward-calculator";
-
-// Import types and services that will be implemented
-type QuestDifficulty = "EASY" | "MEDIUM" | "HARD";
-type CharacterClass = "KNIGHT" | "MAGE" | "RANGER" | "ROGUE" | "HEALER";
-
-interface QuestRewards {
-  goldReward?: number;
-  xpReward?: number;
-  gemsReward?: number;
-  honorPointsReward?: number;
-}
-
-interface Character {
-  id: string;
-  class: CharacterClass;
-  level: number;
-  xp: number;
-  gold: number;
-  gems: number;
-  honorPoints: number;
-}
-
-interface CalculatedRewards {
-  gold: number;
-  xp: number;
-  gems: number;
-  honorPoints: number;
-  levelUp?: {
-    newLevel: number;
-    previousLevel: number;
-  };
-}
+import { QuestDifficulty, CharacterClass } from "@/lib/generated/prisma";
+import { Character } from "@/types/index";
+import { QuestRewards } from "@/types/QuestRewards";
 
 describe("RewardCalculator", () => {
   describe("calculateQuestRewards", () => {
@@ -187,7 +158,7 @@ describe("RewardCalculator", () => {
     });
 
     it("should level up when XP requirement is met", () => {
-      const result = RewardCalculator.calculateLevelUp(900, 200, 1);
+      const result = RewardCalculator.calculateLevelUp(40, 50, 1);
 
       // 1100 total XP should be enough for level 2
       expect(result).not.toBeNull();
