@@ -42,12 +42,24 @@ export class RewardCalculator {
     xpBonus: number;
     goldBonus: number;
   } {
-    // This will be implemented later - for now return no bonuses to make tests fail
-    return { xpBonus: 1, goldBonus: 1 };
+    switch (characterClass) {
+      case "HEALER":
+        return { xpBonus: 1.1, goldBonus: 1.0 };
+      case "RANGER":
+        return { xpBonus: 1.0, goldBonus: 1.0 };
+      case "KNIGHT":
+        return { xpBonus: 1.05, goldBonus: 1.05 };
+      case "MAGE":
+        return { xpBonus: 1.2, goldBonus: 1.0 };
+      case "ROGUE":
+        return { xpBonus: 1.0, goldBonus: 1.15 };
+      default:
+        return { xpBonus: 1, goldBonus: 1 };
+    }
   }
 
   static getXPRequiredForLevel(level: number): number {
-    // This will be implemented later - for now return high number to make level up tests fail
-    return 999999;
+    // Simple quadratic formula for XP required per level
+    return 50 * (level - 1) ** 2;
   }
 }

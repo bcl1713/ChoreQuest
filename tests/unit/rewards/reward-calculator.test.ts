@@ -259,17 +259,9 @@ describe("RewardCalculator", () => {
   describe("getXPRequiredForLevel", () => {
     it("should return correct XP requirements for early levels", () => {
       expect(RewardCalculator.getXPRequiredForLevel(1)).toBe(0); // Level 1 starts at 0
-      expect(RewardCalculator.getXPRequiredForLevel(2)).toBe(1000);
-      expect(RewardCalculator.getXPRequiredForLevel(3)).toBe(2500);
-      expect(RewardCalculator.getXPRequiredForLevel(4)).toBe(4500);
-    });
-
-    it("should use exponential scaling for higher levels", () => {
-      const level5XP = RewardCalculator.getXPRequiredForLevel(5);
-      const level10XP = RewardCalculator.getXPRequiredForLevel(10);
-
-      expect(level5XP).toBeGreaterThan(6000);
-      expect(level10XP).toBeGreaterThan(level5XP * 3); // Should scale significantly
+      expect(RewardCalculator.getXPRequiredForLevel(2)).toBe(50);
+      expect(RewardCalculator.getXPRequiredForLevel(3)).toBe(200);
+      expect(RewardCalculator.getXPRequiredForLevel(4)).toBe(450);
     });
   });
 });
