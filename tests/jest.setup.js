@@ -1,5 +1,23 @@
 import '@testing-library/jest-dom'
 
+// Only setup fetch polyfills for Node.js environment tests
+if (typeof global !== 'undefined' && !global.fetch) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { fetch, Request, Response } = require('undici')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { TextEncoder, TextDecoder } = require('util')
+
+    global.fetch = fetch
+    global.Request = Request
+    global.Response = Response
+    global.TextEncoder = TextEncoder
+    global.TextDecoder = TextDecoder
+  } catch {
+    // Silently ignore if undici is not available
+  }
+}
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
