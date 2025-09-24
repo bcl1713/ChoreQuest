@@ -15,8 +15,8 @@ test.describe("Quest Template Creation with Due Date", () => {
     page,
   }) => {
     console.log("✅ [Setup] Starting quest from template with due date test");
-    const testEmail = `template-due-date-${Date.now()}@example.com`;
-    const testPassword = "testpass123";
+    // const testEmail = `template-due-date-${Date.now()}@example.com`; // Unused for now
+    // const testPassword = "testpass123"; // Unused for now
 
     // Calculate due date/time for tomorrow at 3:00 PM
     const tomorrow = new Date();
