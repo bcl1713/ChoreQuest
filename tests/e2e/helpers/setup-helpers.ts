@@ -112,16 +112,34 @@ export async function loginUser(page: Page, email: string, password: string): Pr
  */
 export async function clearBrowserState(page: Page): Promise<void> {
   await page.context().clearCookies();
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
+
+  // Only clear localStorage/sessionStorage if we have a proper page loaded
+  try {
+    await page.evaluate(() => {
+      if (typeof Storage !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+    });
+  } catch (error) {
+    // Ignore localStorage access errors (happens on initial page load)
+  }
 }
 
 /**
  * Common beforeEach setup for E2E tests
  */
 export async function commonBeforeEach(page: Page): Promise<void> {
-  await clearBrowserState(page);
+  await page.context().clearCookies();
   await page.goto('/');
+
+  // Clear storage after page loads
+  try {
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+  } catch (error) {
+    // Ignore localStorage access errors
+  }
 }
