@@ -10,6 +10,7 @@ async function main() {
   console.log('🧹 Cleaning existing data...');
   await prisma.userAchievement.deleteMany();
   await prisma.sOSRequest.deleteMany();
+  await prisma.rewardRedemption.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.bossBattleParticipant.deleteMany();
   await prisma.bossBattle.deleteMany();
@@ -287,6 +288,59 @@ async function main() {
     }),
   ]);
 
+  // Create sample reward redemptions
+  console.log('🎁 Creating demo reward redemptions...');
+  const screenTimeReward = await prisma.reward.findFirst({
+    where: { name: "Extra Screen Time" },
+  });
+
+  const stayUpReward = await prisma.reward.findFirst({
+    where: { name: "Stay Up 30 Minutes Later" },
+  });
+
+  if (screenTimeReward && stayUpReward) {
+    await Promise.all([
+      // Pending redemption from Alex
+      prisma.rewardRedemption.create({
+        data: {
+          userId: hero.id,
+          rewardId: screenTimeReward.id,
+          status: 'PENDING',
+          cost: screenTimeReward.cost,
+          notes: 'Please! I finished all my homework early today!',
+          requestedAt: new Date(),
+        },
+      }),
+      // Approved redemption from Emma
+      prisma.rewardRedemption.create({
+        data: {
+          userId: youngHero.id,
+          rewardId: stayUpReward.id,
+          status: 'APPROVED',
+          cost: stayUpReward.cost,
+          notes: 'It\'s Friday night, can I please stay up to finish my book?',
+          requestedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+          approvedBy: guildMaster.id,
+          approvedAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        },
+      }),
+      // Fulfilled redemption (completed)
+      prisma.rewardRedemption.create({
+        data: {
+          userId: hero.id,
+          rewardId: screenTimeReward.id,
+          status: 'FULFILLED',
+          cost: screenTimeReward.cost,
+          notes: 'Thanks for letting me play games with my friends!',
+          requestedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+          approvedBy: guildMaster.id,
+          approvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000), // 3 days ago + 1 hour
+          fulfilledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        },
+      }),
+    ]);
+  }
+
   // Create some quest instances
   console.log('⚔️ Creating demo quest instances...');
   const questTemplate = await prisma.questTemplate.findFirst({
@@ -347,6 +401,11 @@ async function main() {
 
   // Create some transactions
   console.log('💰 Creating demo transactions...');
+  const fulfilledRedemption = await prisma.rewardRedemption.findFirst({
+    where: { status: 'FULFILLED' },
+    include: { reward: true },
+  });
+
   await Promise.all([
     prisma.transaction.create({
       data: {
@@ -368,7 +427,17 @@ async function main() {
         relatedId: bossBattle.id,
       },
     }),
-  ]);
+    // Reward redemption transaction
+    fulfilledRedemption && prisma.transaction.create({
+      data: {
+        userId: hero.id,
+        type: 'STORE_PURCHASE',
+        goldChange: -fulfilledRedemption.cost,
+        description: `Redeemed reward: ${fulfilledRedemption.reward.name}`,
+        relatedId: fulfilledRedemption.id,
+      },
+    }),
+  ].filter(Boolean));
 
   console.log('✅ Database seeding completed successfully!');
   console.log(`
@@ -378,10 +447,11 @@ async function main() {
 - 3 Characters with different classes
 - 5 Quest templates (daily and weekly)
 - 5 Reward store items
+- 3 Sample reward redemptions (pending, approved, fulfilled)
 - 1 Completed quest instance
 - 1 Active boss battle with participants
 - 3 Global achievements
-- 2 Transaction records
+- 3 Transaction records (including reward redemption)
 
 🔐 Demo login credentials:
 - Parent: parent@demo.com / password123

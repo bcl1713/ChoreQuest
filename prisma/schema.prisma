@@ -56,6 +56,7 @@ enum TransactionType {
   QUEST_REWARD    // XP/Gold from completing quests
   BOSS_VICTORY    // Gems/Honor from boss battles
   STORE_PURCHASE  // Spending currency in reward store
+  REWARD_REFUND   // Refund from denied reward redemption
   BONUS_AWARD     // Manual bonus from parents
   SOS_HELP        // Honor points from helping family
 }
@@ -105,6 +106,8 @@ model User {
   achievements         UserAchievement[]
   sosRequests          SOSRequest[]         @relation("SOSRequester")
   sosHelps             SOSRequest[]         @relation("SOSHelper")
+  rewardRedemptions    RewardRedemption[]
+  approvedRedemptions  RewardRedemption[]   @relation("RewardApprovals")
 
   @@map("users")
 }
@@ -252,7 +255,31 @@ model Reward {
   // Relations
   family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
 
+  // Relations
+  redemptions RewardRedemption[]
+
   @@map("rewards")
+}
+
+// Reward Redemption System
+model RewardRedemption {
+  id          String   @id @default(cuid())
+  userId      String
+  rewardId    String
+  cost        Int      // Cost at time of redemption
+  status      String   @default("PENDING") // PENDING, APPROVED, FULFILLED, DENIED
+  requestedAt DateTime @default(now())
+  approvedAt  DateTime?
+  approvedBy  String?  // Guild Master who approved
+  fulfilledAt DateTime?
+  notes       String?  // Optional notes from parent/child
+
+  // Relations
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward   Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  approver User?  @relation("RewardApprovals", fields: [approvedBy], references: [id])
+
+  @@map("reward_redemptions")
 }
 
 // Achievement System

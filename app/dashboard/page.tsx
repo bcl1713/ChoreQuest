@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
 import QuestDashboard from '@/components/quest-dashboard';
 import QuestCreateModal from '@/components/quest-create-modal';
+import RewardStore from '@/components/reward-store';
 import { questService } from '@/lib/quest-service';
 import { QuestTemplate } from '@/lib/generated/prisma';
 
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const { user, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<'quests' | 'rewards'>('quests');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -82,10 +84,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleError = (errorMessage: string) => {
+  const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage);
     setTimeout(() => setError(null), 5000);
-  };
+  }, []);
 
   if (isLoading || characterLoading) {
     return (
@@ -195,6 +197,30 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Navigation Tabs */}
+        <div className="flex space-x-1 mb-8 bg-dark-800 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('quests')}
+            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
+              activeTab === 'quests'
+                ? 'bg-gold-600 text-white'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
+            }`}
+          >
+            ⚔️ Quests & Adventures
+          </button>
+          <button
+            onClick={() => setActiveTab('rewards')}
+            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
+              activeTab === 'rewards'
+                ? 'bg-gold-600 text-white'
+                : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
+            }`}
+          >
+            🏪 Reward Store
+          </button>
+        </div>
+
         {/* Error Display */}
         {error && (
           <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6">
@@ -202,13 +228,17 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Quest Dashboard */}
-        <QuestDashboard
-          onError={handleError}
-          onLoadQuestsRef={(loadQuests) => {
-            dashboardLoadQuestsRef.current = loadQuests;
-          }}
-        />
+        {/* Tab Content */}
+        {activeTab === 'quests' ? (
+          <QuestDashboard
+            onError={handleError}
+            onLoadQuestsRef={(loadQuests) => {
+              dashboardLoadQuestsRef.current = loadQuests;
+            }}
+          />
+        ) : (
+          <RewardStore onError={handleError} />
+        )}
 
         {/* Quest Create Modal */}
         <QuestCreateModal
