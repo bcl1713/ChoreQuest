@@ -1,47 +1,77 @@
 # ChoreQuest Code Style & Conventions
 
-## TypeScript Standards
-- **Strict mode enabled**: All TypeScript strict checks active
-- **No `any` types**: Use proper TypeScript interfaces and types
-- **Zod schemas**: Input validation for all API endpoints
-- **Import aliases**: Use `@/*` for absolute imports from project root
+## TypeScript Configuration
+- **Strict Mode**: Enabled with full type safety
+- **Target**: ES2017 with modern features
+- **Module Resolution**: bundler (Next.js optimized)
+- **Path Mapping**: `@/*` maps to project root
+- **JSX**: preserve (handled by Next.js)
 
-## File Organization
-- **API Routes**: `/app/api/[feature]/route.ts` structure
-- **Pages**: App Router structure in `/app` directory
-- **Components**: Reusable components in `/components` directory
-- **Libraries**: Utility functions in `/lib` directory
-- **Types**: TypeScript types in `/types` directory
-- **Tests**: Co-located with components or in `/tests` directory
+## ESLint Configuration
+- **Base Config**: Extends Next.js core-web-vitals and TypeScript rules
+- **Ignored Directories**: node_modules, .next, build, coverage, lib/generated
+- **No Custom Rules**: Uses Next.js defaults for consistency
+
+## Prettier Configuration
+- **Print Width**: 80 characters
+- **Prose Wrap**: always (for markdown files)
+- **End of Line**: auto (cross-platform compatibility)
+- **Other Settings**: Uses Prettier defaults (2-space indentation, single quotes, no semicolons where optional)
 
 ## Naming Conventions
-- **Files**: kebab-case for files and directories (`create-family`, `auth-context`)
-- **Components**: PascalCase for React components (`RootLayout`, `CharacterCreation`)
-- **Variables**: camelCase for variables and functions (`registerSchema`, `hashPassword`)
-- **Constants**: UPPER_SNAKE_CASE for enums and constants (`GUILD_MASTER`, `CHARACTER_CLASS`)
+- **Files**: kebab-case for components (`quest-dashboard.tsx`), camelCase for utilities (`auth-context.tsx`)
+- **Components**: PascalCase (`QuestDashboard`, `LoginForm`)
+- **Functions**: camelCase (`generateToken`, `verifyPassword`)
+- **Variables**: camelCase (`selectedAssignee`, `familyMembers`)
+- **Constants**: SCREAMING_SNAKE_CASE for enums (`GUILD_MASTER`, `BOSS_BATTLE`)
+- **Types/Interfaces**: PascalCase (`AuthResponse`, `QuestDashboardProps`)
+
+## File Organization
+- **Components**: Feature-based organization in `/components`
+- **Pages**: Next.js App Router in `/app` directory
+- **API Routes**: RESTful structure in `/app/api`
+- **Utilities**: Shared code in `/lib` directory
+- **Types**: Custom definitions in `/types` directory
+- **Tests**: Mirror source structure in `/tests` directory
+
+## Code Structure Patterns
+- **Export Style**: Named exports preferred, default exports for pages/components
+- **Function Declaration**: Function expressions for components, function declarations for utilities
+- **Error Handling**: Throw errors with descriptive messages, proper error boundaries
+- **Type Safety**: Strict TypeScript, no `any` types unless absolutely necessary with eslint-disable comment
 
 ## Database Conventions
-- **Prisma Models**: PascalCase (`User`, `QuestInstance`, `BossBattle`)
-- **Table Names**: snake_case with @@map (`users`, `quest_instances`, `boss_battles`)
-- **Field Names**: camelCase in schema, snake_case in database
-- **IDs**: `cuid()` for all primary keys
-- **Relations**: Descriptive names with proper foreign key constraints
+- **Prisma Schema**: Comprehensive comments explaining relationships
+- **Model Names**: PascalCase (`User`, `QuestInstance`)
+- **Field Names**: camelCase (`familyId`, `createdAt`)
+- **Enums**: SCREAMING_SNAKE_CASE values with descriptive comments
 
-## API Design
-- **REST principles**: Standard HTTP methods and status codes
-- **Error responses**: Consistent JSON error format with descriptive messages
-- **Fantasy theming**: Error messages use fantasy language ("A hero with this email already exists in the realm!")
-- **Authentication**: JWT Bearer tokens in Authorization header
-- **Validation**: Zod schemas for all input validation
+## Component Patterns
+- **Props Interface**: Define explicit props interface for each component
+- **State Management**: Local state with hooks, context for shared state
+- **Event Handlers**: Descriptive names (`handleQuestSubmit`, `onAssigneeSelect`)
+- **Conditional Rendering**: Clear boolean conditions, guard clauses
 
-## React Patterns
-- **Contexts**: React contexts for global state (AuthContext, CharacterContext)
-- **Custom hooks**: Extract reusable logic into custom hooks
-- **Component composition**: Prefer composition over inheritance
-- **Type safety**: Proper TypeScript interfaces for all props
+## API Conventions
+- **RESTful Endpoints**: Standard HTTP methods (GET, POST, PUT, DELETE)
+- **Request/Response**: Typed with Zod schemas for validation
+- **Error Handling**: Consistent error response format
+- **Authentication**: JWT token validation middleware
 
-## Testing Standards
-- **Test-Driven Development**: Write tests before implementation
-- **Coverage**: Maintain 80%+ code coverage
-- **E2E Testing**: Comprehensive bash test scripts for API flows
-- **Unit Tests**: Jest with React Testing Library
+## Import Organization
+- **Third-party Imports**: First (React, Next.js, libraries)
+- **Internal Imports**: Second (components, utilities, types)
+- **Relative Imports**: Last (local files)
+- **Path Mapping**: Use `@/` for absolute imports from project root
+
+## Comment Guidelines
+- **Schema Comments**: Comprehensive database field explanations
+- **Complex Logic**: Brief explanations for non-obvious code
+- **TODO Comments**: Include ticket/issue references when possible
+- **Type Overrides**: Justify any eslint-disable comments
+
+## Testing Conventions
+- **File Naming**: `*.test.ts` or `*.spec.ts`
+- **Test Organization**: Mirror source directory structure
+- **Test Categories**: Unit (`/tests/unit`), Integration (`/tests/api`), E2E (`/tests/e2e`)
+- **Test Names**: Descriptive test case names explaining expected behavior

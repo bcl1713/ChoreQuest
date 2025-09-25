@@ -1,35 +1,55 @@
-# ChoreQuest Tech Stack
+# ChoreQuest Technology Stack
 
-## Frontend
-- **Next.js 15**: App Router with server-side rendering
-- **React 19**: Latest React version with new features
-- **TypeScript**: Full type safety throughout the application
-- **Tailwind CSS 4**: Modern utility-first CSS framework
-- **Framer Motion 12**: Animations and transitions for fantasy theme
+## Frontend Technologies
+- **Next.js 15**: Server-side rendering with App Router and Turbopack
+- **React 19**: Modern React with concurrent features
+- **TypeScript 5**: Full type safety throughout the application
+- **Tailwind CSS 4**: Mobile-first responsive design system with fantasy theme
+- **Framer Motion 12**: Animations and micro-interactions (planned)
 
-## Backend
-- **Next.js API Routes**: RESTful API endpoints
-- **Prisma 6**: ORM with type-safe database operations
-- **SQLite**: Development database (configured for PostgreSQL in production)
-- **JWT Authentication**: Token-based auth with bcryptjs for password hashing
-- **Zod**: Schema validation for API inputs
-- **Redis**: Configured for caching and sessions (not yet implemented)
-- **Socket.io**: Real-time features (configured but not implemented)
+## Backend Technologies
+- **Node.js 18+**: JavaScript runtime environment
+- **Next.js API Routes**: Built-in API endpoints
+- **TypeScript**: Type-safe server-side development
+- **JWT Authentication**: Stateless authentication with bcryptjs password hashing
+- **Zod 4**: Runtime type validation and input sanitization
 
-## Development Tools
-- **TypeScript 5**: Latest TypeScript version
-- **ESLint**: Code linting with Next.js and TypeScript rules
-- **Jest 30**: Unit testing framework with React Testing Library
-- **Playwright**: End-to-end testing
-- **Docker Compose**: Development environment setup
-- **Prisma Studio**: Database GUI
+## Database & ORM
+- **SQLite**: Development database (file-based)
+- **PostgreSQL**: Production database (planned migration path)
+- **Prisma ORM**: Type-safe database operations with migrations
+- **Generated Prisma Client**: Located in `lib/generated/prisma`
 
-## Database Architecture
-- **Prisma Client**: Generated in `lib/generated/prisma` (custom output path)
-- **Migrations**: Prisma-managed schema migrations
-- **Seeding**: Database seeding script support
+## Real-Time & Background Processing (Planned)
+- **Socket.io 4**: WebSocket connections for real-time features
+- **Redis 5**: Session storage, caching, and real-time data
 
-## Fonts & UI
-- **Google Fonts**: Cinzel (fantasy headers), Orbitron (sci-fi elements)
-- **Geist**: Sans and mono fonts for modern UI elements
-- **Progressive Web App**: Configured for mobile installation
+## Testing Framework
+- **Jest 30**: Unit testing with 80%+ coverage requirement
+- **@testing-library/react & jest-dom**: Component testing utilities
+- **Playwright 1.55**: End-to-end browser testing
+- **jsdom**: Test environment for React components
+
+## Development & Quality Tools
+- **ESLint**: Code linting with Next.js configuration
+- **Prettier**: Code formatting (80 char width, auto endOfLine)
+- **TypeScript Compiler**: Strict type checking enabled
+- **Docker Compose**: Containerized development environment
+
+## Infrastructure
+- **Docker**: Application containerization
+- **NGINX**: Reverse proxy and static file serving (planned)
+- **Let's Encrypt**: SSL certificate management (planned)
+
+## Package Management
+- **npm**: Package manager with lockfile
+- **Next.js 15.5.2**: Latest framework version
+- **React 19.1.0**: Latest React version
+
+## Architecture Notes
+- **File-based routing**: Next.js App Router in `/app` directory
+- **API Routes**: RESTful endpoints in `/app/api`
+- **Component Structure**: Organized by feature in `/components`
+- **Utility Libraries**: Shared code in `/lib` directory
+- **Type Definitions**: Custom types in `/types` directory
+- **Database Schema**: Prisma schema with comprehensive relationships

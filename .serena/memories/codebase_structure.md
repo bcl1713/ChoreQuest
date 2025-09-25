@@ -3,84 +3,142 @@
 ## Root Directory Layout
 ```
 ChoreQuest/
-├── app/                 # Next.js App Router (main application)
-├── components/          # Reusable React components
-├── lib/                 # Utility libraries and configurations
-├── prisma/             # Database schema and migrations
-├── public/             # Static assets
-├── tests/              # Test files
-├── types/              # TypeScript type definitions
-├── docs/               # Project documentation
-└── Configuration files (package.json, tsconfig.json, etc.)
+├── app/                    # Next.js App Router (pages and API routes)
+├── components/             # Reusable React components
+├── lib/                   # Utility libraries and shared code  
+├── types/                 # TypeScript type definitions
+├── prisma/                # Database schema and migrations
+├── tests/                 # Test files (unit, integration, e2e)
+├── public/                # Static assets
+├── docs/                  # Project documentation
+├── node_modules/          # Dependencies
+├── .next/                 # Next.js build output
+└── Configuration files
 ```
 
-## App Directory Structure (Next.js 15 App Router)
+## App Directory (Next.js App Router)
 ```
 app/
-├── api/                # API routes
-│   ├── auth/          # Authentication endpoints
-│   │   ├── register/
-│   │   ├── login/
-│   │   └── create-family/
-│   ├── character/     # Character management
-│   │   └── create/
-│   └── profile/       # User profile
-├── auth/              # Authentication pages
-│   ├── login/
-│   ├── register/
-│   └── create-family/
-├── character/         # Character-related pages
-│   └── create/
-├── dashboard/         # Main dashboard
-├── layout.tsx         # Root layout with fonts and styles
-├── page.tsx           # Home page
-└── globals.css        # Global styles
+├── api/                   # API routes
+│   ├── auth/             # Authentication endpoints
+│   ├── characters/       # Character management
+│   ├── quests/          # Quest system endpoints  
+│   └── families/        # Family management
+├── auth/                 # Authentication pages
+├── dashboard/            # Main dashboard page
+├── character/            # Character creation/management
+├── layout.tsx           # Root layout component
+├── page.tsx            # Home page
+├── globals.css         # Global styles
+└── favicon.ico         # App icon
 ```
 
-## Library Structure
+## Components Directory
+```
+components/
+├── auth/                 # Authentication-related components
+├── character/            # Character system components
+├── quest-dashboard.tsx   # Quest management dashboard
+└── quest-create-modal.tsx # Quest creation interface
+```
+
+## Lib Directory (Utilities & Services)
 ```
 lib/
-├── generated/         # Generated Prisma client (custom output)
-├── auth.ts           # Authentication utilities (JWT, password hashing)
-├── auth-context.tsx  # React context for authentication state
-├── character-context.tsx # React context for character state
-├── prisma.ts         # Prisma client configuration
-├── middleware.ts     # Next.js middleware
-└── format-utils.ts   # Utility functions for formatting
+├── generated/           # Generated Prisma client
+├── prisma.ts           # Database client configuration
+├── auth.ts             # Authentication utilities
+├── auth-context.tsx    # Authentication React context
+├── character-context.tsx # Character state management
+├── middleware.ts       # Next.js middleware
+├── quest-service.ts    # Quest business logic
+├── user-service.ts     # User management logic
+├── reward-calculator.ts # Reward calculation system
+└── format-utils.ts     # Utility formatting functions
 ```
 
-## Database Structure
+## Database Structure (Prisma)
 ```
 prisma/
-├── schema.prisma     # Complete database schema
-├── dev.db           # SQLite development database
-└── migrations/      # Prisma migration files (auto-generated)
+├── schema.prisma       # Database schema definition
+├── migrations/         # Database migration files
+├── seed.ts            # Database seeding script
+├── dev.db             # SQLite development database
+└── test.db           # SQLite test database
 ```
 
-## Key Implementation Files
+## Testing Structure
+```
+tests/
+├── unit/              # Unit tests
+│   ├── components/   # Component tests
+│   └── rewards/      # Business logic tests  
+├── api/              # API integration tests
+├── e2e/              # End-to-end tests
+│   └── helpers/      # E2E test utilities
+├── utils/            # Test utilities
+└── jest.setup.js     # Jest configuration
+```
 
-### Authentication System
-- `app/api/auth/register/route.ts` - User registration
-- `app/api/auth/login/route.ts` - User login  
-- `app/api/auth/create-family/route.ts` - Family creation
-- `lib/auth.ts` - JWT and password utilities
-- `lib/auth-context.tsx` - Global auth state
+## Key Database Entities
 
-### Character System  
-- `app/api/character/route.ts` - Character data retrieval
-- `app/api/character/create/route.ts` - Character creation
-- `lib/character-context.tsx` - Global character state
-- `app/character/create/page.tsx` - Character creation UI
+### Core Models
+- **families** - Family groups with invite codes
+- **users** - Family members with roles (Guild Master, Hero, Young Hero)
+- **characters** - RPG characters with classes, level, XP, currencies
+- **quest_templates** - Reusable quest definitions
+- **quest_instances** - Specific quest assignments
+- **boss_battles** - Collaborative family challenges
+- **transactions** - Currency tracking (gold, gems, honor points)
+- **achievements** - Unlockable accomplishments
+- **rewards** - Purchasable rewards with family approval
 
-### Testing
-- `test-character-creation.sh` - E2E API testing script
-- `jest.config.js` - Jest configuration
-- `playwright.config.ts` - E2E testing configuration
+### Relationships
+- families → users (one-to-many)
+- users → characters (one-to-one)
+- quest_templates → quest_instances (one-to-many)
+- boss_battles ← boss_participants (many-to-many)
+- families → all family-scoped data (privacy isolation)
 
-## Configuration Files
-- `package.json` - Dependencies and scripts
-- `tsconfig.json` - TypeScript configuration
-- `eslint.config.mjs` - ESLint rules and settings
-- `next.config.ts` - Next.js configuration
-- `docker-compose.yml` - Docker development environment
-- `tailwind.config.js` - Tailwind CSS configuration (implied)
+## Component Architecture Patterns
+
+### Authentication Flow
+```
+app/auth/ → components/auth/ → lib/auth-context.tsx → lib/auth.ts → app/api/auth/
+```
+
+### Quest Management Flow  
+```
+components/quest-dashboard.tsx → lib/quest-service.ts → app/api/quests/ → prisma/
+```
+
+### Character System Flow
+```
+app/character/ → lib/character-context.tsx → app/api/characters/ → prisma/
+```
+
+## API Route Structure
+- **RESTful Design**: Standard HTTP methods (GET, POST, PUT, DELETE)
+- **Family Scoping**: All endpoints respect family data isolation
+- **Authentication**: JWT middleware on protected routes
+- **Type Safety**: Zod schema validation on requests/responses
+
+## File Naming Conventions
+- **Pages**: `page.tsx` (Next.js App Router)
+- **Layouts**: `layout.tsx` (Next.js App Router) 
+- **Components**: kebab-case (`quest-dashboard.tsx`)
+- **Utilities**: camelCase (`auth-context.tsx`)
+- **Tests**: `*.test.ts` or `*.spec.ts`
+- **API Routes**: RESTful structure (`/api/quests/[id]/route.ts`)
+
+## Import Path Structure
+- **Absolute Imports**: `@/` maps to project root
+- **Relative Imports**: Used for same-directory files
+- **Generated Code**: `lib/generated/prisma` (auto-generated client)
+
+## Development Workflow Directories
+- **Development Database**: `prisma/dev.db`
+- **Test Database**: `prisma/test.db` 
+- **Build Output**: `.next/` (ignored in git)
+- **Test Results**: `test-results/`, `playwright-report/` (ignored in git)
+- **Coverage Reports**: `coverage/` (ignored in git)
