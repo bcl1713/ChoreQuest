@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 import { setupUserWithCharacter, commonBeforeEach } from './helpers/setup-helpers';
 
 test.describe("Quest Completion Rewards", () => {
@@ -104,7 +104,7 @@ test.describe("Quest Completion Rewards", () => {
   });
 });
 
-async function createAndCompleteQuest(page: any, title: string, difficulty: string, xp: number) {
+async function createAndCompleteQuest(page: Page, title: string, difficulty: string, xp: number) {
   await page.click('button:text("⚡ Create Quest")');
   await page.locator('.fixed button:has-text("Custom Quest")').click();
   await page.waitForTimeout(500);

@@ -121,7 +121,7 @@ export async function clearBrowserState(page: Page): Promise<void> {
         sessionStorage.clear();
       }
     });
-  } catch (error) {
+  } catch {
     // Ignore localStorage access errors (happens on initial page load)
   }
 }
@@ -139,7 +139,7 @@ export async function commonBeforeEach(page: Page): Promise<void> {
       localStorage.clear();
       sessionStorage.clear();
     });
-  } catch (error) {
+  } catch {
     // Ignore localStorage access errors
   }
 }
