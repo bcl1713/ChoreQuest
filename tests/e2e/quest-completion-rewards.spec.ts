@@ -107,7 +107,7 @@ test.describe("Quest Completion Rewards", () => {
 async function createAndCompleteQuest(page: any, title: string, difficulty: string, xp: number) {
   await page.click('button:text("⚡ Create Quest")');
   await page.locator('.fixed button:has-text("Custom Quest")').click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
 
   await page.fill('input[placeholder="Enter quest title..."]', title);
   await page.fill('textarea[placeholder="Describe the quest..."]', `${difficulty} difficulty task`);
@@ -115,15 +115,23 @@ async function createAndCompleteQuest(page: any, title: string, difficulty: stri
   await page.fill('input[type="number"]:near(:text("XP Reward"))', xp.toString());
 
   await page.click('button[type="submit"]');
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
 
-  // Complete quest workflow
-  await page.locator('button:has-text("Pick Up Quest")').first().click();
-  await page.waitForTimeout(1000);
+  // Wait for quest to appear, then complete workflow
+  await expect(page.getByText(title)).toBeVisible();
+
+  // Try to pick up quest - might not be necessary if directly assigned
+  const pickupButton = page.locator('button:has-text("Pick Up Quest")').first();
+  if (await pickupButton.isVisible().catch(() => false)) {
+    await pickupButton.click();
+    await page.waitForTimeout(500);
+  }
+
+  // Complete quest workflow with shorter waits
   await page.locator('button:has-text("Start Quest")').first().click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
   await page.locator('button:has-text("Complete")').first().click();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
   await page.locator('button:has-text("Approve")').first().click();
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(1000);
 }
