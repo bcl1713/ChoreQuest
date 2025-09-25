@@ -143,3 +143,99 @@ export async function commonBeforeEach(page: Page): Promise<void> {
     // Ignore localStorage access errors
   }
 }
+
+export interface TestUserInfo {
+  email: string;
+  password: string;
+  id: string;
+  familyId: string;
+  characterId: string;
+}
+
+export interface SetupTestUserOptions {
+  familyId?: string;
+  role?: 'GUILD_MASTER' | 'HERO';
+}
+
+/**
+ * Creates a test user with full character setup and returns user info including IDs
+ * Used specifically for reward store E2E tests that need user/family/character IDs
+ */
+export async function setupTestUser(page: Page, options?: SetupTestUserOptions): Promise<{ user: TestUserInfo }> {
+  const timestamp = Date.now() + Math.random(); // Add randomness to avoid conflicts
+  const role = options?.role || 'GUILD_MASTER';
+  const prefix = role === 'GUILD_MASTER' ? 'guildmaster' : 'hero';
+
+  const testUser: TestUser = {
+    email: `${prefix}-${Math.floor(timestamp)}@example.com`,
+    password: 'testpass123',
+    userName: `${prefix} User ${Math.floor(timestamp)}`,
+    familyName: `${prefix} Family ${Math.floor(timestamp)}`,
+    characterName: `${prefix.charAt(0).toUpperCase() + prefix.slice(1)} ${Math.floor(timestamp)}`,
+  };
+
+  await clearBrowserState(page);
+
+  // Always create new family and character for simplicity
+  // We'll handle multi-user setup differently
+  await page.goto('/');
+  await page.getByText('🏰 Create Family Guild').click();
+  await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+  await page.fill('input[name="name"]', testUser.familyName);
+  await page.fill('input[name="email"]', testUser.email);
+  await page.fill('input[name="password"]', testUser.password);
+  await page.fill('input[name="userName"]', testUser.userName);
+  await page.click('button[type="submit"]');
+
+  await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+  await page.fill('input#characterName', testUser.characterName);
+  await page.click(`[data-testid="class-knight"]`);
+  await page.click('button:text("Begin Your Quest")');
+
+  await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+  // Get the created user info from localStorage
+  const authData = await page.evaluate(() => {
+    const stored = localStorage.getItem('chorequest-auth');
+    return stored ? JSON.parse(stored) : {};
+  });
+
+  const userInfo = authData.user || {};
+
+  // If we need to update family association for multi-user tests
+  if (options?.familyId && options.familyId !== userInfo.familyId) {
+    await page.evaluate(async ({ targetFamilyId, userId }) => {
+      const response = await fetch('/api/test/user/update-family', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          familyId: targetFamilyId
+        })
+      });
+      if (!response.ok) throw new Error('Failed to update user family');
+    }, { targetFamilyId: options.familyId, userId: userInfo.id });
+
+    // Update the userInfo to reflect the family change
+    return {
+      user: {
+        email: testUser.email,
+        password: testUser.password,
+        id: userInfo.id,
+        familyId: options.familyId,
+        characterId: userInfo.characterId
+      }
+    };
+  }
+
+  return {
+    user: {
+      email: testUser.email,
+      password: testUser.password,
+      id: userInfo.id,
+      familyId: userInfo.familyId || authData.family?.id,
+      characterId: userInfo.characterId
+    }
+  };
+}
