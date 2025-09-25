@@ -463,3 +463,4 @@ test('standardized test example', async ({ page }) => {
 
 This specification ensures all E2E tests provide consistent, readable output for effective debugging and maintenance.
 - if the dev server is running and you run a build, you have to restart the dev server or it stops working
+- I will run the dev server.  If you do a build, the dev server will need restarted.  Don't restart it yourself, ask me to do it.

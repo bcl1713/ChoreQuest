@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { questService } from "@/lib/quest-service";
+import { userService } from "@/lib/user-service";
 import { QuestInstance, QuestDifficulty } from "@/lib/generated/prisma";
+import { User } from "@/types";
 import { motion } from "framer-motion";
 
 interface QuestDashboardProps {
@@ -19,11 +21,16 @@ export default function QuestDashboard({
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<User[]>([]);
+  const [selectedAssignee, setSelectedAssignee] = useState<{
+    [questId: string]: string;
+  }>({});
 
   useEffect(() => {
     // Only load quests when user and token are available
     if (user && token) {
       loadQuests();
+      loadFamilyMembers(); // Load family members for assignment dropdown
     } else if (!user) {
       // If no user, set error state
       setError("User not authenticated");
@@ -57,20 +64,102 @@ export default function QuestDashboard({
 
   const handleStatusUpdate = async (questId: string, status: string) => {
     try {
-      await questService.updateQuestStatus(questId, {
-        status: status as
-          | "PENDING"
-          | "IN_PROGRESS"
-          | "COMPLETED"
-          | "APPROVED"
-          | "EXPIRED",
-      });
-      await loadQuests(); // Refresh the list
+      if (status === "APPROVED" && user?.role === "GUILD_MASTER") {
+        // Handle quest approval with reward processing
+        const approvalResponse = await questService.approveQuest(questId, user.id);
+        await loadQuests(); // Refresh quest list
+        
+        // Emit a custom event that the dashboard can listen to
+        window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
+          detail: {
+            questId,
+            rewards: approvalResponse.rewards,
+            characterUpdates: approvalResponse.characterUpdates
+          }
+        }));
+        
+      } else {
+        // Handle other status updates normally
+        await questService.updateQuestStatus(questId, {
+          status: status as
+            | "PENDING"
+            | "IN_PROGRESS"
+            | "COMPLETED"
+            | "APPROVED"
+            | "EXPIRED",
+        });
+        await loadQuests(); // Refresh the list
+      }
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to update quest";
       setError(errorMsg);
       onError?.(errorMsg);
+    }
+  };
+
+  // TODO: Implement quest pickup functionality
+  const handlePickupQuest = async (questId: string) => {
+    if (!user) return;
+
+    try {
+      await questService.assignQuest(questId, user.id);
+
+      //Refresh quest list to show updated assignments
+      await loadQuests();
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to pick up quest";
+      setError(errorMsg);
+      onError?.(errorMsg);
+    }
+  };
+
+  // TODO: Implement quest assignment functionality
+  const handleAssignQuest = async (questId: string, assigneeId: string) => {
+    if (!assigneeId) return;
+
+    try {
+      await questService.assignQuest(questId, assigneeId);
+
+      // Clear the dropdown selection
+      setSelectedAssignee((prev) => ({
+        ...prev,
+        [questId]: "",
+      }));
+      await loadQuests();
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to assign quest";
+      setError(errorMsg);
+      onError?.(errorMsg);
+    }
+  };
+
+  const handleCancelQuest = async (questId: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this quest?",
+    );
+    if (!confirmed) return;
+
+    try {
+      await questService.cancelQuest(questId);
+      await loadQuests();
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to cancel quest";
+      setError(errorMsg);
+      onError?.(errorMsg);
+    }
+  };
+
+  // TODO: Implement family members loading
+  const loadFamilyMembers = async () => {
+    try {
+      const members = await userService.getFamilyMembers();
+      setFamilyMembers(members);
+    } catch (err) {
+      console.error("Failed to load family members:", err);
     }
   };
 
@@ -310,6 +399,87 @@ export default function QuestDashboard({
                         </span>
                       )}
                     </div>
+                  </div>
+
+                  {/* Quest Action Buttons */}
+                  <div className="flex flex-col gap-3 min-w-[200px]">
+                    {/* Hero Pickup Button */}
+                    {user?.role !== "GUILD_MASTER" && (
+                      <button
+                        onClick={() => handlePickupQuest(quest.id)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                      >
+                        <span>⚔️</span>
+                        Pick Up Quest
+                      </button>
+                    )}
+
+                    {/* Guild Master Controls */}
+                    {user?.role === "GUILD_MASTER" && (
+                      <div className="space-y-2">
+                        {/* GM can also pick up quests */}
+                        <button
+                          onClick={() => handlePickupQuest(quest.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
+                        >
+                          <span>⚔️</span>
+                          Pick Up Quest
+                        </button>
+
+                        {/* Assignment Section */}
+                        <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                          <label className="block text-xs font-medium text-gray-300 mb-2">
+                            👑 Assign to Hero:
+                          </label>
+                          <div className="flex gap-2">
+                            <select
+                              data-testid="assign-quest-dropdown"
+                              value={selectedAssignee[quest.id] || ""}
+                              onChange={(e) =>
+                                setSelectedAssignee({
+                                  ...selectedAssignee,
+                                  [quest.id]: e.target.value,
+                                })
+                              }
+                              className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-gold-500"
+                            >
+                              <option value="">Choose hero...</option>
+                              {familyMembers.map((member) => (
+                                <option key={member.id} value={member.id}>
+                                  {member.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() =>
+                                handleAssignQuest(
+                                  quest.id,
+                                  selectedAssignee[quest.id],
+                                )
+                              }
+                              disabled={!selectedAssignee[quest.id]}
+                              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-2 rounded text-sm transition-colors"
+                            >
+                              Assign
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Danger Zone - Cancel Quest */}
+                        <div className="bg-red-900/20 rounded-lg p-3 border border-red-800">
+                          <button
+                            onClick={() => handleCancelQuest(quest.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
+                          >
+                            <span>❌</span>
+                            Cancel Quest
+                          </button>
+                          <p className="text-xs text-red-400 mt-1 text-center">
+                            This action cannot be undone
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>

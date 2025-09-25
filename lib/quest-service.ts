@@ -1,5 +1,11 @@
 // Quest management service
-import { QuestTemplate, QuestInstance, QuestDifficulty, QuestCategory, QuestStatus } from '@/lib/generated/prisma';
+import {
+  QuestTemplate,
+  QuestInstance,
+  QuestDifficulty,
+  QuestCategory,
+  QuestStatus,
+} from "@/lib/generated/prisma";
 
 export interface CreateQuestTemplateRequest {
   title: string;
@@ -35,8 +41,8 @@ export interface UpdateQuestStatusRequest {
 export class QuestService {
   private getAuthToken(): string | null {
     // Get token from localStorage (same as auth-context)
-    if (typeof window === 'undefined') return null;
-    const stored = localStorage.getItem('chorequest-auth');
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem("chorequest-auth");
     if (!stored) return null;
 
     try {
@@ -50,17 +56,20 @@ export class QuestService {
   private async request(endpoint: string, options?: RequestInit) {
     const token = this.getAuthToken();
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(options?.headers as Record<string, string>),
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     // Use absolute URL for testing environment
-    const baseUrl = typeof window !== 'undefined' ? '' : 'http://localhost:3000';
-    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+    const baseUrl =
+      typeof window !== "undefined" ? "" : "http://localhost:3000";
+    const url = endpoint.startsWith("http")
+      ? endpoint
+      : `${baseUrl}${endpoint}`;
 
     const response = await fetch(url, {
       ...options,
@@ -68,8 +77,10 @@ export class QuestService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || 'Request failed');
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Request failed" }));
+      throw new Error(error.error || "Request failed");
     }
 
     return response.json();
@@ -77,56 +88,108 @@ export class QuestService {
 
   // Quest Templates
   async getQuestTemplates(): Promise<{ templates: QuestTemplate[] }> {
-    return this.request('/api/quest-templates');
+    return this.request("/api/quest-templates");
   }
 
-  async createQuestTemplate(data: CreateQuestTemplateRequest): Promise<{ template: QuestTemplate }> {
-    return this.request('/api/quest-templates', {
-      method: 'POST',
+  async createQuestTemplate(
+    data: CreateQuestTemplateRequest,
+  ): Promise<{ template: QuestTemplate }> {
+    return this.request("/api/quest-templates", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   // Quest Instances
   async getQuestInstances(): Promise<{ instances: QuestInstance[] }> {
-    return this.request('/api/quest-instances');
+    return this.request("/api/quest-instances");
   }
 
-  async createQuestInstanceFromTemplate(data: CreateQuestInstanceFromTemplateRequest): Promise<{ instance: QuestInstance }> {
-    return this.request('/api/quest-instances', {
-      method: 'POST',
+  async createQuestInstanceFromTemplate(
+    data: CreateQuestInstanceFromTemplateRequest,
+  ): Promise<{ instance: QuestInstance }> {
+    return this.request("/api/quest-instances", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async createQuestInstanceAdHoc(data: CreateQuestInstanceAdHocRequest): Promise<{ instance: QuestInstance }> {
-    return this.request('/api/quest-instances', {
-      method: 'POST',
+  async createQuestInstanceAdHoc(
+    data: CreateQuestInstanceAdHocRequest,
+  ): Promise<{ instance: QuestInstance }> {
+    return this.request("/api/quest-instances", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateQuestStatus(questId: string, data: UpdateQuestStatusRequest): Promise<{ instance: QuestInstance }> {
+  async updateQuestStatus(
+    questId: string,
+    data: UpdateQuestStatusRequest,
+  ): Promise<{ instance: QuestInstance }> {
     return this.request(`/api/quest-instances/${questId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   }
 
   // Quest Rewards & Approval
-  async approveQuest(questId: string, approverId: string): Promise<QuestApprovalResponse> {
+  async approveQuest(
+    questId: string,
+    approverId: string,
+  ): Promise<QuestApprovalResponse> {
     return this.request(`/api/quest-instances/${questId}/approve`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ approverId }),
     });
   }
 
-  async getCharacterStats(characterId: string): Promise<CharacterStatsResponse> {
+  async getCharacterStats(
+    characterId: string,
+  ): Promise<CharacterStatsResponse> {
     return this.request(`/api/characters/${characterId}/stats`);
   }
 
-  async getTransactionHistory(characterId: string): Promise<TransactionResponse[]> {
+  async getTransactionHistory(
+    characterId: string,
+  ): Promise<TransactionResponse[]> {
     return this.request(`/api/characters/${characterId}/transactions`);
+  }
+
+  async assignQuest(
+    questId: string,
+    assigneeId: string,
+  ): Promise<{ success: boolean }> {
+    const response = await fetch(`/api/quest-instances/${questId}/assign`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.getAuthToken()}`,
+      },
+      body: JSON.stringify({ assigneeId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(`Failed to assign quest: ${errorData.error || response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async cancelQuest(questId: string): Promise<{ success: boolean }> {
+    const response = await fetch(`/api/quest-instances/${questId}/cancel`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${this.getAuthToken()}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to cancel quest");
+    }
+
+    return await response.json();
   }
 }
 
@@ -146,7 +209,7 @@ export interface QuestApprovalResponse {
   };
   transaction?: {
     id: string;
-    type: 'QUEST_REWARD';
+    type: "QUEST_REWARD";
     description: string;
     createdAt: string;
   };

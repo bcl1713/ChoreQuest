@@ -3,10 +3,10 @@
  */
 import { PrismaClient } from '@/lib/generated/prisma';
 import bcrypt from 'bcryptjs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+// import { exec } from 'child_process'; // Unused for now
+// import { promisify } from 'util'; // Unused for now
 
-const execAsync = promisify(exec);
+// const execAsync = promisify(exec); // Unused for now
 
 // Use the existing development database
 const prisma = new PrismaClient();

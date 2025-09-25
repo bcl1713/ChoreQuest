@@ -12,7 +12,7 @@ import { QuestTemplate } from '@/lib/generated/prisma';
 export default function Dashboard() {
   const router = useRouter();
   const { user, family, logout, isLoading } = useAuth();
-  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded } = useCharacter();
+  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
@@ -50,6 +50,20 @@ export default function Dashboard() {
       loadQuestTemplates();
     }
   }, [user, character]);
+
+  // Listen for character stats updates from quest approvals
+  useEffect(() => {
+    const handleCharacterStatsUpdate = () => {
+      // Refresh character data when quest is approved
+      refreshCharacter();
+    };
+
+    window.addEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
+    };
+  }, [refreshCharacter]);
 
   const loadQuestTemplates = async () => {
     try {

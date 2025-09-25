@@ -78,3 +78,7 @@ const localStorageMock = {
   clear: jest.fn(),
 }
 global.localStorage = localStorageMock
+
+// Mock window.confirm and window.alert
+global.confirm = jest.fn(() => true)
+global.alert = jest.fn()
