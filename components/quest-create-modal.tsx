@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { questService } from "@/lib/quest-service";
+import { userService } from "@/lib/user-service";
 import {
   QuestDifficulty,
   QuestCategory,
@@ -19,6 +20,12 @@ interface QuestCreateModalProps {
 interface User {
   id: string;
   username: string;
+  role: string;
+}
+
+interface FamilyMember {
+  id: string;
+  name: string;
   role: string;
 }
 
@@ -53,13 +60,15 @@ export default function QuestCreateModal({
 
   const loadFamilyMembers = async () => {
     try {
-      // This would need to be implemented as an API endpoint
-      // For now, we'll mock some data
-      setFamilyMembers([
-        { id: "user1", username: "hero1", role: "HERO" },
-        { id: "user2", username: "hero2", role: "HERO" },
-        { id: "user3", username: "younghero1", role: "YOUNG_HERO" },
-      ]);
+      const members = await userService.getFamilyMembers();
+      // Transform API response to match expected interface
+      setFamilyMembers(
+        members.map((member: FamilyMember) => ({
+          id: member.id,
+          username: member.name,
+          role: member.role,
+        }))
+      );
     } catch {
       setError("Failed to load family members");
     }
