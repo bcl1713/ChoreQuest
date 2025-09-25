@@ -1,14 +1,27 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
+
+IMPORTANT: Always read PLANNING.md at the start of every new conversation, check
+TASKS.md before starting your work, mark completed tasks to TASKS.md
+immediately, and add newly discovered tasks to TASKS.md as soon as they are
+found.
+
+IMPORTANT: You should never make edits to the main branch directly. Always
+create a feature branch for any changes, no matter how small.
 
 ## ChoreQuest Project Overview
 
-ChoreQuest is a fantasy RPG-themed family chore management system designed to gamify household tasks. The system transforms daily chores into epic quests where family members become heroes earning XP, gold, and rewards through real-world task completion.
+ChoreQuest is a fantasy RPG-themed family chore management system designed to
+gamify household tasks. The system transforms daily chores into epic quests
+where family members become heroes earning XP, gold, and rewards through
+real-world task completion.
 
 ## High-Level Architecture
 
-This is a **planned full-stack web application** with the following intended architecture based on the design documents:
+This is a **planned full-stack web application** with the following intended
+architecture based on the design documents:
 
 ### Frontend
 
@@ -36,7 +49,8 @@ This is a **planned full-stack web application** with the following intended arc
 
 ### Character System
 
-- **Classes**: Knight, Mage, Ranger, Rogue, Healer (each with specialization bonuses)
+- **Classes**: Knight, Mage, Ranger, Rogue, Healer (each with specialization
+  bonuses)
 - **Progression**: XP-based leveling with unlockable abilities
 - **Avatars**: Customizable fantasy characters with equipment display
 
@@ -97,7 +111,8 @@ This is a **planned full-stack web application** with the following intended arc
 
 ## Development Commands
 
-Since this is a new project, standard Next.js/Node.js commands will apply once implemented:
+Since this is a new project, standard Next.js/Node.js commands will apply once
+implemented:
 
 ```bash
 # Development
@@ -226,13 +241,15 @@ When implementing features, always consider:
 - Does this create positive motivation?
 - Can this scale to different family sizes?
 - How does this integrate with the fantasy theme?
-- Always create a branch for new features and commit often. When a feature is complete create a PR and merge to main
+- Always create a branch for new features and commit often. When a feature is
+  complete create a PR and merge to main
 
 ## 🚨 MANDATORY Test-Driven Development Workflow 🚨
 
 **⚠️ CRITICAL: STRICT TDD PROCESS - NO EXCEPTIONS ⚠️**
 
-Every change follows this exact sequence. No shortcuts, no "simplified testing", no workarounds.
+Every change follows this exact sequence. No shortcuts, no "simplified testing",
+no workarounds.
 
 ### 🛑 **STOP: BRANCH CHECK REQUIRED BEFORE ANY CODE CHANGES** 🛑
 
@@ -251,7 +268,8 @@ git branch
 **MANDATORY CHECKLIST - NO EXCEPTIONS:**
 
 - [ ] ✅ Verified current branch with `git branch`
-- [ ] ✅ If on main: Created feature branch with `git checkout -b feature/descriptive-name`
+- [ ] ✅ If on main: Created feature branch with
+      `git checkout -b feature/descriptive-name`
 - [ ] ✅ Branch name follows format: `feature/descriptive-kebab-case-name`
 - [ ] ✅ Ready to start TDD process
 
@@ -364,28 +382,43 @@ npx prisma migrate dev # Apply migrations
 
 #### From Dashboard Refresh Bug Fix
 
-- **Race conditions are subtle** - auth/character context timing during page refresh
-- **Context state management needs careful sequencing** - don't set completion flags prematurely
-- **E2E tests catch real user issues** - unit tests wouldn't have found this refresh bug
-- **Debugging with targeted logging** - add console.log strategically, then remove
+- **Race conditions are subtle** - auth/character context timing during page
+  refresh
+- **Context state management needs careful sequencing** - don't set completion
+  flags prematurely
+- **E2E tests catch real user issues** - unit tests wouldn't have found this
+  refresh bug
+- **Debugging with targeted logging** - add console.log strategically, then
+  remove
 - **Test isolation is critical** - each test should create its own fresh state
 
 #### From Quest Modal Test Debugging Session
 
-- **Modal state matters for form interactions** - always ensure correct tab/mode is active before filling forms
-- **Generic text selectors are fragile** - `'text=Cancel'` failed when multiple elements contained "Cancel"
-- **CSS selector specificity prevents conflicts** - `.fixed button:has-text("Cancel")` targets the modal specifically
-- **Test suite timeout management** - run individual test suites to identify failures faster than waiting for full suite
-- **Incremental test fixing is more efficient** - fix one specific test, verify it passes, then run full suite
-- **Modal component architecture affects testing** - understand component structure (tabs, forms, buttons) before writing tests
+- **Modal state matters for form interactions** - always ensure correct tab/mode
+  is active before filling forms
+- **Generic text selectors are fragile** - `'text=Cancel'` failed when multiple
+  elements contained "Cancel"
+- **CSS selector specificity prevents conflicts** -
+  `.fixed button:has-text("Cancel")` targets the modal specifically
+- **Test suite timeout management** - run individual test suites to identify
+  failures faster than waiting for full suite
+- **Incremental test fixing is more efficient** - fix one specific test, verify
+  it passes, then run full suite
+- **Modal component architecture affects testing** - understand component
+  structure (tabs, forms, buttons) before writing tests
 
 #### Playwright Testing Best Practices
 
-- **Always run tests headless for CI/automation**: `npx playwright test --reporter=line`
-- **Use `--reporter=line` for clean output** - avoids spawning report servers that hang processes
-- **Tests should complete and terminate properly** - no hanging servers blocking workflow
-- **Use `--headed` only for debugging specific issues** - not for regular test runs
-- **Create focused tests for specific bugs** - isolate the exact scenario being fixed
+- **Always run tests headless for CI/automation**:
+  `npx playwright test --reporter=line`
+- **Use `--reporter=line` for clean output** - avoids spawning report servers
+  that hang processes
+- **Tests should complete and terminate properly** - no hanging servers blocking
+  workflow
+- **Use `--headed` only for debugging specific issues** - not for regular test
+  runs
+- **Create focused tests for specific bugs** - isolate the exact scenario being
+  fixed
 
 #### Never Do This Again
 
@@ -400,7 +433,8 @@ npx prisma migrate dev # Apply migrations
 - ❌ Create PRs with failing tests
 - ❌ Run Playwright tests without proper completion (hanging report servers)
 - ❌ Assume context loading states work correctly during page refresh
-- ❌ Use generic text selectors like `'text=Cancel'` when multiple elements contain that text
+- ❌ Use generic text selectors like `'text=Cancel'` when multiple elements
+  contain that text
 - ❌ Forget to switch modal tabs/modes before filling form fields
 - ❌ Ignore test selector specificity - always target the exact element intended
 
@@ -409,7 +443,8 @@ npx prisma migrate dev # Apply migrations
 - ✅ **RUN `git branch` BEFORE ANY CODE CHANGES** - MANDATORY FIRST STEP
 - ✅ **CREATE FEATURE BRANCH IF ON MAIN** - NO EXCEPTIONS
 - ✅ Follow the mandatory pre-work checklist every single time
-- ✅ Use descriptive branch names with proper prefixes (feature/, bugfix/, refactor/)
+- ✅ Use descriptive branch names with proper prefixes (feature/, bugfix/,
+  refactor/)
 - ✅ Fix broken test infrastructure immediately
 - ✅ Write tests before implementation
 - ✅ Maintain zero warnings/errors standard
@@ -418,9 +453,12 @@ npx prisma migrate dev # Apply migrations
 - ✅ Run Playwright tests with `--reporter=line` for proper process termination
 - ✅ Test page refresh scenarios explicitly - they often reveal race conditions
 - ✅ Verify context state management during initialization sequences
-- ✅ Use specific selectors in E2E tests - avoid generic text selectors that match multiple elements
-- ✅ Always switch to correct modal tabs/modes before interacting with form elements
-- ✅ Target modal elements with specific CSS selectors (e.g., `.fixed button:has-text("Cancel")`) to avoid conflicts
+- ✅ Use specific selectors in E2E tests - avoid generic text selectors that
+  match multiple elements
+- ✅ Always switch to correct modal tabs/modes before interacting with form
+  elements
+- ✅ Target modal elements with specific CSS selectors (e.g.,
+  `.fixed button:has-text("Cancel")`) to avoid conflicts
 
 ### 🎯 Success Criteria
 
@@ -440,7 +478,8 @@ Every feature completion must achieve:
 
 **🔧 Standardized Test Output Specification**
 
-All E2E tests must follow consistent output patterns for improved debugging and maintenance:
+All E2E tests must follow consistent output patterns for improved debugging and
+maintenance:
 
 ### 📋 Required Output Format
 
@@ -464,7 +503,8 @@ All E2E tests must follow consistent output patterns for improved debugging and 
 - Always log key test milestones for debugging traceability
 - Use structured format: `console.log('✅ [Phase] Specific action completed')`
 - Log both success and failure states clearly
-- Include relevant data when useful: `console.log('✅ [Verification] Modal state:', modalVisible)`
+- Include relevant data when useful:
+  `console.log('✅ [Verification] Modal state:', modalVisible)`
 
 ### 🚫 Prohibited Patterns
 
@@ -505,7 +545,10 @@ test("standardized test example", async ({ page }) => {
 });
 ```
 
-This specification ensures all E2E tests provide consistent, readable output for effective debugging and maintenance.
+This specification ensures all E2E tests provide consistent, readable output for
+effective debugging and maintenance.
 
-- if the dev server is running and you run a build, you have to restart the dev server or it stops working
-- I will run the dev server. If you do a build, the dev server will need restarted. Don't restart it yourself, ask me to do it.
+- if the dev server is running and you run a build, you have to restart the dev
+  server or it stops working
+- I will run the dev server. If you do a build, the dev server will need
+  restarted. Don't restart it yourself, ask me to do it.
