@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { questService } from "@/lib/quest-service";
 import { userService } from "@/lib/user-service";
@@ -25,29 +25,54 @@ export default function QuestDashboard({
   const [selectedAssignee, setSelectedAssignee] = useState<{
     [questId: string]: string;
   }>({});
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // Only load quests when user and token are available
-    if (user && token) {
-      loadQuests();
-      loadFamilyMembers(); // Load family members for assignment dropdown
-    } else if (!user) {
-      // If no user, set error state
-      setError("User not authenticated");
-      setLoading(false);
+    if (!user || !token) {
+      if (!user) {
+        // If no user, set error state
+        setError("User not authenticated");
+        setLoading(false);
+      }
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, token]);
 
-  useEffect(() => {
-    // Pass the loadQuests function to parent
-    if (onLoadQuestsRef) {
-      onLoadQuestsRef(loadQuests);
+    // Prevent multiple initializations
+    if (hasInitialized.current) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onLoadQuestsRef]);
 
-  const loadQuests = async () => {
+    hasInitialized.current = true;
+
+    const loadData = async () => {
+      setLoading(true);
+
+      try {
+        // Load quests
+        const instancesResult = await questService.getQuestInstances();
+        setQuestInstances(instancesResult.instances);
+
+        // Load family members for assignment dropdown
+        try {
+          const members = await userService.getFamilyMembers();
+          setFamilyMembers(members);
+        } catch (err) {
+          console.error("Failed to load family members:", err);
+        }
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to load quests";
+        setError(errorMsg);
+        onError?.(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, token, onError]);
+
+  const loadQuests = useCallback(async () => {
     try {
       setLoading(true);
       const instancesResult = await questService.getQuestInstances();
@@ -60,7 +85,14 @@ export default function QuestDashboard({
     } finally {
       setLoading(false);
     }
-  };
+  }, [onError]);
+
+  useEffect(() => {
+    // Pass the loadQuests function to parent
+    if (onLoadQuestsRef) {
+      onLoadQuestsRef(loadQuests);
+    }
+  }, [onLoadQuestsRef, loadQuests]);
 
   const handleStatusUpdate = async (questId: string, status: string) => {
     try {
@@ -153,15 +185,6 @@ export default function QuestDashboard({
     }
   };
 
-  // TODO: Implement family members loading
-  const loadFamilyMembers = async () => {
-    try {
-      const members = await userService.getFamilyMembers();
-      setFamilyMembers(members);
-    } catch (err) {
-      console.error("Failed to load family members:", err);
-    }
-  };
 
   const getDifficultyColor = (difficulty: QuestDifficulty) => {
     switch (difficulty) {
