@@ -49,7 +49,7 @@ and merge to main
 npm run build        # Zero compilation errors
 npm run lint         # Zero linting errors/warnings
 npm run test         # All unit tests pass
-npx playwright test  # All E2E tests pass
+npx playwright test  # All E2E tests pass. You will have to have a running dev server for this.
 ```
 
 **If ANY step fails, fix it. No exceptions.**
@@ -492,20 +492,21 @@ Through systematic debugging, multiple issues were identified:
 
 1. **Missing Helper Function**: Tests imported `setupTestUser` but the helper
    file only exported `setupUserWithCharacter` and other functions
-2. **Missing Test API Endpoints**: Tests relied on `/api/test/character/update-stats`
-   and `/api/test/user/update-family` endpoints that didn't exist
+2. **Missing Test API Endpoints**: Tests relied on
+   `/api/test/character/update-stats` and `/api/test/user/update-family`
+   endpoints that didn't exist
 3. **Incorrect Data Access**: Helper function was reading from
    `localStorage.getItem('user')` instead of the correct
    `localStorage.getItem('chorequest-auth')`
-4. **Complex Test Scenarios**: Original tests assumed multi-user workflows
-   with existing rewards data that wasn't available in test environments
+4. **Complex Test Scenarios**: Original tests assumed multi-user workflows with
+   existing rewards data that wasn't available in test environments
 5. **Minor UI Assertion Issues**: Button text mismatches (emoji differences)
 
 **Solutions Implemented:**
 
 - ✅ **Created Missing Test API Endpoints**:
-  - `app/api/test/character/update-stats/route.ts` - Updates character stats
-    for E2E testing
+  - `app/api/test/character/update-stats/route.ts` - Updates character stats for
+    E2E testing
   - `app/api/test/user/update-family/route.ts` - Updates user family
     associations for multi-user tests
   - Both endpoints restricted to non-production environments only
@@ -526,8 +527,8 @@ Through systematic debugging, multiple issues were identified:
     `⚔️ Quests & Adventures`
   - Added proper timeouts for dynamic content loading
 - ✅ **Enhanced Test Infrastructure**:
-  - Added page refresh logic to ensure character stats updates are reflected
-    in UI
+  - Added page refresh logic to ensure character stats updates are reflected in
+    UI
   - Proper error handling and cleanup in test helpers
   - Clean separation between test API and production code
 
@@ -555,8 +556,8 @@ Through systematic debugging, multiple issues were identified:
 - `app/api/test/user/update-family/route.ts` - New test API endpoint
 - `tests/e2e/helpers/setup-helpers.ts` - Added `setupTestUser` function with
   proper data handling
-- `tests/e2e/reward-store.spec.ts` - Complete rewrite with simplified,
-  reliable tests
+- `tests/e2e/reward-store.spec.ts` - Complete rewrite with simplified, reliable
+  tests
 
 **Quality Validation:**
 
@@ -573,29 +574,47 @@ testing infrastructure and development workflow quality assurance.
 
 ### 2025-09-25: QuestDashboard useEffect Dependency Fix
 
-**Issue:** QuestDashboard component had useEffect hooks with ESLint disable workarounds that violated React best practices and could potentially cause infinite re-rendering issues.
+**Issue:** QuestDashboard component had useEffect hooks with ESLint disable
+workarounds that violated React best practices and could potentially cause
+infinite re-rendering issues.
 
 **Root Cause Analysis:**
 
-1. **ESLint Disable Workarounds**: Two useEffect hooks used `// eslint-disable-next-line react-hooks/exhaustive-deps` to bypass dependency warnings
-2. **External Function Dependencies**: useEffect hooks called `loadQuests()` and `loadFamilyMembers()` functions but didn't include them in dependencies
-3. **Unstable Function References**: Functions were not wrapped in useCallback, making them unstable dependencies
-4. **Inconsistent Patterns**: QuestDashboard used different dependency management than the fixed RewardStore component
+1. **ESLint Disable Workarounds**: Two useEffect hooks used
+   `// eslint-disable-next-line react-hooks/exhaustive-deps` to bypass
+   dependency warnings
+2. **External Function Dependencies**: useEffect hooks called `loadQuests()` and
+   `loadFamilyMembers()` functions but didn't include them in dependencies
+3. **Unstable Function References**: Functions were not wrapped in useCallback,
+   making them unstable dependencies
+4. **Inconsistent Patterns**: QuestDashboard used different dependency
+   management than the fixed RewardStore component
 
 **Solution Applied:**
 
-- ✅ **Removed ESLint Disable Workarounds**: Eliminated all `// eslint-disable-next-line react-hooks/exhaustive-deps` comments in favor of proper dependency management
-- ✅ **Inlined Async Functions**: Combined quest loading and family member loading into single useEffect with inline async functions to avoid external dependency issues
-- ✅ **Stable Function References**: Wrapped `loadQuests` in `useCallback` with proper dependencies `[onError]` for stable reference
-- ✅ **Proper Dependencies**: Updated useEffect dependencies to include all required values: `[user, token, onError]` and `[onLoadQuestsRef, loadQuests]`
-- ✅ **Initialization Control**: Added `useRef(false)` pattern to prevent multiple initializations, matching RewardStore pattern
-- ✅ **Code Cleanup**: Removed unused `loadFamilyMembers` function that was no longer needed after inlining
-- ✅ **Hoisting Fix**: Moved `useCallback` definition before `useEffect` to prevent TypeScript "used before declaration" errors
+- ✅ **Removed ESLint Disable Workarounds**: Eliminated all
+  `// eslint-disable-next-line react-hooks/exhaustive-deps` comments in favor of
+  proper dependency management
+- ✅ **Inlined Async Functions**: Combined quest loading and family member
+  loading into single useEffect with inline async functions to avoid external
+  dependency issues
+- ✅ **Stable Function References**: Wrapped `loadQuests` in `useCallback` with
+  proper dependencies `[onError]` for stable reference
+- ✅ **Proper Dependencies**: Updated useEffect dependencies to include all
+  required values: `[user, token, onError]` and `[onLoadQuestsRef, loadQuests]`
+- ✅ **Initialization Control**: Added `useRef(false)` pattern to prevent
+  multiple initializations, matching RewardStore pattern
+- ✅ **Code Cleanup**: Removed unused `loadFamilyMembers` function that was no
+  longer needed after inlining
+- ✅ **Hoisting Fix**: Moved `useCallback` definition before `useEffect` to
+  prevent TypeScript "used before declaration" errors
 
 **Technical Highlights:**
 
-- Applied the exact same stable pattern successfully used in RewardStore component
-- Maintained parent component integration via `onLoadQuestsRef` prop without compromising dependency management
+- Applied the exact same stable pattern successfully used in RewardStore
+  component
+- Maintained parent component integration via `onLoadQuestsRef` prop without
+  compromising dependency management
 - Followed React best practices for useEffect dependencies without workarounds
 - Ensured TypeScript compilation with proper function hoisting order
 
@@ -609,7 +628,11 @@ testing infrastructure and development workflow quality assurance.
 
 **Files Modified:**
 
-- `components/quest-dashboard.tsx` - Complete useEffect dependency management overhaul
+- `components/quest-dashboard.tsx` - Complete useEffect dependency management
+  overhaul
 - `TASKS.md` - Updated to mark QuestDashboard dependency fix as completed
 
-**Current Status:** QuestDashboard now follows React best practices with proper dependency management, eliminating potential infinite re-rendering issues and maintaining consistency with established codebase patterns. The component is now fully stable and follows the same reliable patterns as RewardStore.
+**Current Status:** QuestDashboard now follows React best practices with proper
+dependency management, eliminating potential infinite re-rendering issues and
+maintaining consistency with established codebase patterns. The component is now
+fully stable and follows the same reliable patterns as RewardStore.
