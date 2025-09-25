@@ -570,3 +570,46 @@ Through systematic debugging, multiple issues were identified:
 functional and provides reliable automated testing of the core user interface
 and functionality. This represents a significant improvement in the project's
 testing infrastructure and development workflow quality assurance.
+
+### 2025-09-25: QuestDashboard useEffect Dependency Fix
+
+**Issue:** QuestDashboard component had useEffect hooks with ESLint disable workarounds that violated React best practices and could potentially cause infinite re-rendering issues.
+
+**Root Cause Analysis:**
+
+1. **ESLint Disable Workarounds**: Two useEffect hooks used `// eslint-disable-next-line react-hooks/exhaustive-deps` to bypass dependency warnings
+2. **External Function Dependencies**: useEffect hooks called `loadQuests()` and `loadFamilyMembers()` functions but didn't include them in dependencies
+3. **Unstable Function References**: Functions were not wrapped in useCallback, making them unstable dependencies
+4. **Inconsistent Patterns**: QuestDashboard used different dependency management than the fixed RewardStore component
+
+**Solution Applied:**
+
+- ✅ **Removed ESLint Disable Workarounds**: Eliminated all `// eslint-disable-next-line react-hooks/exhaustive-deps` comments in favor of proper dependency management
+- ✅ **Inlined Async Functions**: Combined quest loading and family member loading into single useEffect with inline async functions to avoid external dependency issues
+- ✅ **Stable Function References**: Wrapped `loadQuests` in `useCallback` with proper dependencies `[onError]` for stable reference
+- ✅ **Proper Dependencies**: Updated useEffect dependencies to include all required values: `[user, token, onError]` and `[onLoadQuestsRef, loadQuests]`
+- ✅ **Initialization Control**: Added `useRef(false)` pattern to prevent multiple initializations, matching RewardStore pattern
+- ✅ **Code Cleanup**: Removed unused `loadFamilyMembers` function that was no longer needed after inlining
+- ✅ **Hoisting Fix**: Moved `useCallback` definition before `useEffect` to prevent TypeScript "used before declaration" errors
+
+**Technical Highlights:**
+
+- Applied the exact same stable pattern successfully used in RewardStore component
+- Maintained parent component integration via `onLoadQuestsRef` prop without compromising dependency management
+- Followed React best practices for useEffect dependencies without workarounds
+- Ensured TypeScript compilation with proper function hoisting order
+
+**Quality Validation:**
+
+- ✅ **Build**: Zero TypeScript compilation errors (`npm run build`)
+- ✅ **Lint**: Zero ESLint warnings (`npm run lint`)
+- ✅ **Unit Tests**: All 60 tests pass (`npm run test`)
+- ✅ **E2E Tests**: All 22 E2E tests pass (verified by user)
+- ✅ **Code Quality**: No ESLint disable workarounds remain in codebase
+
+**Files Modified:**
+
+- `components/quest-dashboard.tsx` - Complete useEffect dependency management overhaul
+- `TASKS.md` - Updated to mark QuestDashboard dependency fix as completed
+
+**Current Status:** QuestDashboard now follows React best practices with proper dependency management, eliminating potential infinite re-rendering issues and maintaining consistency with established codebase patterns. The component is now fully stable and follows the same reliable patterns as RewardStore.
