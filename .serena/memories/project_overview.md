@@ -1,30 +1,38 @@
 # ChoreQuest Project Overview
 
-ChoreQuest is a fantasy RPG-themed family chore management system that transforms household tasks into epic adventures. Built with modern web technologies, it's designed for families who want to gamify their daily routines.
+## Purpose
+ChoreQuest is a fantasy RPG-themed family chore management system that transforms household tasks into epic adventures. It gamifies daily routines for families by providing:
+- Character classes (Knight, Mage, Ranger, Rogue, Healer)
+- Experience points and leveling system
+- Currency system (gold, gems, honor points)
+- Family guild system with role-based access
+- Quest management and reward redemption system
 
-## Vision Statement
-ChoreQuest transforms household chores into an epic fantasy RPG adventure where family members become heroes completing quests (chores) to gain experience, collect treasure, and defeat powerful bosses threatening their realm (home). The system balances healthy competition between siblings with cooperative family challenges, using positive reinforcement and catch-up mechanics to ensure everyone stays engaged.
+## Current Status
+- **Version**: 0.1.0 (Production-ready MVP)
+- **Phase**: Phase 1 complete, ready for Phase 2 enhancements
+- **Deployment**: Enterprise-grade Docker deployment with zero-interaction setup
 
-## Key Features
-- **Fantasy RPG Experience**: Character classes (Knight, Mage, Ranger, Rogue, Healer), XP/leveling, currency system (gold, gems, honor points), boss battles
-- **Family-Focused**: Private family guilds with join codes, role-based access (Guild Master, Hero, Young Hero), real-time updates, SOS help system
-- **Quest System**: Daily/Weekly/Boss Battle categories, difficulty levels, assignment and approval workflow
-- **Progressive Web App**: Mobile-first design, installable, offline capabilities
+## Key Features Implemented
+- Complete user authentication and family management
+- Character creation and progression mechanics
+- Quest system with approval workflows
+- Reward store with redemption and approval system
+- Mobile-responsive design with touch-friendly controls
+- Comprehensive testing suite (unit and E2E tests)
 
-## Current Development Status
-**Phase 1 (MVP)** - Nearly complete:
-- ✅ Authentication & user management (JWT-based)
-- ✅ Database foundation (SQLite with Prisma ORM)
-- ✅ Character system (classes, progression, currencies)
-- ✅ Basic quest system (templates, instances, status management)
-- ✅ Frontend foundation (Next.js 15, React 19, TypeScript)
-- ✅ Development infrastructure (Jest, Playwright, TDD workflow)
-- 🔄 In Progress: Parent dashboard, quest board UI, character stats display
+## Architecture
+- **Frontend**: Next.js 15 App Router with React 19
+- **Backend**: API routes with PostgreSQL database
+- **Real-time**: Socket.io for live updates (planned)
+- **Database**: PostgreSQL with Prisma ORM
+- **Styling**: Tailwind CSS with custom fantasy theme
+- **Testing**: Jest (unit tests) + Playwright (E2E tests)
+- **Deployment**: Docker with production-ready configuration
 
-**Next Phases**: Game enhancement (animations, boss battles, real-time features), social features (leaderboards, SOS system), advanced features (Home Assistant integration, AI recommendations)
-
-## Family-Scoped Privacy
-- All data is isolated by family - no cross-family data leakage
-- Private family guilds with unique invite codes
-- Role-based permissions ensure appropriate access levels
-- Privacy-first analytics - only family-scoped data collection
+## Development Philosophy
+- Test-Driven Development (TDD) approach
+- Family-first design with positive reinforcement
+- Mobile-first responsive design
+- Dark fantasy RPG theme throughout
+- Quality-focused with 80%+ test coverage target

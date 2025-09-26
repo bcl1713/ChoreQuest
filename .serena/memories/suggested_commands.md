@@ -1,143 +1,114 @@
 # ChoreQuest Development Commands
 
-## Essential Daily Commands
-
-### Development Server
+## Essential TDD Commands (Daily Use)
 ```bash
-npm run dev              # Start Next.js development server with Turbopack
-npm run build           # Build production application  
-npm run start           # Start production server
+# Unit testing - primary development cycle
+npm run test                # Run all unit tests
+npm run test:watch          # Watch mode for TDD red-green-refactor cycles
+npm run test:coverage       # Generate test coverage report
+
+# E2E testing - integration verification
+npx playwright test         # Run all E2E tests (requires dev server running)
+npx playwright test --reporter=line  # Clean output for CI/automation
+npx playwright test --headed # Debug mode (only for specific issues)
+
+# Code quality - must pass before commits
+npm run build              # Verify TypeScript compilation (zero errors required)
+npm run lint               # Check ESLint rules (zero warnings/errors required)
 ```
 
-### Code Quality (Run Before Commits)
+## Development Server
 ```bash
-npm run lint            # Run ESLint code quality checks
-npm run test            # Run all unit tests with Jest
-npm run test:watch      # Run tests in watch mode (for TDD)
-npm run test:coverage   # Generate test coverage report
-npm run test:e2e        # Run end-to-end tests with Playwright
+# Primary development
+npm run dev                # Start Next.js development server with Turbopack
+npm run start             # Start production server (after build)
+
+# Development environment
+npm run docker:dev        # Start PostgreSQL and Redis containers
+npm run docker:down       # Stop all containers
 ```
 
-### Database Operations
+## Database Operations
 ```bash
-npm run db:generate     # Generate Prisma client after schema changes
-npm run db:migrate      # Run database migrations
-npm run db:reset        # Reset database to initial state (destructive!)
-npm run db:seed         # Seed database with test data
-npm run db:studio       # Open Prisma Studio database GUI
+# Core database workflow
+npx prisma generate       # Generate Prisma client (after schema changes)
+npx prisma migrate dev    # Create and apply new migration
+npm run db:migrate        # Apply existing migrations
+npm run db:seed           # Populate database with sample data
+npm run db:reset          # Reset database to initial state (destructive)
+npm run db:studio         # Open Prisma Studio GUI for database inspection
 ```
 
-### Docker Development Environment
+## Production Deployment
 ```bash
-npm run docker:dev      # Start PostgreSQL and Redis containers
-npm run docker:down     # Stop all containers
+# Docker production deployment
+docker compose -f docker-compose.prod.yml up -d    # Deploy production stack
+docker compose -f docker-compose.prod.yml down     # Stop production stack
+docker compose -f docker-compose.prod.yml logs -f  # Follow container logs
 ```
 
-## Testing Commands (TDD Workflow)
-
-### Unit Testing
+## Git Workflow Commands
 ```bash
-npm run test                        # Run all unit tests
-npm run test:watch                  # Watch mode for TDD cycles
-npm run test:coverage              # Coverage report (80%+ required)
-npm run test:seed                  # Test database seeding functionality
+# Branch management
+git checkout main         # Switch to main branch
+git checkout -b feature/your-feature  # Create new feature branch
+git status               # Check working directory status
+git add .                # Stage all changes
+git commit -m "message"  # Commit with message
+
+# PR workflow using GitHub CLI
+git push -u origin feature/your-feature           # Push feature branch
+gh pr create --title "Title" --body "Description" # Create pull request
+gh pr merge --squash --delete-branch             # Merge and cleanup
 ```
 
-### End-to-End Testing
+## Quality Gate Sequence (Required Before Merge)
 ```bash
-npx playwright test                 # Run all E2E tests
-npx playwright test --reporter=line # Clean output without report server
-npx playwright test --headed       # Debug mode with browser visible
-npx playwright test specific.spec.ts # Run specific test file
+# Run this sequence - ALL must pass:
+npm run build        # ✅ Zero TypeScript compilation errors
+npm run lint         # ✅ Zero ESLint warnings/errors  
+npm run test         # ✅ All unit tests pass
+npx playwright test  # ✅ All E2E tests pass (requires dev server)
 ```
 
-## Database Management
-
-### Schema Changes Workflow
+## Useful Development Utilities
 ```bash
-# 1. Modify prisma/schema.prisma
-# 2. Generate new client
-npm run db:generate
-# 3. Create migration
-npm run db:migrate
-# 4. Optionally seed with test data
-npm run db:seed
+# Linux system commands (this environment)
+ls -la                   # List directory contents with details
+find . -name "*.tsx"     # Find TypeScript React files
+grep -r "searchTerm" .   # Search for text in files
+ps aux | grep node      # Find running Node processes
+lsof -i :3000           # Check what's using port 3000
+pkill node              # Kill all Node processes (if needed)
 ```
 
-### Database Debugging
+## Project-Specific Scripts
 ```bash
-npm run db:studio      # Visual database browser
-npx prisma format      # Format schema file
-npx prisma validate    # Validate schema syntax
+# Specialized testing
+npm run test:seed       # Test database seeding functionality
+npm run test:e2e        # Alternative E2E test command
+
+# Development helpers
+chmod +x test-character-creation.sh  # Make shell script executable
+./test-character-creation.sh         # Run custom test script
 ```
 
-## Quality Assurance Workflow
-
-### Pre-Commit Checklist
+## Environment Setup
 ```bash
-npm run build          # Verify clean build (zero compilation errors)
-npm run lint           # Zero linting warnings allowed
-npm run test           # All unit tests must pass
-npx playwright test    # All E2E tests must pass
+# Initial project setup
+npm install             # Install all dependencies
+cp .env.example .env    # Copy environment template
+npm run docker:dev      # Start development services
+npm run db:generate     # Generate Prisma client
+npm run db:migrate      # Apply database migrations
+npm run db:seed         # Add sample data
 ```
 
-### Git Workflow Commands
+## Health Monitoring
 ```bash
-git branch                          # Check current branch (never work on main!)
-git checkout -b feature/description # Create feature branch
-git add .                          # Stage changes
-git commit -m "descriptive message" # Commit with clear message
-git push -u origin feature/branch  # Push feature branch
+# Check application health
+curl http://localhost:3000/api/health  # Verify API and database connectivity
+docker ps                             # Check running containers
+docker logs chorequest-app            # View application logs
+docker logs chorequest-postgres       # View database logs
 ```
-
-## Troubleshooting Commands
-
-### Development Issues
-```bash
-rm -rf .next           # Clear Next.js cache
-rm -rf node_modules    # Clear dependencies
-npm install            # Reinstall dependencies
-npx prisma generate    # Regenerate Prisma client
-```
-
-### Database Issues
-```bash
-npm run db:reset       # Reset database completely
-rm prisma/dev.db       # Delete SQLite database file
-npm run db:migrate     # Recreate from migrations
-npm run db:seed        # Repopulate with test data
-```
-
-### Testing Issues
-```bash
-npx playwright install  # Reinstall Playwright browsers
-rm -rf test-results     # Clear old test artifacts
-rm -rf playwright-report # Clear old reports
-```
-
-## Production Deployment (Future)
-```bash
-docker-compose up -d                    # Start production containers
-docker-compose -f docker-compose.prod.yml up # Production deployment
-```
-
-## File System Operations (Linux)
-```bash
-find . -name "*.tsx" -not -path "./node_modules/*"  # Find React components
-grep -r "function" --include="*.ts" lib/            # Search in TypeScript files  
-ls -la app/api/                                     # List API endpoints
-tree -I "node_modules|.next|.git"                  # Project structure overview
-```
-
-## Performance Monitoring
-```bash
-npm run build --analyze  # Analyze bundle size (when configured)
-npm run test:coverage    # Code coverage analysis
-```
-
-## Important Notes
-- **Never work directly on main branch** - always create feature branches
-- **Run quality checks before commits** - build, lint, test, e2e
-- **Database migrations are one-way** - be careful with db:reset
-- **E2E tests require dev server running** - start with `npm run dev` first
-- **Turbopack is enabled** - faster builds and hot reloading in development

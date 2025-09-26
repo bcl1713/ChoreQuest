@@ -1,77 +1,63 @@
 # ChoreQuest Code Style & Conventions
 
-## TypeScript Configuration
-- **Strict Mode**: Enabled with full type safety
-- **Target**: ES2017 with modern features
-- **Module Resolution**: bundler (Next.js optimized)
-- **Path Mapping**: `@/*` maps to project root
-- **JSX**: preserve (handled by Next.js)
+## TypeScript Guidelines
+- **Full Type Safety**: All code uses TypeScript with strict typing
+- **Interface Definitions**: Clear interfaces for props and data structures
+- **Zod Schemas**: Runtime validation with Zod for API inputs
+- **No `any` Types**: Avoid using `any`, prefer specific types
 
-## ESLint Configuration
-- **Base Config**: Extends Next.js core-web-vitals and TypeScript rules
-- **Ignored Directories**: node_modules, .next, build, coverage, lib/generated
-- **No Custom Rules**: Uses Next.js defaults for consistency
+## React Patterns
+- **Functional Components**: Use function declarations, not arrow functions for components
+- **Hooks**: Proper dependency arrays, avoid ESLint disable comments
+- **useCallback**: Wrap functions passed as props to prevent re-renders
+- **Context Usage**: Leverage existing contexts (auth, character) instead of duplicating API calls
+- **Component Structure**: Props interface → component function → export default
 
-## Prettier Configuration
-- **Print Width**: 80 characters
-- **Prose Wrap**: always (for markdown files)
-- **End of Line**: auto (cross-platform compatibility)
-- **Other Settings**: Uses Prettier defaults (2-space indentation, single quotes, no semicolons where optional)
+## API Route Conventions
+- **Next.js 15 Pattern**: Use async params with proper type annotations
+- **Authentication**: Use `getTokenData()` for route authentication
+- **Error Handling**: Consistent HTTP status codes and error responses
+- **Family Scoping**: Always scope data by family ID for security
 
-## Naming Conventions
-- **Files**: kebab-case for components (`quest-dashboard.tsx`), camelCase for utilities (`auth-context.tsx`)
-- **Components**: PascalCase (`QuestDashboard`, `LoginForm`)
-- **Functions**: camelCase (`generateToken`, `verifyPassword`)
-- **Variables**: camelCase (`selectedAssignee`, `familyMembers`)
-- **Constants**: SCREAMING_SNAKE_CASE for enums (`GUILD_MASTER`, `BOSS_BATTLE`)
-- **Types/Interfaces**: PascalCase (`AuthResponse`, `QuestDashboardProps`)
+## Database Patterns
+- **Prisma ORM**: Use Prisma client for all database operations
+- **Transaction Support**: Use `prisma.$transaction()` for multi-table operations
+- **Proper Relations**: Leverage Prisma relationships instead of manual joins
+- **Seeding**: Comprehensive seed data for development and testing
 
-## File Organization
-- **Components**: Feature-based organization in `/components`
-- **Pages**: Next.js App Router in `/app` directory
-- **API Routes**: RESTful structure in `/app/api`
-- **Utilities**: Shared code in `/lib` directory
-- **Types**: Custom definitions in `/types` directory
-- **Tests**: Mirror source structure in `/tests` directory
+## Styling Conventions
+- **Tailwind Classes**: Use utility-first approach with semantic class combinations
+- **Fantasy Theme**: Consistent use of custom CSS variables and utility classes
+- **Mobile-First**: Always start with mobile layouts, enhance with `sm:` prefixes
+- **Touch Targets**: Use `.touch-target` class for 44px minimum touch areas
+- **Color System**: Use theme colors (gold, gem, xp, dark) consistently
 
-## Code Structure Patterns
-- **Export Style**: Named exports preferred, default exports for pages/components
-- **Function Declaration**: Function expressions for components, function declarations for utilities
-- **Error Handling**: Throw errors with descriptive messages, proper error boundaries
-- **Type Safety**: Strict TypeScript, no `any` types unless absolutely necessary with eslint-disable comment
+## Component Naming
+- **PascalCase**: Component files and function names
+- **Descriptive Names**: Clear, intention-revealing names
+- **File Extensions**: Use `.tsx` for React components, `.ts` for utilities
+- **Directory Structure**: Group related components in subdirectories
 
-## Database Conventions
-- **Prisma Schema**: Comprehensive comments explaining relationships
-- **Model Names**: PascalCase (`User`, `QuestInstance`)
-- **Field Names**: camelCase (`familyId`, `createdAt`)
-- **Enums**: SCREAMING_SNAKE_CASE values with descriptive comments
+## Testing Standards
+- **TDD Approach**: Write tests before implementation
+- **Comprehensive Coverage**: Happy path, edge cases, error conditions
+- **Clean Output**: Mock console.error to keep test output clean
+- **E2E Tests**: Focus on user workflows, not implementation details
+- **Test Structure**: Describe blocks for organization, clear test names
 
-## Component Patterns
-- **Props Interface**: Define explicit props interface for each component
-- **State Management**: Local state with hooks, context for shared state
-- **Event Handlers**: Descriptive names (`handleQuestSubmit`, `onAssigneeSelect`)
-- **Conditional Rendering**: Clear boolean conditions, guard clauses
+## Git & Development Workflow
+- **Branch Naming**: 
+  - `feature/description-of-feature`
+  - `bugfix/description-of-bug`
+  - `refactor/description-of-change`
+- **Never Develop on Main**: Always create feature branches
+- **Frequent Commits**: Small, focused commits with clear messages
+- **Quality Gates**: All tests must pass before merging
+- **PR Process**: Use GitHub CLI for PR creation and merging
 
-## API Conventions
-- **RESTful Endpoints**: Standard HTTP methods (GET, POST, PUT, DELETE)
-- **Request/Response**: Typed with Zod schemas for validation
-- **Error Handling**: Consistent error response format
-- **Authentication**: JWT token validation middleware
-
-## Import Organization
-- **Third-party Imports**: First (React, Next.js, libraries)
-- **Internal Imports**: Second (components, utilities, types)
-- **Relative Imports**: Last (local files)
-- **Path Mapping**: Use `@/` for absolute imports from project root
-
-## Comment Guidelines
-- **Schema Comments**: Comprehensive database field explanations
-- **Complex Logic**: Brief explanations for non-obvious code
-- **TODO Comments**: Include ticket/issue references when possible
-- **Type Overrides**: Justify any eslint-disable comments
-
-## Testing Conventions
-- **File Naming**: `*.test.ts` or `*.spec.ts`
-- **Test Organization**: Mirror source directory structure
-- **Test Categories**: Unit (`/tests/unit`), Integration (`/tests/api`), E2E (`/tests/e2e`)
-- **Test Names**: Descriptive test case names explaining expected behavior
+## Code Quality Rules
+- **No Comments**: Code should be self-documenting
+- **ESLint Compliance**: Zero warnings or errors allowed
+- **Build Success**: `npm run build` must pass without errors
+- **Test Coverage**: Maintain 80%+ coverage across all modules
+- **Performance**: Optimize for mobile devices and slower connections

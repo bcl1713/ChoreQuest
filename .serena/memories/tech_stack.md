@@ -1,55 +1,50 @@
-# ChoreQuest Technology Stack
+# ChoreQuest Tech Stack
 
 ## Frontend Technologies
-- **Next.js 15**: Server-side rendering with App Router and Turbopack
+- **Next.js 15**: App Router with Turbopack for fast development
 - **React 19**: Modern React with concurrent features
-- **TypeScript 5**: Full type safety throughout the application
-- **Tailwind CSS 4**: Mobile-first responsive design system with fantasy theme
-- **Framer Motion 12**: Animations and micro-interactions (planned)
+- **TypeScript**: Full type safety throughout application
+- **Tailwind CSS 4**: Utility-first styling with custom fantasy theme
+- **Framer Motion**: Animation library for enhanced UX
 
 ## Backend Technologies
-- **Node.js 18+**: JavaScript runtime environment
-- **Next.js API Routes**: Built-in API endpoints
-- **TypeScript**: Type-safe server-side development
-- **JWT Authentication**: Stateless authentication with bcryptjs password hashing
-- **Zod 4**: Runtime type validation and input sanitization
+- **Next.js API Routes**: RESTful API endpoints
+- **PostgreSQL**: Production database (migrated from SQLite)
+- **Prisma 6.15.0**: Type-safe ORM with automatic migrations
+- **JWT**: Authentication with jsonwebtoken library
+- **bcryptjs**: Password hashing and verification
+- **Redis**: Caching and session management (development setup)
+- **Zod**: Runtime type validation and schema parsing
 
-## Database & ORM
-- **SQLite**: Development database (file-based)
-- **PostgreSQL**: Production database (planned migration path)
-- **Prisma ORM**: Type-safe database operations with migrations
-- **Generated Prisma Client**: Located in `lib/generated/prisma`
+## Development Tools
+- **ESLint**: Code quality and style enforcement
+- **Prettier**: Code formatting (configured)
+- **Jest**: Unit testing framework with Testing Library
+- **Playwright**: End-to-end testing framework
+- **tsx**: TypeScript execution for scripts
 
-## Real-Time & Background Processing (Planned)
-- **Socket.io 4**: WebSocket connections for real-time features
-- **Redis 5**: Session storage, caching, and real-time data
+## Infrastructure & Deployment
+- **Docker**: Development and production containerization
+- **Docker Compose**: Multi-service orchestration
+- **GitHub**: Version control with Git workflow
+- **Socket.io**: Real-time communication (configured, not fully implemented)
 
-## Testing Framework
-- **Jest 30**: Unit testing with 80%+ coverage requirement
-- **@testing-library/react & jest-dom**: Component testing utilities
-- **Playwright 1.55**: End-to-end browser testing
-- **jsdom**: Test environment for React components
+## Key Dependencies
+```json
+{
+  "next": "15.5.2",
+  "react": "19.1.0", 
+  "typescript": "^5",
+  "tailwindcss": "^4",
+  "@prisma/client": "^6.15.0",
+  "framer-motion": "^12.23.12",
+  "jsonwebtoken": "^9.0.2",
+  "zod": "^4.1.5"
+}
+```
 
-## Development & Quality Tools
-- **ESLint**: Code linting with Next.js configuration
-- **Prettier**: Code formatting (80 char width, auto endOfLine)
-- **TypeScript Compiler**: Strict type checking enabled
-- **Docker Compose**: Containerized development environment
-
-## Infrastructure
-- **Docker**: Application containerization
-- **NGINX**: Reverse proxy and static file serving (planned)
-- **Let's Encrypt**: SSL certificate management (planned)
-
-## Package Management
-- **npm**: Package manager with lockfile
-- **Next.js 15.5.2**: Latest framework version
-- **React 19.1.0**: Latest React version
-
-## Architecture Notes
-- **File-based routing**: Next.js App Router in `/app` directory
-- **API Routes**: RESTful endpoints in `/app/api`
-- **Component Structure**: Organized by feature in `/components`
-- **Utility Libraries**: Shared code in `/lib` directory
-- **Type Definitions**: Custom types in `/types` directory
-- **Database Schema**: Prisma schema with comprehensive relationships
+## Development Environment
+- **Node.js**: 20+ required
+- **PostgreSQL**: Local development via Docker
+- **Redis**: Caching layer via Docker
+- **Git**: Version control with branch-based workflow
