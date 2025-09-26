@@ -184,16 +184,27 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - [ ] **Add reward cost management** - Dynamic pricing controls
   - [ ] **Integrate with admin dashboard** - Add reward management to Guild Master interface
 
-#### ⚡ Real-time Updates System
-- [ ] **Server-Sent Events Implementation** - Live database synchronization
-  - [ ] **Create /api/events SSE endpoint** - Server-sent events for real-time updates
-  - [ ] **Add database change triggers** - Detect changes to quests, rewards, character stats
-  - [ ] **Create realtime context** - `lib/realtime-context.tsx` for React state management
-  - [ ] **Update QuestDashboard for realtime** - Live quest status updates
-  - [ ] **Update RewardStore for realtime** - Live reward redemption updates
-  - [ ] **Update character stats for realtime** - Live XP/gold/level updates
-  - [ ] **Add connection management** - Handle SSE disconnections and reconnections
-  - [ ] **Add event filtering** - Family-scoped event delivery only
+#### ⚡ Real-time Updates System (TDD-First Approach)
+- [ ] **RED Phase: Write Tests First** - Complete test suite before implementation
+  - [ ] **Write SSE endpoint unit tests** - `tests/api/events.test.ts` for SSE connection, event emission, cleanup, family filtering
+  - [ ] **Write database change detection tests** - `tests/lib/realtime-events.test.ts` for quest/reward/character change triggers
+  - [ ] **Write real-time context tests** - `tests/lib/realtime-context.test.ts` for React SSE connection management
+  - [ ] **Write integration flow tests** - `tests/integration/realtime-flow.test.ts` for full database→client flow
+  - [ ] **Write E2E multi-tab sync tests** - `tests/e2e/realtime-sync.spec.ts` with data-testid selectors
+- [ ] **GREEN Phase: Implement Features** - Make tests pass
+  - [ ] **Create /api/events SSE endpoint** - Server-sent events endpoint with proper headers and family filtering
+  - [ ] **Implement database change detection** - Prisma middleware or triggers for real-time event emission
+  - [ ] **Create realtime context** - `lib/realtime-context.tsx` for React SSE state management with reconnection logic
+  - [ ] **Add data-testid attributes** - Systematic component IDs for E2E testing reliability
+  - [ ] **Integrate QuestDashboard real-time** - Live quest status updates using real-time context
+  - [ ] **Integrate RewardStore real-time** - Live reward redemption updates using real-time context
+  - [ ] **Integrate character stats real-time** - Live XP/gold/level updates across all displays
+- [ ] **REFACTOR Phase: Optimize & Clean** - Performance and code quality improvements
+  - [ ] **Connection management optimization** - Efficient SSE connection pooling and cleanup
+  - [ ] **Event batching and debouncing** - Prevent UI thrashing from rapid updates
+  - [ ] **Error boundaries and fallback** - Graceful degradation when real-time fails
+  - [ ] **TypeScript interfaces** - Strict typing for all SSE event types
+  - [ ] **Memory leak prevention** - Proper EventSource cleanup and React cleanup
 
 #### 🎭 Enhanced Character Creation
 - [ ] **Class Bonus Display System** - Show class advantages during character selection
