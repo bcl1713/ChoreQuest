@@ -1,14 +1,22 @@
 // Health Check API Endpoint
 // Used by Docker health checks and load balancers
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // Health check endpoint - no authentication required
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Basic application health
-    const healthData = {
+    const healthData: {
+      status: string;
+      timestamp: string;
+      uptime: number;
+      environment: string | undefined;
+      version: string;
+      database?: string;
+      error?: string;
+    } = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
