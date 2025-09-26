@@ -4,9 +4,10 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { questService } from "@/lib/quest-service";
 import { userService } from "@/lib/user-service";
-import { QuestInstance, QuestDifficulty } from "@/lib/generated/prisma";
+import { QuestInstance, QuestDifficulty, QuestStatus } from "@/lib/generated/prisma";
 import { User } from "@/types";
 import { motion } from "framer-motion";
+import { useRealTime } from "@/lib/realtime-context";
 
 interface QuestDashboardProps {
   onError?: (error: string) => void;
@@ -18,6 +19,7 @@ export default function QuestDashboard({
   onLoadQuestsRef,
 }: QuestDashboardProps) {
   const { user, token } = useAuth();
+  const { events, isConnected } = useRealTime();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +95,46 @@ export default function QuestDashboard({
       onLoadQuestsRef(loadQuests);
     }
   }, [onLoadQuestsRef, loadQuests]);
+
+  // Listen for real-time quest updates
+  useEffect(() => {
+    if (!events || events.length === 0) return;
+
+    const latestEvent = events[events.length - 1];
+
+    // Handle quest status changes
+    if (latestEvent.type === 'quest_status_change') {
+      const { questId, newStatus } = latestEvent.data as { questId: string; oldStatus: QuestStatus; newStatus: QuestStatus };
+
+      setQuestInstances(currentQuests =>
+        currentQuests.map(quest =>
+          quest.id === questId
+            ? { ...quest, status: newStatus }
+            : quest
+        )
+      );
+    }
+
+    // Handle quest assignments
+    if (latestEvent.type === 'quest_assignment') {
+      const { questId, assignedToId } = latestEvent.data as { questId: string; assignedToId: string };
+
+      setQuestInstances(currentQuests =>
+        currentQuests.map(quest =>
+          quest.id === questId
+            ? { ...quest, assignedToId }
+            : quest
+        )
+      );
+    }
+
+    // Handle new quests created
+    if (latestEvent.type === 'quest_created') {
+      // Reload quests to get the new one with full data
+      loadQuests();
+    }
+
+  }, [events, loadQuests]);
 
   const handleStatusUpdate = async (questId: string, status: string) => {
     try {
@@ -264,7 +306,7 @@ export default function QuestDashboard({
 
   if (loading) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-8" data-testid="quest-dashboard-loading">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mx-auto mb-4"></div>
         <p className="text-gray-400">Loading quests...</p>
       </div>
@@ -273,11 +315,12 @@ export default function QuestDashboard({
 
   if (error) {
     return (
-      <div className="fantasy-card p-6 text-center">
+      <div className="fantasy-card p-6 text-center" data-testid="quest-dashboard-error">
         <p className="text-red-400 mb-4">⚠️ {error}</p>
         <button
           onClick={loadQuests}
           className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
+          data-testid="quest-dashboard-retry-btn"
         >
           Try Again
         </button>
@@ -292,20 +335,27 @@ export default function QuestDashboard({
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-testid="quest-dashboard">
       {/* Header */}
-      <div>
-        <h2 className="text-3xl font-fantasy text-gray-100">Quest Dashboard</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-fantasy text-gray-100" data-testid="quest-dashboard-title">Quest Dashboard</h2>
+        {/* Real-time connection status */}
+        <div className="flex items-center space-x-2" data-testid="realtime-status">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+          <span className={`text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+            {isConnected ? 'Live Updates' : 'Disconnected'}
+          </span>
+        </div>
       </div>
 
       {/* My Active Quests */}
-      <section>
-        <h3 className="text-xl font-fantasy text-gray-200 mb-4">
+      <section data-testid="my-quests-section">
+        <h3 className="text-xl font-fantasy text-gray-200 mb-4" data-testid="my-quests-title">
           🗡️ My Quests
         </h3>
-        <div className="grid gap-4">
+        <div className="grid gap-4" data-testid="my-quests-list">
           {myQuests.length === 0 ? (
-            <div className="fantasy-card p-6 text-center">
+            <div className="fantasy-card p-6 text-center" data-testid="my-quests-empty">
               <p className="text-gray-400">
                 No active quests. Ready for adventure?
               </p>
@@ -317,36 +367,38 @@ export default function QuestDashboard({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="fantasy-card p-6"
+                data-testid={`my-quest-${quest.id}`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h4 className="text-lg font-medium text-gray-100">
+                    <h4 className="text-lg font-medium text-gray-100" data-testid={`quest-title-${quest.id}`}>
                       {quest.title}
                     </h4>
-                    <p className="text-gray-400 text-sm">{quest.description}</p>
+                    <p className="text-gray-400 text-sm" data-testid={`quest-description-${quest.id}`}>{quest.description}</p>
                   </div>
                   <span
                     className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status)}`}
+                    data-testid={`quest-status-${quest.id}`}
                   >
                     {quest.status.replace("_", " ")}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <div className="flex gap-4 text-sm">
-                    <span className={getDifficultyColor(quest.difficulty)}>
+                  <div className="flex gap-4 text-sm" data-testid={`quest-details-${quest.id}`}>
+                    <span className={getDifficultyColor(quest.difficulty)} data-testid={`quest-difficulty-${quest.id}`}>
                       {quest.difficulty}
                     </span>
-                    <span className="text-gold-400">💰 {quest.goldReward}</span>
-                    <span className="xp-text">⚡ {quest.xpReward} XP</span>
+                    <span className="text-gold-400" data-testid={`quest-gold-reward-${quest.id}`}>💰 {quest.goldReward}</span>
+                    <span className="xp-text" data-testid={`quest-xp-reward-${quest.id}`}>⚡ {quest.xpReward} XP</span>
                     {formatDueDate(quest.dueDate) && (
-                      <span className="text-blue-400">
+                      <span className="text-blue-400" data-testid={`quest-due-date-${quest.id}`}>
                         {formatDueDate(quest.dueDate)}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" data-testid={`quest-actions-${quest.id}`}>
                     {quest.status === "PENDING" &&
                       canUpdateStatus(quest, "IN_PROGRESS") && (
                         <button
@@ -354,6 +406,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "IN_PROGRESS")
                           }
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid={`start-quest-btn-${quest.id}`}
                         >
                           Start Quest
                         </button>
@@ -365,6 +418,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "COMPLETED")
                           }
                           className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid={`complete-quest-btn-${quest.id}`}
                         >
                           Complete
                         </button>
@@ -376,6 +430,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "APPROVED")
                           }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid={`approve-quest-btn-${quest.id}`}
                         >
                           Approve
                         </button>
@@ -390,17 +445,18 @@ export default function QuestDashboard({
 
       {/* Available Quests (for guild masters and unassigned quests) */}
       {(user?.role === "GUILD_MASTER" || unassignedQuests.length > 0) && (
-        <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">
+        <section data-testid="available-quests-section">
+          <h3 className="text-xl font-fantasy text-gray-200 mb-4" data-testid="available-quests-title">
             📋 Available Quests
           </h3>
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-testid="available-quests-list">
             {unassignedQuests.map((quest) => (
               <motion.div
                 key={quest.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="fantasy-card p-6 border-l-4 border-gold-500"
+                data-testid={`available-quest-${quest.id}`}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -425,12 +481,13 @@ export default function QuestDashboard({
                   </div>
 
                   {/* Quest Action Buttons */}
-                  <div className="flex flex-col gap-3 min-w-[200px]">
+                  <div className="flex flex-col gap-3 min-w-[200px]" data-testid={`available-quest-actions-${quest.id}`}>
                     {/* Hero Pickup Button */}
                     {user?.role !== "GUILD_MASTER" && (
                       <button
                         onClick={() => handlePickupQuest(quest.id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                        data-testid={`pickup-quest-btn-${quest.id}`}
                       >
                         <span>⚔️</span>
                         Pick Up Quest
@@ -439,24 +496,25 @@ export default function QuestDashboard({
 
                     {/* Guild Master Controls */}
                     {user?.role === "GUILD_MASTER" && (
-                      <div className="space-y-2">
+                      <div className="space-y-2" data-testid={`guild-master-controls-${quest.id}`}>
                         {/* GM can also pick up quests */}
                         <button
                           onClick={() => handlePickupQuest(quest.id)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
+                          data-testid={`gm-pickup-quest-btn-${quest.id}`}
                         >
                           <span>⚔️</span>
                           Pick Up Quest
                         </button>
 
                         {/* Assignment Section */}
-                        <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+                        <div className="bg-gray-800 rounded-lg p-3 border border-gray-700" data-testid={`quest-assignment-section-${quest.id}`}>
                           <label className="block text-xs font-medium text-gray-300 mb-2">
                             👑 Assign to Hero:
                           </label>
                           <div className="flex gap-2">
                             <select
-                              data-testid="assign-quest-dropdown"
+                              data-testid={`assign-quest-dropdown-${quest.id}`}
                               value={selectedAssignee[quest.id] || ""}
                               onChange={(e) =>
                                 setSelectedAssignee({
@@ -482,6 +540,7 @@ export default function QuestDashboard({
                               }
                               disabled={!selectedAssignee[quest.id]}
                               className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-2 rounded text-sm transition-colors"
+                              data-testid={`assign-quest-btn-${quest.id}`}
                             >
                               Assign
                             </button>
@@ -489,10 +548,11 @@ export default function QuestDashboard({
                         </div>
 
                         {/* Danger Zone - Cancel Quest */}
-                        <div className="bg-red-900/20 rounded-lg p-3 border border-red-800">
+                        <div className="bg-red-900/20 rounded-lg p-3 border border-red-800" data-testid={`cancel-quest-section-${quest.id}`}>
                           <button
                             onClick={() => handleCancelQuest(quest.id)}
                             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
+                            data-testid={`cancel-quest-btn-${quest.id}`}
                           >
                             <span>❌</span>
                             Cancel Quest
@@ -513,17 +573,18 @@ export default function QuestDashboard({
 
       {/* Other Family Quests (visible to guild masters) */}
       {user?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
-        <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">
+        <section data-testid="family-quests-section">
+          <h3 className="text-xl font-fantasy text-gray-200 mb-4" data-testid="family-quests-title">
             👥 Family Quests
           </h3>
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-testid="family-quests-list">
             {otherQuests.map((quest) => (
               <motion.div
                 key={quest.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="fantasy-card p-6 opacity-75"
+                data-testid={`family-quest-${quest.id}`}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -546,9 +607,10 @@ export default function QuestDashboard({
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right" data-testid={`family-quest-status-section-${quest.id}`}>
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status)}`}
+                      data-testid={`family-quest-status-${quest.id}`}
                     >
                       {quest.status.replace("_", " ")}
                     </span>
@@ -559,6 +621,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "APPROVED")
                           }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors mt-2 block"
+                          data-testid={`family-quest-approve-btn-${quest.id}`}
                         >
                           Approve
                         </button>

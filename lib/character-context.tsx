@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './auth-context';
+import { useRealTime } from './realtime-context';
 
 interface Character {
   id: string;
@@ -27,6 +28,7 @@ const CharacterContext = createContext<CharacterContextType | undefined>(undefin
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const { user, token } = useAuth();
+  const { events } = useRealTime();
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +73,31 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchCharacter();
   }, [fetchCharacter]);
+
+  // Listen for real-time character stats updates
+  useEffect(() => {
+    if (!events || events.length === 0 || !character) return;
+
+    const latestEvent = events[events.length - 1];
+
+    // Handle character stats changes
+    if (latestEvent.type === 'character_stats_change') {
+      const { characterId, changes } = latestEvent.data as { characterId: string; changes: Partial<Character> };
+
+      // Only update if it's our character
+      if (characterId === character.id) {
+        setCharacter(currentCharacter => {
+          if (!currentCharacter) return currentCharacter;
+
+          return {
+            ...currentCharacter,
+            ...changes // Apply the stat changes (gold, xp, level, etc.)
+          };
+        });
+      }
+    }
+
+  }, [events, character]);
 
   const refreshCharacter = async () => {
     await fetchCharacter();

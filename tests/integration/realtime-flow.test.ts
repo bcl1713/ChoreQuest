@@ -255,7 +255,7 @@ describe('Real-Time Integration Flow', () => {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
-      const receivedEvents: any[] = [];
+      const receivedEvents: unknown[] = [];
       let connectionEstablished = false;
 
       const readEvents = async () => {

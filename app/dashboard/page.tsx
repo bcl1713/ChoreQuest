@@ -136,21 +136,21 @@ export default function Dashboard() {
                 ChoreQuest
               </h1>
               {family && (
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-gray-400" data-testid="family-info">
                   Guild: <span className="text-gold-400">{family.name}</span> ({family.code})
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1" data-testid="current-time">
                 🕐 {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
               </p>
             </div>
 
             {/* Character info - responsive layout */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <div className="text-left sm:text-right">
-                <p className="text-gray-300 font-medium">{character.name}</p>
-                <p className="text-sm text-gray-400">{getClassDisplay(character.class)} • Level {character.level}</p>
-                <p className="text-xs text-gray-500">{getRoleDisplay(user.role)}</p>
+              <div className="text-left sm:text-right" data-testid="character-info">
+                <p className="text-gray-300 font-medium" data-testid="character-name">{character.name}</p>
+                <p className="text-sm text-gray-400" data-testid="character-class-level">{getClassDisplay(character.class)} • Level {character.level}</p>
+                <p className="text-xs text-gray-500" data-testid="user-role">{getRoleDisplay(user.role)}</p>
               </div>
 
               {/* Action buttons - mobile-optimized */}
@@ -159,6 +159,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => setShowCreateQuest(true)}
                     className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                    data-testid="create-quest-btn"
                   >
                     <span className="hidden sm:inline">⚡ Create Quest</span>
                     <span className="sm:hidden">⚡ Quest</span>
@@ -167,6 +168,7 @@ export default function Dashboard() {
                 <button
                   onClick={logout}
                   className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm transition-colors min-h-[44px] touch-target"
+                  data-testid="logout-btn"
                 >
                   Logout
                 </button>
@@ -188,27 +190,27 @@ export default function Dashboard() {
         </div>
 
         {/* Character Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
-          <div className="fantasy-card p-3 sm:p-6 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12" data-testid="character-stats">
+          <div className="fantasy-card p-3 sm:p-6 text-center" data-testid={`character-gold-${user.id}`}>
             <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2">💰 {character.gold}</div>
             <div className="text-xs sm:text-sm text-gray-400">Gold</div>
           </div>
-          <div className="fantasy-card p-3 sm:p-6 text-center">
+          <div className="fantasy-card p-3 sm:p-6 text-center" data-testid={`character-xp-${user.id}`}>
             <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2">⚡ {character.xp}</div>
             <div className="text-xs sm:text-sm text-gray-400">Experience</div>
           </div>
-          <div className="fantasy-card p-3 sm:p-6 text-center">
+          <div className="fantasy-card p-3 sm:p-6 text-center" data-testid={`character-gems-${user.id}`}>
             <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2">💎 {character.gems}</div>
             <div className="text-xs sm:text-sm text-gray-400">Gems</div>
           </div>
-          <div className="fantasy-card p-3 sm:p-6 text-center">
+          <div className="fantasy-card p-3 sm:p-6 text-center" data-testid={`character-level-${user.id}`}>
             <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2">🏅 {character.honorPoints}</div>
             <div className="text-xs sm:text-sm text-gray-400">Honor Points</div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg">
+        <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg" data-testid="navigation-tabs">
           <button
             onClick={() => setActiveTab('quests')}
             className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
@@ -216,6 +218,7 @@ export default function Dashboard() {
                 ? 'bg-gold-600 text-white'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
             }`}
+            data-testid="quests-tab"
           >
             <span className="hidden sm:inline">⚔️ Quests & Adventures</span>
             <span className="sm:hidden">⚔️ Quests</span>
@@ -227,6 +230,7 @@ export default function Dashboard() {
                 ? 'bg-gold-600 text-white'
                 : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
             }`}
+            data-testid="rewards-tab"
           >
             <span className="hidden sm:inline">🏪 Reward Store</span>
             <span className="sm:hidden">🏪 Rewards</span>
