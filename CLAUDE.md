@@ -605,6 +605,43 @@ PASS messages visible, improving developer experience during TDD workflows.
 
 **Current Status:** ChoreQuest v0.1.0 is now production-ready with enterprise-grade Docker deployment. The application can be deployed by anyone with zero technical interaction required beyond setting secure environment variables. This represents the completion of Phase 1 MVP with full production deployment capability, ready for family use worldwide.
 
+### 2025-09-25: Docker Container Startup Syntax Error Fix
+
+**Issue:** Production Docker containers were failing to start with "syntax error: unexpected redirection" on line 63 of `entrypoint.sh`, causing continuous restart loops in production deployment.
+
+**Root Cause Analysis:**
+
+- **Shell Compatibility Issue**: Line 63 used bash-specific here-string syntax (`<<<`) in a script with `#!/bin/sh` shebang
+- **Syntax Conflict**: The command structure `npx prisma db execute --stdin <<< "SQL" | grep` created conflicting redirections
+- **POSIX Non-Compliance**: Here-string syntax (`<<<`) is bash-specific and not available in POSIX-compliant `/bin/sh`
+
+**Solution Applied:**
+
+- ✅ **Fixed Shell Syntax**: Replaced bash-specific here-string with POSIX-compliant `echo` pipe
+- ✅ **Before**: `npx prisma db execute --stdin <<< "SELECT COUNT(*) FROM users LIMIT 1;" 2>/dev/null | grep -q "0"`
+- ✅ **After**: `echo "SELECT COUNT(*) FROM users LIMIT 1;" | npx prisma db execute --stdin 2>/dev/null | grep -q "0"`
+- ✅ **Maintained Functionality**: Identical logic flow and database seeding behavior preserved
+
+**Development Process:**
+
+- ✅ **Followed Full Development Cycle**: Created feature branch `bugfix/docker-entrypoint-syntax-error`, updated TASKS.md, implemented fix
+- ✅ **Quality Gates Passed**: Build (✅), lint (✅), unit tests (✅ 60/60 tests) all passing
+- ✅ **POSIX Compliance**: Ensured all shell syntax works with `/bin/sh` for maximum container compatibility
+
+**Technical Details:**
+
+- Fixed database initialization check in `seed_database()` function
+- Maintained proper error handling with `2>/dev/null` redirection
+- Used `echo` command piped to `--stdin` for POSIX shell compatibility
+- Preserved automatic database seeding logic for fresh deployments
+
+**Files Modified:**
+
+- `entrypoint.sh` - Fixed line 63 shell syntax compatibility issue
+- `TASKS.md` - Updated with Docker bug fix task tracking and completion
+
+**Current Status:** Docker container startup issue completely resolved. Production deployments now start successfully without syntax errors, enabling reliable zero-interaction deployment for all users.
+
 ### 2025-09-25: E2E Test System Implementation & Reward Store Testing
 
 **Issue:** User reported that none of the E2E tests for the reward store were

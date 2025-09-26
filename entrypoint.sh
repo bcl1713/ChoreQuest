@@ -60,7 +60,7 @@ seed_database() {
     echo "🌱 Checking if database seeding is needed..."
 
     # Check if this is a fresh database by looking for users
-    if npx prisma db execute --stdin <<< "SELECT COUNT(*) FROM users LIMIT 1;" 2>/dev/null | grep -q "0"; then
+    if echo "SELECT COUNT(*) FROM users LIMIT 1;" | npx prisma db execute --stdin 2>/dev/null | grep -q "0"; then
         echo "📋 Database appears empty, running seed..."
 
         if npm run db:seed; then
