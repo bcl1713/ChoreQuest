@@ -1,6 +1,18 @@
 import { EventEmitter } from 'events';
 import { PrismaClient } from '@/lib/generated/prisma';
 
+// Import the broadcast function from the SSE endpoint
+let broadcastToFamily: ((familyId: string, event: { type: string; data: unknown; familyId: string; timestamp: string }) => void) | null = null;
+
+// Lazy import to avoid circular dependencies
+async function getBroadcastFunction() {
+  if (!broadcastToFamily) {
+    const { broadcastToFamily: broadcast } = await import('@/app/api/events/route');
+    broadcastToFamily = broadcast;
+  }
+  return broadcastToFamily;
+}
+
 const prisma = new PrismaClient();
 
 // Event type definitions
@@ -88,7 +100,12 @@ export class DatabaseChangeEmitter extends EventEmitter {
         timestamp: new Date().toISOString()
       };
 
+      // Emit event locally and broadcast to SSE connections
       this.emit('event', event);
+      const broadcast = await getBroadcastFunction();
+      if (broadcast) {
+        broadcast(event.familyId, event);
+      }
     } catch (error) {
       console.error('Error handling quest status change:', error);
     }
@@ -128,7 +145,12 @@ export class DatabaseChangeEmitter extends EventEmitter {
         timestamp: new Date().toISOString()
       };
 
+      // Emit event locally and broadcast to SSE connections
       this.emit('event', event);
+      const broadcast = await getBroadcastFunction();
+      if (broadcast) {
+        broadcast(event.familyId, event);
+      }
     } catch (error) {
       console.error('Error handling character stats change:', error);
     }
@@ -166,7 +188,12 @@ export class DatabaseChangeEmitter extends EventEmitter {
         timestamp: new Date().toISOString()
       };
 
+      // Emit event locally and broadcast to SSE connections
       this.emit('event', event);
+      const broadcast = await getBroadcastFunction();
+      if (broadcast) {
+        broadcast(event.familyId, event);
+      }
     } catch (error) {
       console.error('Error handling reward redemption change:', error);
     }
@@ -200,7 +227,12 @@ export class DatabaseChangeEmitter extends EventEmitter {
         timestamp: new Date().toISOString()
       };
 
+      // Emit event locally and broadcast to SSE connections
       this.emit('event', event);
+      const broadcast = await getBroadcastFunction();
+      if (broadcast) {
+        broadcast(event.familyId, event);
+      }
     } catch (error) {
       console.error('Error handling user role change:', error);
     }
@@ -209,13 +241,6 @@ export class DatabaseChangeEmitter extends EventEmitter {
 
 // Global emitter instance
 const globalEmitter = new DatabaseChangeEmitter();
-
-// Connect emitter to SSE broadcaster
-import { broadcastToFamily } from '../app/api/events/route';
-
-globalEmitter.on('event', (event: RealTimeEvent) => {
-  broadcastToFamily(event.familyId, event);
-});
 
 export { globalEmitter };
 

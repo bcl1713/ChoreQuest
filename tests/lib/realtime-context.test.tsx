@@ -14,7 +14,7 @@ import {
 // Mock fetch globally
 global.fetch = jest.fn();
 
-// Mock EventSource
+// Mock EventSource with Jest mock functionality
 class MockEventSource {
   url: string;
   readyState: number = 0; // CONNECTING
@@ -28,6 +28,8 @@ class MockEventSource {
 
   constructor(url: string) {
     this.url = url;
+    // Store this instance for test access
+    (MockEventSource as any).mock.instances.push(this);
     setTimeout(() => this.simulateConnection(), 10);
   }
 
@@ -56,6 +58,12 @@ class MockEventSource {
 
   close() {
     this.readyState = MockEventSource.CLOSED;
+    // Add to spy tracking
+    if ((this as any)._closeCalled) {
+      (this as any)._closeCalled = (this as any)._closeCalled + 1;
+    } else {
+      (this as any)._closeCalled = 1;
+    }
   }
 
   addEventListener(type: string, listener: EventListener) {
@@ -68,6 +76,12 @@ class MockEventSource {
     // Mock implementation
   }
 }
+
+// Add Jest mock structure
+(MockEventSource as any).mock = {
+  instances: [],
+  calls: []
+};
 
 global.EventSource = MockEventSource as any;
 
@@ -91,6 +105,8 @@ beforeEach(() => {
 afterEach(() => {
   jest.restoreAllMocks();
   jest.clearAllMocks();
+  // Clear EventSource mock instances
+  (MockEventSource as any).mock.instances = [];
 });
 
 // Test component to consume real-time context
@@ -129,7 +145,8 @@ function TestWrapper({
 
 describe('Real-Time Context', () => {
   beforeEach(() => {
-    mockLocalStorage.getItem.mockReturnValue('test-token-123');
+    // Mock localStorage to return valid auth data
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ token: 'test-token-123' }));
   });
 
   describe('Provider Initialization', () => {
@@ -214,7 +231,7 @@ describe('Real-Time Context', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId('connection-status')).toBe('error');
+        expect(screen.getByTestId('connection-status')).toHaveTextContent('error');
       });
     });
 
@@ -302,7 +319,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(questEvent)}\n\n`, 'quest_updated');
+        eventSource.simulateMessage(JSON.stringify(questEvent), 'quest_updated');
       });
 
       await waitFor(() => {
@@ -338,7 +355,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(characterEvent)}\n\n`, 'character_updated');
+        eventSource.simulateMessage(JSON.stringify(characterEvent), 'character_updated');
       });
 
       await waitFor(() => {
@@ -373,7 +390,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(rewardEvent)}\n\n`, 'reward_redemption_updated');
+        eventSource.simulateMessage(JSON.stringify(rewardEvent), 'reward_redemption_updated');
       });
 
       await waitFor(() => {
@@ -407,7 +424,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(roleEvent)}\n\n`, 'user_role_updated');
+        eventSource.simulateMessage(JSON.stringify(roleEvent), 'user_role_updated');
       });
 
       await waitFor(() => {
@@ -445,7 +462,7 @@ describe('Real-Time Context', () => {
 
       events.forEach((event, index) => {
         act(() => {
-          eventSource.simulateMessage(`data: ${JSON.stringify(event)}\n\n`, event.type);
+          eventSource.simulateMessage(JSON.stringify(event), event.type);
         });
       });
 
@@ -470,7 +487,7 @@ describe('Real-Time Context', () => {
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
         // Send malformed JSON
-        eventSource.simulateMessage('data: invalid-json\n\n');
+        eventSource.simulateMessage('invalid-json');
       });
 
       await waitFor(() => {
@@ -497,7 +514,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(invalidEvent)}\n\n`);
+        eventSource.simulateMessage(JSON.stringify(invalidEvent));
       });
 
       await waitFor(() => {
@@ -524,7 +541,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(connectionEvent)}\n\n`, 'connected');
+        eventSource.simulateMessage(JSON.stringify(connectionEvent), 'connected');
       });
 
       // Connection events shouldn't be stored in events array
@@ -558,7 +575,7 @@ describe('Real-Time Context', () => {
 
       const eventSource = (global.EventSource as any).mock.instances[0];
       act(() => {
-        eventSource.simulateMessage(`data: ${JSON.stringify(questEvent)}\n\n`, 'quest_updated');
+        eventSource.simulateMessage(JSON.stringify(questEvent), 'quest_updated');
       });
 
       await waitFor(() => {
@@ -598,7 +615,7 @@ describe('Real-Time Context', () => {
         };
 
         act(() => {
-          eventSource.simulateMessage(`data: ${JSON.stringify(event)}\n\n`, 'quest_updated');
+          eventSource.simulateMessage(JSON.stringify(event), 'quest_updated');
         });
       }
 
@@ -624,11 +641,13 @@ describe('Real-Time Context', () => {
       });
 
       const eventSource = (global.EventSource as any).mock.instances[0];
-      const closeSpy = jest.spyOn(eventSource, 'close');
 
       unmount();
 
-      expect(closeSpy).toHaveBeenCalled();
+      // Need to wait for the cleanup to complete since it happens in useEffect cleanup
+      await waitFor(() => {
+        expect((eventSource as any)._closeCalled).toBeTruthy();
+      });
     });
 
     it('should handle context used outside provider', () => {
@@ -686,13 +705,13 @@ describe('Real-Time Context', () => {
         expect(screen.getByTestId('connection-status')).toHaveTextContent('error');
       });
 
-      // Fast-forward past reconnection delay
+      // Fast-forward past reconnection delay and connection time
       act(() => {
-        jest.advanceTimersByTime(5000);
+        jest.advanceTimersByTime(5100); // 5000ms for reconnection + 100ms for connection
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId('connection-status')).toHaveTextContent('connecting');
+        expect(screen.getByTestId('connection-status')).toHaveTextContent('connected');
       });
 
       jest.useRealTimers();
