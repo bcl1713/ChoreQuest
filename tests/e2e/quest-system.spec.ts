@@ -12,10 +12,10 @@ test.describe('Quest System', () => {
     // Verify Quest Dashboard is visible
     await expect(page.getByText('Quest Dashboard')).toBeVisible();
     await expect(page.getByText('🗡️ My Quests')).toBeVisible();
-    await expect(page.getByText('⚡ Create Quest')).toBeVisible();
+    await expect(page.locator('[data-testid="create-quest-btn"]')).toBeVisible();
 
     // Open quest creation modal
-    await page.locator('header button:has-text("⚡ Create Quest")').click();
+    await page.locator('[data-testid="create-quest-btn"]').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
 
     // Switch to Custom Quest mode
@@ -33,7 +33,7 @@ test.describe('Quest System', () => {
     await page.fill('input[type="number"]:near(:text("Gold Reward"))', '10');
 
     // Submit quest
-    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
+    await page.locator('button[type="submit"]').click();
 
     // Verify quest creation success
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
@@ -48,29 +48,29 @@ test.describe('Quest System', () => {
     await expect(page.getByText('Quest Dashboard')).toBeVisible();
     await expect(page.getByText('🗡️ My Quests')).toBeVisible();
     await expect(page.getByText('No active quests. Ready for adventure?')).toBeVisible();
-    await expect(page.getByText('⚡ Create Quest')).toBeVisible();
+    await expect(page.locator('[data-testid="create-quest-btn"]')).toBeVisible();
   });
 
   test('quest creation modal validation', async ({ page }) => {
     await setupUserWithCharacter(page, 'QuestValidation', { characterClass: 'RANGER' });
 
     // Open quest creation modal
-    await page.locator('header button:has-text("⚡ Create Quest")').click();
+    await page.locator('[data-testid="create-quest-btn"]').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
     await page.click('text=Custom Quest');
 
     // Try submitting empty form - should stay open
-    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
+    await page.locator('button[type="submit"]').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
 
     // Fill title only - should still stay open
     await page.fill('input[placeholder="Enter quest title..."]', 'Valid Quest Title');
-    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
+    await page.locator('button[type="submit"]').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
 
     // Add description - should now succeed
     await page.fill('textarea[placeholder="Describe the quest..."]', 'Valid quest description');
-    await page.locator('.fantasy-card button:has-text("⚡ Create Quest")').click();
+    await page.locator('button[type="submit"]').click();
 
     // Verify success
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
@@ -81,7 +81,7 @@ test.describe('Quest System', () => {
     await setupUserWithCharacter(page, 'QuestCancel', { characterClass: 'HEALER' });
 
     // Open quest creation modal
-    await page.locator('header button:has-text("⚡ Create Quest")').click();
+    await page.locator('[data-testid="create-quest-btn"]').click();
     await expect(page.getByText('Create New Quest')).toBeVisible();
     await page.click('text=Custom Quest');
 

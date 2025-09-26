@@ -25,7 +25,7 @@ test.describe("Quest Template Due Date", () => {
     await expect(page.getByText("Welcome back, Lady Sarah!")).toBeVisible();
 
     // Open quest creation modal
-    await page.getByText("⚡ Create Quest").click();
+    await page.locator('[data-testid="create-quest-btn"]').click();
     await expect(page.locator("text=Create New Quest")).toBeVisible();
 
     // Select a quest template if available
@@ -63,7 +63,7 @@ test.describe("Quest Template Due Date", () => {
     await setupUserWithCharacter(page, 'DueDateValidation', { characterClass: 'RANGER' });
 
     // Open quest creation modal
-    await page.getByText("⚡ Create Quest").click();
+    await page.locator('[data-testid="create-quest-btn"]').click();
     await page.click("text=Custom Quest");
 
     // Fill required fields
@@ -101,7 +101,7 @@ test.describe("Quest Template Due Date", () => {
     await setupUserWithCharacter(page, 'DueDateDisplay', { characterClass: 'ROGUE' });
 
     // Create quest with specific due date
-    await page.getByText("⚡ Create Quest").click();
+    await page.locator('[data-testid="create-quest-btn"]').click();
     await page.click("text=Custom Quest");
 
     await page.fill('input[placeholder="Enter quest title..."]', "Display Test Quest");

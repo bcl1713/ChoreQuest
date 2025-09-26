@@ -10,7 +10,7 @@ test.describe('Quest Pickup and Management', () => {
     await setupUserWithCharacter(page, 'PickupGM');
 
     // Create unassigned quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-btn"]');
     await expect(page.locator("text=Create New Quest")).toBeVisible();
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
@@ -44,7 +44,7 @@ test.describe('Quest Pickup and Management', () => {
     await setupUserWithCharacter(page, 'PermissionTester');
 
     // Create and pick up a quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-btn"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
     await page.fill('input[placeholder="Enter quest title..."]', 'Test Permission Quest');
@@ -81,7 +81,7 @@ test.describe('Quest Pickup and Management', () => {
     await setupUserWithCharacter(page, 'WorkflowTester');
 
     // Create quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-btn"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
     await page.fill('input[placeholder="Enter quest title..."]', 'Workflow Test Quest');

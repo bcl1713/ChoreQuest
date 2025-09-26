@@ -51,7 +51,7 @@ test.describe('Real-Time Multi-Tab Synchronization', () => {
     await page1.click('text=Create New Quest');
     await page1.fill('input[placeholder*="quest title"]', 'Test Real-time Quest');
     await page1.selectOption('select', 'DAILY');
-    await page1.click('button:has-text("Create Quest")');
+    await page1.click('[data-testid="create-quest-btn"]');
 
     // Wait for quest to appear on both pages
     const questSelector = '[data-testid*="quest-"]';
@@ -206,7 +206,7 @@ test.describe('Real-Time Multi-Tab Synchronization', () => {
       // Create activity by starting and completing a quest
       await page1.click('text=Create New Quest');
       await page1.fill('input[placeholder*="quest title"]', 'Activity Test Quest');
-      await page1.click('button:has-text("Create Quest")');
+      await page1.click('[data-testid="create-quest-btn"]');
 
       // Start the quest
       await page1.locator('[data-testid*="quest-start-btn-"]').first().click();
@@ -319,7 +319,7 @@ test.describe('Real-Time Multi-Tab Synchronization', () => {
         await page1.click('text=Create New Quest');
         await page1.fill('input[placeholder*="quest title"]', 'Simultaneous Quest 1');
         await page1.selectOption('select', 'DAILY');
-        await page1.click('button:has-text("Create Quest")');
+        await page1.click('[data-testid="create-quest-btn"]');
       })()
     );
 
@@ -329,7 +329,7 @@ test.describe('Real-Time Multi-Tab Synchronization', () => {
         await page2.click('text=Create New Quest');
         await page2.fill('input[placeholder*="quest title"]', 'Simultaneous Quest 2');
         await page2.selectOption('select', 'DAILY');
-        await page2.click('button:has-text("Create Quest")');
+        await page2.click('[data-testid="create-quest-btn"]');
       })()
     );
 
