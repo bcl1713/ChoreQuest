@@ -477,13 +477,15 @@ describe('Database Change Detection System', () => {
     it('should only emit events for the correct family', async () => {
       const questData = {
         id: 'quest-123',
+        familyId: 'family-456', // Direct familyId property
         status: 'COMPLETED',
-        assignedTo: 'user-123',
-        user: {
-          familyId: 'family-456' // Different family
+        assignedToId: 'user-123',
+        assignedTo: {
+          id: 'user-123',
+          familyId: 'family-456'
         },
         template: {
-          name: 'Clean Kitchen'
+          title: 'Clean Kitchen'
         }
       };
 
@@ -501,11 +503,12 @@ describe('Database Change Detection System', () => {
     it('should not emit events for missing family data', async () => {
       const questDataNoFamily = {
         id: 'quest-123',
+        familyId: null, // Missing family data
         status: 'COMPLETED',
-        assignedTo: 'user-123',
-        user: null, // No user/family data
+        assignedToId: 'user-123',
+        assignedTo: null, // No assigned user
         template: {
-          name: 'Clean Kitchen'
+          title: 'Clean Kitchen'
         }
       };
 
@@ -521,10 +524,14 @@ describe('Database Change Detection System', () => {
     it('should include valid ISO timestamp in all events', async () => {
       const mockQuestData = {
         id: 'quest-123',
+        familyId: 'family-456',
         status: 'STARTED',
-        assignedTo: 'user-123',
-        user: { familyId: 'family-456' },
-        template: { name: 'Test Quest' }
+        assignedToId: 'user-123',
+        assignedTo: {
+          id: 'user-123',
+          familyId: 'family-456'
+        },
+        template: { title: 'Test Quest' }
       };
 
       (mockPrisma.questInstance.findUnique as jest.Mock).mockResolvedValue(mockQuestData);
@@ -541,10 +548,14 @@ describe('Database Change Detection System', () => {
     it('should validate event structure with required fields', async () => {
       const mockQuestData = {
         id: 'quest-123',
+        familyId: 'family-456',
         status: 'STARTED',
-        assignedTo: 'user-123',
-        user: { familyId: 'family-456' },
-        template: { name: 'Test Quest' }
+        assignedToId: 'user-123',
+        assignedTo: {
+          id: 'user-123',
+          familyId: 'family-456'
+        },
+        template: { title: 'Test Quest' }
       };
 
       (mockPrisma.questInstance.findUnique as jest.Mock).mockResolvedValue(mockQuestData);

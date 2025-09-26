@@ -11,6 +11,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import QuestDashboard from "../../components/quest-dashboard";
 import { questService } from "@/lib/quest-service";
 import { userService } from "@/lib/user-service";
+import { RealTimeProvider } from "@/lib/realtime-context";
 
 // Mock the auth context
 const mockUseAuth = jest.fn();
@@ -34,6 +35,13 @@ jest.mock("@/lib/user-service", () => ({
     getFamilyMembers: jest.fn(),
   },
 }));
+
+// Test wrapper component that provides RealTimeProvider
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <RealTimeProvider>
+    {children}
+  </RealTimeProvider>
+);
 
 // Mock framer-motion to avoid animation issues in tests
 jest.mock("framer-motion", () => ({
@@ -87,7 +95,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       token: "mock-token",
     });
 
-    render(<QuestDashboard onError={jest.fn()} />);
+    render(<QuestDashboard onError={jest.fn()} />, { wrapper: TestWrapper });
 
     // Wait for quest data to load
     await waitFor(() => {
@@ -134,7 +142,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       token: "mock-token",
     });
 
-    render(<QuestDashboard onError={jest.fn()} />);
+    render(<QuestDashboard onError={jest.fn()} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText("📋 Available Quests")).toBeInTheDocument();
@@ -145,7 +153,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     // GM controls should exist
     expect(screen.getByText("Pick Up Quest")).toBeInTheDocument();
 
-    const assignDropdown = screen.getByTestId("assign-quest-dropdown");
+    const assignDropdown = screen.getByTestId("assign-quest-dropdown-quest-123");
     expect(assignDropdown).toBeInTheDocument();
 
     expect(screen.getByText("Cancel Quest")).toBeInTheDocument();
@@ -188,7 +196,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       token: null,
     });
 
-    render(<QuestDashboard onError={jest.fn()} />);
+    render(<QuestDashboard onError={jest.fn()} />, { wrapper: TestWrapper });
 
     // Should show error state for no user
     await waitFor(() => {
@@ -217,7 +225,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       success: true,
     });
 
-    render(<QuestDashboard onError={jest.fn()} />);
+    render(<QuestDashboard onError={jest.fn()} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText("📋 Available Quests")).toBeInTheDocument();
@@ -255,7 +263,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       instances: [mockUnassignedQuest],
     });
 
-    const { rerender } = render(<QuestDashboard onError={jest.fn()} />);
+    const { rerender } = render(<QuestDashboard onError={jest.fn()} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
@@ -287,7 +295,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
 
     // GM should see ALL interaction options
     expect(screen.getByText("Pick Up Quest")).toBeInTheDocument();
-    expect(screen.getByTestId("assign-quest-dropdown")).toBeInTheDocument();
+    expect(screen.getByTestId("assign-quest-dropdown-quest-123")).toBeInTheDocument();
     expect(screen.getByText("Cancel Quest")).toBeInTheDocument();
   });
 });

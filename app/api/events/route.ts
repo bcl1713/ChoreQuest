@@ -40,6 +40,18 @@ export function clearCleanupInterval() {
   }
 }
 
+// For testing: clear all connections and timers
+export function clearConnections() {
+  for (const [connectionId, connection] of connections.entries()) {
+    try {
+      connection.controller.close();
+    } catch {
+      // Connection already closed
+    }
+  }
+  connections.clear();
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Verify authentication

@@ -85,6 +85,7 @@ describe('Real-Time Integration Flow', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
     mockGetTokenData.mockResolvedValue(mockUserData);
     (mockPrisma.questInstance.findUnique as jest.Mock).mockResolvedValue(mockQuestData);
     (mockPrisma.character.findUnique as jest.Mock).mockResolvedValue(mockCharacterData);
@@ -92,80 +93,110 @@ describe('Real-Time Integration Flow', () => {
     emitter = new DatabaseChangeEmitter();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     emitter.removeAllListeners();
+
+    // Clear SSE connections to prevent memory leaks
+    const { clearConnections } = await import('../../app/api/events/route');
+    if (clearConnections) {
+      clearConnections();
+    }
+
+    // Clear any pending timers and restore real timers
+    jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   describe('Database Change → SSE Event → Client Update Flow', () => {
-    it('should complete full flow for quest status change', async (done) => {
-      // Setup SSE connection
+    it('should complete full flow for quest status change', (done) => {
+      // Setup SSE connection with AbortController for cleanup
+      const abortController = new AbortController();
       const request = new NextRequest('http://localhost:3000/api/events', {
         method: 'GET',
+        signal: abortController.signal,
         headers: {
           'authorization': 'Bearer valid-token',
           'accept': 'text/event-stream',
         }
       });
 
-      const response = await eventsEndpoint(request);
-      expect(response.status).toBe(200);
+      // Handle async response
+      eventsEndpoint(request).then(response => {
+        expect(response.status).toBe(200);
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
 
-      let eventCount = 0;
-      let connectionEstablished = false;
+        let eventCount = 0;
+        let cleanup = () => {
+          if (reader) {
+            reader.cancel();
+          }
+          abortController.abort();
+        };
 
-      // Read SSE events
-      const readEvents = async () => {
-        try {
-          while (true) {
-            const { value, done: streamDone } = await reader!.read();
-            if (streamDone) break;
+        // Set timeout to prevent hanging
+        const timeout = setTimeout(() => {
+          cleanup();
+          done(new Error('Test timeout - no events received'));
+        }, 4000);
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
+        // Read SSE events
+        const readEvents = async () => {
+          try {
+            while (true) {
+              const { value, done: streamDone } = await reader!.read();
+              if (streamDone) break;
 
-            for (const line of lines) {
-              const eventData = JSON.parse(line.substring(6));
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n').filter(line => line.startsWith('data: '));
 
-              if (eventData.type === 'connected') {
-                connectionEstablished = true;
+              for (const line of lines) {
+                const eventData = JSON.parse(line.substring(6));
 
-                // Simulate database change after connection established
-                setTimeout(async () => {
-                  await emitter.handleQuestStatusChange('quest-123', 'STARTED', 'COMPLETED');
-                }, 50);
-              } else if (eventData.type === 'quest_updated') {
-                expect(eventData).toEqual({
-                  type: 'quest_updated',
-                  data: {
-                    questId: 'quest-123',
-                    status: 'COMPLETED',
-                    userId: 'user-123',
-                    questName: 'Clean Kitchen',
-                    xpAwarded: 100,
-                    goldAwarded: 50
-                  },
-                  familyId: 'family-456',
-                  timestamp: expect.any(String)
-                });
+                if (eventData.type === 'connected') {
+                  // Simulate database change after connection established
+                  setTimeout(async () => {
+                    await emitter.handleQuestStatusChange('quest-123', 'STARTED', 'COMPLETED');
+                  }, 50);
+                } else if (eventData.type === 'quest_updated') {
+                  expect(eventData).toEqual({
+                    type: 'quest_updated',
+                    data: {
+                      questId: 'quest-123',
+                      status: 'COMPLETED',
+                      userId: 'user-123',
+                      questName: 'Clean Kitchen',
+                      xpAwarded: 100,
+                      goldAwarded: 50
+                    },
+                    familyId: 'family-456',
+                    timestamp: expect.any(String)
+                  });
 
-                eventCount++;
+                  eventCount++;
 
-                if (eventCount === 1) {
-                  reader!.cancel();
-                  done();
+                  if (eventCount === 1) {
+                    clearTimeout(timeout);
+                    cleanup();
+                    done();
+                  }
                 }
               }
             }
+          } catch (error) {
+            // Expected when reader is cancelled
+            if (error && error.name !== 'AbortError') {
+              clearTimeout(timeout);
+              done(error);
+            }
           }
-        } catch (error) {
-          // Expected when reader is cancelled
-        }
-      };
+        };
 
-      readEvents();
+        readEvents();
+      }).catch(error => {
+        done(error);
+      });
     });
 
     it('should complete full flow for character stats change', async (done) => {
