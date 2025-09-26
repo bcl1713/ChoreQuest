@@ -3,13 +3,7 @@
  */
 import { PrismaClient } from '@/lib/generated/prisma';
 import {
-  DatabaseChangeEmitter,
-  RealTimeEventType,
-  QuestEventData,
-  CharacterEventData,
-  RewardRedemptionEventData,
-  UserRoleEventData,
-  RealTimeEvent
+  DatabaseChangeEmitter
 } from '../../lib/realtime-events';
 
 // Mock PrismaClient

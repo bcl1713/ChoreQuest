@@ -410,7 +410,7 @@ describe('SSE Events API Endpoint', () => {
 
   describe('Error Handling', () => {
     it('should return 405 for non-GET requests', async () => {
-      const request = new NextRequest('http://localhost:3000/api/events', {
+      new NextRequest('http://localhost:3000/api/events', {
         method: 'POST',
         headers: {
           'authorization': 'Bearer valid-token',

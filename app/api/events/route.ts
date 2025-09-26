@@ -17,7 +17,7 @@ let cleanupInterval: NodeJS.Timeout | null = null;
 
 if (process.env.NODE_ENV !== 'test') {
   cleanupInterval = setInterval(() => {
-    for (const [connectionId, connection] of connections.entries()) {
+    for (const [, connection] of connections.entries()) {
       // Remove connections that haven't been active (this is a simple cleanup)
       // In a real implementation, you'd track last activity per connection
       if (Math.random() < 0.001) { // Very small chance to cleanup randomly
@@ -42,7 +42,7 @@ export function clearCleanupInterval() {
 
 // For testing: clear all connections and timers
 export function clearConnections() {
-  for (const [connectionId, connection] of connections.entries()) {
+  for (const [, connection] of connections.entries()) {
     try {
       connection.controller.close();
     } catch {
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     let tokenData;
     try {
       tokenData = await getTokenData(request);
-    } catch (authError) {
+    } catch {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },

@@ -20,7 +20,7 @@ test.describe('Real-Time Multi-Tab Synchronization', () => {
 
     // Setup user and family for both pages
     await page1.goto('/');
-    const { user, token } = await setupTestUser(page1);
+    const { token } = await setupTestUser(page1);
 
     // Share the same authentication token between both pages
     await page2.goto('/');

@@ -7,15 +7,41 @@ import {
   RealTimeProvider,
   useRealTime,
   RealTimeEvent,
-  RealTimeContextValue,
-  ConnectionStatus
+  RealTimeContextValue
 } from '../../lib/realtime-context';
 
 // Mock fetch globally
 global.fetch = jest.fn();
 
+// TypeScript interfaces for mock
+interface MockEventSourceInstance {
+  url: string;
+  readyState: number;
+  onopen: ((event: Event) => void) | null;
+  onmessage: ((event: MessageEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  _closeCalled?: number;
+  simulateConnection: () => void;
+  simulateMessage: (data: string) => void;
+  simulateError: () => void;
+  close: () => void;
+  addEventListener: (type: string, listener: EventListener) => void;
+  removeEventListener: () => void;
+}
+
+interface MockEventSourceConstructor {
+  new (url: string): MockEventSourceInstance;
+  CONNECTING: number;
+  OPEN: number;
+  CLOSED: number;
+  mock: {
+    instances: MockEventSourceInstance[];
+    calls: unknown[];
+  };
+}
+
 // Mock EventSource with Jest mock functionality
-class MockEventSource {
+class MockEventSource implements MockEventSourceInstance {
   url: string;
   readyState: number = 0; // CONNECTING
   onopen: ((event: Event) => void) | null = null;
@@ -29,7 +55,7 @@ class MockEventSource {
   constructor(url: string) {
     this.url = url;
     // Store this instance for test access
-    (MockEventSource as any).mock.instances.push(this);
+    (MockEventSource as MockEventSourceConstructor).mock.instances.push(this);
     setTimeout(() => this.simulateConnection(), 10);
   }
 
@@ -59,17 +85,17 @@ class MockEventSource {
   close() {
     this.readyState = MockEventSource.CLOSED;
     // Add to spy tracking
-    if ((this as any)._closeCalled) {
-      (this as any)._closeCalled = (this as any)._closeCalled + 1;
+    if (this._closeCalled) {
+      this._closeCalled = this._closeCalled + 1;
     } else {
-      (this as any)._closeCalled = 1;
+      this._closeCalled = 1;
     }
   }
 
   addEventListener(type: string, listener: EventListener) {
-    if (type === 'open') this.onopen = listener as any;
-    if (type === 'message') this.onmessage = listener as any;
-    if (type === 'error') this.onerror = listener as any;
+    if (type === 'open') this.onopen = listener as (event: Event) => void;
+    if (type === 'message') this.onmessage = listener as (event: MessageEvent) => void;
+    if (type === 'error') this.onerror = listener as (event: Event) => void;
   }
 
   removeEventListener() {
@@ -78,12 +104,12 @@ class MockEventSource {
 }
 
 // Add Jest mock structure
-(MockEventSource as any).mock = {
+(MockEventSource as MockEventSourceConstructor).mock = {
   instances: [],
   calls: []
 };
 
-global.EventSource = MockEventSource as any;
+global.EventSource = MockEventSource as unknown as typeof EventSource;
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -106,7 +132,7 @@ afterEach(() => {
   jest.restoreAllMocks();
   jest.clearAllMocks();
   // Clear EventSource mock instances
-  (MockEventSource as any).mock.instances = [];
+  (MockEventSource as MockEventSourceConstructor).mock.instances = [];
 });
 
 // Test component to consume real-time context
@@ -225,7 +251,7 @@ describe('Real-Time Context', () => {
       });
 
       // Simulate error
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateError();
       });
@@ -317,7 +343,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(questEvent), 'quest_updated');
       });
@@ -353,7 +379,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(characterEvent), 'character_updated');
       });
@@ -388,7 +414,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(rewardEvent), 'reward_redemption_updated');
       });
@@ -422,7 +448,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(roleEvent), 'user_role_updated');
       });
@@ -458,9 +484,9 @@ describe('Real-Time Context', () => {
         }
       ];
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
 
-      events.forEach((event, index) => {
+      events.forEach((event) => {
         act(() => {
           eventSource.simulateMessage(JSON.stringify(event), event.type);
         });
@@ -484,7 +510,7 @@ describe('Real-Time Context', () => {
         expect(screen.getByTestId('connection-status')).toHaveTextContent('connected');
       });
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         // Send malformed JSON
         eventSource.simulateMessage('invalid-json');
@@ -512,7 +538,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(invalidEvent));
       });
@@ -539,7 +565,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(connectionEvent), 'connected');
       });
@@ -573,7 +599,7 @@ describe('Real-Time Context', () => {
         timestamp: new Date().toISOString()
       };
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateMessage(JSON.stringify(questEvent), 'quest_updated');
       });
@@ -603,7 +629,7 @@ describe('Real-Time Context', () => {
         expect(screen.getByTestId('connection-status')).toHaveTextContent('connected');
       });
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
 
       // Send more than maximum events (assuming limit is 100)
       for (let i = 0; i < 150; i++) {
@@ -640,13 +666,13 @@ describe('Real-Time Context', () => {
         expect(screen.getByTestId('connection-status')).toHaveTextContent('connected');
       });
 
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
 
       unmount();
 
       // Need to wait for the cleanup to complete since it happens in useEffect cleanup
       await waitFor(() => {
-        expect((eventSource as any)._closeCalled).toBeTruthy();
+        expect(eventSource._closeCalled).toBeTruthy();
       });
     });
 
@@ -696,7 +722,7 @@ describe('Real-Time Context', () => {
       });
 
       // Simulate connection error
-      const eventSource = (global.EventSource as any).mock.instances[0];
+      const eventSource = (global.EventSource as unknown as MockEventSourceConstructor).mock.instances[0];
       act(() => {
         eventSource.simulateError();
       });

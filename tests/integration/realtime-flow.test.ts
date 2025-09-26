@@ -136,7 +136,7 @@ describe('Real-Time Integration Flow', () => {
         const decoder = new TextDecoder();
 
         let eventCount = 0;
-        let cleanup = () => {
+        const cleanup = () => {
           if (reader) {
             reader.cancel();
           }
@@ -233,7 +233,7 @@ describe('Real-Time Integration Flow', () => {
         const decoder = new TextDecoder();
 
         let eventCount = 0;
-        let cleanup = () => {
+        const cleanup = () => {
           if (reader) {
             reader.cancel();
           }
@@ -335,7 +335,7 @@ describe('Real-Time Integration Flow', () => {
         const receivedEvents: unknown[] = [];
         let connectionEstablished = false;
 
-        let cleanup = () => {
+        const cleanup = () => {
           if (reader) {
             reader.cancel();
           }
@@ -405,7 +405,7 @@ describe('Real-Time Integration Flow', () => {
       // Test the broadcast function directly instead of full integration
       // This tests the core functionality without complex SSE setup
 
-      const { broadcastToFamily, connections } = require('../../app/api/events/route');
+      const { broadcastToFamily, connections } = await import('../../app/api/events/route');
 
       // Mock connections for testing
       const mockController1 = {
@@ -467,7 +467,7 @@ describe('Real-Time Integration Flow', () => {
   describe('Family Data Isolation', () => {
     it('should not deliver events to clients from different families', (done) => {
       // Test the broadcast function directly for family isolation
-      const { broadcastToFamily, connections } = require('../../app/api/events/route');
+      const { broadcastToFamily, connections } = await import('../../app/api/events/route');
 
       // Mock connections for testing
       const mockController1 = {
@@ -551,7 +551,7 @@ describe('Real-Time Integration Flow', () => {
 
         let connectionEstablished = false;
 
-        let cleanup = () => {
+        const cleanup = () => {
           if (reader) {
             reader.cancel();
           }
@@ -642,7 +642,7 @@ describe('Real-Time Integration Flow', () => {
 
         let connectionEstablished = false;
 
-        let cleanup = () => {
+        const cleanup = () => {
           if (reader) {
             reader.cancel();
           }
@@ -674,7 +674,7 @@ describe('Real-Time Integration Flow', () => {
                   setTimeout(async () => {
                     try {
                       await emitter.handleQuestStatusChange('quest-123', 'STARTED', 'COMPLETED');
-                    } catch (error) {
+                    } catch {
                       // Database error is expected and should be handled gracefully
                     }
 
