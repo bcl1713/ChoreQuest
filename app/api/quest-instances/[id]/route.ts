@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { PrismaClient, QuestStatus } from '@/lib/generated/prisma';
 import { getTokenData } from '@/lib/auth';
 import { RewardCalculator } from '@/lib/reward-calculator';
+import { emitQuestStatusChange, emitCharacterStatsChange } from '@/lib/realtime-events';
 
 const prisma = new PrismaClient();
 
@@ -87,6 +88,7 @@ export async function PATCH(
     }
 
     let updatedInstance;
+    const oldStatus = questInstance.status;
 
     // If approving quest, calculate and award rewards
     if (status === 'APPROVED' && currentStatus === 'COMPLETED') {
@@ -126,6 +128,12 @@ export async function PATCH(
           const newLevel = levelUpResult?.newLevel || character.level;
 
           // Update character stats
+          const oldCharacterStats = {
+            xp: character.xp,
+            gold: character.gold,
+            level: character.level
+          };
+
           await tx.character.update({
             where: { id: character.id },
             data: {
@@ -135,6 +143,22 @@ export async function PATCH(
               level: newLevel
             }
           });
+
+          // Emit character stats change event
+          const characterChanges: { [key: string]: { old: number; new: number } } = {};
+          if (calculatedRewards.xp > 0) {
+            characterChanges.xp = { old: oldCharacterStats.xp, new: oldCharacterStats.xp + calculatedRewards.xp };
+          }
+          if (calculatedRewards.gold > 0) {
+            characterChanges.gold = { old: oldCharacterStats.gold, new: oldCharacterStats.gold + calculatedRewards.gold };
+          }
+          if (newLevel !== oldCharacterStats.level) {
+            characterChanges.level = { old: oldCharacterStats.level, new: newLevel };
+          }
+
+          if (Object.keys(characterChanges).length > 0) {
+            await emitCharacterStatsChange(character.id, characterChanges);
+          }
 
           // Create transaction record for quest rewards (include level up info if applicable)
           const description = levelUpResult
@@ -163,6 +187,9 @@ export async function PATCH(
         data: updateData
       });
     }
+
+    // Emit quest status change event
+    await emitQuestStatusChange(questId, oldStatus, status);
 
     return NextResponse.json({ instance: updatedInstance });
   } catch (error) {

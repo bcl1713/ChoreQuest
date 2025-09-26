@@ -12,26 +12,47 @@ interface SSEConnection {
 // Global connection store (in production, this would be Redis or similar)
 const connections = new Map<string, SSEConnection>();
 
-// Cleanup inactive connections periodically
-setInterval(() => {
-  for (const [connectionId, connection] of connections.entries()) {
-    // Remove connections that haven't been active (this is a simple cleanup)
-    // In a real implementation, you'd track last activity per connection
-    if (Math.random() < 0.001) { // Very small chance to cleanup randomly
-      try {
-        connection.controller.close();
-      } catch {
-        // Connection already closed
+// Cleanup inactive connections periodically (only in production)
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+if (process.env.NODE_ENV !== 'test') {
+  cleanupInterval = setInterval(() => {
+    for (const [connectionId, connection] of connections.entries()) {
+      // Remove connections that haven't been active (this is a simple cleanup)
+      // In a real implementation, you'd track last activity per connection
+      if (Math.random() < 0.001) { // Very small chance to cleanup randomly
+        try {
+          connection.controller.close();
+        } catch {
+          // Connection already closed
+        }
+        connections.delete(connectionId);
       }
-      connections.delete(connectionId);
     }
+  }, 30000); // Run every 30 seconds
+}
+
+// For testing: allow clearing the interval
+export function clearCleanupInterval() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
   }
-}, 30000); // Run every 30 seconds
+}
 
 export async function GET(request: NextRequest) {
   try {
     // Verify authentication
-    const tokenData = await getTokenData(request);
+    let tokenData;
+    try {
+      tokenData = await getTokenData(request);
+    } catch (authError) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!tokenData) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getTokenData } from '@/lib/auth';
+import { emitRewardRedemptionChange, emitCharacterStatsChange } from '@/lib/realtime-events';
 
 const updateRedemptionSchema = z.object({
   status: z.enum(['APPROVED', 'DENIED', 'FULFILLED']),
@@ -56,14 +57,23 @@ export async function PATCH(
     }
 
     // Handle refund if denying a redemption
+    const oldStatus = redemption.status;
     const result = await prisma.$transaction(async (tx) => {
       // If denying the redemption, refund the gold
       if (validatedData.status === 'DENIED' && redemption.status === 'PENDING') {
+        const oldGold = redemption.user.character!.gold;
+        const newGold = oldGold + redemption.cost;
+
         await tx.character.update({
           where: { userId: redemption.userId },
           data: {
-            gold: redemption.user.character!.gold + redemption.cost
+            gold: newGold
           }
+        });
+
+        // Emit character stats change event for refund
+        await emitCharacterStatsChange(redemption.user.character!.id, {
+          gold: { old: oldGold, new: newGold }
         });
 
         // Create refund transaction record
@@ -108,6 +118,9 @@ export async function PATCH(
 
       return updatedRedemption;
     });
+
+    // Emit reward redemption change event
+    await emitRewardRedemptionChange(resolvedParams.id, oldStatus, validatedData.status);
 
     return NextResponse.json({
       success: true,

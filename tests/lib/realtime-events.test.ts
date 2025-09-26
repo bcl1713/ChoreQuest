@@ -64,14 +64,18 @@ describe('Database Change Detection System', () => {
     const mockQuestData = {
       id: 'quest-123',
       status: 'COMPLETED',
-      assignedTo: 'user-123',
-      xpAwarded: 100,
-      goldAwarded: 50,
-      user: {
+      assignedToId: 'user-123',
+      familyId: 'family-456',
+      title: 'Clean Kitchen', // Direct title property
+      xpReward: 100,
+      goldReward: 50,
+      assignedTo: {
+        id: 'user-123',
+        name: 'Test User',
         familyId: 'family-456'
       },
       template: {
-        name: 'Clean Kitchen',
+        title: 'Clean Kitchen',
         baseXP: 100
       }
     };
@@ -94,8 +98,8 @@ describe('Database Change Detection System', () => {
           status: newStatus,
           userId: 'user-123',
           questName: 'Clean Kitchen',
-          xpAwarded: null,
-          goldAwarded: null
+          xpAwarded: 100,
+          goldAwarded: 50
         },
         familyId: 'family-456',
         timestamp: expect.any(String)
@@ -116,8 +120,8 @@ describe('Database Change Detection System', () => {
           status: newStatus,
           userId: 'user-123',
           questName: 'Clean Kitchen',
-          xpAwarded: null,
-          goldAwarded: null
+          xpAwarded: 100,
+          goldAwarded: 50
         },
         familyId: 'family-456',
         timestamp: expect.any(String)

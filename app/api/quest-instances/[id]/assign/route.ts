@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getTokenData } from "@/lib/auth";
+import { emitQuestStatusChange } from "@/lib/realtime-events";
 
 const questAssignSchema = z.object({
   assigneeId: z.string().min(1, "Assignee ID is required"),
@@ -87,6 +88,7 @@ export async function PATCH(
     }
 
     // Update quest assignment using relation instead of foreign key
+    const oldStatus = questInstance.status;
     const updatedInstance = await prisma.questInstance.update({
       where: { id: questId },
       data: {
@@ -104,6 +106,9 @@ export async function PATCH(
         template: true,
       },
     });
+
+    // Emit quest status change event
+    await emitQuestStatusChange(questId, oldStatus, "PENDING");
 
     return NextResponse.json({
       success: true,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getTokenData } from '@/lib/auth';
+import { emitRewardRedemptionChange, emitCharacterStatsChange } from '@/lib/realtime-events';
 
 const redeemRewardSchema = z.object({
   rewardId: z.string().min(1, 'Reward ID is required'),
@@ -55,12 +56,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Start transaction to ensure data consistency
+    const oldGold = character.gold;
+    const newGold = oldGold - reward.cost;
+
     const result = await prisma.$transaction(async (tx) => {
 
       // Deduct gold from character
       await tx.character.update({
         where: { id: character.id },
-        data: { gold: character.gold - reward.cost }
+        data: { gold: newGold }
       });
 
       // Create transaction record for gold deduction
@@ -96,9 +100,17 @@ export async function POST(request: NextRequest) {
 
       return {
         redemption,
-        newGoldBalance: character.gold - reward.cost,
+        newGoldBalance: newGold,
       };
     });
+
+    // Emit character stats change event for gold deduction
+    await emitCharacterStatsChange(character.id, {
+      gold: { old: oldGold, new: newGold }
+    });
+
+    // Emit reward redemption creation event
+    await emitRewardRedemptionChange(result.redemption.id, '', 'PENDING');
 
     return NextResponse.json({
       success: true,

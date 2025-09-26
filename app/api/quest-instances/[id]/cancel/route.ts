@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getTokenData } from '@/lib/auth';
+import { emitQuestStatusChange } from '@/lib/realtime-events';
 
 export async function DELETE(
   req: NextRequest,
@@ -38,6 +39,9 @@ export async function DELETE(
         error: 'Cannot cancel completed or approved quests'
       }, { status: 409 });
     }
+
+    // Emit quest cancellation event before deletion (use EXPIRED to indicate removal)
+    await emitQuestStatusChange(questId, questInstance.status, 'EXPIRED');
 
     // Delete the quest instance
     await prisma.questInstance.delete({

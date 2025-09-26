@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { NextRequest } from 'next/server';
-import { GET as eventsEndpoint } from '../../app/api/events/route';
+import { GET as eventsEndpoint, clearCleanupInterval } from '../../app/api/events/route';
 import * as auth from '@/lib/auth';
 
 // Mock the auth module
@@ -16,6 +16,11 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+// Clear the cleanup interval after all tests to prevent Jest hanging
+afterAll(() => {
+  clearCleanupInterval();
 });
 
 describe('SSE Events API Endpoint', () => {

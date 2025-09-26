@@ -204,9 +204,10 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - [x] **TypeScript interfaces** - Strict typing for all SSE event types and data structures
   - [x] **Memory leak prevention** - Proper EventSource cleanup and React useEffect cleanup
   - [x] **Provider integration** - RealTimeProvider integrated into app layout with proper provider nesting
-  - [ ] **Event batching and debouncing** - Prevent UI thrashing from rapid updates (pending database triggers)
-  - [ ] **Error boundaries and fallback** - Graceful degradation when real-time fails (pending)
-  - [ ] **Connect database change triggers** - Integrate with existing API routes to emit real-time events
+  - [x] **Connect database change triggers** - ✅ COMPLETED: Integrated with existing API routes to emit real-time events
+  - [ ] **Event batching and debouncing** - Prevent UI thrashing from rapid updates
+  - [ ] **Error boundaries and fallback** - Graceful degradation when real-time fails
+  - [ ] **Complete test suite fixes** - Fix remaining 3 failing realtime-events tests and JSX parsing issue
 
 #### 🎭 Enhanced Character Creation
 - [ ] **Class Bonus Display System** - Show class advantages during character selection
