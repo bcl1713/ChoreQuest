@@ -107,9 +107,9 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
   };
 
   return (
-    <div className="fantasy-card p-8 w-full max-w-md mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold mb-2">
+    <div className="fantasy-card p-4 sm:p-8 w-full max-w-md mx-auto">
+      <div className="text-center mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold mb-2">
           {getTitle()}
         </h2>
         {type === 'create-family' && (
@@ -142,7 +142,7 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
               placeholder={field.placeholder}
               value={formData[field.name] || ''}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+              className="w-full px-4 py-4 bg-dark-700 border border-dark-600 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-base touch-target"
               disabled={isLoading}
             />
             {validationErrors[field.name] && (
@@ -160,7 +160,7 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full fantasy-button py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full fantasy-button py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed touch-target"
         >
           {isLoading ? (
             <span className="flex items-center justify-center">
