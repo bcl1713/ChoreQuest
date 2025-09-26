@@ -129,3 +129,8 @@ body {
 .glow-xp {
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
+
+/* Mobile touch targets - minimum 44px for accessibility */
+.touch-target {
+  @apply min-w-[44px] min-h-[44px];
+}
