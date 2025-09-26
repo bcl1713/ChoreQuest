@@ -142,6 +142,117 @@ development tasks organized by implementation phases.
 
 ---
 
+## 🌟 ChoreQuest 0.2.0 Release Plan - "Advanced Family Management"
+
+### Overview
+
+ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a fully customizable family management platform. This release introduces quest template creation, reward management, multi-Guild Master support, real-time updates, and enhanced character creation with class bonuses.
+
+### Core Features for 0.2.0
+
+#### 🔧 Multi-Guild Master System
+- [ ] **Multi-Guild Master Role Support** - Allow couples to co-manage families with equal permissions
+  - [ ] **Update API role checks** - Modify 6 existing API endpoints to support multiple Guild Masters per family
+  - [ ] **Create user promotion endpoint** - `POST /api/users/[id]/promote` - Promote family member to Guild Master
+  - [ ] **Create user demotion endpoint** - `POST /api/users/[id]/demote` - Demote Guild Master to Hero (with last-GM safeguards)
+  - [ ] **Update quest-templates API** - Support multiple Guild Masters in quest template creation
+  - [ ] **Update quest-instances APIs** - Support multiple Guild Masters in quest management (6 endpoints)
+  - [ ] **Create Guild Master management UI** - Interface for promoting/demoting family members
+  - [ ] **Add safeguard logic** - Prevent demoting the last Guild Master in a family
+
+#### 📝 Quest Template Management System
+- [ ] **Quest Template Management UI** - Complete CRUD interface for Guild Masters
+  - [ ] **Create QuestTemplateManager component** - Full template creation and editing interface
+  - [ ] **Add template editing modal** - Edit existing quest templates with all fields
+  - [ ] **Add template deletion** - Safe deletion with usage confirmation
+  - [ ] **Add template activation/deactivation** - Toggle template availability
+  - [ ] **Add class bonus configuration** - Interface for setting class-specific bonuses
+  - [ ] **Add template preview** - Show how template will appear to users
+  - [ ] **Integrate with admin dashboard** - Add template management to Guild Master interface
+
+#### 🎁 Reward Management System
+- [ ] **Reward Creation & Editing APIs** - Complete CRUD backend for rewards
+  - [ ] **Add POST /api/rewards** - Create new family rewards
+  - [ ] **Create /api/rewards/[id]** - PUT/DELETE endpoints for reward editing
+  - [ ] **Add reward validation schemas** - Zod schemas for reward data validation
+  - [ ] **Add reward ownership checks** - Ensure family-scoped reward access
+- [ ] **Reward Management UI** - Complete CRUD interface for Guild Masters
+  - [ ] **Create RewardManager component** - Full reward creation and editing interface
+  - [ ] **Add reward editing modal** - Edit existing rewards with all fields
+  - [ ] **Add reward deletion** - Safe deletion with redemption history checks
+  - [ ] **Add reward activation/deactivation** - Toggle reward availability
+  - [ ] **Add reward cost management** - Dynamic pricing controls
+  - [ ] **Integrate with admin dashboard** - Add reward management to Guild Master interface
+
+#### ⚡ Real-time Updates System
+- [ ] **Server-Sent Events Implementation** - Live database synchronization
+  - [ ] **Create /api/events SSE endpoint** - Server-sent events for real-time updates
+  - [ ] **Add database change triggers** - Detect changes to quests, rewards, character stats
+  - [ ] **Create realtime context** - `lib/realtime-context.tsx` for React state management
+  - [ ] **Update QuestDashboard for realtime** - Live quest status updates
+  - [ ] **Update RewardStore for realtime** - Live reward redemption updates
+  - [ ] **Update character stats for realtime** - Live XP/gold/level updates
+  - [ ] **Add connection management** - Handle SSE disconnections and reconnections
+  - [ ] **Add event filtering** - Family-scoped event delivery only
+
+#### 🎭 Enhanced Character Creation
+- [ ] **Class Bonus Display System** - Show class advantages during character selection
+  - [ ] **Update CharacterCreation component** - Add class bonus information display
+  - [ ] **Create class bonus calculation** - Calculate bonuses from quest templates
+  - [ ] **Add visual bonus indicators** - Show XP/gold bonuses for each class
+  - [ ] **Add quest type examples** - Show which quest types benefit each class
+  - [ ] **Add class recommendation engine** - Suggest classes based on family quest patterns
+  - [ ] **Add bonus explanation tooltips** - Detailed explanations of class advantages
+
+#### 🏠 Extended Demo Families
+- [ ] **Second Demo Family Creation** - "The Johnson Family" with different dynamics
+  - [ ] **Create Johnson family seed data** - Alternative quest templates and rewards
+  - [ ] **Add multi-Guild Master examples** - Show co-parenting scenarios in demo data
+  - [ ] **Create age-appropriate quest variations** - Different quest complexity levels
+  - [ ] **Add diverse reward types** - Various reward categories and costs
+  - [ ] **Add family personality differences** - Different management styles in demos
+  - [ ] **Document family differences** - Clear differentiation between demo families
+
+#### 🛡️ Admin Management Interface
+- [ ] **Consolidated Admin Dashboard** - Central management for all Guild Master functions
+  - [ ] **Create /app/admin page** - Dedicated admin interface
+  - [ ] **Add quest template management section** - Template CRUD in admin dashboard
+  - [ ] **Add reward management section** - Reward CRUD in admin dashboard
+  - [ ] **Add Guild Master management section** - User role promotion/demotion
+  - [ ] **Add family statistics panel** - Overview of family engagement and progress
+  - [ ] **Add real-time activity monitor** - Live feed of family member activities
+  - [ ] **Add admin navigation** - Easy access to all management functions
+
+### Implementation Timeline
+
+#### Week 1: Core Management Systems
+1. Multi-Guild Master API updates and role system
+2. Quest Template Management UI and integration
+3. Reward Management APIs and UI
+4. Admin dashboard foundation
+
+#### Week 2: Real-time Features
+5. Server-Sent Events implementation
+6. Real-time context and component updates
+7. Live synchronization testing and optimization
+
+#### Week 3: Enhanced Experience
+8. Character creation class bonus display
+9. Extended demo family with multi-GM examples
+10. Final testing, documentation, and release preparation
+
+### Quality Gates for 0.2.0
+
+- ✅ **Build**: Zero compilation errors (`npm run build`)
+- ✅ **Lint**: Zero ESLint warnings (`npm run lint`)
+- ✅ **Unit Tests**: All tests pass (`npm run test`)
+- ✅ **E2E Tests**: All workflows functional (`npx playwright test`)
+- ✅ **Real-time**: SSE connections stable and efficient
+- ✅ **Multi-GM**: Proper role management without security issues
+- ✅ **Mobile**: All new features work on mobile devices
+
+---
+
 ## 🎮 Phase 2: Game Enhancement - "Now It's Actually Fun"
 
 ### 🎨 Visual & UI Enhancement
