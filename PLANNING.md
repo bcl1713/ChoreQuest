@@ -2,14 +2,23 @@
 
 ## Vision Statement
 
-ChoreQuest transforms household chores into an epic fantasy RPG adventure where family members become heroes completing quests (chores) to gain experience, collect treasure, and defeat powerful bosses threatening their realm (home). The system balances healthy competition between siblings with cooperative family challenges, using positive reinforcement and catch-up mechanics to ensure everyone stays engaged.
+ChoreQuest transforms household chores into an epic fantasy RPG adventure where
+family members become heroes completing quests (chores) to gain experience,
+collect treasure, and defeat powerful bosses threatening their realm (home). The
+system balances healthy competition between siblings with cooperative family
+challenges, using positive reinforcement and catch-up mechanics to ensure
+everyone stays engaged.
 
 ### Key Differentiators
+
 - **Persistent boss battles** that require real teamwork and family cooperation
 - **Full RPG progression** with classes, abilities, and equipment customization
-- **Real-time collaboration** with push notifications and live family activity updates
-- **Dual competitive/cooperative mechanics** that strengthen family bonds rather than create division
-- **Smart home integration** for automated quest generation and completion detection
+- **Real-time collaboration** with push notifications and live family activity
+  updates
+- **Dual competitive/cooperative mechanics** that strengthen family bonds rather
+  than create division
+- **Smart home integration** for automated quest generation and completion
+  detection
 - **Seasonal content** that keeps the experience fresh and engaging year-round
 
 ## Architecture Overview
@@ -41,10 +50,12 @@ ChoreQuest transforms household chores into an epic fantasy RPG adventure where 
 ```
 
 ### Component Architecture
+
 - **Frontend**: Mobile-first React 18 + Next.js 15 Progressive Web App
 - **Backend**: Node.js/Express REST API with GraphQL layer for complex queries
 - **Database**: PostgreSQL with Prisma ORM for type-safe operations
-- **Real-time**: Socket.io for live updates, family activity feeds, and boss battles
+- **Real-time**: Socket.io for live updates, family activity feeds, and boss
+  battles
 - **Caching**: Redis for sessions, leaderboards, and performance optimization
 - **Infrastructure**: Docker Compose containerization with NGINX reverse proxy
 
@@ -53,18 +64,21 @@ ChoreQuest transforms household chores into an epic fantasy RPG adventure where 
 ### Frontend Technologies
 
 #### Core Framework & Language
+
 - **Next.js 15** - Server-side rendering with App Router for optimal performance
 - **React 18** - Modern React with concurrent features and suspense
 - **TypeScript 5.4+** - Full type safety throughout the application
 - **Tailwind CSS 3.4+** - Mobile-first responsive design system
 
 #### UI & Animation
+
 - **Framer Motion 11+** - Smooth animations and micro-interactions
 - **@headlessui/react** - Accessible UI components
 - **Lucide React** - Consistent icon library
 - **React Query (TanStack)** - Efficient server state management and caching
 
 #### PWA & Mobile Features
+
 - **next-pwa** - Progressive Web App capabilities
 - **workbox-webpack-plugin** - Service worker and offline functionality
 - **Web Push API** - Browser-native push notifications
@@ -72,17 +86,21 @@ ChoreQuest transforms household chores into an epic fantasy RPG adventure where 
 ### Backend Technologies
 
 #### Core Server & API
+
 - **Node.js 18+** - JavaScript runtime environment
 - **Express.js** - Web application framework
 - **TypeScript** - Type-safe server-side development
-- **GraphQL with Apollo** - Flexible data fetching for complex family relationships
+- **GraphQL with Apollo** - Flexible data fetching for complex family
+  relationships
 
 #### Database & ORM
+
 - **PostgreSQL 15** - Primary relational database
 - **Prisma ORM** - Type-safe database operations with migrations
 - **Database Migrations** - Version-controlled schema management
 
 #### Authentication & Security
+
 - **JSON Web Tokens (JWT)** - Stateless authentication system
 - **bcrypt** - Password hashing and security
 - **express-rate-limit** - API rate limiting protection
@@ -90,6 +108,7 @@ ChoreQuest transforms household chores into an epic fantasy RPG adventure where 
 - **Helmet.js** - Security headers and protection middleware
 
 #### Real-time & Background Processing
+
 - **Socket.io** - WebSocket connections for real-time features
 - **Redis** - Session storage, caching, and real-time data
 - **node-cron** - Scheduled task management
@@ -98,11 +117,13 @@ ChoreQuest transforms household chores into an epic fantasy RPG adventure where 
 ### Infrastructure & Deployment
 
 #### Containerization & Orchestration
+
 - **Docker** - Application containerization
 - **Docker Compose** - Multi-service development and deployment
 - **NGINX** - Reverse proxy, static file serving, SSL termination
 
 #### Development & Quality Tools
+
 - **ESLint** - Code linting and style enforcement
 - **Prettier** - Code formatting
 - **Jest** - Unit testing framework
@@ -112,6 +133,7 @@ ChoreQuest transforms household chores into an epic fantasy RPG adventure where 
 ### Database Schema Design
 
 #### Core Entity Relationships
+
 ```sql
 -- User Management & Family Structure
 families (id, name, invite_code, settings, created_at)
@@ -143,6 +165,7 @@ activity_feed (id, family_id, user_id, activity_type, title, description, metada
 ### Development Setup Requirements
 
 #### Core Development Tools
+
 - **Node.js 18+** - JavaScript runtime
 - **npm 9+** - Package manager
 - **Git** - Version control system
@@ -151,6 +174,7 @@ activity_feed (id, family_id, user_id, activity_type, title, description, metada
 - **Redis 7** - Caching and session store
 
 #### Code Editors & Extensions
+
 - **Visual Studio Code** (recommended)
   - TypeScript extension
   - ESLint extension
@@ -159,6 +183,7 @@ activity_feed (id, family_id, user_id, activity_type, title, description, metada
   - Tailwind CSS IntelliSense
 
 #### Development Database Setup
+
 ```bash
 # Local development environment
 docker-compose -f docker-compose.dev.yml up -d postgres redis
@@ -169,12 +194,14 @@ npm run dev
 ```
 
 #### Testing Tools
+
 - **Jest** - Unit testing framework
 - **React Testing Library** - Component testing utilities
 - **Playwright** - End-to-end browser testing
 - **Supertest** - API endpoint testing
 
 #### Quality Assurance Tools
+
 - **ESLint** - JavaScript/TypeScript linting
 - **Prettier** - Code formatting
 - **TypeScript Compiler** - Type checking
@@ -184,6 +211,7 @@ npm run dev
 ### Production Deployment Requirements
 
 #### Infrastructure Components
+
 - **Docker Host** - Container runtime environment
 - **NGINX** - Web server and reverse proxy
 - **Let's Encrypt** - SSL certificate management
@@ -191,6 +219,7 @@ npm run dev
 - **Redis Server** - Production cache and sessions
 
 #### Monitoring & Maintenance
+
 - **Application Health Checks** - Built-in health monitoring endpoints
 - **Database Backup Strategy** - Automated daily backups with retention
 - **Log Management** - Centralized logging and error tracking
@@ -226,20 +255,25 @@ docker-compose up -d                           # Production deployment
 ### External Service Integrations
 
 #### Required Third-Party Services
+
 - **Email Service Provider** (optional) - For password resets and notifications
 - **File Storage** (optional) - Avatar images and achievement badges
 
 #### Optional Integration Services
+
 - **Home Assistant** - Smart home integration API
 - **Push Notification Services** - Enhanced mobile notifications
-- **Analytics Services** - User engagement and application performance monitoring
+- **Analytics Services** - User engagement and application performance
+  monitoring
 
 ## Implementation Strategy
 
 ### Development Phases
 
 #### Phase 1: Core Foundation (3-4 weeks)
+
 **MVP: "It Actually Works" Release**
+
 - User authentication with family grouping
 - Basic character creation and progression
 - Core quest system (create, assign, complete, approve)
@@ -248,7 +282,9 @@ docker-compose up -d                           # Production deployment
 - Parent dashboard for quest management
 
 #### Phase 2: Game Enhancement (3-4 weeks)
+
 **The "Now It's Actually Fun" Release**
+
 - Fantasy-themed UI with animations
 - Avatar customization system
 - Class abilities and special powers
@@ -257,7 +293,9 @@ docker-compose up -d                           # Production deployment
 - Achievement system with celebrations
 
 #### Phase 3: Social Features (3-4 weeks)
+
 **The "Family Competition & Cooperation" Release**
+
 - Dual leaderboard system
 - SOS help request system
 - Live activity feed
@@ -266,7 +304,9 @@ docker-compose up -d                           # Production deployment
 - Advanced boss battle mechanics
 
 #### Phase 4: Advanced Features (Ongoing)
+
 **The "Full Featured Experience" Release**
+
 - Home Assistant integration
 - Seasonal event system
 - Community features
@@ -277,12 +317,14 @@ docker-compose up -d                           # Production deployment
 ### Development Methodology
 
 #### Strict Test-Driven Development (TDD)
+
 - **Red-Green-Refactor cycle** enforced for all features
 - **80%+ code coverage** requirement across all layers
 - **Comprehensive test suite** with unit, integration, and E2E tests
 - **Quality gates** prevent deployment of untested code
 
 #### Code Quality Standards
+
 - **Zero tolerance** for ESLint warnings or TypeScript errors
 - **Prettier formatting** enforced on all commits
 - **Pre-commit hooks** ensure code quality
@@ -292,12 +334,14 @@ docker-compose up -d                           # Production deployment
 ### Security Considerations
 
 #### Authentication & Authorization
+
 - **JWT-based authentication** with refresh token rotation
 - **Role-based permissions** (Guild Master, Hero, Young Hero)
 - **Family-scoped data isolation** - no cross-family data leakage
 - **Input validation** using Zod schemas for all API endpoints
 
 #### Data Protection
+
 - **Password hashing** with bcrypt
 - **SQL injection prevention** through Prisma ORM
 - **XSS protection** with content sanitization
@@ -307,6 +351,7 @@ docker-compose up -d                           # Production deployment
 ## Success Metrics & Analytics
 
 ### Key Performance Indicators
+
 - **Daily Active Users**: >80% family participation
 - **Quest Completion Rate**: >85% successfully completed quests
 - **Family Engagement**: >90% all-family participation within 7 days
@@ -314,6 +359,7 @@ docker-compose up -d                           # Production deployment
 - **Real-world Impact**: Measurable improvement in household task completion
 
 ### Privacy-First Analytics
+
 - **Family-only data** aggregation with no cross-family tracking
 - **Opt-in reporting** for system improvement data
 - **Local storage priority** for sensitive information
@@ -323,22 +369,26 @@ docker-compose up -d                           # Production deployment
 ## Future Vision
 
 ### Year 1 Roadmap
+
 - **Q1**: Complete MVP with stable core functionality
 - **Q2**: Enhanced game experience with animations and real-time features
 - **Q3**: Social features and family dynamics implementation
 - **Q4**: Advanced features and Home Assistant integration
 
 ### Long-term Expansion
+
 - **Community Features**: Neighborhood guilds and family showcases
 - **AI Integration**: Smart quest generation and predictive engagement
 - **Educational Integration**: School partnerships and life skills curriculum
-- **IoT Automation**: Smart home device integration for automatic quest detection
+- **IoT Automation**: Smart home device integration for automatic quest
+  detection
 
 ---
 
 ## Getting Started
 
 ### Prerequisites Checklist
+
 - [ ] Node.js 18+ installed
 - [ ] Docker and Docker Compose installed
 - [ ] Git configured for development
@@ -346,6 +396,7 @@ docker-compose up -d                           # Production deployment
 - [ ] PostgreSQL and Redis accessible (locally or via Docker)
 
 ### Quick Start Commands
+
 ```bash
 git clone <repository-url>
 cd ChoreQuest
@@ -357,10 +408,12 @@ npm run dev
 ```
 
 ### Development Resources
-- **Technical Design Document**: `/docs/202508291550-Technical-Design-Documnent.md`
+
+- **Technical Design Document**:
+  `/docs/202508291550-Technical-Design-Documnent.md`
 - **Game Design Document**: `/docs/202508291552-Game-Design-Document.md`
 - **Project Instructions**: `/CLAUDE.md`
 
 ---
 
-*Ready to transform chores into epic family adventures! 🏰⚔️*
+_Ready to transform chores into epic family adventures! 🏰⚔️_
