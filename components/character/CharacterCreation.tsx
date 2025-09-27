@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CharacterClass } from '@/lib/generated/prisma';
 import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase';
 
 interface Character {
   id: string;
@@ -62,7 +63,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
   const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +73,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
       return;
     }
 
-    if (!token) {
+    if (!user) {
       setError('Authentication required. Please log in again.');
       return;
     }
@@ -81,25 +82,21 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
     setError('');
 
     try {
-      const response = await fetch('/api/character/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const { data, error: dbError } = await supabase
+        .from('characters')
+        .insert({
+          user_id: user.id,
           name: name.trim(),
-          characterClass: selectedClass,
-        }),
-      });
+          class: selectedClass,
+        })
+        .select()
+        .single();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create character');
+      if (dbError) {
+        throw new Error(dbError.message || 'Failed to create character');
       }
 
-      onCharacterCreated(data.character);
+      onCharacterCreated(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create character');
     } finally {

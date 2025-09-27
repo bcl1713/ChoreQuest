@@ -12,7 +12,7 @@ import { QuestTemplate } from '@/lib/generated/prisma';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, family, logout, isLoading } = useAuth();
+  const { user, profile, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'quests' | 'rewards'>('quests');
@@ -150,12 +150,12 @@ export default function Dashboard() {
               <div className="text-left sm:text-right">
                 <p className="text-gray-300 font-medium">{character.name}</p>
                 <p className="text-sm text-gray-400">{getClassDisplay(character.class)} • Level {character.level}</p>
-                <p className="text-xs text-gray-500">{getRoleDisplay(user.role)}</p>
+                <p className="text-xs text-gray-500">{profile?.role ? getRoleDisplay(profile.role) : ''}</p>
               </div>
 
               {/* Action buttons - mobile-optimized */}
               <div className="flex gap-2 sm:gap-3">
-                {user.role === 'GUILD_MASTER' && (
+                {profile?.role === 'GUILD_MASTER' && (
                   <button
                     onClick={() => setShowCreateQuest(true)}
                     className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"

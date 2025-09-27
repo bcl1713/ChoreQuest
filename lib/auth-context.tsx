@@ -1,16 +1,32 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { AuthUser, AuthResponse } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import type { User, Session } from '@supabase/supabase-js';
+
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: 'GUILD_MASTER' | 'HERO' | 'YOUNG_HERO';
+  family_id: string;
+}
+
+interface Family {
+  id: string;
+  name: string;
+  code: string;
+}
 
 interface AuthContextType {
-  user: AuthUser | null;
-  family: { id: string; name: string; code: string } | null;
-  token: string | null;
+  user: User | null;
+  profile: UserProfile | null;
+  family: Family | null;
+  session: Session | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (data: { name: string; email: string; password: string; familyCode: string }) => Promise<void>;
   createFamily: (data: { name: string; email: string; password: string; userName: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -18,68 +34,124 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [family, setFamily] = useState<{ id: string; name: string; code: string } | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [family, setFamily] = useState<Family | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('chorequest-auth');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setUser(parsed.user);
-        setFamily(parsed.family);
-        setToken(parsed.token);
-      } catch {
-        localStorage.removeItem('chorequest-auth');
+  // Load user profile and family data
+  const loadUserData = async (userId: string) => {
+    try {
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('Error loading user profile:', profileError);
+        return;
       }
+
+      setProfile(profileData);
+
+      // Get family data
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .select('*')
+        .eq('id', profileData.family_id)
+        .single();
+
+      if (familyError) {
+        console.error('Error loading family:', familyError);
+        return;
+      }
+
+      setFamily(familyData);
+    } catch (err) {
+      console.error('Error loading user data:', err);
     }
-    setIsLoading(false);
+  };
+
+  // Initialize auth state
+  useEffect(() => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+
+          if (initialSession?.user) {
+            await loadUserData(initialSession.user.id);
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await loadUserData(session.user.id);
+        } else {
+          setProfile(null);
+          setFamily(null);
+        }
+
+        if (event === 'SIGNED_OUT') {
+          setError(null);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const storeAuth = (data: { user: AuthUser; token: string; family?: { id: string; name: string; code: string } }) => {
-    const authData = {
-      user: data.user,
-      token: data.token,
-      family: data.family || family
-    };
-    localStorage.setItem('chorequest-auth', JSON.stringify(authData));
-    setUser(data.user);
-    setToken(data.token);
-    if (data.family) setFamily(data.family);
-  };
+  const clearError = () => setError(null);
 
-  const clearAuth = () => {
-    localStorage.removeItem('chorequest-auth');
-    setUser(null);
-    setFamily(null);
-    setToken(null);
-  };
-
-  const makeRequest = async (endpoint: string, data: Record<string, string>): Promise<AuthResponse & { family?: { id: string; name: string; code: string } }> => {
-    setError(null);
+  const login = async (credentials: { email: string; password: string }) => {
+    clearError();
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/auth/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      const { error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Authentication failed');
+      if (error) {
+        throw error;
       }
 
-      return result;
+      // User data will be loaded automatically via auth state change
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
       throw err;
     } finally {
@@ -87,31 +159,136 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (credentials: { email: string; password: string }) => {
-    const result = await makeRequest('login', credentials);
-    storeAuth(result);
-  };
-
   const register = async (data: { name: string; email: string; password: string; familyCode: string }) => {
-    const result = await makeRequest('register', data);
-    storeAuth(result);
+    clearError();
+    setIsLoading(true);
+
+    try {
+      // First, verify the family code exists
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .select('id, name, code')
+        .eq('code', data.familyCode)
+        .single();
+
+      if (familyError || !familyData) {
+        throw new Error('Invalid family code');
+      }
+
+      // Create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Create user profile
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          name: data.name,
+          role: 'YOUNG_HERO',
+          family_id: familyData.id,
+        });
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // User data will be loaded automatically via auth state change
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const createFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
-    const result = await makeRequest('create-family', data);
-    storeAuth(result);
+    clearError();
+    setIsLoading(true);
+
+    try {
+      // Generate family code
+      const familyCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // Create the auth user first
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Create the family
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .insert({
+          name: data.name,
+          code: familyCode,
+        })
+        .select()
+        .single();
+
+      if (familyError) {
+        throw familyError;
+      }
+
+      // Create user profile with Guild Master role
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          name: data.userName,
+          role: 'GUILD_MASTER',
+          family_id: familyData.id,
+        });
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // User data will be loaded automatically via auth state change
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Family creation failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    clearAuth();
-    setError(null);
+  const logout = async () => {
+    clearError();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
     <AuthContext.Provider value={{
       user,
+      profile,
       family,
-      token,
+      session,
       login,
       register,
       createFamily,

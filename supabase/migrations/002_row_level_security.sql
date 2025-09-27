@@ -17,7 +17,7 @@ ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sos_requests ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to get user's family_id
-CREATE OR REPLACE FUNCTION auth.user_family_id()
+CREATE OR REPLACE FUNCTION get_user_family_id()
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -33,11 +33,11 @@ $$;
 
 -- Families policies
 CREATE POLICY "Users can view their own family" ON families
-  FOR SELECT USING (id = auth.user_family_id());
+  FOR SELECT USING (id = get_user_family_id());
 
 CREATE POLICY "Guild Masters can update their family" ON families
   FOR UPDATE USING (
-    id = auth.user_family_id()
+    id = get_user_family_id()
     AND EXISTS (
       SELECT 1 FROM user_profiles
       WHERE id = auth.uid()
@@ -47,14 +47,14 @@ CREATE POLICY "Guild Masters can update their family" ON families
 
 -- User profiles policies
 CREATE POLICY "Users can view family members" ON user_profiles
-  FOR SELECT USING (family_id = auth.user_family_id());
+  FOR SELECT USING (family_id = get_user_family_id());
 
 CREATE POLICY "Users can update their own profile" ON user_profiles
   FOR UPDATE USING (id = auth.uid());
 
 CREATE POLICY "Guild Masters can update family member roles" ON user_profiles
   FOR UPDATE USING (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND EXISTS (
       SELECT 1 FROM user_profiles
       WHERE id = auth.uid()
@@ -70,7 +70,7 @@ CREATE POLICY "Users can view family member characters" ON characters
   FOR SELECT USING (
     user_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
@@ -79,11 +79,11 @@ CREATE POLICY "Users can manage their own character" ON characters
 
 -- Quest templates policies
 CREATE POLICY "Family members can view quest templates" ON quest_templates
-  FOR SELECT USING (family_id = auth.user_family_id());
+  FOR SELECT USING (family_id = get_user_family_id());
 
 CREATE POLICY "Guild Masters and Heroes can manage quest templates" ON quest_templates
   FOR ALL USING (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND EXISTS (
       SELECT 1 FROM user_profiles
       WHERE id = auth.uid()
@@ -93,11 +93,11 @@ CREATE POLICY "Guild Masters and Heroes can manage quest templates" ON quest_tem
 
 -- Quest instances policies
 CREATE POLICY "Family members can view family quests" ON quest_instances
-  FOR SELECT USING (family_id = auth.user_family_id());
+  FOR SELECT USING (family_id = get_user_family_id());
 
 CREATE POLICY "Guild Masters and Heroes can create quests" ON quest_instances
   FOR INSERT WITH CHECK (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND created_by_id = auth.uid()
     AND EXISTS (
       SELECT 1 FROM user_profiles
@@ -108,7 +108,7 @@ CREATE POLICY "Guild Masters and Heroes can create quests" ON quest_instances
 
 CREATE POLICY "Quest creators and assigned users can update quests" ON quest_instances
   FOR UPDATE USING (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND (
       created_by_id = auth.uid()
       OR assigned_to_id = auth.uid()
@@ -122,7 +122,7 @@ CREATE POLICY "Quest creators and assigned users can update quests" ON quest_ins
 
 CREATE POLICY "Quest creators can delete quests" ON quest_instances
   FOR DELETE USING (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND (
       created_by_id = auth.uid()
       OR EXISTS (
@@ -135,11 +135,11 @@ CREATE POLICY "Quest creators can delete quests" ON quest_instances
 
 -- Boss battles policies
 CREATE POLICY "Family members can view family boss battles" ON boss_battles
-  FOR SELECT USING (family_id = auth.user_family_id());
+  FOR SELECT USING (family_id = get_user_family_id());
 
 CREATE POLICY "Guild Masters can manage boss battles" ON boss_battles
   FOR ALL USING (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND EXISTS (
       SELECT 1 FROM user_profiles
       WHERE id = auth.uid()
@@ -153,7 +153,7 @@ CREATE POLICY "Family members can view boss battle participants" ON boss_battle_
     EXISTS (
       SELECT 1 FROM boss_battles bb
       WHERE bb.id = boss_battle_id
-      AND bb.family_id = auth.user_family_id()
+      AND bb.family_id = get_user_family_id()
     )
   );
 
@@ -163,7 +163,7 @@ CREATE POLICY "Users can join boss battles" ON boss_battle_participants
     AND EXISTS (
       SELECT 1 FROM boss_battles bb
       WHERE bb.id = boss_battle_id
-      AND bb.family_id = auth.user_family_id()
+      AND bb.family_id = get_user_family_id()
     )
   );
 
@@ -178,7 +178,7 @@ CREATE POLICY "Family members can view family transactions" ON transactions
   FOR SELECT USING (
     user_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
@@ -186,17 +186,17 @@ CREATE POLICY "System can create transactions" ON transactions
   FOR INSERT WITH CHECK (
     user_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
 -- Rewards policies
 CREATE POLICY "Family members can view family rewards" ON rewards
-  FOR SELECT USING (family_id = auth.user_family_id());
+  FOR SELECT USING (family_id = get_user_family_id());
 
 CREATE POLICY "Guild Masters can manage rewards" ON rewards
   FOR ALL USING (
-    family_id = auth.user_family_id()
+    family_id = get_user_family_id()
     AND EXISTS (
       SELECT 1 FROM user_profiles
       WHERE id = auth.uid()
@@ -209,7 +209,7 @@ CREATE POLICY "Family members can view family redemptions" ON reward_redemptions
   FOR SELECT USING (
     user_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
@@ -219,7 +219,7 @@ CREATE POLICY "Users can create their own redemptions" ON reward_redemptions
     AND EXISTS (
       SELECT 1 FROM rewards r
       WHERE r.id = reward_id
-      AND r.family_id = auth.user_family_id()
+      AND r.family_id = get_user_family_id()
     )
   );
 
@@ -252,7 +252,7 @@ CREATE POLICY "Family members can view family achievements" ON user_achievements
   FOR SELECT USING (
     user_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
@@ -260,7 +260,7 @@ CREATE POLICY "System can award achievements" ON user_achievements
   FOR INSERT WITH CHECK (
     user_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
@@ -269,7 +269,7 @@ CREATE POLICY "Family members can view family SOS requests" ON sos_requests
   FOR SELECT USING (
     requester_id IN (
       SELECT id FROM user_profiles
-      WHERE family_id = auth.user_family_id()
+      WHERE family_id = get_user_family_id()
     )
   );
 
