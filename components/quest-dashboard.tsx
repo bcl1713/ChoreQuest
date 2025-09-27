@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty } from "@/lib/generated/prisma";
 import { User } from "@/types";
@@ -17,6 +18,7 @@ export default function QuestDashboard({
   onLoadQuestsRef,
 }: QuestDashboardProps) {
   const { user, session, profile } = useAuth();
+  const { onQuestUpdate } = useRealtime();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +131,32 @@ export default function QuestDashboard({
     }
   }, [onLoadQuestsRef, loadQuests]);
 
+  // Set up realtime quest update listener
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    const unsubscribe = onQuestUpdate((event) => {
+
+      setQuestInstances(currentQuests => {
+        if (event.action === 'INSERT') {
+          // Add new quest to the list
+          return [event.record as QuestInstance, ...currentQuests];
+        } else if (event.action === 'UPDATE') {
+          // Update existing quest
+          return currentQuests.map(quest =>
+            quest.id === event.record.id ? { ...quest, ...event.record } as QuestInstance : quest
+          );
+        } else if (event.action === 'DELETE') {
+          // Remove quest from the list
+          return currentQuests.filter(quest => quest.id !== event.old_record?.id);
+        }
+        return currentQuests;
+      });
+    });
+
+    return unsubscribe;
+  }, [user, profile, onQuestUpdate]);
+
   const handleStatusUpdate = async (questId: string, status: string) => {
     try {
       if (status === "APPROVED" && profile?.role === "GUILD_MASTER") {
@@ -191,9 +219,8 @@ export default function QuestDashboard({
           }
         }
 
-        await loadQuests(); // Refresh quest list
-
-        // Emit a custom event that the dashboard can listen to
+        // Character stats updates will be handled by realtime subscriptions
+        // Emit a custom event that the dashboard can listen to for character stats updates
         window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
           detail: {
             questId,
@@ -234,7 +261,7 @@ export default function QuestDashboard({
           throw error;
         }
 
-        await loadQuests(); // Refresh the list
+        // Quest updates will be handled automatically by realtime subscriptions
       }
     } catch (err) {
       const errorMsg =
@@ -261,8 +288,7 @@ export default function QuestDashboard({
         throw error;
       }
 
-      //Refresh quest list to show updated assignments
-      await loadQuests();
+      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to pick up quest";
@@ -293,7 +319,7 @@ export default function QuestDashboard({
         ...prev,
         [questId]: "",
       }));
-      await loadQuests();
+      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to assign quest";
@@ -318,7 +344,7 @@ export default function QuestDashboard({
         throw error;
       }
 
-      await loadQuests();
+      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to cancel quest";

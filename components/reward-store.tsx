@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useCharacter } from "@/lib/character-context";
+import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
@@ -48,6 +49,7 @@ const REWARD_TYPE_LABELS = {
 export default function RewardStore({ onError }: RewardStoreProps) {
   const { user, session, profile } = useAuth();
   const { character, refreshCharacter } = useCharacter();
+  const { onRewardRedemptionUpdate, onCharacterUpdate } = useRealtime();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +133,73 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     loadData();
   }, [user, session, character, profile, onError]); // Proper dependencies - onError is stable via useCallback
 
+  // Set up realtime reward redemption listener
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    console.log('Setting up realtime reward redemption listener for RewardStore');
+
+    const unsubscribe = onRewardRedemptionUpdate(async (event) => {
+      console.log('Reward redemption realtime event received:', event);
+
+      // Reload redemptions data to get the full joined data
+      try {
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('reward_redemptions')
+          .select(`
+            *,
+            rewards:reward_id(id, name, description, type, cost),
+            user_profiles:user_id(id, name)
+          `)
+          .eq('rewards.family_id', profile.family_id)
+          .order('requested_at', { ascending: false });
+
+        if (!redemptionsError && redemptionsData) {
+          const transformedRedemptions = redemptionsData.map(redemption => ({
+            id: redemption.id,
+            status: redemption.status,
+            requestedAt: redemption.requested_at,
+            reward: {
+              id: redemption.rewards.id,
+              name: redemption.rewards.name,
+              description: redemption.rewards.description,
+              type: redemption.rewards.type,
+              cost: redemption.rewards.cost,
+            },
+            user: {
+              id: redemption.user_profiles.id,
+              name: redemption.user_profiles.name,
+            },
+            notes: redemption.notes,
+          }));
+          setRedemptions(transformedRedemptions);
+        }
+      } catch (error) {
+        console.error('Failed to reload redemptions after realtime event:', error);
+      }
+    });
+
+    return unsubscribe;
+  }, [user, profile, onRewardRedemptionUpdate]);
+
+  // Set up realtime character update listener for gold changes
+  useEffect(() => {
+    if (!user || !character) return;
+
+    console.log('Setting up realtime character listener for RewardStore');
+
+    const unsubscribe = onCharacterUpdate((event) => {
+      console.log('Character realtime event received in RewardStore:', event);
+
+      // If this is our character, refresh the character context
+      if (event.record?.user_id === user.id) {
+        refreshCharacter();
+      }
+    });
+
+    return unsubscribe;
+  }, [user, character, onCharacterUpdate, refreshCharacter]);
+
   const handleRedeem = async (reward: Reward, notes?: string) => {
     if (!user || !character) return;
 
@@ -168,46 +237,9 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         throw characterError;
       }
 
-      // Refresh character data to get updated gold balance
+      // Character and redemption updates will be handled by realtime subscriptions
+      // Refresh character data to get updated gold balance immediately
       await refreshCharacter();
-
-      // Reload redemptions to show new request
-      try {
-        const { data: redemptionsData, error: redemptionsError } = await supabase
-          .from('reward_redemptions')
-          .select(`
-            *,
-            rewards:reward_id(id, name, description, type, cost),
-            user_profiles:user_id(id, name)
-          `)
-          .eq('rewards.family_id', profile?.family_id)
-          .order('requested_at', { ascending: false });
-
-        if (!redemptionsError && redemptionsData) {
-          const transformedRedemptions = redemptionsData.map(redemption => ({
-            id: redemption.id,
-            status: redemption.status,
-            requestedAt: redemption.requested_at,
-            reward: {
-              id: redemption.rewards.id,
-              name: redemption.rewards.name,
-              description: redemption.rewards.description,
-              type: redemption.rewards.type,
-              cost: redemption.rewards.cost,
-            },
-            user: {
-              id: redemption.user_profiles.id,
-              name: redemption.user_profiles.name,
-            },
-            notes: redemption.notes,
-          }));
-          setRedemptions(transformedRedemptions);
-        }
-      } catch (error) {
-        console.error('Failed to reload redemptions:', error);
-      }
-
-      // UI will update to show pending status automatically
 
     } catch (error) {
       console.error('Failed to redeem reward:', error);
@@ -292,43 +324,8 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         }
       }
 
-      // Reload redemptions to reflect changes
-      try {
-        const { data: redemptionsData, error: redemptionsError } = await supabase
-          .from('reward_redemptions')
-          .select(`
-            *,
-            rewards:reward_id(id, name, description, type, cost),
-            user_profiles:user_id(id, name)
-          `)
-          .eq('rewards.family_id', profile?.family_id)
-          .order('requested_at', { ascending: false });
-
-        if (!redemptionsError && redemptionsData) {
-          const transformedRedemptions = redemptionsData.map(redemption => ({
-            id: redemption.id,
-            status: redemption.status,
-            requestedAt: redemption.requested_at,
-            reward: {
-              id: redemption.rewards.id,
-              name: redemption.rewards.name,
-              description: redemption.rewards.description,
-              type: redemption.rewards.type,
-              cost: redemption.rewards.cost,
-            },
-            user: {
-              id: redemption.user_profiles.id,
-              name: redemption.user_profiles.name,
-            },
-            notes: redemption.notes,
-          }));
-          setRedemptions(transformedRedemptions);
-        }
-      } catch (error) {
-        console.error('Failed to reload redemptions:', error);
-      }
-
-      // If this was a refund, refresh character data
+      // Character and redemption updates will be handled by realtime subscriptions
+      // If this was a refund, refresh character data immediately
       if (status === 'DENIED') {
         await refreshCharacter();
       }
