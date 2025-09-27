@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { questService } from "@/lib/quest-service";
-import { userService } from "@/lib/user-service";
+import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty } from "@/lib/generated/prisma";
 import { User } from "@/types";
 import { motion } from "framer-motion";
@@ -17,7 +16,7 @@ export default function QuestDashboard({
   onError,
   onLoadQuestsRef,
 }: QuestDashboardProps) {
-  const { user, session } = useAuth();
+  const { user, session, profile } = useAuth();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +27,7 @@ export default function QuestDashboard({
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!user || !session) {
+    if (!user || !session || !profile) {
       if (!user) {
         // If no user, set error state
         setError("User not authenticated");
@@ -48,14 +47,39 @@ export default function QuestDashboard({
       setLoading(true);
 
       try {
-        // Load quests
-        const instancesResult = await questService.getQuestInstances();
-        setQuestInstances(instancesResult.instances);
+        // Load quest instances for the family
+        const { data: questData, error: questError } = await supabase
+          .from('quest_instances')
+          .select('*')
+          .eq('family_id', profile.family_id)
+          .order('created_at', { ascending: false });
+
+        if (questError) {
+          throw questError;
+        }
+
+        setQuestInstances(questData || []);
 
         // Load family members for assignment dropdown
         try {
-          const members = await userService.getFamilyMembers();
-          setFamilyMembers(members);
+          const { data: membersData, error: membersError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('family_id', profile.family_id);
+
+          if (!membersError && membersData) {
+            // Transform to match User interface
+            const transformedMembers = membersData.map(member => ({
+              id: member.id,
+              name: member.name,
+              email: member.email,
+              role: member.role,
+              familyId: member.family_id,
+              createdAt: new Date(member.created_at),
+              updatedAt: new Date(member.updated_at),
+            }));
+            setFamilyMembers(transformedMembers);
+          }
         } catch (err) {
           console.error("Failed to load family members:", err);
         }
@@ -70,13 +94,24 @@ export default function QuestDashboard({
     };
 
     loadData();
-  }, [user, session, onError]);
+  }, [user, session, profile, onError]);
 
   const loadQuests = useCallback(async () => {
+    if (!profile) return;
+
     try {
       setLoading(true);
-      const instancesResult = await questService.getQuestInstances();
-      setQuestInstances(instancesResult.instances);
+      const { data: questData, error: questError } = await supabase
+        .from('quest_instances')
+        .select('*')
+        .eq('family_id', profile.family_id)
+        .order('created_at', { ascending: false });
+
+      if (questError) {
+        throw questError;
+      }
+
+      setQuestInstances(questData || []);
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to load quests";
@@ -85,7 +120,7 @@ export default function QuestDashboard({
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [profile, onError]);
 
   useEffect(() => {
     // Pass the loadQuests function to parent
@@ -96,30 +131,109 @@ export default function QuestDashboard({
 
   const handleStatusUpdate = async (questId: string, status: string) => {
     try {
-      if (status === "APPROVED" && user?.role === "GUILD_MASTER") {
+      if (status === "APPROVED" && profile?.role === "GUILD_MASTER") {
         // Handle quest approval with reward processing
-        const approvalResponse = await questService.approveQuest(questId, user.id);
+        // First get quest details
+        const { data: questData, error: questError } = await supabase
+          .from('quest_instances')
+          .select('*')
+          .eq('id', questId)
+          .single();
+
+        if (questError) {
+          throw questError;
+        }
+
+        // Update quest status
+        const { error: updateError } = await supabase
+          .from('quest_instances')
+          .update({
+            status: 'APPROVED',
+            approved_at: new Date().toISOString(),
+          })
+          .eq('id', questId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Update character stats if quest is assigned
+        if (questData.assigned_to_id) {
+          // First get current character stats
+          const { data: characterData, error: characterFetchError } = await supabase
+            .from('characters')
+            .select('xp, gold, level')
+            .eq('user_id', questData.assigned_to_id)
+            .single();
+
+          if (characterFetchError) {
+            console.error('Failed to fetch character stats:', characterFetchError);
+          } else {
+            // Calculate new stats
+            const newXp = characterData.xp + questData.xp_reward;
+            const newGold = characterData.gold + questData.gold_reward;
+
+            // Calculate new level (every 100 XP = 1 level)
+            const newLevel = Math.floor(newXp / 100) + 1;
+
+            const { error: characterError } = await supabase
+              .from('characters')
+              .update({
+                xp: newXp,
+                gold: newGold,
+                level: newLevel,
+              })
+              .eq('user_id', questData.assigned_to_id);
+
+            if (characterError) {
+              console.error('Failed to update character stats:', characterError);
+            }
+          }
+        }
+
         await loadQuests(); // Refresh quest list
-        
+
         // Emit a custom event that the dashboard can listen to
         window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
           detail: {
             questId,
-            rewards: approvalResponse.rewards,
-            characterUpdates: approvalResponse.characterUpdates
+            rewards: {
+              xp: questData.xp_reward,
+              gold: questData.gold_reward,
+            },
+            characterUpdates: {
+              userId: questData.assigned_to_id,
+            }
           }
         }));
-        
+
       } else {
         // Handle other status updates normally
-        await questService.updateQuestStatus(questId, {
+        const updateData: {
+          status: string;
+          completed_at?: string;
+        } = {
           status: status as
             | "PENDING"
             | "IN_PROGRESS"
             | "COMPLETED"
             | "APPROVED"
             | "EXPIRED",
-        });
+        };
+
+        if (status === "COMPLETED") {
+          updateData.completed_at = new Date().toISOString();
+        }
+
+        const { error } = await supabase
+          .from('quest_instances')
+          .update(updateData)
+          .eq('id', questId);
+
+        if (error) {
+          throw error;
+        }
+
         await loadQuests(); // Refresh the list
       }
     } catch (err) {
@@ -135,7 +249,17 @@ export default function QuestDashboard({
     if (!user) return;
 
     try {
-      await questService.assignQuest(questId, user.id);
+      const { error } = await supabase
+        .from('quest_instances')
+        .update({
+          assigned_to_id: user.id,
+          status: 'IN_PROGRESS',
+        })
+        .eq('id', questId);
+
+      if (error) {
+        throw error;
+      }
 
       //Refresh quest list to show updated assignments
       await loadQuests();
@@ -152,7 +276,17 @@ export default function QuestDashboard({
     if (!assigneeId) return;
 
     try {
-      await questService.assignQuest(questId, assigneeId);
+      const { error } = await supabase
+        .from('quest_instances')
+        .update({
+          assigned_to_id: assigneeId,
+          status: 'IN_PROGRESS',
+        })
+        .eq('id', questId);
+
+      if (error) {
+        throw error;
+      }
 
       // Clear the dropdown selection
       setSelectedAssignee((prev) => ({
@@ -175,7 +309,15 @@ export default function QuestDashboard({
     if (!confirmed) return;
 
     try {
-      await questService.cancelQuest(questId);
+      const { error } = await supabase
+        .from('quest_instances')
+        .delete()
+        .eq('id', questId);
+
+      if (error) {
+        throw error;
+      }
+
       await loadQuests();
     } catch (err) {
       const errorMsg =
