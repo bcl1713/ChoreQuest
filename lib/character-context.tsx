@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './auth-context';
+import { supabase } from './supabase';
 
 interface Character {
   id: string;
@@ -26,14 +27,14 @@ interface CharacterContextType {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
 
   const fetchCharacter = useCallback(async () => {
-    if (!user || !token) {
+    if (!user) {
       setCharacter(null);
       setIsLoading(false);
       // Don't set hasLoaded=true here - we haven't actually tried to fetch
@@ -45,19 +46,33 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     setHasLoaded(false);
 
     try {
-      const response = await fetch('/api/character', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch character');
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No character found - this is not an error, just no character created yet
+          setCharacter(null);
+        } else {
+          throw error;
+        }
+      } else {
+        // Transform Supabase data to match our interface
+        setCharacter({
+          id: data.id,
+          name: data.name,
+          class: data.class,
+          level: data.level,
+          xp: data.xp,
+          gold: data.gold,
+          gems: data.gems,
+          honorPoints: data.honor_points,
+          avatarUrl: data.avatar_url || undefined,
+        });
       }
-
-      setCharacter(data.character);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch character';
       setError(message);
@@ -66,7 +81,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       setHasLoaded(true); // Mark as loaded regardless of success/failure
     }
-  }, [user, token]);
+  }, [user]);
 
   useEffect(() => {
     fetchCharacter();

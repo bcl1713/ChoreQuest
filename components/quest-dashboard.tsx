@@ -17,7 +17,7 @@ export default function QuestDashboard({
   onError,
   onLoadQuestsRef,
 }: QuestDashboardProps) {
-  const { user, token } = useAuth();
+  const { user, session } = useAuth();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function QuestDashboard({
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!user || !token) {
+    if (!user || !session) {
       if (!user) {
         // If no user, set error state
         setError("User not authenticated");
@@ -70,7 +70,7 @@ export default function QuestDashboard({
     };
 
     loadData();
-  }, [user, token, onError]);
+  }, [user, session, onError]);
 
   const loadQuests = useCallback(async () => {
     try {

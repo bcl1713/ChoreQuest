@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useCharacter } from "@/lib/character-context";
+import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
 interface Reward {
@@ -45,7 +46,7 @@ const REWARD_TYPE_LABELS = {
 };
 
 export default function RewardStore({ onError }: RewardStoreProps) {
-  const { user, token } = useAuth();
+  const { user, session, profile } = useAuth();
   const { character, refreshCharacter } = useCharacter();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
@@ -54,7 +55,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!user || !token || !character) {
+    if (!user || !session || !character || !profile) {
       return;
     }
 
@@ -69,36 +70,55 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       setLoading(true);
 
       try {
-        // Load rewards
-        const rewardsResponse = await fetch('/api/rewards', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Load rewards for the family
+        const { data: rewardsData, error: rewardsError } = await supabase
+          .from('rewards')
+          .select('*')
+          .eq('family_id', profile?.family_id)
+          .eq('is_active', true);
 
-        if (rewardsResponse.ok) {
-          const rewardsData = await rewardsResponse.json();
-          setRewards(rewardsData.rewards);
-        } else {
-          console.error('Failed to load rewards');
+        if (rewardsError) {
+          console.error('Failed to load rewards:', rewardsError);
           onError?.('Failed to load rewards');
+        } else {
+          setRewards(rewardsData || []);
         }
 
-        // Load redemptions
-        const redemptionsResponse = await fetch('/api/rewards/redemptions', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Load redemptions with reward and user details
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('reward_redemptions')
+          .select(`
+            *,
+            rewards:reward_id(id, name, description, type, cost),
+            user_profiles:user_id(id, name)
+          `)
+          .eq('rewards.family_id', profile?.family_id)
+          .order('requested_at', { ascending: false });
 
-        if (redemptionsResponse.ok) {
-          const redemptionsData = await redemptionsResponse.json();
-          setRedemptions(redemptionsData.redemptions);
-        } else {
-          console.error('Failed to load redemptions');
+        if (redemptionsError) {
+          console.error('Failed to load redemptions:', redemptionsError);
           onError?.('Failed to load redemption history');
+        } else {
+          // Transform the data to match the expected format
+          const transformedRedemptions = redemptionsData?.map(redemption => ({
+            id: redemption.id,
+            status: redemption.status,
+            requestedAt: redemption.requested_at,
+            reward: {
+              id: redemption.rewards.id,
+              name: redemption.rewards.name,
+              description: redemption.rewards.description,
+              type: redemption.rewards.type,
+              cost: redemption.rewards.cost,
+            },
+            user: {
+              id: redemption.user_profiles.id,
+              name: redemption.user_profiles.name,
+            },
+            notes: redemption.notes,
+          })) || [];
+
+          setRedemptions(transformedRedemptions);
         }
       } catch (error) {
         console.error('Failed to load data:', error);
@@ -109,10 +129,10 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     };
 
     loadData();
-  }, [user, token, character, onError]); // Proper dependencies - onError is stable via useCallback
+  }, [user, session, character, profile, onError]); // Proper dependencies - onError is stable via useCallback
 
   const handleRedeem = async (reward: Reward, notes?: string) => {
-    if (!token || !character) return;
+    if (!user || !character) return;
 
     if (character.gold < reward.cost) {
       onError?.('Insufficient gold to redeem this reward');
@@ -122,40 +142,66 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     setRedeeming(reward.id);
 
     try {
-      const response = await fetch('/api/rewards/redeem', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rewardId: reward.id,
-          notes,
-        }),
-      });
+      // Create reward redemption in Supabase
+      const { error: redemptionError } = await supabase
+        .from('reward_redemptions')
+        .insert({
+          user_id: user.id,
+          reward_id: reward.id,
+          cost: reward.cost,
+          status: 'PENDING',
+          notes: notes || null,
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to redeem reward');
+      if (redemptionError) {
+        throw redemptionError;
       }
 
-      await response.json();
+      // Update character gold
+      const newGold = character.gold - reward.cost;
+      const { error: characterError } = await supabase
+        .from('characters')
+        .update({ gold: newGold })
+        .eq('user_id', user.id);
+
+      if (characterError) {
+        throw characterError;
+      }
 
       // Refresh character data to get updated gold balance
       await refreshCharacter();
 
       // Reload redemptions to show new request
       try {
-        const response = await fetch('/api/rewards/redemptions', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('reward_redemptions')
+          .select(`
+            *,
+            rewards:reward_id(id, name, description, type, cost),
+            user_profiles:user_id(id, name)
+          `)
+          .eq('rewards.family_id', profile?.family_id)
+          .order('requested_at', { ascending: false });
 
-        if (response.ok) {
-          const data = await response.json();
-          setRedemptions(data.redemptions);
+        if (!redemptionsError && redemptionsData) {
+          const transformedRedemptions = redemptionsData.map(redemption => ({
+            id: redemption.id,
+            status: redemption.status,
+            requestedAt: redemption.requested_at,
+            reward: {
+              id: redemption.rewards.id,
+              name: redemption.rewards.name,
+              description: redemption.rewards.description,
+              type: redemption.rewards.type,
+              cost: redemption.rewards.cost,
+            },
+            user: {
+              id: redemption.user_profiles.id,
+              name: redemption.user_profiles.name,
+            },
+            notes: redemption.notes,
+          }));
+          setRedemptions(transformedRedemptions);
         }
       } catch (error) {
         console.error('Failed to reload redemptions:', error);
@@ -174,41 +220,115 @@ export default function RewardStore({ onError }: RewardStoreProps) {
   const canAfford = (cost: number) => character ? character.gold >= cost : false;
 
   const handleApproval = async (redemptionId: string, status: 'APPROVED' | 'DENIED' | 'FULFILLED', notes?: string) => {
-    if (!token) return;
+    if (!user) return;
 
     try {
-      const response = await fetch(`/api/rewards/redemptions/${redemptionId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status, notes }),
-      });
+      // Get the redemption details first if we need to process a refund
+      let redemptionData = null;
+      if (status === 'DENIED') {
+        const { data, error } = await supabase
+          .from('reward_redemptions')
+          .select('*')
+          .eq('id', redemptionId)
+          .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update redemption');
+        if (error) {
+          throw error;
+        }
+        redemptionData = data;
+      }
+
+      // Update the redemption status
+      const updateData: {
+        status: string;
+        notes: string | null;
+        approved_at?: string;
+        approved_by?: string;
+        fulfilled_at?: string;
+      } = {
+        status,
+        notes: notes || null,
+      };
+
+      if (status === 'APPROVED') {
+        updateData.approved_at = new Date().toISOString();
+        updateData.approved_by = user.id;
+      } else if (status === 'FULFILLED') {
+        updateData.fulfilled_at = new Date().toISOString();
+      }
+
+      const { error: updateError } = await supabase
+        .from('reward_redemptions')
+        .update(updateData)
+        .eq('id', redemptionId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // If denied, refund the gold
+      if (status === 'DENIED' && redemptionData) {
+        // First get current gold amount
+        const { data: characterData, error: characterError } = await supabase
+          .from('characters')
+          .select('gold')
+          .eq('user_id', redemptionData.user_id)
+          .single();
+
+        if (characterError) {
+          throw characterError;
+        }
+
+        // Update with refunded amount
+        const { error: refundError } = await supabase
+          .from('characters')
+          .update({
+            gold: characterData.gold + redemptionData.cost
+          })
+          .eq('user_id', redemptionData.user_id);
+
+        if (refundError) {
+          throw refundError;
+        }
       }
 
       // Reload redemptions to reflect changes
       try {
-        const response = await fetch('/api/rewards/redemptions', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('reward_redemptions')
+          .select(`
+            *,
+            rewards:reward_id(id, name, description, type, cost),
+            user_profiles:user_id(id, name)
+          `)
+          .eq('rewards.family_id', profile?.family_id)
+          .order('requested_at', { ascending: false });
 
-        if (response.ok) {
-          const data = await response.json();
-          setRedemptions(data.redemptions);
+        if (!redemptionsError && redemptionsData) {
+          const transformedRedemptions = redemptionsData.map(redemption => ({
+            id: redemption.id,
+            status: redemption.status,
+            requestedAt: redemption.requested_at,
+            reward: {
+              id: redemption.rewards.id,
+              name: redemption.rewards.name,
+              description: redemption.rewards.description,
+              type: redemption.rewards.type,
+              cost: redemption.rewards.cost,
+            },
+            user: {
+              id: redemption.user_profiles.id,
+              name: redemption.user_profiles.name,
+            },
+            notes: redemption.notes,
+          }));
+          setRedemptions(transformedRedemptions);
         }
       } catch (error) {
         console.error('Failed to reload redemptions:', error);
       }
 
-      // If this was a refund, refresh character data for all users
+      // If this was a refund, refresh character data
       if (status === 'DENIED') {
         await refreshCharacter();
       }
