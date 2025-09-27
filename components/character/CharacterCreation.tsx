@@ -82,6 +82,60 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
     setError('');
 
     try {
+      console.log('Attempting to create character for user:', user.id);
+
+      // First, verify the user profile exists with retry logic for timing issues
+      console.log('Checking for user profile...');
+      let profileData = null;
+      let profileError = null;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      // Retry loop to handle Supabase timing issues
+      while (retryCount < maxRetries && !profileData) {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('id, name, role, family_id')
+          .eq('id', user.id)
+          .single();
+
+        profileData = data;
+        profileError = error;
+
+        console.log(`Profile query attempt ${retryCount + 1}:`, { profileData, profileError });
+
+        if (!profileData && retryCount < maxRetries - 1) {
+          console.log(`Retrying profile lookup in 2 seconds (attempt ${retryCount + 1}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          retryCount++;
+        } else {
+          break;
+        }
+      }
+
+      if (profileError || !profileData) {
+        console.error('User profile not found after retries:', profileError);
+        console.error('Profile error details:', {
+          message: profileError?.message,
+          details: profileError?.details,
+          hint: profileError?.hint,
+          code: profileError?.code
+        });
+
+        // Let's also check what profiles exist
+        const { data: allProfiles, error: allProfilesError } = await supabase
+          .from('user_profiles')
+          .select('id, name, role')
+          .limit(5);
+
+        console.log('All user profiles (first 5):', allProfiles);
+        console.log('All profiles query error:', allProfilesError);
+
+        throw new Error('User profile not found. This may be a timing issue - please wait a moment and try refreshing the page.');
+      }
+
+      console.log('User profile verified, creating character...');
+
       const { data, error: dbError } = await supabase
         .from('characters')
         .insert({
@@ -93,11 +147,14 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
         .single();
 
       if (dbError) {
+        console.error('Character creation failed:', dbError);
         throw new Error(dbError.message || 'Failed to create character');
       }
 
+      console.log('Character created successfully:', data);
       onCharacterCreated(data);
     } catch (err) {
+      console.error('Character creation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to create character');
     } finally {
       setIsLoading(false);
@@ -166,7 +223,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4">
+            <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4" data-testid="character-creation-error">
               <p className="text-red-300 text-sm">{error}</p>
             </div>
           )}

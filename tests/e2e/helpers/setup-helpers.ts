@@ -44,7 +44,7 @@ export async function setupUserWithCharacter(
 
   // Navigate to home and start family creation
   await page.goto('/');
-  await page.getByText('🏰 Create Family Guild').click();
+  await page.click('[data-testid="create-family-button"]');
   await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
   // Fill family creation form
@@ -52,18 +52,58 @@ export async function setupUserWithCharacter(
   await page.fill('input[name="email"]', user.email);
   await page.fill('input[name="password"]', user.password);
   await page.fill('input[name="userName"]', user.userName);
+
+  console.log('E2E Debug - About to submit family creation form');
   await page.click('button[type="submit"]');
+  console.log('E2E Debug - Family creation form submitted');
 
   if (!options.skipCharacterCreation) {
-    // Complete character creation
-    await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+    // Complete character creation - wait longer for Supabase auth
+    await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
     await page.fill('input#characterName', user.characterName);
     await page.click(`[data-testid="class-${characterClass.toLowerCase()}"]`);
+
+    // Add a small delay before clicking the submit button to ensure state is ready
+    await page.waitForTimeout(500);
     await page.click('button:text("Begin Your Quest")');
 
-    // Verify dashboard reached
-    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
-    await expect(page.getByText(`Welcome back, ${user.characterName}!`)).toBeVisible();
+    // Wait for either dashboard or any error states - be more flexible
+    try {
+      await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
+      await expect(page.locator('[data-testid="welcome-message"]')).toContainText(`Welcome back, ${user.characterName}!`, { timeout: 10000 });
+    } catch (error) {
+      // Log current URL and page content for debugging
+      const currentUrl = page.url();
+      console.log('E2E Debug - Current URL:', currentUrl);
+
+      // Check for character creation error specifically
+      const characterError = page.locator('[data-testid="character-creation-error"]');
+      if (await characterError.isVisible()) {
+        const errorText = await characterError.textContent();
+        console.log('E2E Debug - Character creation error:', errorText);
+      }
+
+      // Check for any other error messages
+      const errorElements = page.locator('.text-red-400, .text-red-500, .text-red-600, [class*="error"]');
+      const errorCount = await errorElements.count();
+      if (errorCount > 0) {
+        console.log('E2E Debug - Found other error messages:');
+        for (let i = 0; i < errorCount; i++) {
+          const errorText = await errorElements.nth(i).textContent();
+          console.log(`  Error ${i + 1}: ${errorText}`);
+        }
+      }
+
+      // Get browser console logs
+      const consoleLogs = page.context().newPage();
+      page.on('console', msg => {
+        console.log('Browser Console:', msg.type(), msg.text());
+      });
+
+      const pageContent = await page.textContent('body');
+      console.log('E2E Debug - Page content (first 500 chars):', pageContent?.substring(0, 500));
+      throw error;
+    }
   }
 
   return user;
@@ -77,7 +117,7 @@ export async function setupUserAtCharacterCreation(page: Page, prefix: string): 
 
   await clearBrowserState(page);
   await page.goto('/');
-  await page.getByText('🏰 Create Family Guild').click();
+  await page.click('[data-testid="create-family-button"]');
   await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
   await page.fill('input[name="name"]', user.familyName);
@@ -86,7 +126,7 @@ export async function setupUserAtCharacterCreation(page: Page, prefix: string): 
   await page.fill('input[name="userName"]', user.userName);
   await page.click('button[type="submit"]');
 
-  await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+  await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
 
   return user;
 }
@@ -97,14 +137,25 @@ export async function setupUserAtCharacterCreation(page: Page, prefix: string): 
 export async function loginUser(page: Page, email: string, password: string): Promise<void> {
   await clearBrowserState(page);
   await page.goto('/');
-  await page.getByText('🗡️ Join Existing Guild').click();
+
+  // Check if "Enter the Realm" link exists (for already logged in users)
+  const enterRealmLink = page.locator('text="🏰 Enter Your Realm"');
+  if (await enterRealmLink.isVisible({ timeout: 1000 })) {
+    await enterRealmLink.click();
+    await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+    return;
+  }
+
+  // Navigate to login page
+  await page.click('[data-testid="login-link"]');
   await expect(page).toHaveURL(/.*\/auth\/login/);
 
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
   await page.click('button[type="submit"]');
 
-  await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+  // Wait for Supabase auth to complete and navigation to dashboard
+  await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
 }
 
 /**
@@ -179,7 +230,7 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
   // Always create new family and character for simplicity
   // We'll handle multi-user setup differently
   await page.goto('/');
-  await page.getByText('🏰 Create Family Guild').click();
+  await page.click('[data-testid="create-family-button"]');
   await expect(page).toHaveURL(/.*\/auth\/create-family/);
 
   await page.fill('input[name="name"]', testUser.familyName);
@@ -188,17 +239,43 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
   await page.fill('input[name="userName"]', testUser.userName);
   await page.click('button[type="submit"]');
 
-  await page.waitForURL(/.*\/character\/create/, { timeout: 10000 });
+  await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
   await page.fill('input#characterName', testUser.characterName);
   await page.click(`[data-testid="class-knight"]`);
   await page.click('button:text("Begin Your Quest")');
 
-  await page.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+  await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
 
-  // Get the created user info from localStorage
-  const authData = await page.evaluate(() => {
-    const stored = localStorage.getItem('chorequest-auth');
-    return stored ? JSON.parse(stored) : {};
+  // Get the created user info from Supabase session
+  const authData = await page.evaluate(async () => {
+    // Wait a bit for auth state to settle
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Get the user ID and profile from the page's auth context
+    const authDiv = document.querySelector('[data-auth-user]');
+    if (authDiv) {
+      return {
+        user: {
+          id: authDiv.getAttribute('data-auth-user'),
+          familyId: authDiv.getAttribute('data-auth-family'),
+          characterId: authDiv.getAttribute('data-auth-character')
+        }
+      };
+    }
+
+    // Fallback: try to get from window object if auth context exposes it
+    if ((window as any).__authContext) {
+      const ctx = (window as any).__authContext;
+      return {
+        user: {
+          id: ctx.user?.id,
+          familyId: ctx.profile?.family_id,
+          characterId: ctx.profile?.character_id
+        }
+      };
+    }
+
+    return { user: {} };
   });
 
   const userInfo = authData.user || {};

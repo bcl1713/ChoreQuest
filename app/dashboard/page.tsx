@@ -35,7 +35,7 @@ export default function Dashboard() {
     // 4. No character was found (character === null)
     // 5. No error occurred during fetch (successful "no character" response)
     if (!isLoading && user && characterHasLoaded && character === null && !characterError) {
-      router.push('/character/create');
+      window.location.href = '/character/create';
     }
   }, [user, character, isLoading, characterHasLoaded, characterError, router]);
 
@@ -179,7 +179,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4">
+          <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4" data-testid="welcome-message">
             Welcome back, {character.name}!
           </h2>
           <p className="text-base sm:text-lg text-gray-400">

@@ -82,11 +82,16 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
     e.preventDefault();
     setValidationErrors({});
 
+    console.log('AuthForm handleSubmit called, type:', type, 'formData:', formData);
+
     try {
       const schema = getSchema();
       const validatedData = schema.parse(formData);
+      console.log('AuthForm calling onSubmit with:', validatedData);
       await onSubmit(validatedData);
+      console.log('AuthForm onSubmit completed');
     } catch (error) {
+      console.log('AuthForm onSubmit error:', error);
       if (error instanceof z.ZodError) {
         const errors: Record<string, string> = {};
         error.issues.forEach((err) => {

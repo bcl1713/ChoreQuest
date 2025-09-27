@@ -16,6 +16,17 @@ export default function CreateFamilyPage() {
     }
   }, [user, isLoading, router]);
 
+  const handleCreateFamily = async (data: any) => {
+    try {
+      await createFamily(data);
+      // Navigate immediately after successful family creation
+      window.location.href = '/dashboard';
+    } catch (err) {
+      // Error will be handled by createFamily function
+      console.error('CreateFamily - Family creation failed:', err);
+    }
+  };
+
   if (user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
@@ -32,7 +43,7 @@ export default function CreateFamilyPage() {
       <div className="w-full max-w-md">
         <AuthForm
           type="create-family"
-          onSubmit={createFamily}
+          onSubmit={handleCreateFamily}
           isLoading={isLoading}
           error={error}
         />
