@@ -152,6 +152,21 @@ development tasks organized by implementation phases.
 - ✅ Application now loads correctly without console errors
 - ✅ Authentication and family creation functionality restored
 
+### ✅ **COMPLETED (2025-09-28)**
+**Critical Migration Issues Resolved**
+- ✅ **Fixed Supabase Realtime WebSocket 403 Error** - Created migration `20250928113857_fix_realtime_permissions.sql`
+  - Added realtime permissions for quest_instances, characters, reward_redemptions, user_profiles, families tables
+  - Granted SELECT permissions to authenticated and anon roles
+  - Enabled realtime publication for all required tables
+- ✅ **Fixed Missing Approve-Quest-Button Issue** - Resolved role checking inconsistency in quest-dashboard.tsx
+  - Fixed `canUpdateStatus()` function to use `profile?.role` instead of `user.role`
+  - Fixed `handleStatusUpdate()` function role checking consistency
+  - Updated all UI conditional rendering to use `profile?.role` consistently
+- ✅ **Quest Approval Workflow Functional** - E2E tests now find approve buttons correctly
+- ✅ **Unit Tests**: All 26 unit tests passing
+- ✅ **Character Creation E2E**: All 3 tests passing
+- ✅ **Realtime Connection**: WebSocket connections now working without 403 errors
+
 ---
 
 ### Overview
