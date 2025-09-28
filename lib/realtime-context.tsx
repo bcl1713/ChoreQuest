@@ -63,7 +63,9 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [lastEvent, setLastEvent] = useState<RealtimeEvent | null>(null);
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  
+  // Use ref to store current channel without causing re-renders
+  const currentChannelRef = useRef<RealtimeChannel | null>(null);
 
   // Event listener management using refs to avoid dependency issues
   const questListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
@@ -73,13 +75,14 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
   // Setup realtime connection when user and family are available
   useEffect(() => {
+    // Clean up any existing connection first
+    if (currentChannelRef.current) {
+      supabase.removeChannel(currentChannelRef.current);
+      currentChannelRef.current = null;
+      setIsConnected(false);
+    }
+
     if (!user || !session || !profile?.family_id) {
-      // Clean up any existing connection
-      if (channel) {
-        supabase.removeChannel(channel);
-        setChannel(null);
-        setIsConnected(false);
-      }
       return;
     }
 
@@ -214,17 +217,20 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
         }
       });
 
-    setChannel(realtimeChannel);
+    // Store the channel in ref for cleanup
+    currentChannelRef.current = realtimeChannel;
 
     // Cleanup function
     return () => {
       console.log('Cleaning up realtime connection for family:', familyId);
-      supabase.removeChannel(realtimeChannel);
+      if (currentChannelRef.current) {
+        supabase.removeChannel(currentChannelRef.current);
+        currentChannelRef.current = null;
+      }
       setIsConnected(false);
       setConnectionError(null);
     };
-  }, [user, session, profile?.family_id, channel]);
-
+  }, [user, session, profile?.family_id]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
