@@ -17,21 +17,11 @@ export class RewardCalculator {
     const baseHonorPoints = baseRewards.honorPointsReward || 0;
 
     const rewards: CalculatedRewards = {
-      gold: Number(
-        (baseGold * classBonus.goldBonus * difficultyMultiplier).toFixed(2),
-      ),
-      xp: Number(
-        (baseXP * classBonus.xpBonus * difficultyMultiplier).toFixed(2),
-      ),
-      gems: Number(
-        (baseGems * classBonus.gemsBonus * difficultyMultiplier).toFixed(2),
-      ),
-      honor_points: Number(
-        (
-          baseHonorPoints *
-          classBonus.honorBonus *
-          difficultyMultiplier
-        ).toFixed(2),
+      gold: Math.floor(baseGold * classBonus.goldBonus * difficultyMultiplier),
+      xp: Math.floor(baseXP * classBonus.xpBonus * difficultyMultiplier),
+      gems: Math.floor(baseGems * classBonus.gemsBonus * difficultyMultiplier),
+      honor_points: Math.floor(
+        baseHonorPoints * classBonus.honorBonus * difficultyMultiplier
       ),
     };
 

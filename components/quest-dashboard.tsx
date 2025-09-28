@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
+import { RewardCalculator } from "@/lib/reward-calculator";
 import { motion } from "framer-motion";
 
 interface QuestDashboardProps {
@@ -175,24 +176,56 @@ export default function QuestDashboard({
           throw updateError;
         }
 
+        // Calculate rewards for events (before character update)
+        let finalRewards = {
+          xp: questData.xp_reward,
+          gold: questData.gold_reward,
+        };
+
         // Update character stats if quest is assigned
         if (questData.assigned_to_id) {
-          // First get current character stats
+          // First get current character stats and class
           const { data: characterData, error: characterFetchError } = await supabase
             .from('characters')
-            .select('xp, gold, level')
+            .select('xp, gold, level, class')
             .eq('user_id', questData.assigned_to_id)
             .single();
 
           if (characterFetchError) {
             console.error('Failed to fetch character stats:', characterFetchError);
           } else {
-            // Calculate new stats
-            const newXp = characterData.xp + questData.xp_reward;
-            const newGold = characterData.gold + questData.gold_reward;
+            // Calculate rewards using RewardCalculator with class bonuses
+            const baseRewards = {
+              xpReward: questData.xp_reward,
+              goldReward: questData.gold_reward,
+              gemsReward: questData.gems_reward || 0,
+              honorPointsReward: questData.honor_points_reward || 0,
+            };
 
-            // Calculate new level (every 100 XP = 1 level)
-            const newLevel = Math.floor(newXp / 100) + 1;
+            const calculatedRewards = RewardCalculator.calculateQuestRewards(
+              baseRewards,
+              questData.difficulty,
+              characterData.class,
+              characterData.level
+            );
+
+            // Update final rewards with calculated values
+            finalRewards = {
+              xp: calculatedRewards.xp,
+              gold: calculatedRewards.gold,
+            };
+
+            // Calculate new stats with proper rewards
+            const newXp = characterData.xp + calculatedRewards.xp;
+            const newGold = characterData.gold + calculatedRewards.gold;
+
+            // Calculate level up using RewardCalculator
+            const levelUpResult = RewardCalculator.calculateLevelUp(
+              characterData.xp,
+              calculatedRewards.xp,
+              characterData.level
+            );
+            const newLevel = levelUpResult ? levelUpResult.newLevel : characterData.level;
 
             const { error: characterError } = await supabase
               .from('characters')
@@ -214,10 +247,7 @@ export default function QuestDashboard({
         window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
           detail: {
             questId,
-            rewards: {
-              xp: questData.xp_reward,
-              gold: questData.gold_reward,
-            },
+            rewards: finalRewards,
             characterUpdates: {
               assigned_to_id: questData.assigned_to_id,
             }
