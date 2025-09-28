@@ -870,11 +870,29 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - ✅ Consistent type system throughout application
 - ✅ Better developer experience with accurate autocomplete
 
-### Remaining E2E Test Tasks (after type migration)
+### ✅ **COMPLETED (2025-09-28)**
+**Field Name Mismatch Resolution & Quest Reward System Fixed**
+- ✅ **Fixed camelCase/snake_case field mismatches** - Updated CalculatedRewards interface from `honorPoints` to `honor_points`
+- ✅ **Integrated RewardCalculator into quest approval workflow** - Quest approval now properly calculates class bonuses (KNIGHT 1.05x XP, etc.)
+- ✅ **Fixed reward calculation precision** - Changed to Math.floor() to match PostgreSQL truncation behavior
+- ✅ **Updated unit tests** - All 26 unit tests passing with proper reward calculations
+- ✅ **Files Updated**:
+  - `types/QuestRewards.ts` - Fixed field names
+  - `lib/reward-calculator.ts` - Integrated proper calculations
+  - `components/quest-dashboard.tsx` - Added RewardCalculator integration
+  - `tests/unit/rewards/reward-calculator.test.ts` - Updated expectations
+
+### 🔄 **Remaining Issues to Investigate**
+- [ ] **URGENT: Quest pickup functionality broken** - User reports unable to pickup quests after login
+  - Symptoms: Can login manually but quest pickup not working
+  - Needs: Investigation of quest pickup workflow, database permissions, UI state
+- [ ] **Realtime connection error** - Console error: "Realtime connection error for family: [id]"
+  - Error: `RealtimeProvider.useEffect.realtimeChannel (lib/realtime-context.tsx:208:19)`
+  - May be related to Supabase configuration or family ID resolution
 - [ ] **Fix quest-pickup-management.spec.ts** - Should work after type migration
 - [ ] **Fix quest-template-due-date.spec.ts** - Should work after type migration
 - [ ] **Run full E2E suite validation** - All 22 tests should pass
-- [ ] **Commit E2E test fixes** - Final commit with all fixes
+- [ ] **Remove debug output from E2E tests** - Clean up console.log statements
 
 ---
 
