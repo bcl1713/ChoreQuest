@@ -295,23 +295,30 @@ export default function QuestDashboard({
   const handlePickupQuest = async (questId: string) => {
     if (!user) return;
 
+    console.log('Quest pickup attempt:', { questId, userId: user.id });
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('quest_instances')
         .update({
           assigned_to_id: user.id,
           status: 'IN_PROGRESS',
         })
-        .eq('id', questId);
+        .eq('id', questId)
+        .select();
 
       if (error) {
+        console.error('Quest pickup error:', error);
         throw error;
       }
+
+      console.log('Quest pickup success:', data);
 
       // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to pick up quest";
+      console.error('Quest pickup failed:', err);
       setError(errorMsg);
       onError?.(errorMsg);
     }

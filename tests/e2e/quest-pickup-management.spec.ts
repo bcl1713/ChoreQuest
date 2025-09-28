@@ -7,10 +7,16 @@ test.describe('Quest Pickup and Management', () => {
   });
 
   test('Guild Master can pick up available quests', async ({ page }) => {
+    // Capture console logs for debugging
+    const consoleLogs: string[] = [];
+    page.on('console', msg => {
+      consoleLogs.push(`${msg.type().toUpperCase()}: ${msg.text()}`);
+    });
+
     await setupUserWithCharacter(page, 'PickupGM');
 
     // Create unassigned quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await expect(page.locator("text=Create New Quest")).toBeVisible();
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
@@ -29,7 +35,7 @@ test.describe('Quest Pickup and Management', () => {
 
     // Pick up the quest
     const questCard = page.locator('.fantasy-card:has-text("Clean the Kitchen")');
-    const pickupButton = questCard.locator('button:has-text("Pick Up Quest")');
+    const pickupButton = questCard.locator('[data-testid="pick-up-quest-button"]');
     await expect(pickupButton).toBeVisible();
     await pickupButton.click();
     await page.waitForTimeout(2000);
@@ -37,6 +43,10 @@ test.describe('Quest Pickup and Management', () => {
     // Verify quest moved to My Quests
     await expect(page.getByText('🗡️ My Quests')).toBeVisible();
     const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
+
+    // Print console logs for debugging
+    console.log('Console logs during quest pickup:', consoleLogs);
+
     await expect(myQuestsSection.getByText('Clean the Kitchen')).toBeVisible();
   });
 
@@ -44,7 +54,7 @@ test.describe('Quest Pickup and Management', () => {
     await setupUserWithCharacter(page, 'PermissionTester');
 
     // Create and pick up a quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
     await page.fill('input[placeholder="Enter quest title..."]', 'Test Permission Quest');
@@ -81,7 +91,7 @@ test.describe('Quest Pickup and Management', () => {
     await setupUserWithCharacter(page, 'WorkflowTester');
 
     // Create quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
     await page.fill('input[placeholder="Enter quest title..."]', 'Workflow Test Quest');
