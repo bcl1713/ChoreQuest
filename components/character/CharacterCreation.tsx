@@ -1,20 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-// Using literal type instead of import due to Turbopack build issue
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
-
-interface Character {
-  id: string;
-  name: string;
-  class: string;
-  level: number;
-  xp: number;
-  gold: number;
-  gems: number;
-  honorPoints: number;
-}
+import { Character, CharacterClass } from '@/lib/types/database';
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
@@ -60,7 +49,7 @@ const characterClasses = [
 
 export default function CharacterCreation({ onCharacterCreated }: CharacterCreationProps) {
   const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState<'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER' | null>(null);
+  const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { user } = useAuth();
@@ -206,7 +195,7 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
                       ? 'ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50'
                       : 'hover:border-gold-500/30'
                   }`}
-                  onClick={() => setSelectedClass(characterClass.id)}
+                  onClick={() => setSelectedClass(characterClass.id as CharacterClass)}
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">{characterClass.icon}</div>
