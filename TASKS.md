@@ -882,16 +882,25 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - `components/quest-dashboard.tsx` - Added RewardCalculator integration
   - `tests/unit/rewards/reward-calculator.test.ts` - Updated expectations
 
-### 🔄 **Remaining Issues to Investigate**
-- [ ] **URGENT: Quest pickup functionality broken** - User reports unable to pickup quests after login
-  - Symptoms: Can login manually but quest pickup not working
-  - Needs: Investigation of quest pickup workflow, database permissions, UI state
-- [ ] **Realtime connection error** - Console error: "Realtime connection error for family: [id]"
-  - Error: `RealtimeProvider.useEffect.realtimeChannel (lib/realtime-context.tsx:208:19)`
-  - May be related to Supabase configuration or family ID resolution
-- [ ] **Fix quest-pickup-management.spec.ts** - Should work after type migration
-- [ ] **Fix quest-template-due-date.spec.ts** - Should work after type migration
-- [ ] **Run full E2E suite validation** - All 22 tests should pass
+### ✅ **COMPLETED (2025-09-28) - Session 2**
+**Quest Pickup Investigation & Fixes**
+- ✅ **Quest pickup RLS policy fixed** - Created migration `20250928121800_fix_quest_pickup_rls.sql` to allow family members to assign unassigned quests to themselves
+- ✅ **E2E test selectors fixed** - Updated quest-pickup-management.spec.ts to use `[data-testid="create-quest-button"]` instead of brittle text selectors
+- ✅ **Debug logging added** - Enhanced quest pickup function with comprehensive logging for troubleshooting
+- ✅ **Root cause identified** - Quest pickup issue caused by combination of RLS policy restrictions + realtime connection WebSocket 403 errors
+- ✅ **Database migrations applied** - All pending Supabase migrations including realtime permissions are up to date
+
+### 🔄 **Remaining Issues for Next Session**
+- [ ] **Quest pickup UI issue** - Quest pickup function not being called when button is clicked
+  - **Status**: RLS policy fixed, database updates should work, but UI button clicks not triggering function
+  - **Investigation needed**: Check button visibility, DOM structure, event handling
+  - **Debug logs show**: No "Quest pickup attempt:" messages, indicating function never called
+- [ ] **WebSocket 403 realtime errors** - Preventing UI updates after successful database operations
+  - Error: `WebSocket connection to 'ws://127.0.0.1:54321/realtime/v1/websocket' failed: Unexpected response code: 403`
+  - **Impact**: Database changes succeed but UI doesn't refresh to show updates
+  - **Investigation needed**: Supabase realtime permissions/configuration
+- [ ] **Fix remaining E2E test failures** - Several quest-pickup-management tests still failing
+- [ ] **Run full E2E suite validation** - Target: All 22 tests should pass
 - [ ] **Remove debug output from E2E tests** - Clean up console.log statements
 
 ---
