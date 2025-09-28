@@ -1,65 +1,68 @@
 # ChoreQuest Codebase Structure
 
-## Directory Layout
+## Project Organization
 ```
 ChoreQuest/
-├── app/                    # Next.js app router pages
-│   ├── api/               # API route handlers
-│   │   ├── auth/          # Authentication endpoints
-│   │   ├── character/     # Character management
-│   │   ├── rewards/       # Reward system endpoints
-│   │   ├── quests/        # Quest management
-│   │   ├── health/        # Health check endpoint
-│   │   └── test/          # Test-only API endpoints
-│   ├── auth/              # Authentication pages
-│   ├── dashboard/         # Main dashboard page
-│   ├── character/         # Character pages
-│   ├── globals.css        # Global styles & fantasy theme
-│   ├── layout.tsx         # Root layout component
-│   └── page.tsx           # Landing/home page
+├── app/                    # Next.js App Router pages and API routes
+│   ├── api/               # API endpoints (minimal after Supabase migration)
+│   │   ├── health/        # Health check endpoint for Docker
+│   │   └── test/          # Test endpoints for development
+│   ├── auth/              # Authentication pages (login, register, create-family)
+│   ├── dashboard/         # Main application dashboard
+│   ├── character/         # Character creation and management
+│   └── debug/             # Debug tools for development
 ├── components/            # Reusable React components
-│   ├── auth/              # Authentication components
-│   │   └── AuthForm.tsx   # Login/register/create family forms
+│   ├── auth/              # Authentication forms and components
 │   ├── character/         # Character-related components
-│   ├── quest-dashboard.tsx    # Quest management UI
-│   ├── reward-store.tsx       # Reward redemption UI
-│   └── quest-create-modal.tsx # Quest creation modal
-├── lib/                   # Utility libraries
-│   ├── auth.ts            # JWT & password utilities
-│   ├── auth-context.tsx   # Authentication React context
-│   ├── character-context.tsx # Character data context
-│   ├── prisma.ts          # Database client configuration
-│   ├── quest-service.ts   # Quest business logic
-│   ├── user-service.ts    # User management utilities
-│   ├── reward-calculator.ts # Reward calculation logic
-│   └── generated/         # Prisma generated client
-├── prisma/                # Database schema and migrations
-│   ├── schema.prisma      # Database schema definition
-│   ├── seed.ts            # Database seeding script
-│   └── migrations/        # Database migration files
+│   └── migration/         # Migration-specific components
+├── lib/                   # Utility libraries and contexts
+│   ├── generated/         # Generated Prisma client (legacy)
+│   ├── auth-context.tsx   # Supabase authentication context
+│   ├── character-context.tsx # Character state management
+│   ├── realtime-context.tsx  # Supabase realtime subscriptions
+│   └── supabase.ts        # Supabase client configuration
+├── supabase/              # Supabase configuration and migrations
+│   └── migrations/        # SQL migration files
 ├── tests/                 # Test files
-│   ├── api/               # API endpoint tests
-│   ├── e2e/               # End-to-end Playwright tests
-│   │   └── helpers/       # Test helper functions
-│   └── jest.setup.js      # Jest test configuration
+│   ├── unit/              # Unit tests (Jest)
+│   └── e2e/               # End-to-end tests (Playwright)
 ├── types/                 # TypeScript type definitions
 ├── public/                # Static assets
 ├── docs/                  # Project documentation
-├── docker-compose.yml     # Development Docker setup
-├── docker-compose.prod.yml # Production Docker setup
-├── Dockerfile             # Production container build
-└── entrypoint.sh          # Container startup script
+└── scripts/               # Utility scripts
 ```
 
-## Key Configuration Files
-- `package.json` - Dependencies and npm scripts
-- `next.config.ts` - Next.js configuration with standalone output
-- `eslint.config.mjs` - ESLint configuration
-- `jest.config.js` - Jest testing configuration
-- `playwright.config.ts` - E2E testing configuration
-- `tsconfig.json` - TypeScript configuration
-- `tailwind.config.js` - Tailwind CSS configuration (implied)
-- `.env` - Environment variables for development
-- `CLAUDE.md` - Development workflow and conventions
-- `PLANNING.md` - Project planning and roadmap
-- `TASKS.md` - Task tracking and completion status
+## Key Architecture Patterns
+
+### App Router Structure (Next.js 15)
+- File-based routing in `app/` directory
+- Server and client components properly separated
+- API routes co-located with pages where appropriate
+
+### Component Organization
+- **Context Providers**: Authentication, character state, realtime updates
+- **Reusable Components**: AuthForm, CharacterCreation, QuestDashboard, RewardStore
+- **Page Components**: Dashboard, character creation, authentication flows
+
+### Database Architecture
+- **Supabase Native**: Direct client connections with Row Level Security
+- **Family-Scoped Data**: All data isolated by family_id using RLS policies
+- **Real-time Updates**: Automatic UI updates via Supabase subscriptions
+
+### State Management
+- React Context for authentication state (`lib/auth-context.tsx`)
+- Character state management (`lib/character-context.tsx`)
+- Real-time subscriptions for live data (`lib/realtime-context.tsx`)
+
+## File Naming Conventions
+- **Pages**: `page.tsx` in directory structure (Next.js App Router)
+- **Components**: PascalCase `.tsx` files
+- **Contexts**: kebab-case with `.tsx` extension
+- **Utilities**: kebab-case with `.ts` extension
+- **Types**: PascalCase interfaces and types
+
+## Import Patterns
+- Absolute imports using `@/` path mapping
+- Components import types from same file when possible
+- Consistent use of named exports for utilities
+- Default exports for page and main components

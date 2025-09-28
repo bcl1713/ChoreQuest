@@ -1,114 +1,167 @@
 # ChoreQuest Development Commands
 
-## Essential TDD Commands (Daily Use)
+## Essential Development Commands
+
+### Development Server
 ```bash
-# Unit testing - primary development cycle
-npm run test                # Run all unit tests
-npm run test:watch          # Watch mode for TDD red-green-refactor cycles
-npm run test:coverage       # Generate test coverage report
-
-# E2E testing - integration verification
-npx playwright test         # Run all E2E tests (requires dev server running)
-npx playwright test --reporter=line  # Clean output for CI/automation
-npx playwright test --headed # Debug mode (only for specific issues)
-
-# Code quality - must pass before commits
-npm run build              # Verify TypeScript compilation (zero errors required)
-npm run lint               # Check ESLint rules (zero warnings/errors required)
+npm run dev                 # Start Next.js development server with Turbopack
 ```
 
-## Development Server
+### Quality Assurance (MUST PASS BEFORE ANY COMMIT)
 ```bash
-# Primary development
-npm run dev                # Start Next.js development server with Turbopack
-npm run start             # Start production server (after build)
-
-# Development environment
-npm run docker:dev        # Start PostgreSQL and Redis containers
-npm run docker:down       # Stop all containers
+npm run build              # Build production application (zero errors required)
+npm run lint               # Run ESLint code quality checks (zero warnings required)
+npm run test               # Run all unit tests (all must pass)
+npx playwright test        # Run E2E tests (all must pass)
 ```
 
-## Database Operations
+### Database Operations (Supabase)
 ```bash
-# Core database workflow
-npx prisma generate       # Generate Prisma client (after schema changes)
-npx prisma migrate dev    # Create and apply new migration
-npm run db:migrate        # Apply existing migrations
-npm run db:seed           # Populate database with sample data
-npm run db:reset          # Reset database to initial state (destructive)
-npm run db:studio         # Open Prisma Studio GUI for database inspection
+npx supabase start         # Start local Supabase development environment
+npx supabase stop          # Stop local Supabase services
+npx supabase status        # Check status of local Supabase services
+npx supabase migration new <name>  # Create new migration file
+npx supabase db push       # Apply local schema changes to remote
+npx supabase db pull       # Pull remote schema changes to local
+npx supabase db reset      # Reset local database to clean state
 ```
 
-## Production Deployment
+### Testing Commands
 ```bash
+npm run test:watch         # Run tests in watch mode for TDD
+npm run test:coverage      # Generate test coverage report
+npm run test:e2e           # Run E2E tests with line reporter (alias for playwright test)
+npx playwright test --headed --debug  # Debug E2E tests with browser UI
+```
+
+### Docker Development
+```bash
+npm run docker:dev         # Start PostgreSQL and Redis containers for development
+npm run docker:down        # Stop all Docker containers
+docker-compose up -d       # Start production containers
+docker-compose down        # Stop production containers
+```
+
+### Legacy Commands (No Longer Used After Supabase Migration)
+```bash
+# These commands were removed after Supabase migration:
+# npm run db:generate      # Generate Prisma client (replaced by Supabase)
+# npm run db:migrate       # Run Prisma migrations (replaced by Supabase)
+# npm run db:reset         # Reset Prisma database (replaced by Supabase)
+# npm run db:seed          # Seed Prisma database (replaced by Supabase)
+# npm run db:studio        # Open Prisma Studio (replaced by Supabase dashboard)
+```
+
+## Development Workflow Commands
+
+### Daily Development
+```bash
+# Start development environment
+npm run dev
+
+# Run tests continuously during development
+npm run test:watch
+
+# Check code quality before commit
+npm run lint && npm run test && npm run build
+```
+
+### Feature Development
+```bash
+# Create feature branch
+git checkout -b feature/feature-name
+
+# Development cycle
+npm run test:watch  # Keep running in one terminal
+npm run dev         # Keep running in another terminal
+
+# Pre-commit checks
+npm run build && npm run lint && npm run test && npx playwright test
+
+# Commit and push
+git add . && git commit -m "feat: description" && git push
+```
+
+### Production Deployment
+```bash
+# Build and test
+npm run build
+npm run test
+npx playwright test
+
 # Docker production deployment
-docker compose -f docker-compose.prod.yml up -d    # Deploy production stack
-docker compose -f docker-compose.prod.yml down     # Stop production stack
-docker compose -f docker-compose.prod.yml logs -f  # Follow container logs
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## Git Workflow Commands
+## Utility Commands
+
+### Linux System Commands (Available)
 ```bash
-# Branch management
-git checkout main         # Switch to main branch
-git checkout -b feature/your-feature  # Create new feature branch
-git status               # Check working directory status
-git add .                # Stage all changes
-git commit -m "message"  # Commit with message
-
-# PR workflow using GitHub CLI
-git push -u origin feature/your-feature           # Push feature branch
-gh pr create --title "Title" --body "Description" # Create pull request
-gh pr merge --squash --delete-branch             # Merge and cleanup
+ls                         # List files
+cd <directory>            # Change directory
+grep <pattern> <files>    # Search for patterns (use Grep tool instead)
+find <path> <criteria>    # Find files (use Glob tool instead)
+git status                # Check git status
+git log --oneline -10     # View recent commits
+git diff                  # View changes
 ```
 
-## Quality Gate Sequence (Required Before Merge)
-```bash
-# Run this sequence - ALL must pass:
-npm run build        # ✅ Zero TypeScript compilation errors
-npm run lint         # ✅ Zero ESLint warnings/errors  
-npm run test         # ✅ All unit tests pass
-npx playwright test  # ✅ All E2E tests pass (requires dev server)
-```
-
-## Useful Development Utilities
-```bash
-# Linux system commands (this environment)
-ls -la                   # List directory contents with details
-find . -name "*.tsx"     # Find TypeScript React files
-grep -r "searchTerm" .   # Search for text in files
-ps aux | grep node      # Find running Node processes
-lsof -i :3000           # Check what's using port 3000
-pkill node              # Kill all Node processes (if needed)
-```
-
-## Project-Specific Scripts
-```bash
-# Specialized testing
-npm run test:seed       # Test database seeding functionality
-npm run test:e2e        # Alternative E2E test command
-
-# Development helpers
-chmod +x test-character-creation.sh  # Make shell script executable
-./test-character-creation.sh         # Run custom test script
-```
-
-## Environment Setup
-```bash
-# Initial project setup
-npm install             # Install all dependencies
-cp .env.example .env    # Copy environment template
-npm run docker:dev      # Start development services
-npm run db:generate     # Generate Prisma client
-npm run db:migrate      # Apply database migrations
-npm run db:seed         # Add sample data
-```
-
-## Health Monitoring
+### Project-Specific Utilities
 ```bash
 # Check application health
-curl http://localhost:3000/api/health  # Verify API and database connectivity
-docker ps                             # Check running containers
-docker logs chorequest-app            # View application logs
-docker logs chorequest-postgres       # View database logs
+curl http://localhost:3000/api/health
+
+# View application logs
+docker-compose logs -f
+
+# Connect to database (via Supabase dashboard)
+# Visit: https://supabase.com/dashboard/project/YOUR_PROJECT/editor
+
+# Monitor realtime subscriptions
+# Use browser dev tools to inspect realtime connection
+```
+
+## TDD Workflow Commands
+
+### Red-Green-Refactor Cycle
+```bash
+# 1. RED: Write failing test
+npm run test              # Should fail
+
+# 2. GREEN: Write minimal code to pass
+npm run test:watch        # Should pass
+
+# 3. REFACTOR: Improve code quality
+npm run lint              # Should pass
+npm run build             # Should pass
+npx playwright test       # Should pass
+```
+
+## Emergency Commands
+
+### Reset Development Environment
+```bash
+# Reset Supabase
+npx supabase db reset
+
+# Reset Node modules
+rm -rf node_modules package-lock.json
+npm install
+
+# Reset Docker
+docker-compose down
+docker system prune -f
+npm run docker:dev
+```
+
+### Debug Issues
+```bash
+# View detailed test output
+npm run test -- --verbose
+
+# Run specific test file
+npm run test -- tests/unit/specific-test.test.ts
+
+# Debug specific E2E test
+npx playwright test tests/e2e/specific-test.spec.ts --headed --debug
 ```
