@@ -282,6 +282,8 @@ export default function QuestDashboard({
         }
 
         // Quest updates will be handled automatically by realtime subscriptions
+        // But also trigger manual refresh as fallback for when realtime fails
+        await loadQuests();
       }
     } catch (err) {
       const errorMsg =
@@ -315,6 +317,8 @@ export default function QuestDashboard({
       console.log('Quest pickup success:', data);
 
       // Quest updates will be handled automatically by realtime subscriptions
+      // But also trigger manual refresh as fallback for when realtime fails
+      await loadQuests();
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to pick up quest";

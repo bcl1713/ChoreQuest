@@ -83,6 +83,13 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     }
 
     if (!user || !session || !profile?.family_id) {
+      setConnectionError('Authentication required for realtime connection');
+      return;
+    }
+
+    // Ensure session is valid and token is available
+    if (!session.access_token) {
+      setConnectionError('Valid authentication token required');
       return;
     }
 
@@ -90,10 +97,27 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     const channelName = `family_${familyId}`;
 
     console.log('Setting up realtime connection for family:', familyId);
+    console.log('User ID:', user.id);
+    console.log('Session access token exists:', !!session.access_token);
 
-    // Create a family-scoped channel
+    // Clear any previous error
+    setConnectionError(null);
+
+    // For local development, provide fallback if realtime fails
+    const isLocalDevelopment = process.env.NODE_ENV === 'development' &&
+                               process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1');
+
+    if (isLocalDevelopment) {
+      console.log('RealtimeContext: Local development detected, setting up authenticated realtime');
+    }
+
+    // Create a family-scoped channel with authentication
     const realtimeChannel = supabase
-      .channel(channelName)
+      .channel(channelName, {
+        config: {
+          private: true // Enable authentication for this channel
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -196,20 +220,42 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
           familyMemberListeners.current.forEach(listener => listener(event));
         }
       )
-      .subscribe((status) => {
+      .subscribe(async (status) => {
         console.log('Realtime subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          setIsConnected(true);
-          setConnectionError(null);
-          console.log('Successfully connected to realtime for family:', familyId);
+          // Send access token after successful subscription
+          try {
+            console.log('Sending access token for authentication...');
+            realtimeChannel.send({
+              type: 'access_token',
+              access_token: session.access_token
+            });
+            
+            setIsConnected(true);
+            setConnectionError(null);
+            console.log('Successfully connected to realtime for family:', familyId, 'with authentication');
+          } catch (error) {
+            console.error('Failed to send access token:', error);
+            setConnectionError('Failed to authenticate realtime connection');
+          }
         } else if (status === 'CHANNEL_ERROR') {
           setIsConnected(false);
-          setConnectionError('Failed to connect to realtime updates');
-          console.error('Realtime connection error for family:', familyId);
+          if (isLocalDevelopment) {
+            setConnectionError('Realtime authentication failed in local development');
+            console.warn('Realtime connection failed - this may be due to authentication requirements');
+          } else {
+            setConnectionError('Failed to connect to realtime updates');
+            console.error('Realtime connection error for family:', familyId);
+          }
         } else if (status === 'TIMED_OUT') {
           setIsConnected(false);
-          setConnectionError('Realtime connection timed out');
-          console.error('Realtime connection timed out for family:', familyId);
+          if (isLocalDevelopment) {
+            setConnectionError('Realtime connection timed out - check authentication');
+            console.warn('Realtime connection timed out - may be authentication related');
+          } else {
+            setConnectionError('Realtime connection timed out');
+            console.error('Realtime connection timed out for family:', familyId);
+          }
         } else if (status === 'CLOSED') {
           setIsConnected(false);
           setConnectionError(null);

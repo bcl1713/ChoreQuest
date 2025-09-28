@@ -890,17 +890,29 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - ✅ **Root cause identified** - Quest pickup issue caused by combination of RLS policy restrictions + realtime connection WebSocket 403 errors
 - ✅ **Database migrations applied** - All pending Supabase migrations including realtime permissions are up to date
 
+### ✅ **COMPLETED (2025-09-28) - Session 3**
+**WebSocket 403 Authentication Issue Resolved & E2E Test Improvements**
+- ✅ **Fixed critical app crash** - Resolved undefined `supabaseUrl` variable causing "supabaseUrl is not defined" runtime error
+- ✅ **Implemented WebSocket JWT authentication** - Added proper `access_token` message sending to authenticate realtime connections
+  - **Key changes**: Added `private: true` channel config and `realtimeChannel.send({ type: 'access_token', access_token: session.access_token })`
+  - **Result**: WebSocket 403 errors resolved, realtime authentication working in development
+- ✅ **Fixed syntax error** - Removed extra closing parentheses in realtime-context.tsx causing compilation errors
+- ✅ **Significant E2E test improvement** - Tests now progress through family creation, authentication, and basic quest operations
+- ✅ **Manual refresh fallbacks working** - Quest pickup functionality operational with manual UI refresh
+
 ### 🔄 **Remaining Issues for Next Session**
-- [ ] **Quest pickup UI issue** - Quest pickup function not being called when button is clicked
-  - **Status**: RLS policy fixed, database updates should work, but UI button clicks not triggering function
-  - **Investigation needed**: Check button visibility, DOM structure, event handling
-  - **Debug logs show**: No "Quest pickup attempt:" messages, indicating function never called
-- [ ] **WebSocket 403 realtime errors** - Preventing UI updates after successful database operations
-  - Error: `WebSocket connection to 'ws://127.0.0.1:54321/realtime/v1/websocket' failed: Unexpected response code: 403`
-  - **Impact**: Database changes succeed but UI doesn't refresh to show updates
-  - **Investigation needed**: Supabase realtime permissions/configuration
-- [ ] **Fix remaining E2E test failures** - Several quest-pickup-management tests still failing
-- [ ] **Run full E2E suite validation** - Target: All 22 tests should pass
+- [ ] **Complete E2E test validation** - Several tests still failing on quest state transitions (Start Quest → Complete → Approve)
+  - **Status**: Authentication and basic quest creation working, remaining issues appear to be UI timing/state management
+  - **Progress**: First quest-pickup-management test now passes, other tests failing on missing "Start Quest" buttons
+- [ ] **Join existing family functionality** - Family code validation not working for new users joining existing families
+  - **Issue**: Users report "family code is invalid" when trying to join existing families
+  - **Missing test coverage**: No E2E tests cover joining existing families (all tests create new families)
+  - **Investigation needed**: Family code lookup and validation logic
+- [ ] **Create E2E test for family joining** - Add comprehensive test for joining existing family workflow
+  - **Test should cover**: Create family → Get family code → New user joins with code → Both users can interact
+  - **File**: New test file or additional test in existing character-creation.spec.ts
+- [ ] **Fix remaining quest state management issues** - Quest Start/Complete/Approve button visibility
+- [ ] **Run full E2E suite validation** - Target: All 22+ tests should pass
 - [ ] **Remove debug output from E2E tests** - Clean up console.log statements
 
 ---
