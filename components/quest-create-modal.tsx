@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { questService } from "@/lib/quest-service";
-import { userService } from "@/lib/user-service";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import {
   QuestDifficulty,
   QuestCategory,
@@ -35,7 +35,8 @@ export default function QuestCreateModal({
   onQuestCreated,
   templates,
 }: QuestCreateModalProps) {
-  const [mode, setMode] = useState<"template" | "adhoc">("template");
+  const { user, profile } = useAuth();
+  const [mode, setMode] = useState<"template" | "adhoc">("adhoc");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -59,23 +60,34 @@ export default function QuestCreateModal({
   }, [isOpen]);
 
   const loadFamilyMembers = async () => {
+    if (!profile) return;
+
     try {
-      const members = await userService.getFamilyMembers();
-      // Transform API response to match expected interface
-      setFamilyMembers(
-        members.map((member: FamilyMember) => ({
+      const { data: membersData, error: membersError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('family_id', profile.family_id);
+
+      if (membersError) {
+        throw membersError;
+      }
+
+      if (membersData) {
+        // Transform to match User interface
+        const transformedMembers = membersData.map(member => ({
           id: member.id,
           username: member.name,
           role: member.role,
-        }))
-      );
-    } catch {
+        }));
+        setFamilyMembers(transformedMembers);
+      }
+    } catch (err) {
       setError("Failed to load family members");
     }
   };
 
   const resetForm = () => {
-    setMode("template");
+    setMode("adhoc");
     setSelectedTemplateId("");
     setAssignedToId("");
     setDueDate("");
@@ -100,6 +112,11 @@ export default function QuestCreateModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user || !profile) {
+      setError("User not authenticated");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -115,27 +132,37 @@ export default function QuestCreateModal({
           return;
         }
 
-        await questService.createQuestInstanceFromTemplate({
-          templateId: selectedTemplateId,
-          assignedToId: assignedToId || undefined,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        });
+        // Create quest from template (we'll implement this when templates are available)
+        setError("Template creation not yet implemented in current migration");
+        return;
       } else {
         if (!title.trim() || !description.trim()) {
           setError("Please fill in all required fields");
           return;
         }
 
-        await questService.createQuestInstanceAdHoc({
+        // Create ad-hoc quest instance directly
+        const questData = {
           title: title.trim(),
           description: description.trim(),
-          xpReward,
-          goldReward,
-          difficulty,
-          category,
-          assignedToId: assignedToId || undefined,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        });
+          xp_reward: xpReward,
+          gold_reward: goldReward,
+          difficulty: difficulty,
+          category: category,
+          status: 'PENDING',
+          family_id: profile.family_id,
+          created_by_id: user.id,
+          assigned_to_id: assignedToId || null,
+          due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        };
+
+        const { error: insertError } = await supabase
+          .from('quest_instances')
+          .insert(questData);
+
+        if (insertError) {
+          throw insertError;
+        }
       }
 
       resetForm();

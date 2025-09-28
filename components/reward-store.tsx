@@ -362,7 +362,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       {/* Header with Gold Balance */}
       <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-yellow-800">⭐ Reward Store</h2>
+          <h2 className="text-2xl font-bold text-yellow-800" data-testid="reward-store-title">⭐ Reward Store</h2>
           <div className="flex items-center space-x-4">
             {user?.role === 'GUILD_MASTER' && pendingRedemptions.length > 0 && (
               <div className="flex items-center space-x-2 bg-orange-100 px-3 py-1 rounded-full">
@@ -371,7 +371,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
             )}
             <div className="flex items-center space-x-2">
               <span className="text-2xl">🪙</span>
-              <span className="text-xl font-bold text-yellow-700">
+              <span className="text-xl font-bold text-yellow-700" data-testid="gold-balance">
                 {character?.gold || 0} Gold
               </span>
             </div>
@@ -456,7 +456,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
       {rewards.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <p>No rewards available at this time.</p>
+          <p data-testid="no-rewards-message">No rewards available at this time.</p>
         </div>
       )}
 

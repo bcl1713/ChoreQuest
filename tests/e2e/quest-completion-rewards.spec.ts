@@ -16,7 +16,7 @@ test.describe("Quest Completion Rewards", () => {
     await expect(page.getByText("🏅 0")).toBeVisible();
 
     // Create quest with rewards
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await expect(page.locator("text=Create New Quest")).toBeVisible();
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
@@ -76,7 +76,7 @@ test.describe("Quest Completion Rewards", () => {
     await setupUserWithCharacter(page, 'MultiReward');
 
     // Create quest with both gold and XP rewards
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
     await page.fill('input[placeholder="Enter quest title..."]', "Multi-Reward Quest");
@@ -105,7 +105,7 @@ test.describe("Quest Completion Rewards", () => {
 });
 
 async function createAndCompleteQuest(page: Page, title: string, difficulty: string, xp: number) {
-  await page.click('button:text("⚡ Create Quest")');
+  await page.click('[data-testid="create-quest-button"]');
   await page.locator('.fixed button:has-text("Custom Quest")').click();
   await page.waitForTimeout(500);
 

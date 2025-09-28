@@ -159,6 +159,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => setShowCreateQuest(true)}
                     className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                    data-testid="create-quest-button"
                   >
                     <span className="hidden sm:inline">⚡ Create Quest</span>
                     <span className="sm:hidden">⚡ Quest</span>

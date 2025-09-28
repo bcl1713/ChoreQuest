@@ -799,6 +799,25 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 
 ---
 
+## 🧪 E2E Test Suite Fixes
+
+### ✅ Recently Completed (2025-09-27)
+- [x] **Environment Setup** - Supabase local environment running, development server started
+
+### 🔄 Current E2E Test Fixing Tasks
+
+- [x] **Run initial test scan** - Assessed all current test failures
+- [x] **Fix character-creation.spec.ts** - Fixed 3 tests for character creation flow (3/3 passing)
+- [x] **Fix quest-system.spec.ts** - Fixed 4 tests for quest management (4/4 passing)
+- [x] **Fix reward-store.spec.ts** - Fixed 4 tests for reward store functionality (4/4 passing)
+- [ ] **Fix quest-completion-rewards.spec.ts** - Partially fixed (1/5 passing) - quest creation works, completion workflow needs more work
+- [ ] **Fix quest-pickup-management.spec.ts** - Fix quest assignment tests
+- [ ] **Fix quest-template-due-date.spec.ts** - Fix due date functionality tests
+- [ ] **Run full E2E suite validation** - Verify all tests pass
+- [ ] **Commit E2E test fixes** - Commit progress made so far
+
+---
+
 _This task list represents the complete roadmap for ChoreQuest development. All
 Phase 1 core foundation tasks are either completed or in final stages, with the
 MVP being very close to completion._
