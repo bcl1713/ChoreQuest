@@ -413,7 +413,7 @@ export default function QuestDashboard({
     }
 
     // Guild masters can approve quests
-    if (newStatus === "APPROVED" && user.role === "GUILD_MASTER") {
+    if (newStatus === "APPROVED" && profile?.role === "GUILD_MASTER") {
       return true;
     }
 
@@ -550,7 +550,7 @@ export default function QuestDashboard({
       </section>
 
       {/* Available Quests (for guild masters and unassigned quests) */}
-      {(user?.role === "GUILD_MASTER" || unassignedQuests.length > 0) && (
+      {(profile?.role === "GUILD_MASTER" || unassignedQuests.length > 0) && (
         <section>
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             📋 Available Quests
@@ -588,7 +588,7 @@ export default function QuestDashboard({
                   {/* Quest Action Buttons */}
                   <div className="flex flex-col gap-3 min-w-[200px]">
                     {/* Hero Pickup Button */}
-                    {user?.role !== "GUILD_MASTER" && (
+                    {profile?.role !== "GUILD_MASTER" && (
                       <button
                         onClick={() => handlePickupQuest(quest.id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
@@ -600,7 +600,7 @@ export default function QuestDashboard({
                     )}
 
                     {/* Guild Master Controls */}
-                    {user?.role === "GUILD_MASTER" && (
+                    {profile?.role === "GUILD_MASTER" && (
                       <div className="space-y-2">
                         {/* GM can also pick up quests */}
                         <button
@@ -675,7 +675,7 @@ export default function QuestDashboard({
       )}
 
       {/* Other Family Quests (visible to guild masters) */}
-      {user?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
+      {profile?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
         <section>
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             👥 Family Quests
