@@ -1,4 +1,4 @@
-import { QuestDifficulty, CharacterClass } from "@/lib/generated/prisma";
+import { QuestDifficulty, CharacterClass } from "@/lib/types/database";
 import { CalculatedRewards, QuestRewards } from "@/types/QuestRewards";
 
 export class RewardCalculator {
