@@ -154,7 +154,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
   const handleRedeem = async (reward: Reward, notes?: string) => {
     if (!user || !character) return;
 
-    if (character.gold < reward.cost) {
+    if ((character.gold || 0) < reward.cost) {
       onError?.('Insufficient gold to redeem this reward');
       return;
     }
@@ -178,7 +178,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       }
 
       // Update character gold
-      const newGold = character.gold - reward.cost;
+      const newGold = (character.gold || 0) - reward.cost;
       const { error: characterError } = await supabase
         .from('characters')
         .update({ gold: newGold })
@@ -200,7 +200,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     }
   };
 
-  const canAfford = (cost: number) => character ? character.gold >= cost : false;
+  const canAfford = (cost: number) => character ? (character.gold || 0) >= cost : false;
 
   const handleApproval = async (redemptionId: string, status: 'APPROVED' | 'DENIED' | 'FULFILLED', notes?: string) => {
     if (!user) return;
@@ -291,9 +291,9 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
   const getRedemptionStatus = (rewardId: string) => {
     const pending = redemptions.find(r =>
-      r.reward.id === rewardId &&
-      r.user.id === user?.id &&  // Only check current user's redemptions
-      ['PENDING', 'APPROVED'].includes(r.status)
+      r.rewards.id === rewardId &&
+      r.user_profiles.id === user?.id &&  // Only check current user's redemptions
+      ['PENDING', 'APPROVED'].includes(r.status || '')
     );
     return pending ? pending.status : null;
   };
@@ -434,7 +434,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                       <strong>Requested by:</strong> {redemption.user_profiles.name}
                     </div>
                     <div className="text-sm text-gray-500 mb-2">
-                      <strong>Request Date:</strong> {new Date(redemption.requested_at).toLocaleDateString()}
+                      <strong>Request Date:</strong> {redemption.requested_at ? new Date(redemption.requested_at).toLocaleDateString() : 'N/A'}
                     </div>
                     {redemption.notes && (
                       <div className="text-sm text-gray-600 mb-2">
@@ -489,7 +489,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                       </div>
                     </div>
                     <div className="text-sm text-gray-400 mb-2">
-                      Requested by <span className="text-gray-300 font-medium">{redemption.user_profiles.name}</span> • {new Date(redemption.requested_at).toLocaleDateString()}
+                      Requested by <span className="text-gray-300 font-medium">{redemption.user_profiles.name}</span> • {redemption.requested_at ? new Date(redemption.requested_at).toLocaleDateString() : 'N/A'}
                     </div>
                     {redemption.notes && (
                       <div className="text-sm text-gray-300 mb-2 bg-dark-600 p-2 rounded">
@@ -507,7 +507,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                         ? 'bg-blue-900/30 text-blue-300 border-blue-600/50'
                         : 'bg-red-900/30 text-red-300 border-red-600/50'
                     }`}>
-                      {redemption.status.toLowerCase()}
+                      {(redemption.status || 'unknown').toLowerCase()}
                     </div>
                   </div>
                 </div>

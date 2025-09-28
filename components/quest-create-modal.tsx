@@ -252,7 +252,7 @@ export default function QuestCreateModal({
                       {templates.map((template) => (
                         <option key={template.id} value={template.id}>
                           {template.title} - {template.difficulty} (
-                          {template.xpReward} XP, {template.goldReward} Gold)
+                          {template.xp_reward} XP, {template.gold_reward} Gold)
                         </option>
                       ))}
                     </select>
@@ -275,10 +275,10 @@ export default function QuestCreateModal({
                           {selectedTemplate.category}
                         </span>
                         <span className="text-gold-400">
-                          💰 {selectedTemplate.goldReward}
+                          💰 {selectedTemplate.gold_reward}
                         </span>
                         <span className="xp-text">
-                          ⚡ {selectedTemplate.xpReward} XP
+                          ⚡ {selectedTemplate.xp_reward} XP
                         </span>
                       </div>
                     </div>

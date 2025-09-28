@@ -484,9 +484,9 @@ export default function QuestDashboard({
                     <p className="text-gray-400 text-sm">{quest.description}</p>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status)}`}
+                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
                   >
-                    {quest.status.replace("_", " ")}
+                    {(quest.status || 'PENDING').replace("_", " ")}
                   </span>
                 </div>
 
@@ -495,11 +495,11 @@ export default function QuestDashboard({
                     <span className={getDifficultyColor(quest.difficulty)}>
                       {quest.difficulty}
                     </span>
-                    <span className="text-gold-400">💰 {quest.goldReward}</span>
-                    <span className="xp-text">⚡ {quest.xpReward} XP</span>
-                    {formatDueDate(quest.dueDate) && (
+                    <span className="text-gold-400">💰 {quest.gold_reward}</span>
+                    <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                    {formatDueDate(quest.due_date) && (
                       <span className="text-blue-400">
-                        {formatDueDate(quest.dueDate)}
+                        {formatDueDate(quest.due_date)}
                       </span>
                     )}
                   </div>
@@ -574,12 +574,12 @@ export default function QuestDashboard({
                         {quest.difficulty}
                       </span>
                       <span className="text-gold-400">
-                        💰 {quest.goldReward}
+                        💰 {quest.gold_reward}
                       </span>
-                      <span className="xp-text">⚡ {quest.xpReward} XP</span>
-                      {formatDueDate(quest.dueDate) && (
+                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                      {formatDueDate(quest.due_date) && (
                         <span className="text-blue-400">
-                          {formatDueDate(quest.dueDate)}
+                          {formatDueDate(quest.due_date)}
                         </span>
                       )}
                     </div>
@@ -699,21 +699,21 @@ export default function QuestDashboard({
                         {quest.difficulty}
                       </span>
                       <span className="text-gold-400">
-                        💰 {quest.goldReward}
+                        💰 {quest.gold_reward}
                       </span>
-                      <span className="xp-text">⚡ {quest.xpReward} XP</span>
-                      {formatDueDate(quest.dueDate) && (
+                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                      {formatDueDate(quest.due_date) && (
                         <span className="text-blue-400">
-                          {formatDueDate(quest.dueDate)}
+                          {formatDueDate(quest.due_date)}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status)}`}
+                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
                     >
-                      {quest.status.replace("_", " ")}
+                      {(quest.status || 'PENDING').replace("_", " ")}
                     </span>
                     {quest.status === "COMPLETED" &&
                       canUpdateStatus(quest, "APPROVED") && (

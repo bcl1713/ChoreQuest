@@ -311,7 +311,7 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
       email: testUser.email,
       password: testUser.password,
       id: userInfo.id,
-      familyId: userInfo.familyId || authData.family?.id,
+      familyId: userInfo.familyId,
       characterId: userInfo.characterId
     }
   };

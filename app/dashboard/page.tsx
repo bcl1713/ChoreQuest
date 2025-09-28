@@ -157,7 +157,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="text-left sm:text-right">
                 <p className="text-gray-300 font-medium">{character.name}</p>
-                <p className="text-sm text-gray-400">{getClassDisplay(character.class)} • Level {character.level}</p>
+                <p className="text-sm text-gray-400">{character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}</p>
                 <p className="text-xs text-gray-500">{profile?.role ? getRoleDisplay(profile.role) : ''}</p>
               </div>
 
@@ -211,7 +211,7 @@ export default function Dashboard() {
             <div className="text-xs sm:text-sm text-gray-400">Gems</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2">🏅 {character.honorPoints}</div>
+            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2">🏅 {character.honor_points}</div>
             <div className="text-xs sm:text-sm text-gray-400">Honor Points</div>
           </div>
         </div>
