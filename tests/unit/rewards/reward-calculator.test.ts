@@ -23,7 +23,7 @@ describe("RewardCalculator", () => {
       expect(result.gold).toBe(52.5);
       expect(result.xp).toBe(105);
       expect(result.gems).toBe(5);
-      expect(result.honorPoints).toBe(10);
+      expect(result.honor_points).toBe(10);
     });
 
     it("should apply difficulty multiplier for MEDIUM quests", () => {
@@ -123,7 +123,7 @@ describe("RewardCalculator", () => {
       );
 
       // HEALER should get 1.25x honor points bonus
-      expect(result.honorPoints).toBe(25);
+      expect(result.honor_points).toBe(25);
     });
 
     it("should combine difficulty multiplier and class bonuses", () => {

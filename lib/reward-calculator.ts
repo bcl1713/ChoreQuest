@@ -26,7 +26,7 @@ export class RewardCalculator {
       gems: Number(
         (baseGems * classBonus.gemsBonus * difficultyMultiplier).toFixed(2),
       ),
-      honorPoints: Number(
+      honor_points: Number(
         (
           baseHonorPoints *
           classBonus.honorBonus *
