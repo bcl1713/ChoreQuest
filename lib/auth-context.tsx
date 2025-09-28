@@ -3,20 +3,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import { UserProfile, Family } from '@/lib/types/database';
 
-interface UserProfile {
-  id: string;
-  email: string;
-  name: string;
-  role: 'GUILD_MASTER' | 'HERO' | 'YOUNG_HERO';
-  family_id: string;
-}
-
-interface Family {
-  id: string;
-  name: string;
-  code: string;
-}
+// Using types from @/lib/types/database
 
 interface AuthContextType {
   user: User | null;
@@ -152,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [isCreatingFamily]);
 
   const clearError = () => setError(null);
 
@@ -268,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // If user is not automatically signed in (email confirmation required), sign them in
       if (!authData.session) {
         console.log('No session from signup, attempting to sign in...');
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });

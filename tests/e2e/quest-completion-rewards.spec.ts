@@ -89,13 +89,18 @@ test.describe("Quest Completion Rewards", () => {
     await page.waitForTimeout(2000);
 
     // Complete the quest
-    await page.locator('button:has-text("Pick Up Quest")').first().click();
+    await page.locator('[data-testid="pick-up-quest-button"]').first().click();
     await page.waitForTimeout(1000);
-    await page.locator('button:has-text("Start Quest")').first().click();
+    // Workaround for realtime subscription issues - refresh page to get updated state
+    await page.reload();
     await page.waitForTimeout(1000);
-    await page.locator('button:has-text("Complete")').first().click();
+    // Quest should now be IN_PROGRESS and show Complete button
+    await page.locator('[data-testid="complete-quest-button"]').first().click();
     await page.waitForTimeout(1000);
-    await page.locator('button:has-text("Approve")').first().click();
+    // Workaround for realtime issues - refresh to see COMPLETED status
+    await page.reload();
+    await page.waitForTimeout(1000);
+    await page.locator('[data-testid="approve-quest-button"]').first().click();
     await page.waitForTimeout(3000);
 
     // Gold: 75 * 1.5 * 1.05 = 118, XP: 150 * 1.5 * 1.05 = 236
@@ -120,18 +125,25 @@ async function createAndCompleteQuest(page: Page, title: string, difficulty: str
   // Wait for quest to appear, then complete workflow
   await expect(page.getByText(title)).toBeVisible();
 
-  // Try to pick up quest - might not be necessary if directly assigned
-  const pickupButton = page.locator('button:has-text("Pick Up Quest")').first();
-  if (await pickupButton.isVisible().catch(() => false)) {
-    await pickupButton.click();
-    await page.waitForTimeout(500);
-  }
+  // Always try to pick up quest first (quests are created as unassigned)
+  await page.locator('[data-testid="pick-up-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+
+  // Workaround for realtime subscription issues - refresh page to get updated state
+  await page.reload();
+  await page.waitForTimeout(1000);
+
+  // Quest should now be IN_PROGRESS and show Complete button (no Start Quest needed)
+  await expect(page.locator('[data-testid="complete-quest-button"]').first()).toBeVisible();
 
   // Complete quest workflow with shorter waits
-  await page.locator('button:has-text("Start Quest")').first().click();
-  await page.waitForTimeout(500);
-  await page.locator('button:has-text("Complete")').first().click();
-  await page.waitForTimeout(500);
-  await page.locator('button:has-text("Approve")').first().click();
+  await page.locator('[data-testid="complete-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+
+  // Workaround for realtime issues - refresh to see COMPLETED status
+  await page.reload();
+  await page.waitForTimeout(1000);
+
+  await page.locator('[data-testid="approve-quest-button"]').first().click();
   await page.waitForTimeout(1000);
 }

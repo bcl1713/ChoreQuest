@@ -3,18 +3,9 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './auth-context';
 import { supabase } from './supabase';
+import { Character } from '@/lib/types/database';
 
-interface Character {
-  id: string;
-  name: string;
-  class: string;
-  level: number;
-  xp: number;
-  gold: number;
-  gems: number;
-  honorPoints: number;
-  avatarUrl?: string;
-}
+// Using Character type from @/lib/types/database
 
 interface CharacterContextType {
   character: Character | null;
@@ -60,18 +51,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
       } else {
-        // Transform Supabase data to match our interface
-        setCharacter({
-          id: data.id,
-          name: data.name,
-          class: data.class,
-          level: data.level,
-          xp: data.xp,
-          gold: data.gold,
-          gems: data.gems,
-          honorPoints: data.honor_points,
-          avatarUrl: data.avatar_url || undefined,
-        });
+        // Use Supabase data directly
+        setCharacter(data);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch character';

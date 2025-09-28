@@ -5,26 +5,12 @@ import { useAuth } from "@/lib/auth-context";
 import { useCharacter } from "@/lib/character-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
+import { Reward, RewardRedemption, UserProfile } from "@/lib/types/database";
 import { motion } from "framer-motion";
 
-interface Reward {
-  id: string;
-  name: string;
-  description: string;
-  type: 'SCREEN_TIME' | 'PRIVILEGE' | 'PURCHASE' | 'EXPERIENCE';
-  cost: number;
-}
-
-interface RewardRedemption {
-  id: string;
-  status: 'PENDING' | 'APPROVED' | 'FULFILLED' | 'DENIED';
-  requestedAt: string;
-  reward: Reward;
-  user: {
-    id: string;
-    name: string;
-  };
-  notes?: string;
+interface RewardRedemptionWithDetails extends RewardRedemption {
+  rewards: Reward;
+  user_profiles: UserProfile;
 }
 
 
@@ -51,7 +37,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
   const { character, refreshCharacter } = useCharacter();
   const { onRewardRedemptionUpdate, onCharacterUpdate } = useRealtime();
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
+  const [redemptions, setRedemptions] = useState<RewardRedemptionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
   const hasInitialized = useRef(false);
@@ -101,26 +87,8 @@ export default function RewardStore({ onError }: RewardStoreProps) {
           console.error('Failed to load redemptions:', redemptionsError);
           onError?.('Failed to load redemption history');
         } else {
-          // Transform the data to match the expected format
-          const transformedRedemptions = redemptionsData?.map(redemption => ({
-            id: redemption.id,
-            status: redemption.status,
-            requestedAt: redemption.requested_at,
-            reward: {
-              id: redemption.rewards.id,
-              name: redemption.rewards.name,
-              description: redemption.rewards.description,
-              type: redemption.rewards.type,
-              cost: redemption.rewards.cost,
-            },
-            user: {
-              id: redemption.user_profiles.id,
-              name: redemption.user_profiles.name,
-            },
-            notes: redemption.notes,
-          })) || [];
-
-          setRedemptions(transformedRedemptions);
+          // Use Supabase data directly (no transformation needed)
+          setRedemptions(redemptionsData || []);
         }
       } catch (error) {
         console.error('Failed to load data:', error);
@@ -155,24 +123,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
           .order('requested_at', { ascending: false });
 
         if (!redemptionsError && redemptionsData) {
-          const transformedRedemptions = redemptionsData.map(redemption => ({
-            id: redemption.id,
-            status: redemption.status,
-            requestedAt: redemption.requested_at,
-            reward: {
-              id: redemption.rewards.id,
-              name: redemption.rewards.name,
-              description: redemption.rewards.description,
-              type: redemption.rewards.type,
-              cost: redemption.rewards.cost,
-            },
-            user: {
-              id: redemption.user_profiles.id,
-              name: redemption.user_profiles.name,
-            },
-            notes: redemption.notes,
-          }));
-          setRedemptions(transformedRedemptions);
+          setRedemptions(redemptionsData);
         }
       } catch (error) {
         console.error('Failed to reload redemptions after realtime event:', error);
@@ -472,18 +423,18 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-bold text-gray-900">{redemption.reward.name}</span>
-                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward.type]}</span>
+                      <span className="font-bold text-gray-900">{redemption.rewards.name}</span>
+                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.rewards.type]}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-sm">🪙</span>
-                        <span className="text-sm font-bold text-yellow-600">{redemption.reward.cost}</span>
+                        <span className="text-sm font-bold text-yellow-600">{redemption.rewards.cost}</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-600 mb-2">
-                      <strong>Requested by:</strong> {redemption.user.name}
+                      <strong>Requested by:</strong> {redemption.user_profiles.name}
                     </div>
                     <div className="text-sm text-gray-500 mb-2">
-                      <strong>Request Date:</strong> {new Date(redemption.requestedAt).toLocaleDateString()}
+                      <strong>Request Date:</strong> {new Date(redemption.requested_at).toLocaleDateString()}
                     </div>
                     {redemption.notes && (
                       <div className="text-sm text-gray-600 mb-2">
@@ -530,15 +481,15 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward.type]}</span>
-                      <span className="font-medium text-gray-100">{redemption.reward.name}</span>
+                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.rewards.type]}</span>
+                      <span className="font-medium text-gray-100">{redemption.rewards.name}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-gold-400">🪙</span>
-                        <span className="text-sm font-bold gold-text">{redemption.reward.cost}</span>
+                        <span className="text-sm font-bold gold-text">{redemption.rewards.cost}</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-400 mb-2">
-                      Requested by <span className="text-gray-300 font-medium">{redemption.user.name}</span> • {new Date(redemption.requestedAt).toLocaleDateString()}
+                      Requested by <span className="text-gray-300 font-medium">{redemption.user_profiles.name}</span> • {new Date(redemption.requested_at).toLocaleDateString()}
                     </div>
                     {redemption.notes && (
                       <div className="text-sm text-gray-300 mb-2 bg-dark-600 p-2 rounded">

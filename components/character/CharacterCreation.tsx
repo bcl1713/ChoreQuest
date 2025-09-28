@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CharacterClass } from '@/lib/generated/prisma';
+// Using literal type instead of import due to Turbopack build issue
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 
@@ -22,35 +22,35 @@ interface CharacterCreationProps {
 
 const characterClasses = [
   {
-    id: CharacterClass.KNIGHT,
+    id: 'KNIGHT',
     name: 'Knight',
     icon: '⚔️',
     description: 'Brave protector with exceptional leadership skills',
     specialty: '+25% XP from protection and organization tasks'
   },
   {
-    id: CharacterClass.MAGE,
+    id: 'MAGE',
     name: 'Mage',
     icon: '🔮',
     description: 'Wise scholar who excels at complex problem-solving',
     specialty: '+25% XP from study and research tasks'
   },
   {
-    id: CharacterClass.RANGER,
+    id: 'RANGER',
     name: 'Ranger',
     icon: '🏹',
     description: 'Nature-loving explorer who thrives outdoors',
     specialty: '+25% XP from outdoor and maintenance tasks'
   },
   {
-    id: CharacterClass.ROGUE,
+    id: 'ROGUE',
     name: 'Rogue',
     icon: '🗡️',
     description: 'Cunning adventurer skilled in stealth and creativity',
     specialty: '+25% XP from cleaning and creative tasks'
   },
   {
-    id: CharacterClass.HEALER,
+    id: 'HEALER',
     name: 'Healer',
     icon: '🌿',
     description: 'Compassionate helper who cares for others',
@@ -60,7 +60,7 @@ const characterClasses = [
 
 export default function CharacterCreation({ onCharacterCreated }: CharacterCreationProps) {
   const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
+  const [selectedClass, setSelectedClass] = useState<'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { user } = useAuth();

@@ -16,7 +16,7 @@ export default function CreateFamilyPage() {
     }
   }, [user, isLoading, router]);
 
-  const handleCreateFamily = async (data: any) => {
+  const handleCreateFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
     try {
       await createFamily(data);
       // Navigate immediately after successful family creation

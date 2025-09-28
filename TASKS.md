@@ -804,17 +804,77 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 ### ✅ Recently Completed (2025-09-27)
 - [x] **Environment Setup** - Supabase local environment running, development server started
 
-### 🔄 Current E2E Test Fixing Tasks
+### ✅ E2E Test Fixing Progress (2025-09-27)
 
 - [x] **Run initial test scan** - Assessed all current test failures
 - [x] **Fix character-creation.spec.ts** - Fixed 3 tests for character creation flow (3/3 passing)
 - [x] **Fix quest-system.spec.ts** - Fixed 4 tests for quest management (4/4 passing)
 - [x] **Fix reward-store.spec.ts** - Fixed 4 tests for reward store functionality (4/4 passing)
-- [ ] **Fix quest-completion-rewards.spec.ts** - Partially fixed (1/5 passing) - quest creation works, completion workflow needs more work
-- [ ] **Fix quest-pickup-management.spec.ts** - Fix quest assignment tests
-- [ ] **Fix quest-template-due-date.spec.ts** - Fix due date functionality tests
-- [ ] **Run full E2E suite validation** - Verify all tests pass
-- [ ] **Commit E2E test fixes** - Commit progress made so far
+- [x] **Identify core issue: Field name mismatch** - Found Prisma types (camelCase) vs Supabase data (snake_case) mismatch
+- [x] **Add quest action button data-testids** - Added data-testid attributes for reliable E2E testing
+- [x] **Fix quest pickup functionality** - Fixed field name references (assigned_to_id vs assignedToId)
+- [x] **quest-completion-rewards.spec.ts partially fixed** - Quest pickup and status transitions working, approval workflow needs type migration
+
+### 🔄 Current E2E Test Status
+
+- **11/22 tests passing** (50% success rate)
+- **Main blocker identified**: Hybrid Prisma/Supabase type system causing runtime mismatches
+- **Solution needed**: Complete migration to native Supabase types
+
+### 🎯 **NEXT PRIORITY: Complete Supabase Type Migration**
+
+**Root Cause**: Currently using Prisma types (camelCase fields) while fetching Supabase data (snake_case fields), causing UI component filtering and conditional logic failures.
+
+**Impact**: Quest approval buttons not appearing, realtime subscriptions not working properly, data filtering logic broken.
+
+**Solution**: Migrate all components from `@/lib/generated/prisma` types to native Supabase types from `@/lib/types/database`.
+
+---
+
+## 🔄 **Supabase Type Migration Tasks**
+
+### Phase 1: Core Type Infrastructure (1-2 hours)
+- [x] **Create comprehensive Supabase types** - `/lib/types/database.ts` with all table and enum definitions
+- [ ] **Update component imports** - Replace all Prisma type imports with Supabase types
+- [ ] **Fix interface mismatches** - Update User → UserProfile, handle field name differences
+- [ ] **Update auth context types** - Ensure auth context uses proper Supabase types
+- [ ] **Update character context types** - Migrate character-related type usage
+
+### Phase 2: Component Migration (2-3 hours)
+- [ ] **quest-dashboard.tsx** - Complete migration from Prisma to Supabase types
+- [ ] **reward-store.tsx** - Update reward and redemption types
+- [ ] **character-creation.tsx** - Update character class and related types
+- [ ] **quest-create-modal.tsx** - Update quest template and instance types
+- [ ] **Update all form components** - Ensure form validation uses correct types
+
+### Phase 3: Context and State Migration (1-2 hours)
+- [ ] **auth-context.tsx** - Update user profile and family types
+- [ ] **character-context.tsx** - Update character state management types
+- [ ] **realtime-context.tsx** - Update event handling for proper field names
+
+### Phase 4: Test Updates (1 hour)
+- [ ] **Update unit tests** - Fix type-related test failures
+- [ ] **Update E2E test helpers** - Ensure test setup uses correct types
+- [ ] **Remove debug files** - Clean up debug-quest-pickup.spec.ts
+
+### Phase 5: Validation and Cleanup (1 hour)
+- [ ] **Run full test suite** - Ensure all unit and E2E tests pass
+- [ ] **Remove Prisma type dependencies** - Clean up unused imports
+- [ ] **Update documentation** - Document the type system migration
+- [ ] **Verify quest approval workflow** - Ensure all quest state transitions work correctly
+
+### Expected Outcomes
+- ✅ All 22 E2E tests passing
+- ✅ Quest approval buttons appearing correctly
+- ✅ Realtime subscriptions working properly
+- ✅ Consistent type system throughout application
+- ✅ Better developer experience with accurate autocomplete
+
+### Remaining E2E Test Tasks (after type migration)
+- [ ] **Fix quest-pickup-management.spec.ts** - Should work after type migration
+- [ ] **Fix quest-template-due-date.spec.ts** - Should work after type migration
+- [ ] **Run full E2E suite validation** - All 22 tests should pass
+- [ ] **Commit E2E test fixes** - Final commit with all fixes
 
 ---
 

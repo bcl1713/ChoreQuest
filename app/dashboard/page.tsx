@@ -7,8 +7,8 @@ import { useCharacter } from '@/lib/character-context';
 import QuestDashboard from '@/components/quest-dashboard';
 import QuestCreateModal from '@/components/quest-create-modal';
 import RewardStore from '@/components/reward-store';
-import { questService } from '@/lib/quest-service';
-import { QuestTemplate } from '@/lib/generated/prisma';
+import { QuestTemplate } from '@/lib/types/database';
+import { supabase } from '@/lib/supabase';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -68,9 +68,17 @@ export default function Dashboard() {
   }, [refreshCharacter]);
 
   const loadQuestTemplates = async () => {
+    if (!profile?.family_id) return;
+
     try {
-      const result = await questService.getQuestTemplates();
-      setQuestTemplates(result.templates);
+      const { data: templates, error } = await supabase
+        .from('quest_templates')
+        .select('*')
+        .eq('family_id', profile.family_id)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setQuestTemplates(templates || []);
     } catch (err) {
       console.error('Failed to load quest templates:', err);
     }

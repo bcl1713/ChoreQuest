@@ -7,7 +7,7 @@ import {
   QuestDifficulty,
   QuestCategory,
   QuestTemplate,
-} from "@/lib/generated/prisma";
+} from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestCreateModalProps {

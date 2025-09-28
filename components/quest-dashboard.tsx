@@ -4,8 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
-import { QuestInstance, QuestDifficulty } from "@/lib/generated/prisma";
-import { User } from "@/types";
+import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
 import { motion } from "framer-motion";
 
 interface QuestDashboardProps {
@@ -22,7 +21,7 @@ export default function QuestDashboard({
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [familyMembers, setFamilyMembers] = useState<User[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
   const [selectedAssignee, setSelectedAssignee] = useState<{
     [questId: string]: string;
   }>({});
@@ -70,17 +69,8 @@ export default function QuestDashboard({
             .eq('family_id', profile.family_id);
 
           if (!membersError && membersData) {
-            // Transform to match User interface
-            const transformedMembers = membersData.map(member => ({
-              id: member.id,
-              name: member.name,
-              email: member.email,
-              role: member.role,
-              familyId: member.family_id,
-              createdAt: new Date(member.created_at),
-              updatedAt: new Date(member.updated_at),
-            }));
-            setFamilyMembers(transformedMembers);
+            // Use UserProfile data directly (no transformation needed)
+            setFamilyMembers(membersData);
           }
         } catch (err) {
           console.error("Failed to load family members:", err);
@@ -229,7 +219,7 @@ export default function QuestDashboard({
               gold: questData.gold_reward,
             },
             characterUpdates: {
-              userId: questData.assigned_to_id,
+              assigned_to_id: questData.assigned_to_id,
             }
           }
         }));
@@ -417,7 +407,7 @@ export default function QuestDashboard({
     // Heroes can mark their own quests as IN_PROGRESS or COMPLETED
     if (
       (newStatus === "IN_PROGRESS" || newStatus === "COMPLETED") &&
-      quest.assignedToId === user.id
+      quest.assigned_to_id === user.id
     ) {
       return true;
     }
@@ -453,10 +443,10 @@ export default function QuestDashboard({
     );
   }
 
-  const myQuests = questInstances.filter((q) => q.assignedToId === user?.id);
-  const unassignedQuests = questInstances.filter((q) => !q.assignedToId);
+  const myQuests = questInstances.filter((q) => q.assigned_to_id === user?.id);
+  const unassignedQuests = questInstances.filter((q) => !q.assigned_to_id);
   const otherQuests = questInstances.filter(
-    (q) => q.assignedToId && q.assignedToId !== user?.id,
+    (q) => q.assigned_to_id && q.assigned_to_id !== user?.id,
   );
 
   return (
@@ -522,6 +512,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "IN_PROGRESS")
                           }
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid="start-quest-button"
                         >
                           Start Quest
                         </button>
@@ -533,6 +524,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "COMPLETED")
                           }
                           className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid="complete-quest-button"
                         >
                           Complete
                         </button>
@@ -544,6 +536,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "APPROVED")
                           }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid="approve-quest-button"
                         >
                           Approve
                         </button>
@@ -599,6 +592,7 @@ export default function QuestDashboard({
                       <button
                         onClick={() => handlePickupQuest(quest.id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                        data-testid="pick-up-quest-button"
                       >
                         <span>⚔️</span>
                         Pick Up Quest
@@ -612,6 +606,7 @@ export default function QuestDashboard({
                         <button
                           onClick={() => handlePickupQuest(quest.id)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
+                          data-testid="pick-up-quest-button"
                         >
                           <span>⚔️</span>
                           Pick Up Quest
@@ -727,6 +722,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "APPROVED")
                           }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors mt-2 block"
+                          data-testid="approve-quest-button"
                         >
                           Approve
                         </button>
