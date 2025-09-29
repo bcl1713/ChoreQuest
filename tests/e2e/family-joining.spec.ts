@@ -29,8 +29,14 @@ test.describe('Family Joining', () => {
 
     // If we're on character creation, complete it first to get to dashboard
     if (page.url().includes('/character/create')) {
-      await page.fill('input#characterName', familyData.userName);
+      await page.waitForTimeout(1000); // Wait for form to be ready
+      await page.fill('textbox', familyData.userName);
+      await page.waitForTimeout(500);
       await page.click('[data-testid="class-knight"]');
+      await page.waitForTimeout(500);
+
+      // Ensure button is enabled before clicking
+      await expect(page.locator('button[type="submit"]')).toBeEnabled();
       await page.click('button[type="submit"]');
       await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
     }
