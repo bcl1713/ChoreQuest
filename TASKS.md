@@ -932,9 +932,17 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] **Test production deployment** - Verify Supabase production deployment works
 - [ ] **Update README.md deployment section** - Replace outdated JWT system references with Supabase
 
-### E2E Test Fixes Required
-- [ ] Fix character creation form submission in family-joining test
-- [ ] Remove debug console.log statements from E2E tests
+### E2E Test Fixes (2025-09-28)
+- [x] **Fix family-joining.spec.ts test**
+  - [x] Fixed character creation flow for Guild Masters who create families
+  - [x] Fixed family code extraction and usage in second user registration
+  - [x] Fixed duplicate element selectors with `.first()` pattern
+- [x] **Fix quest-system.spec.ts duplicate element issues**
+  - [x] Fixed "Test Custom Quest" and "Valid Quest Title" duplicate element issues
+  - [x] Used `.getByRole('heading', { name: '...' }).first()` pattern for specificity
+- [x] **Remove debug console.log statements from E2E tests**
+  - [x] Removed all debug logging from test files
+  - [x] Cleaned up setup helpers error handling
 
 ---
 

@@ -53,9 +53,7 @@ export async function setupUserWithCharacter(
   await page.fill('input[name="password"]', user.password);
   await page.fill('input[name="userName"]', user.userName);
 
-  console.log('E2E Debug - About to submit family creation form');
   await page.click('button[type="submit"]');
-  console.log('E2E Debug - Family creation form submitted');
 
   if (!options.skipCharacterCreation) {
     // Complete character creation - wait longer for Supabase auth
@@ -72,36 +70,6 @@ export async function setupUserWithCharacter(
       await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
       await expect(page.locator('[data-testid="welcome-message"]')).toContainText(`Welcome back, ${user.characterName}!`, { timeout: 10000 });
     } catch (error) {
-      // Log current URL and page content for debugging
-      const currentUrl = page.url();
-      console.log('E2E Debug - Current URL:', currentUrl);
-
-      // Check for character creation error specifically
-      const characterError = page.locator('[data-testid="character-creation-error"]');
-      if (await characterError.isVisible()) {
-        const errorText = await characterError.textContent();
-        console.log('E2E Debug - Character creation error:', errorText);
-      }
-
-      // Check for any other error messages
-      const errorElements = page.locator('.text-red-400, .text-red-500, .text-red-600, [class*="error"]');
-      const errorCount = await errorElements.count();
-      if (errorCount > 0) {
-        console.log('E2E Debug - Found other error messages:');
-        for (let i = 0; i < errorCount; i++) {
-          const errorText = await errorElements.nth(i).textContent();
-          console.log(`  Error ${i + 1}: ${errorText}`);
-        }
-      }
-
-      // Get browser console logs
-      const consoleLogs = page.context().newPage();
-      page.on('console', msg => {
-        console.log('Browser Console:', msg.type(), msg.text());
-      });
-
-      const pageContent = await page.textContent('body');
-      console.log('E2E Debug - Page content (first 500 chars):', pageContent?.substring(0, 500));
       throw error;
     }
   }

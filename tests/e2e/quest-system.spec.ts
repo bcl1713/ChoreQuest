@@ -37,8 +37,8 @@ test.describe('Quest System', () => {
 
     // Verify quest creation success
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
-    await expect(page.getByText('Test Custom Quest')).toBeVisible();
-    await expect(page.getByText('Test quest for automation')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Test Custom Quest' }).first()).toBeVisible();
+    await expect(page.getByText('Test quest for automation').first()).toBeVisible();
   });
 
   test('quest dashboard displays correctly', async ({ page }) => {
@@ -74,7 +74,7 @@ test.describe('Quest System', () => {
 
     // Verify success
     await expect(page.getByText('Create New Quest')).not.toBeVisible();
-    await expect(page.getByText('Valid Quest Title')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Valid Quest Title' }).first()).toBeVisible();
   });
 
   test('quest creation modal can be cancelled', async ({ page }) => {

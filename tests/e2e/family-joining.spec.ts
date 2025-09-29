@@ -19,28 +19,42 @@ test.describe('Family Joining', () => {
     await page.fill('input[placeholder="hero@example.com"]', familyData.email);
     await page.fill('input[placeholder="••••••••"]', familyData.password);
 
-    console.log('E2E Debug - About to submit family creation form');
     await page.click('button[type="submit"]');
-    console.log('E2E Debug - Family creation form submitted');
 
-    // Wait for either dashboard (Guild Master) or character creation (new user)
-    // Guild Masters go to dashboard, new users go to character creation
+    // After family creation, wait for page to settle and check where we end up
     await page.waitForURL(/.*\/(dashboard|character\/create)/, { timeout: 30000 });
 
-    // If we're on character creation, complete it first to get to dashboard
+    // Give the page some time to potentially redirect to character creation
+    await page.waitForTimeout(2000);
+
+    // Handle character creation if we end up there (Guild Masters need characters too)
     if (page.url().includes('/character/create')) {
       await page.waitForTimeout(1000); // Wait for form to be ready
-      await page.fill('textbox', familyData.userName);
+
+      // Fill in character name using the ID selector (more reliable)
+      await page.fill('input#characterName', familyData.userName);
       await page.waitForTimeout(500);
+
+      // Select Knight class
       await page.click('[data-testid="class-knight"]');
       await page.waitForTimeout(500);
 
-      // Ensure button is enabled before clicking
-      await expect(page.locator('button[type="submit"]')).toBeEnabled();
-      await page.click('button[type="submit"]');
-      await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
+      // Verify button is enabled before clicking
+      const submitButton = page.locator('button:text("Begin Your Quest")');
+      await expect(submitButton).toBeEnabled({ timeout: 5000 });
+
+      // Click the "Begin Your Quest" button
+      await submitButton.click();
+
+      // Wait for navigation with better error handling
+      try {
+        await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
+      } catch (error) {
+        throw error;
+      }
     }
 
+    // Wait for dashboard to load completely
     await expect(page.getByText('Quest Dashboard')).toBeVisible({ timeout: 10000 });
 
     // Get the family code from the dashboard - it's displayed as "Guild: Family Name (CODE)"
@@ -51,7 +65,6 @@ test.describe('Family Joining', () => {
     let familyCode: string;
     try {
       const familyCodeText = await familyCodeElement.textContent();
-      console.log('Family code text found:', familyCodeText);
 
       // Extract 6-character code from parentheses
       const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
@@ -59,11 +72,7 @@ test.describe('Family Joining', () => {
         throw new Error(`Could not extract family code from: ${familyCodeText}`);
       }
       familyCode = codeMatch[1];
-      console.log('Extracted family code:', familyCode);
     } catch (error) {
-      console.error('Failed to get family code:', error);
-      // Take a screenshot for debugging
-      await page.screenshot({ path: `test-results/family-code-debug-${timestamp}.png` });
       throw error;
     }
 
@@ -79,7 +88,7 @@ test.describe('Family Joining', () => {
         name: `Hero ${timestamp}`,
         email: `hero-${timestamp}@example.com`,
         password: 'testpass123',
-        familyCode: 'A0GX31' // Use known valid family code for testing
+        familyCode: familyCode // Use the extracted family code from the first user
       };
 
       // Fill out registration form
@@ -88,17 +97,13 @@ test.describe('Family Joining', () => {
       await newPage.fill('input[placeholder="••••••••"]', newUserData.password);
       await newPage.fill('input[placeholder="BraveKnights123"]', newUserData.familyCode);
 
-      console.log('E2E Debug - About to submit registration form with family code:', familyCode);
       await newPage.click('button[type="submit"]');
-      console.log('E2E Debug - Registration form submitted');
 
       // Wait for successful registration and redirect to character creation
       await newPage.waitForURL(/.*\/character\/create/, { timeout: 15000 });
 
-      // Verify we're on character creation page
-      await expect(newPage.getByText('Create Your Hero')).toBeVisible({ timeout: 10000 });
-
-      console.log('E2E Debug - Successfully joined family and reached character creation');
+      // Verify we're on character creation page using a more specific selector
+      await expect(newPage.getByRole('heading', { name: 'Create Your Hero' }).first()).toBeVisible({ timeout: 10000 });
 
     } finally {
       await newContext.close();
