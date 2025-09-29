@@ -932,10 +932,12 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] **Test production deployment** - Verify Supabase production deployment works
 - [ ] **Update README.md deployment section** - Replace outdated JWT system references with Supabase
 
-### Remaining Issues for Next Session
-- [x] Family joining functionality completely resolved
-- [ ] Run full E2E suite validation - Target: All 22+ tests should pass
-- [ ] Remove debug output from E2E tests - Clean up console.log statements
+### E2E Test Fixes Required
+- [ ] Fix Realtime 406 errors causing CHANNEL_ERROR status in quest-completion-rewards.spec.ts
+- [ ] Fix page loading state issues preventing quest approval/completion buttons from appearing
+- [ ] Fix character creation navigation timeouts in setupUserWithCharacter helper
+- [ ] Fix missing "Quest Dashboard" text display in family-joining.spec.ts
+- [ ] Remove debug console.log statements from E2E tests
 
 ---
 
