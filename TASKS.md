@@ -956,7 +956,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Run quality gates (build ✅, lint ✅, test ✅ 26/26)
 - [x] Fix ESLint warning (unused 'data' variable in quest-dashboard.tsx)
 - [x] Commit and push changes
-- [ ] Merge back to feature/supabase-native-migration
+- [x] Merge back to feature/supabase-native-migration (removed 2,300+ lines of code)
 
 **Sub-branch 2: feature/update-production-deployment**
 - [ ] Create branch from feature/supabase-native-migration
