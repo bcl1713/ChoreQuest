@@ -932,6 +932,17 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] **Test production deployment** - Verify Supabase production deployment works
 - [ ] **Update README.md deployment section** - Replace outdated JWT system references with Supabase
 
+### ✅ **COMPLETED (2025-09-29) - Hero Reward Display Fix**
+**Critical Bug: Heroes Not Receiving XP/Gold After Quest Approval**
+- [x] **Root cause identified** - Row Level Security (RLS) policies blocked Guild Masters from updating Hero character stats
+- [x] **RLS migration created** - Added `012_allow_gm_character_updates.sql` to allow family-scoped character updates by Guild Masters
+- [x] **Realtime subscription implemented** - Added automatic character context refresh when character stats are updated
+- [x] **Character context enhanced** - Fixed SSR/SSG compatibility and added proper realtime integration
+- [x] **Error handling improved** - Better error visibility for character update failures in quest approval workflow
+- [x] **Test infrastructure added** - E2E test for Hero reward display (tests will pass after applying RLS migration)
+- [x] **Data-testid attributes added** - Enhanced dashboard character stats with test identifiers for reliable E2E testing
+- [x] **Quest dashboard improvements** - Better error handling and user feedback for character update operations
+
 ### 🎯 **HIGH PRIORITY: Quest Template System Implementation**
 **Missing from Supabase Migration**
 - [ ] **Quest Template Database Operations** - Create CRUD operations for quest_templates table using Supabase client

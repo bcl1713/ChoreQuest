@@ -5,7 +5,7 @@
  * This script creates "The Smith Family" with parent@demo.com for E2E testing
  */
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration for local development
 const supabaseUrl = 'http://127.0.0.1:54321';

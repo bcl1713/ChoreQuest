@@ -7,10 +7,10 @@
  * UUID conversion and auth user creation.
  */
 
-const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs').promises;
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
+import { createClient } from '@supabase/supabase-js';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 // Initialize Supabase client (will be configured with environment variables)
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -102,7 +102,7 @@ async function importTable(tableName, data, transformFn = null) {
       return transformed;
     });
 
-    const { data: result, error } = await supabase
+    const { error } = await supabase
       .from(tableName)
       .insert(transformedData);
 
@@ -254,8 +254,8 @@ async function importDatabase() {
 }
 
 // Run import if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   importDatabase();
 }
 
-module.exports = { importDatabase };
+export { importDatabase };

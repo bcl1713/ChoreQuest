@@ -60,7 +60,7 @@ export default function QuestDashboard({
           throw questError;
         }
 
-        setQuestInstances(questData || []);
+        setQuestInstances(deduplicateQuests(questData || []));
 
         // Load family members for assignment dropdown
         try {
@@ -104,7 +104,7 @@ export default function QuestDashboard({
         throw questError;
       }
 
-      setQuestInstances(questData || []);
+      setQuestInstances(deduplicateQuests(questData || []));
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to load quests";
@@ -114,6 +114,18 @@ export default function QuestDashboard({
       setLoading(false);
     }
   }, [profile, onError]);
+
+  // Helper function to deduplicate quests by ID
+  const deduplicateQuests = (quests: QuestInstance[]): QuestInstance[] => {
+    const seen = new Set<string>();
+    return quests.filter(quest => {
+      if (seen.has(quest.id)) {
+        return false;
+      }
+      seen.add(quest.id);
+      return true;
+    });
+  };
 
   useEffect(() => {
     // Pass the loadQuests function to parent
@@ -130,18 +142,24 @@ export default function QuestDashboard({
 
       setQuestInstances(currentQuests => {
         if (event.action === 'INSERT') {
+          // Check if quest already exists before adding
+          const questExists = currentQuests.some(quest => quest.id === event.record.id);
+          if (questExists) {
+            return currentQuests;
+          }
           // Add new quest to the list
-          return [event.record as QuestInstance, ...currentQuests];
+          return deduplicateQuests([event.record as QuestInstance, ...currentQuests]);
         } else if (event.action === 'UPDATE') {
           // Update existing quest
-          return currentQuests.map(quest =>
+          const updatedQuests = currentQuests.map(quest =>
             quest.id === event.record.id ? { ...quest, ...event.record } as QuestInstance : quest
           );
+          return deduplicateQuests(updatedQuests);
         } else if (event.action === 'DELETE') {
           // Remove quest from the list
           return currentQuests.filter(quest => quest.id !== event.old_record?.id);
         }
-        return currentQuests;
+        return deduplicateQuests(currentQuests);
       });
     });
 
@@ -238,6 +256,8 @@ export default function QuestDashboard({
 
             if (characterError) {
               console.error('Failed to update character stats:', characterError);
+              // Throw error to prevent quest from being marked as approved if character update fails
+              throw new Error(`Failed to award rewards: ${characterError.message}`);
             }
           }
         }
@@ -282,8 +302,6 @@ export default function QuestDashboard({
         }
 
         // Quest updates will be handled automatically by realtime subscriptions
-        // But also trigger manual refresh as fallback for when realtime fails
-        await loadQuests();
       }
     } catch (err) {
       const errorMsg =
@@ -317,8 +335,6 @@ export default function QuestDashboard({
       console.log('Quest pickup success:', data);
 
       // Quest updates will be handled automatically by realtime subscriptions
-      // But also trigger manual refresh as fallback for when realtime fails
-      await loadQuests();
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to pick up quest";

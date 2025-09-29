@@ -1,5 +1,20 @@
 import { Page, expect } from '@playwright/test';
 
+// Type declarations for window objects used in tests
+declare global {
+  interface Window {
+    __authContext?: {
+      user?: {
+        id: string;
+      };
+      profile?: {
+        family_id: string;
+        character_id: string;
+      };
+    };
+  }
+}
+
 export interface TestUser {
   email: string;
   password: string;
@@ -232,8 +247,8 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
     }
 
     // Fallback: try to get from window object if auth context exposes it
-    if ((window as any).__authContext) {
-      const ctx = (window as any).__authContext;
+    if (window.__authContext) {
+      const ctx = window.__authContext;
       return {
         user: {
           id: ctx.user?.id,
@@ -267,9 +282,9 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
       user: {
         email: testUser.email,
         password: testUser.password,
-        id: userInfo.id,
+        id: userInfo.id || '',
         familyId: options.familyId,
-        characterId: userInfo.characterId
+        characterId: userInfo.characterId || ''
       }
     };
   }
@@ -278,9 +293,9 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
     user: {
       email: testUser.email,
       password: testUser.password,
-      id: userInfo.id,
-      familyId: userInfo.familyId,
-      characterId: userInfo.characterId
+      id: userInfo.id || '',
+      familyId: userInfo.familyId || '',
+      characterId: userInfo.characterId || ''
     }
   };
 }

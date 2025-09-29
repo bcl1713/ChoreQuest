@@ -47,27 +47,7 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (user && character) {
-      loadQuestTemplates();
-    }
-  }, [user, character]);
-
-  // Listen for character stats updates from quest approvals
-  useEffect(() => {
-    const handleCharacterStatsUpdate = () => {
-      // Refresh character data when quest is approved
-      refreshCharacter();
-    };
-
-    window.addEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
-    };
-  }, [refreshCharacter]);
-
-  const loadQuestTemplates = async () => {
+  const loadQuestTemplates = useCallback(async () => {
     if (!profile?.family_id) return;
 
     try {
@@ -82,7 +62,27 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Failed to load quest templates:', err);
     }
-  };
+  }, [profile?.family_id]);
+
+  useEffect(() => {
+    if (user && character) {
+      loadQuestTemplates();
+    }
+  }, [user, character, loadQuestTemplates]);
+
+  // Listen for character stats updates from quest approvals
+  useEffect(() => {
+    const handleCharacterStatsUpdate = () => {
+      // Refresh character data when quest is approved
+      refreshCharacter();
+    };
+
+    window.addEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
+    };
+  }, [refreshCharacter]);
 
   const handleQuestCreated = async () => {
     loadQuestTemplates();
@@ -157,7 +157,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="text-left sm:text-right">
                 <p className="text-gray-300 font-medium">{character.name}</p>
-                <p className="text-sm text-gray-400">{character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}</p>
+                <p className="text-sm text-gray-400" data-testid="character-level">{character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}</p>
                 <p className="text-xs text-gray-500">{profile?.role ? getRoleDisplay(profile.role) : ''}</p>
               </div>
 
@@ -199,19 +199,19 @@ export default function Dashboard() {
         {/* Character Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2">💰 {character.gold}</div>
+            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2" data-testid="character-gold">💰 {character.gold}</div>
             <div className="text-xs sm:text-sm text-gray-400">Gold</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2">⚡ {character.xp}</div>
+            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2" data-testid="character-xp">⚡ {character.xp}</div>
             <div className="text-xs sm:text-sm text-gray-400">Experience</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2">💎 {character.gems}</div>
+            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2" data-testid="character-gems">💎 {character.gems}</div>
             <div className="text-xs sm:text-sm text-gray-400">Gems</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2">🏅 {character.honor_points}</div>
+            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2" data-testid="character-honor-points">🏅 {character.honor_points}</div>
             <div className="text-xs sm:text-sm text-gray-400">Honor Points</div>
           </div>
         </div>

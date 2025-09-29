@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import {
@@ -23,11 +23,6 @@ interface User {
   role: string;
 }
 
-interface FamilyMember {
-  id: string;
-  name: string;
-  role: string;
-}
 
 export default function QuestCreateModal({
   isOpen,
@@ -53,13 +48,7 @@ export default function QuestCreateModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadFamilyMembers();
-    }
-  }, [isOpen]);
-
-  const loadFamilyMembers = async () => {
+  const loadFamilyMembers = useCallback(async () => {
     if (!profile) return;
 
     try {
@@ -81,10 +70,16 @@ export default function QuestCreateModal({
         }));
         setFamilyMembers(transformedMembers);
       }
-    } catch (err) {
+    } catch {
       setError("Failed to load family members");
     }
-  };
+  }, [profile]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadFamilyMembers();
+    }
+  }, [isOpen, loadFamilyMembers]);
 
   const resetForm = () => {
     setMode("adhoc");

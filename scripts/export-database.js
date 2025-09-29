@@ -7,9 +7,9 @@
  * that can be imported into Supabase after schema migration.
  */
 
-const { PrismaClient } = require('../lib/generated/prisma');
-const fs = require('fs').promises;
-const path = require('path');
+import { PrismaClient } from '../lib/generated/prisma.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -89,8 +89,8 @@ async function exportDatabase() {
 }
 
 // Run export if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   exportDatabase();
 }
 
-module.exports = { exportDatabase };
+export { exportDatabase };

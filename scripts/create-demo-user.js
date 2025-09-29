@@ -4,7 +4,7 @@
  * Create demo user through Supabase auth
  */
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // Use anon key for normal auth operations
 const supabaseUrl = 'http://127.0.0.1:54321';
