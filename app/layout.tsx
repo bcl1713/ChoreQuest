@@ -43,11 +43,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${orbitron.variable} antialiased`}
       >
         <AuthProvider>
-          <CharacterProvider>
-            <RealtimeProvider>
+          <RealtimeProvider>
+            <CharacterProvider>
               {children}
-            </RealtimeProvider>
-          </CharacterProvider>
+            </CharacterProvider>
+          </RealtimeProvider>
         </AuthProvider>
       </body>
     </html>

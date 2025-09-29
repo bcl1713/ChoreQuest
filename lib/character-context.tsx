@@ -20,16 +20,7 @@ const CharacterContext = createContext<CharacterContextType | undefined>(undefin
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-
-  // Safely get realtime context, handle case where it's not available during SSR/SSG
-  let onCharacterUpdate: ((callback: (event: { record?: { user_id?: string } }) => void) => () => void) | undefined;
-  try {
-    const realtimeContext = useRealtime();
-    onCharacterUpdate = realtimeContext.onCharacterUpdate;
-  } catch {
-    // Realtime not available during SSR/SSG, continue without it
-    onCharacterUpdate = undefined;
-  }
+  const { onCharacterUpdate } = useRealtime();
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +34,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    console.log('CharacterContext: Fetching character for user:', user.id);
     setIsLoading(true);
     setError(null);
     setHasLoaded(false);
@@ -57,12 +49,14 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         if (error.code === 'PGRST116') {
           // No character found - this is not an error, just no character created yet
+          console.log('CharacterContext: No character found for user');
           setCharacter(null);
         } else {
           throw error;
         }
       } else {
         // Use Supabase data directly
+        console.log('CharacterContext: Character fetched successfully:', data);
         setCharacter(data);
       }
     } catch (err) {
@@ -84,11 +78,20 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user || !onCharacterUpdate) return;
 
+    console.log('CharacterContext: Setting up realtime subscription for user:', user.id);
+
     const unsubscribe = onCharacterUpdate((event) => {
+      console.log('CharacterContext: Received realtime event:', event);
+      console.log('CharacterContext: Current user ID:', user.id);
+      console.log('CharacterContext: Event user ID:', event.record?.user_id);
+
       // Only refresh if this is our character being updated
       if (event.record?.user_id === user.id) {
+        console.log('CharacterContext: Event matches current user, refreshing character data');
         // Automatically refresh character data when realtime event detected
         fetchCharacter().catch(console.error);
+      } else {
+        console.log('CharacterContext: Event does not match current user, ignoring');
       }
     });
 

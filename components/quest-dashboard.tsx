@@ -245,6 +245,13 @@ export default function QuestDashboard({
             );
             const newLevel = levelUpResult ? levelUpResult.newLevel : characterData.level;
 
+            console.log('QuestDashboard: Updating character stats:', {
+              user_id: questData.assigned_to_id,
+              oldStats: { xp: characterData.xp, gold: characterData.gold, level: characterData.level },
+              newStats: { xp: newXp, gold: newGold, level: newLevel },
+              rewards: calculatedRewards
+            });
+
             const { error: characterError } = await supabase
               .from('characters')
               .update({
@@ -258,6 +265,8 @@ export default function QuestDashboard({
               console.error('Failed to update character stats:', characterError);
               // Throw error to prevent quest from being marked as approved if character update fails
               throw new Error(`Failed to award rewards: ${characterError.message}`);
+            } else {
+              console.log('QuestDashboard: Character stats updated successfully');
             }
           }
         }

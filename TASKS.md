@@ -942,6 +942,12 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] **Test infrastructure added** - E2E test for Hero reward display (tests will pass after applying RLS migration)
 - [x] **Data-testid attributes added** - Enhanced dashboard character stats with test identifiers for reliable E2E testing
 - [x] **Quest dashboard improvements** - Better error handling and user feedback for character update operations
+- [x] **Realtime subscription debugging and fixes** - Fixed React hooks rule violation and provider hierarchy order
+- [x] **Provider hierarchy correction** - Moved RealtimeProvider before CharacterProvider in app layout
+- [x] **Debug logging added** - Comprehensive logging for character updates and realtime events
+
+### 🔧 **Minor UI Improvements**
+- [ ] **Fix page scroll jump during realtime character refresh** - Character stats update causes page to scroll to top instead of staying in place
 
 ### 🎯 **HIGH PRIORITY: Quest Template System Implementation**
 **Missing from Supabase Migration**
