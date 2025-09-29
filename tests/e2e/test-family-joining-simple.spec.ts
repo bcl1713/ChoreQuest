@@ -35,7 +35,7 @@ test('user can join existing family with valid family code', async ({ page }) =>
   await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
 
   // Verify we're on character creation page
-  await expect(page.getByText('Create Your Hero')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Create Your Hero').first()).toBeVisible({ timeout: 10000 });
 
   console.log('✅ Successfully joined family and reached character creation');
 });

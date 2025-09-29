@@ -944,6 +944,14 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - [x] Removed all debug logging from test files
   - [x] Cleaned up setup helpers error handling
 
+### E2E Test Fixes (2025-09-29)
+- [x] **Fix remaining E2E test failures**
+  - [x] Fixed test-family-joining-simple.spec.ts duplicate element issue with `.first()` pattern
+  - [x] Created demo family seed data for Supabase with "The Smith Family" (DEMO123)
+  - [x] Created demo user parent@demo.com with Lady Sarah character (HEALER, Level 10)
+  - [x] Fixed quest-template-due-date.spec.ts to use "From Template" tab correctly
+  - [x] Identified quest template functionality not yet implemented in Supabase migration
+
 ---
 
 _This task list represents the complete roadmap for ChoreQuest development. All

@@ -28,6 +28,10 @@ test.describe("Quest Template Due Date", () => {
     await page.getByText("⚡ Create Quest").click();
     await expect(page.locator("text=Create New Quest")).toBeVisible();
 
+    // Click on "From Template" tab
+    await page.getByText("From Template").click();
+    await page.waitForTimeout(500);
+
     // Select a quest template if available
     const templateSelector = page.locator('select:has-text("Choose a quest template..")').first();
     await page.waitForTimeout(1000);
