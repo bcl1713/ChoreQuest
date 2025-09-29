@@ -102,3 +102,12 @@ npx prisma migrate dev # Apply migrations
     already a dev server running. Stop it and restart on port 3000.
   - If you run `npm run build`, the dev server will need restarted. Running a
     build breaks any existing dev server.
+
+## Critical Supabase Configuration
+
+⚠️ **IMPORTANT**: The `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env` MUST be a valid JWT token, not the "Publishable key" shown in `supabase status`.
+
+- **Wrong**: `sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH` (causes "Expected 3 parts in JWT; got 1" errors)
+- **Correct**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsaG9zdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzU5MTA2NjMxLCJleHAiOjE3OTA2NDI2MzF9.NkngKkUpeZJRgEwsTAOQFzauIXVPgHsx7M6afIk3iZ8`
+
+If family joining shows "Invalid family code" for ALL codes (even valid ones), check that the anon key is a proper JWT token. Generate using the default Supabase local secret: `super-secret-jwt-token-with-at-least-32-characters-long`
