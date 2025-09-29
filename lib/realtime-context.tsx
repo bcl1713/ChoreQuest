@@ -113,11 +113,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
     // Create a family-scoped channel with authentication
     const realtimeChannel = supabase
-      .channel(channelName, {
-        config: {
-          private: true // Enable authentication for this channel
-        }
-      })
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -223,21 +219,9 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       .subscribe(async (status) => {
         console.log('Realtime subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          // Send access token after successful subscription
-          try {
-            console.log('Sending access token for authentication...');
-            realtimeChannel.send({
-              type: 'access_token',
-              access_token: session.access_token
-            });
-            
-            setIsConnected(true);
-            setConnectionError(null);
-            console.log('Successfully connected to realtime for family:', familyId, 'with authentication');
-          } catch (error) {
-            console.error('Failed to send access token:', error);
-            setConnectionError('Failed to authenticate realtime connection');
-          }
+          setIsConnected(true);
+          setConnectionError(null);
+          console.log('Successfully connected to realtime for family:', familyId);
         } else if (status === 'CHANNEL_ERROR') {
           setIsConnected(false);
           if (isLocalDevelopment) {
