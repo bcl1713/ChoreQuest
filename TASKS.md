@@ -949,6 +949,40 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 ### 🔧 **Minor UI Improvements**
 - [ ] **Fix page scroll jump during realtime character refresh** - Character stats update causes page to scroll to top instead of staying in place
 
+### 🔧 **CURRENT BRANCH: Final Test Fixes**
+**Fix Failing Unit Tests Before Merge**
+- [ ] **Fix character-context.test.tsx failing tests** - 6 tests failing due to missing AuthProvider context
+  - [ ] Add AuthProvider mock wrapper to realtime subscription tests
+  - [ ] Fix "should subscribe to character updates on mount" test
+  - [ ] Fix "should automatically refresh character data when realtime event received" test
+  - [ ] Fix "should only refresh for events matching current user" test
+  - [ ] Remove unused imports (useAuth, useRealtime, supabase) to fix ESLint warnings
+  - [ ] Ensure all 32 unit tests pass before merge
+- [ ] **Commit test fixes to current branch** - Complete quality gate requirements
+
+### 🧹 **NEXT BRANCH: Infrastructure Cleanup**
+**Post-Merge Cleanup Tasks (Future Branch: feature/cleanup-obsolete-code)**
+- [ ] **Remove Obsolete Test API Routes**
+  - [ ] Delete `app/api/test/character/update-stats/route.ts` (uses Prisma)
+  - [ ] Delete `app/api/test/user/update-family/route.ts` (uses Prisma)
+- [ ] **Update Health Check Route**
+  - [ ] Replace `prisma.$queryRaw` with Supabase health check in `app/api/health/route.ts`
+- [ ] **Remove Obsolete Authentication Code**
+  - [ ] Remove unused JWT functions from `lib/auth.ts`
+  - [ ] Remove unused JWT middleware from `lib/middleware.ts`
+- [ ] **Remove Prisma Infrastructure**
+  - [ ] Delete `lib/prisma.ts`
+  - [ ] Delete `prisma/schema.prisma`
+  - [ ] Delete `prisma/seed.ts`
+  - [ ] Delete `lib/generated/prisma/` directory
+  - [ ] Delete `scripts/export-database.js` (or move to archive)
+- [ ] **Clean Package Dependencies**
+  - [ ] Remove `@prisma/client`, `prisma`
+  - [ ] Remove `jsonwebtoken`, `@types/jsonwebtoken`
+  - [ ] Remove `bcryptjs`
+  - [ ] Remove unused `redis`, `socket.io`, `socket.io-client`
+  - [ ] Remove Prisma scripts from package.json (`db:generate`, `db:migrate`, etc.)
+
 ### 🎯 **HIGH PRIORITY: Quest Template System Implementation**
 **Missing from Supabase Migration**
 - [ ] **Quest Template Database Operations** - Create CRUD operations for quest_templates table using Supabase client
