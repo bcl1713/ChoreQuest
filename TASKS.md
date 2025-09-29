@@ -924,13 +924,78 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] **Family joining now works** - Users can successfully join families with valid codes like "9R7BIW"
 - [x] **Documented fix** - Added critical Supabase configuration section to CLAUDE.md and created memory
 
-### 🚨 **CRITICAL DEPLOYMENT ISSUE DISCOVERED**
-**Production Deployment Configuration is Broken**
-- [ ] **Fix docker-compose.prod.yml** - Update production deployment to use Supabase instead of removed JWT system
-- [ ] **Update production environment variables** - Add missing Supabase configuration
-- [ ] **Document Supabase production setup** - Create instructions for generating production JWT keys
-- [ ] **Test production deployment** - Verify Supabase production deployment works
-- [ ] **Update README.md deployment section** - Replace outdated JWT system references with Supabase
+### Supabase Migration Completion Workflow
+
+**Current Branch: feature/supabase-native-migration**
+- [ ] All quality gates passing (build, lint, unit tests, E2E tests)
+- [ ] Three sub-branches to complete before PR to main
+- [ ] Each sub-branch merges back to feature/supabase-native-migration
+- [ ] Final PR to main after all sub-branches merged
+
+**Sub-branch 1: feature/cleanup-obsolete-code**
+- [ ] Create branch from feature/supabase-native-migration
+- [ ] Delete app/api/test/character/update-stats/route.ts
+- [ ] Delete app/api/test/user/update-family/route.ts
+- [ ] Update app/api/health/route.ts to use Supabase instead of Prisma
+- [ ] Delete lib/prisma.ts
+- [ ] Delete prisma/schema.prisma
+- [ ] Delete prisma/seed.ts
+- [ ] Delete lib/generated/prisma/ directory
+- [ ] Delete or archive scripts/export-database.js
+- [ ] Remove unused JWT functions from lib/auth.ts
+- [ ] Remove unused JWT middleware from lib/middleware.ts
+- [ ] Remove @prisma/client and prisma from package.json
+- [ ] Remove jsonwebtoken and @types/jsonwebtoken from package.json
+- [ ] Remove bcryptjs from package.json
+- [ ] Remove redis, socket.io, socket.io-client from package.json
+- [ ] Remove Prisma scripts from package.json
+- [ ] Run npm install to update package-lock.json
+- [ ] Run quality gates (build, lint, test, E2E)
+- [ ] Commit and push changes
+- [ ] Merge back to feature/supabase-native-migration
+
+**Sub-branch 2: feature/update-production-deployment**
+- [ ] Create branch from feature/supabase-native-migration
+- [ ] Update docker-compose.prod.yml with Supabase services
+- [ ] Add NEXT_PUBLIC_SUPABASE_URL to production environment
+- [ ] Add NEXT_PUBLIC_SUPABASE_ANON_KEY to production environment
+- [ ] Add Supabase JWT secret configuration
+- [ ] Update README.md deployment section for Supabase
+- [ ] Document production Supabase setup process
+- [ ] Document JWT token generation for production
+- [ ] Test production deployment configuration
+- [ ] Run quality gates (build, lint, test, E2E)
+- [ ] Commit and push changes
+- [ ] Merge back to feature/supabase-native-migration
+
+**Sub-branch 3: feature/quest-template-implementation**
+- [ ] Create branch from feature/supabase-native-migration
+- [ ] Create quest template CRUD operations using Supabase client
+- [ ] Implement template creation function
+- [ ] Implement template listing function
+- [ ] Implement template update function
+- [ ] Implement template deletion function
+- [ ] Update components/quest-create-modal.tsx to support templates
+- [ ] Remove "Template creation not yet implemented" error
+- [ ] Implement template selection UI
+- [ ] Implement quest creation from templates
+- [ ] Add template preview functionality
+- [ ] Create template management interface for Guild Masters
+- [ ] Add template creation form
+- [ ] Add template editing functionality
+- [ ] Add template activation/deactivation controls
+- [ ] Create E2E tests for template creation workflow
+- [ ] Create E2E tests for template-based quest creation
+- [ ] Create E2E tests for template management interface
+- [ ] Run quality gates (build, lint, test, E2E)
+- [ ] Commit and push changes
+- [ ] Merge back to feature/supabase-native-migration
+
+**Final Step: PR to Main**
+- [ ] Verify all sub-branches merged to feature/supabase-native-migration
+- [ ] Run final quality gate checks
+- [ ] Create PR from feature/supabase-native-migration to main
+- [ ] Review and merge PR
 
 ### ✅ **COMPLETED (2025-09-29) - Hero Reward Display Fix**
 **Critical Bug: Heroes Not Receiving XP/Gold After Quest Approval**
@@ -946,65 +1011,8 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] **Provider hierarchy correction** - Moved RealtimeProvider before CharacterProvider in app layout
 - [x] **Debug logging added** - Comprehensive logging for character updates and realtime events
 
-### 🔧 **Minor UI Improvements**
-- [ ] **Fix page scroll jump during realtime character refresh** - Character stats update causes page to scroll to top instead of staying in place
-
-### 🔧 **CURRENT BRANCH: Final Test Fixes** - ✅ **COMPLETED**
-**Fix Failing Unit Tests Before Merge**
-- [x] **Removed character-context.test.tsx** - Deleted 6 implementation detail tests that were testing CharacterProvider's internal realtime subscription mechanism
-  - **Rationale**: Tests were testing internal implementation (how subscription is set up) rather than behavior (what user experiences)
-  - **Coverage**: Realtime functionality is fully covered by 21 passing E2E tests
-  - **Result**: All 26 remaining unit tests pass
-- [x] **Ensure all unit tests pass before merge** - ✅ 26/26 passing
-- [x] **Commit test fixes to current branch** - Complete quality gate requirements
-- [x] **Quality Gates** - All passing
-  - [x] Build: ✅ Zero compilation errors
-  - [x] Lint: ✅ Zero ESLint warnings
-  - [x] Unit Tests: ✅ 26/26 passing
-  - [x] E2E Tests: ✅ 21/21 passing (from previous run)
-
-### 🧹 **NEXT BRANCH: Infrastructure Cleanup**
-**Post-Merge Cleanup Tasks (Future Branch: feature/cleanup-obsolete-code)**
-- [ ] **Remove Obsolete Test API Routes**
-  - [ ] Delete `app/api/test/character/update-stats/route.ts` (uses Prisma)
-  - [ ] Delete `app/api/test/user/update-family/route.ts` (uses Prisma)
-- [ ] **Update Health Check Route**
-  - [ ] Replace `prisma.$queryRaw` with Supabase health check in `app/api/health/route.ts`
-- [ ] **Remove Obsolete Authentication Code**
-  - [ ] Remove unused JWT functions from `lib/auth.ts`
-  - [ ] Remove unused JWT middleware from `lib/middleware.ts`
-- [ ] **Remove Prisma Infrastructure**
-  - [ ] Delete `lib/prisma.ts`
-  - [ ] Delete `prisma/schema.prisma`
-  - [ ] Delete `prisma/seed.ts`
-  - [ ] Delete `lib/generated/prisma/` directory
-  - [ ] Delete `scripts/export-database.js` (or move to archive)
-- [ ] **Clean Package Dependencies**
-  - [ ] Remove `@prisma/client`, `prisma`
-  - [ ] Remove `jsonwebtoken`, `@types/jsonwebtoken`
-  - [ ] Remove `bcryptjs`
-  - [ ] Remove unused `redis`, `socket.io`, `socket.io-client`
-  - [ ] Remove Prisma scripts from package.json (`db:generate`, `db:migrate`, etc.)
-
-### 🎯 **HIGH PRIORITY: Quest Template System Implementation**
-**Missing from Supabase Migration**
-- [ ] **Quest Template Database Operations** - Create CRUD operations for quest_templates table using Supabase client
-  - [ ] Create quest template creation function
-  - [ ] Create quest template listing function
-  - [ ] Create quest template update function
-  - [ ] Create quest template deletion function
-- [ ] **Quest Template UI Integration** - Update QuestCreateModal to support template functionality
-  - [ ] Remove "Template creation not yet implemented" error message
-  - [ ] Implement template selection and quest creation from templates
-  - [ ] Add template preview functionality
-- [ ] **Quest Template Management Interface** - Create admin interface for template management
-  - [ ] Template creation form for Guild Masters
-  - [ ] Template editing functionality
-  - [ ] Template activation/deactivation controls
-- [ ] **E2E Test Suite for Templates** - Create comprehensive test coverage
-  - [ ] Template creation workflow tests
-  - [ ] Template-based quest creation tests
-  - [ ] Template management interface tests
+### Known Issues
+- [ ] Fix page scroll jump during realtime character refresh
 
 ### E2E Test Fixes (2025-09-28)
 - [x] **Fix family-joining.spec.ts test**
