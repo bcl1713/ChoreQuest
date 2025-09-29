@@ -2,7 +2,7 @@
 // Used by Docker health checks and load balancers
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 // Health check endpoint - no authentication required
 export async function GET() {
@@ -26,7 +26,8 @@ export async function GET() {
 
     // Test database connection
     try {
-      await prisma.$queryRaw`SELECT 1`;
+      const { error } = await supabase.from('families').select('id').limit(1);
+      if (error) throw error;
       healthData.database = 'connected';
     } catch (error) {
       console.error('Health check - Database connection failed:', error);

@@ -315,7 +315,7 @@ export default function QuestDashboard({
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('quest_instances')
         .update({
           assigned_to_id: user.id,
