@@ -133,7 +133,12 @@ async function createAndCompleteQuest(page: Page, title: string, difficulty: str
   await page.reload();
   await page.waitForTimeout(1000);
 
-  // Quest should now be IN_PROGRESS and show Complete button (no Start Quest needed)
+  // Quest should now be PENDING and show Start Quest button
+  await expect(page.locator('[data-testid="start-quest-button"]').first()).toBeVisible();
+  await page.locator('[data-testid="start-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+
+  // After starting, quest should be IN_PROGRESS and show Complete button
   await expect(page.locator('[data-testid="complete-quest-button"]').first()).toBeVisible();
 
   // Complete quest workflow with shorter waits

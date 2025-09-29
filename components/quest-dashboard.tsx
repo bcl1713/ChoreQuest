@@ -304,7 +304,7 @@ export default function QuestDashboard({
         .from('quest_instances')
         .update({
           assigned_to_id: user.id,
-          status: 'IN_PROGRESS',
+          status: 'PENDING',
         })
         .eq('id', questId)
         .select();
@@ -337,7 +337,7 @@ export default function QuestDashboard({
         .from('quest_instances')
         .update({
           assigned_to_id: assigneeId,
-          status: 'IN_PROGRESS',
+          status: 'PENDING',
         })
         .eq('id', questId);
 

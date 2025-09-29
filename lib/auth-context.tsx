@@ -174,6 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
+      console.log('Attempting to register with family code:', data.familyCode);
+
       // First, verify the family code exists
       const { data: familyData, error: familyError } = await supabase
         .from('families')
@@ -181,9 +183,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('code', data.familyCode)
         .single();
 
+      console.log('DEBUG: Family lookup result:', { familyData, familyError });
+      console.log('DEBUG: Family error details:', familyError ? {
+        message: familyError.message,
+        details: familyError.details,
+        hint: familyError.hint,
+        code: familyError.code
+      } : 'No error');
+
       if (familyError || !familyData) {
+        console.error('Family code validation failed:', { familyError, familyData });
         throw new Error('Invalid family code');
       }
+
+      console.log('Family code validated successfully:', familyData);
 
       // Create the auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
