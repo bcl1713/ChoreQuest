@@ -24,7 +24,7 @@ jest.mock("../../lib/realtime-context", () => ({
   RealtimeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-// Mock Supabase client
+// Mock Supabase client with full operation chain
 jest.mock("../../lib/supabase", () => ({
   supabase: {
     from: jest.fn(() => ({
@@ -35,6 +35,18 @@ jest.mock("../../lib/supabase", () => ({
             error: null,
           })),
           data: [],
+          error: null,
+        })),
+      })),
+      update: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({
+          data: null,
+          error: null,
+        })),
+      })),
+      delete: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({
+          data: null,
           error: null,
         })),
       })),
@@ -109,8 +121,24 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     const mockSelectChain = {
       eq: jest.fn().mockReturnValue(mockEqChain),
     };
+
+    // Mock all Supabase operations to prevent console errors
     (supabase.from as jest.Mock).mockReturnValue({
       select: jest.fn().mockReturnValue(mockSelectChain),
+      update: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          select: jest.fn(() => Promise.resolve({
+            data: null,
+            error: null,
+          })),
+        })),
+      })),
+      delete: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({
+          data: null,
+          error: null,
+        })),
+      })),
     });
   });
 
