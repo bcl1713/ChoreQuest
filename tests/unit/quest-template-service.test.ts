@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { QuestTemplateService } from "@/lib/quest-template-service";
 import {
