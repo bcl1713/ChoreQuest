@@ -984,16 +984,24 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Update TASKS.md with detailed implementation tasks
 - [x] Commit and push initial branch setup
 
-**Phase 1: Database & Type Infrastructure**
-- [ ] Create migration 013_create_default_quest_templates.sql
-- [ ] Add 8-10 default templates for common household chores
-- [ ] Include class_bonuses for each character class
-- [ ] Add trigger function to copy defaults when new family created
-- [ ] Test migration applies cleanly
-- [ ] Extend type definitions for template operations
-- [ ] Add ClassBonuses interface for type safety
-- [ ] Add template-specific request/response types
-- [ ] Commit Phase 1
+**Phase 1: Database & Type Infrastructure** ✅ **COMPLETED (2025-09-30)**
+- [x] Create migration 013_create_default_quest_templates.sql
+- [x] Add 8-10 default templates for common household chores
+- [x] Include class_bonuses for each character class
+- [x] Add trigger function to copy defaults when new family created
+- [x] Test migration applies cleanly
+- [x] Extend type definitions for template operations
+- [x] Add ClassBonuses interface for type safety
+- [x] Add template-specific request/response types
+- [x] Commit Phase 1
+
+**Phase 1 Results:**
+- ✅ Migration 013 created with 10 default quest templates
+- ✅ Trigger `copy_default_quest_templates_to_new_family()` auto-copies templates to new families
+- ✅ TypeScript types extended: ClassBonuses, QuestTemplateWithBonuses, CreateQuestTemplateInput, UpdateQuestTemplateInput
+- ✅ All quality gates pass: build ✅, lint ✅, test (26/26) ✅, tsc --noEmit ✅
+- ✅ Bonus: Fixed Deno import errors (removed 867 lines of Supabase volumes)
+- ✅ Bonus: Fixed jest-dom TypeScript declarations (zero tsc errors)
 
 **Phase 2: Backend Template Service - TDD**
 - [ ] Create tests/unit/quest-template-service.test.ts
