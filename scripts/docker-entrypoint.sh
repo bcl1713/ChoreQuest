@@ -40,7 +40,7 @@ check_database_initialized() {
     fi
 }
 
-# Function to run migrations
+# Function to run migrations using psql
 run_migrations() {
     echo "=================================================="
     echo "Running Database Migrations"
@@ -54,33 +54,36 @@ run_migrations() {
         return 0
     fi
 
+    # Extract database connection details from Supabase URL
+    # For self-hosted: connect directly to postgres container
+    DB_HOST="${DB_HOST:-supabase-db}"
+    DB_PORT="${DB_PORT:-5432}"
+    DB_NAME="${DB_NAME:-postgres}"
+    DB_USER="${DB_USER:-postgres}"
+    # DB_PASSWORD should come from SUPABASE env or be set separately
+
     # Run each migration file in order
-    for migration in ./supabase/migrations/*.sql; do
+    for migration in $(ls -1 ./supabase/migrations/*.sql | sort); do
         if [ -f "$migration" ]; then
             filename=$(basename "$migration")
             echo "→ Applying migration: $filename"
 
-            # Read migration content and execute via Supabase SQL API
-            migration_sql=$(cat "$migration")
+            # Execute migration directly with psql
+            PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration" > /dev/null 2>&1
 
-            # Execute migration (this is a simplified approach - in production you'd want better error handling)
-            curl -s -X POST \
-                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-                -H "Content-Type: application/json" \
-                -d "{\"query\": $(echo "$migration_sql" | jq -Rs .)}" \
-                "${SUPABASE_API_URL}/rest/v1/rpc/exec_sql" \
-                > /dev/null 2>&1
-
-            migration_count=$((migration_count + 1))
-            echo "  ✓ Applied: $filename"
+            if [ $? -eq 0 ]; then
+                migration_count=$((migration_count + 1))
+                echo "  ✓ Applied: $filename"
+            else
+                echo "  ✗ Failed: $filename"
+            fi
         fi
     done
 
     echo "✓ Applied $migration_count migrations"
 }
 
-# Function to seed database
+# Function to seed database using psql
 seed_database() {
     echo "=================================================="
     echo "Seeding Database"
@@ -92,17 +95,15 @@ seed_database() {
     fi
 
     echo "→ Running seed data..."
-    seed_sql=$(cat "./supabase/seed.sql")
 
-    curl -s -X POST \
-        -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-        -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-        -H "Content-Type: application/json" \
-        -d "{\"query\": $(echo "$seed_sql" | jq -Rs .)}" \
-        "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql" \
-        > /dev/null 2>&1
+    # Execute seed SQL directly with psql
+    PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "./supabase/seed.sql" > /dev/null 2>&1
 
-    echo "✓ Database seeded successfully"
+    if [ $? -eq 0 ]; then
+        echo "✓ Database seeded successfully"
+    else
+        echo "✗ Database seeding failed"
+    fi
 }
 
 # Main initialization logic

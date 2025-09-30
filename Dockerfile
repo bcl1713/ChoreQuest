@@ -52,7 +52,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install required tools for entrypoint script
-RUN apk add --no-cache curl jq
+RUN apk add --no-cache curl jq postgresql16-client
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
