@@ -8,6 +8,7 @@ import {
   QuestCategory,
   QuestTemplate,
 } from "@/lib/types/database";
+import { questTemplateService } from "@/lib/quest-template-service";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestCreateModalProps {
@@ -127,9 +128,15 @@ export default function QuestCreateModal({
           return;
         }
 
-        // Create quest from template (we'll implement this when templates are available)
-        setError("Template creation not yet implemented in current migration");
-        return;
+        // Create quest from template using quest template service
+        await questTemplateService.createQuestFromTemplate(
+          selectedTemplateId,
+          user.id,
+          {
+            assignedToId: assignedToId || undefined,
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          }
+        );
       } else {
         if (!title.trim() || !description.trim()) {
           setError("Please fill in all required fields");
@@ -234,10 +241,11 @@ export default function QuestCreateModal({
                 <>
                   {/* Template Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-2">
+                    <label htmlFor="template-select" className="block text-sm font-medium text-gray-200 mb-2">
                       Select Template
                     </label>
                     <select
+                      id="template-select"
                       value={selectedTemplateId}
                       onChange={(e) => setSelectedTemplateId(e.target.value)}
                       className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
@@ -385,10 +393,11 @@ export default function QuestCreateModal({
               {/* Common Fields */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">
+                  <label htmlFor="assign-to" className="block text-sm font-medium text-gray-200 mb-2">
                     Assign To (Optional)
                   </label>
                   <select
+                    id="assign-to"
                     value={assignedToId}
                     onChange={(e) => setAssignedToId(e.target.value)}
                     className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
@@ -403,10 +412,11 @@ export default function QuestCreateModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">
+                  <label htmlFor="due-date" className="block text-sm font-medium text-gray-200 mb-2">
                     Due Date (Optional)
                   </label>
                   <input
+                    id="due-date"
                     type="datetime-local"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}

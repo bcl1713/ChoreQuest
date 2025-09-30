@@ -995,7 +995,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Add template-specific request/response types
 - [x] Commit Phase 1
 
-**Phase 2: Backend Template Service - TDD** (IN PROGRESS)
+**Phase 2: Backend Template Service - TDD** (COMPLETED)
 - [x] Create tests/unit/quest-template-service.test.ts
 - [x] Write test for getTemplatesForFamily
 - [x] Write test for createTemplate
@@ -1018,17 +1018,17 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Run integration tests against local Supabase (6/6 PASS)
 - [x] Commit Phase 2
 
-**Phase 3: Quest Creation from Templates**
-- [ ] Write unit tests for template selection logic
-- [ ] Write unit tests for quest instantiation from template
-- [ ] Update quest-create-modal.tsx handleSubmit
-- [ ] Remove "Template creation not yet implemented" error
-- [ ] Implement template-based quest creation
-- [ ] Copy template fields to quest instance
-- [ ] Apply template_id reference
-- [ ] Preserve override fields (assigned_to, due_date)
-- [ ] Handle class_bonuses properly
-- [ ] Run unit tests until all pass
+**Phase 3: Quest Creation from Templates** (IN PROGRESS)
+- [x] Write unit tests for template selection logic
+- [x] Write unit tests for quest instantiation from template
+- [x] Update quest-create-modal.tsx handleSubmit
+- [x] Remove "Template creation not yet implemented" error
+- [x] Implement template-based quest creation
+- [x] Copy template fields to quest instance
+- [x] Apply template_id reference
+- [x] Preserve override fields (assigned_to, due_date)
+- [x] Handle class_bonuses properly
+- [x] Run unit tests until all pass (6/6 PASS)
 - [ ] Create tests/e2e/quest-template-creation.spec.ts
 - [ ] Write E2E test for creating quest from template
 - [ ] Write E2E test for template field copying
