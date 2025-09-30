@@ -959,15 +959,20 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Merge back to feature/supabase-native-migration (removed 2,300+ lines of code)
 
 **Sub-branch 2: feature/update-production-deployment**
-- [ ] Create branch from feature/supabase-native-migration
-- [ ] Update docker-compose.prod.yml with Supabase services
-- [ ] Add NEXT_PUBLIC_SUPABASE_URL to production environment
-- [ ] Add NEXT_PUBLIC_SUPABASE_ANON_KEY to production environment
-- [ ] Add Supabase JWT secret configuration
-- [ ] Update README.md deployment section for Supabase
-- [ ] Document production Supabase setup process
-- [ ] Document JWT token generation for production
-- [ ] Test production deployment configuration
+- [x] Create fresh branch from feature/supabase-native-migration
+- [ ] Create supabase-docker/ directory with official Supabase docker setup
+- [ ] Create supabase-docker/.env.example with secure defaults
+- [ ] Create supabase-docker/README.md with setup instructions
+- [ ] Simplify docker-compose.prod.yml (remove Supabase services)
+- [ ] Update Dockerfile to use ARG for build-time Supabase credentials
+- [ ] Update scripts/docker-entrypoint.sh for automatic database initialization
+- [ ] Create .env.production.example with required variables
+- [ ] Update README.md with comprehensive production deployment guide
+  - [ ] Option A: Local Supabase (npx supabase start)
+  - [ ] Option B: Hosted Supabase (supabase.com)
+  - [ ] Option C: Self-hosted Supabase Docker (two-step process)
+  - [ ] Portainer deployment instructions
+- [ ] Test deployment end-to-end
 - [ ] Run quality gates (build, lint, test, E2E)
 - [ ] Commit and push changes
 - [ ] Merge back to feature/supabase-native-migration
