@@ -8,8 +8,19 @@ This directory contains the official Supabase self-hosting setup for running Sup
 
 ```bash
 cp .env.example .env
-# Edit .env and change default passwords!
 ```
+
+**IMPORTANT**: Edit `.env` and update the following:
+
+1. **For Development/Testing**: The default keys in `.env.example` work together and can be used as-is for local testing.
+
+2. **For Production**: You MUST generate your own secure keys:
+   - Generate a new `JWT_SECRET` (40+ random characters)
+   - Generate matching `ANON_KEY` and `SERVICE_ROLE_KEY` using that JWT secret
+   - See [Supabase API Keys Generator](https://supabase.com/docs/guides/self-hosting/docker) for tools
+   - Change `POSTGRES_PASSWORD`, `DASHBOARD_PASSWORD`, and other secrets
+
+⚠️ **Why all three keys?** The `JWT_SECRET` is used to sign the `ANON_KEY` and `SERVICE_ROLE_KEY` tokens. If you change the JWT secret, you must regenerate the other keys or they won't work!
 
 ### 2. Start Supabase
 
@@ -85,14 +96,17 @@ With default configuration:
 
 Before using in production, you MUST:
 
-- [ ] Change default Studio username and password (in `.env`)
-- [ ] Generate and set secure JWT secrets (in `.env`)
-- [ ] Change all default passwords (database, dashboard, etc.)
+- [ ] **Generate new JWT_SECRET** (40+ characters) and matching ANON_KEY/SERVICE_ROLE_KEY
+- [ ] Change default Studio username and password (`DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`)
+- [ ] Change database password (`POSTGRES_PASSWORD`)
+- [ ] Update all other secret keys (`SECRET_KEY_BASE`, `VAULT_ENC_KEY`)
 - [ ] Configure SSL/TLS certificates for HTTPS
 - [ ] Set up regular database backups
-- [ ] Configure proper SMTP settings for email
-- [ ] Review and update all default environment variables
+- [ ] Configure proper SMTP settings for email (if using email auth)
 - [ ] Restrict network access to necessary ports only
+- [ ] Keep Docker images updated regularly
+
+⚠️ **Never use the default keys from `.env.example` in production!** They are publicly known and insecure.
 
 ## Stopping Supabase
 
