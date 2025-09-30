@@ -38,9 +38,15 @@ services:
       start_period: 60s
     networks:
       - chorequest
+      - supabase_default
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 # Network Configuration
 networks:
   chorequest:
     driver: bridge
     name: chorequest_network
+  supabase_default:
+    external: true
+    name: supabase-docker_default
