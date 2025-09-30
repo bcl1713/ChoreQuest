@@ -267,10 +267,11 @@ docker compose ps  # Verify all services are healthy
 # Login: supabase / this_password_is_insecure_and_should_be_updated
 # ⚠️ Change these credentials immediately!
 
-# 4. Get API credentials
-# In Supabase Studio → Settings → API
-# Copy: API URL (http://localhost:8000), anon key, service_role key
-# ⚠️ Use "anon key" (JWT token starting with eyJ...)
+# 4. Get API credentials from .env file
+# The keys are already in your supabase-docker/.env file
+cd supabase-docker
+cat .env | grep -E "ANON_KEY=|SERVICE_ROLE_KEY="
+# Copy these JWT tokens (starting with eyJ...)
 ```
 
 **Step 2: Deploy ChoreQuest**
@@ -279,7 +280,12 @@ docker compose ps  # Verify all services are healthy
 # 5. Configure ChoreQuest
 cd ..  # Back to project root
 cp .env.production.example .env.production
-# Edit .env.production with credentials from Step 1
+
+# Edit .env.production with the following:
+# IMPORTANT: Use container name for Docker networking
+NEXT_PUBLIC_SUPABASE_URL=http://supabase-kong:8000
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-from-supabase/.env>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key-from-supabase/.env>
 
 # 6. Build ChoreQuest with Supabase credentials
 docker compose --env-file .env.production -f docker-compose.prod.yml build
