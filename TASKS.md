@@ -1014,6 +1014,8 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Implement activateTemplate function
 - [x] Implement createQuestFromTemplate function
 - [x] Run unit tests until all pass
+- [x] Create integration tests for quest-template-service
+- [x] Run integration tests against local Supabase (6/6 PASS)
 - [x] Commit Phase 2
 
 **Phase 3: Quest Creation from Templates**
