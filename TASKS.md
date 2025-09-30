@@ -995,7 +995,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Add template-specific request/response types
 - [x] Commit Phase 1
 
-**Phase 2: Backend Template Service - TDD**
+**Phase 2: Backend Template Service - TDD** (IN PROGRESS)
 - [ ] Create tests/unit/quest-template-service.test.ts
 - [ ] Write test for getTemplatesForFamily
 - [ ] Write test for createTemplate
