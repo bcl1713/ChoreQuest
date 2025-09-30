@@ -980,27 +980,154 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Delete feature/update-production-deployment branch
 
 **Sub-branch 3: feature/quest-template-implementation**
-- [ ] Create branch from feature/supabase-native-migration
-- [ ] Create quest template CRUD operations using Supabase client
-- [ ] Implement template creation function
-- [ ] Implement template listing function
-- [ ] Implement template update function
-- [ ] Implement template deletion function
-- [ ] Update components/quest-create-modal.tsx to support templates
+- [x] Create branch from feature/supabase-native-migration
+- [x] Update TASKS.md with detailed implementation tasks
+- [x] Commit and push initial branch setup
+
+**Phase 1: Database & Type Infrastructure**
+- [ ] Create migration 013_create_default_quest_templates.sql
+- [ ] Add 8-10 default templates for common household chores
+- [ ] Include class_bonuses for each character class
+- [ ] Add trigger function to copy defaults when new family created
+- [ ] Test migration applies cleanly
+- [ ] Extend type definitions for template operations
+- [ ] Add ClassBonuses interface for type safety
+- [ ] Add template-specific request/response types
+- [ ] Commit Phase 1
+
+**Phase 2: Backend Template Service - TDD**
+- [ ] Create tests/unit/quest-template-service.test.ts
+- [ ] Write test for getTemplatesForFamily
+- [ ] Write test for createTemplate
+- [ ] Write test for updateTemplate
+- [ ] Write test for deleteTemplate (soft delete)
+- [ ] Write test for activateTemplate
+- [ ] Write test for createQuestFromTemplate
+- [ ] Write tests for RLS policy compliance
+- [ ] Write tests for class_bonuses handling
+- [ ] Write tests for error cases
+- [ ] Create lib/quest-template-service.ts
+- [ ] Implement getTemplatesForFamily function
+- [ ] Implement createTemplate function
+- [ ] Implement updateTemplate function
+- [ ] Implement deleteTemplate function
+- [ ] Implement activateTemplate function
+- [ ] Implement createQuestFromTemplate function
+- [ ] Run unit tests until all pass
+- [ ] Commit Phase 2
+
+**Phase 3: Quest Creation from Templates**
+- [ ] Write unit tests for template selection logic
+- [ ] Write unit tests for quest instantiation from template
+- [ ] Update quest-create-modal.tsx handleSubmit
 - [ ] Remove "Template creation not yet implemented" error
-- [ ] Implement template selection UI
-- [ ] Implement quest creation from templates
-- [ ] Add template preview functionality
-- [ ] Create template management interface for Guild Masters
-- [ ] Add template creation form
-- [ ] Add template editing functionality
-- [ ] Add template activation/deactivation controls
-- [ ] Create E2E tests for template creation workflow
-- [ ] Create E2E tests for template-based quest creation
-- [ ] Create E2E tests for template management interface
-- [ ] Run quality gates (build, lint, test, E2E)
-- [ ] Commit and push changes
-- [ ] Merge back to feature/supabase-native-migration
+- [ ] Implement template-based quest creation
+- [ ] Copy template fields to quest instance
+- [ ] Apply template_id reference
+- [ ] Preserve override fields (assigned_to, due_date)
+- [ ] Handle class_bonuses properly
+- [ ] Run unit tests until all pass
+- [ ] Create tests/e2e/quest-template-creation.spec.ts
+- [ ] Write E2E test for creating quest from template
+- [ ] Write E2E test for template field copying
+- [ ] Write E2E test for assignment and due date overrides
+- [ ] Write E2E test with different character classes
+- [ ] Run E2E tests until all pass
+- [ ] Commit Phase 3
+
+**Phase 4: Template Management Interface**
+- [ ] Create tests/unit/components/quest-template-manager.test.tsx
+- [ ] Write test for template list rendering
+- [ ] Write test for template creation form
+- [ ] Write test for template editing modal
+- [ ] Write test for template activation/deactivation
+- [ ] Write test for class bonus editor
+- [ ] Create components/quest-template-manager.tsx
+- [ ] Implement template table/list view
+- [ ] Implement create new template button and modal
+- [ ] Implement edit existing template functionality
+- [ ] Implement activate/deactivate toggle
+- [ ] Implement delete with confirmation
+- [ ] Implement class bonus configuration UI
+- [ ] Implement template preview
+- [ ] Run unit tests until all pass
+- [ ] Write unit tests for template manager integration in dashboard
+- [ ] Write unit test for Guild Master role check
+- [ ] Update app/dashboard/page.tsx
+- [ ] Add Quest Templates tab or section for Guild Masters
+- [ ] Load template manager component
+- [ ] Wire up refresh after CRUD operations
+- [ ] Handle permissions (Guild Masters + Heroes only)
+- [ ] Run unit tests until all pass
+- [ ] Create tests/e2e/quest-template-management.spec.ts
+- [ ] Write E2E test for Guild Master creates template
+- [ ] Write E2E test for Guild Master edits template
+- [ ] Write E2E test for Guild Master deactivates template
+- [ ] Write E2E test for template appears in quest creation modal
+- [ ] Write E2E test for Heroes cannot access template management
+- [ ] Run E2E tests until all pass
+- [ ] Commit Phase 4
+
+**Phase 5: Default Templates on Family Creation**
+- [ ] Write unit test for default template copying
+- [ ] Write E2E test verifying new families get templates
+- [ ] Create database function to copy default templates
+- [ ] Add trigger function on family INSERT
+- [ ] Verify templates assigned to new family_id
+- [ ] Test with family creation E2E flow
+- [ ] Run all tests until pass
+- [ ] Commit Phase 5
+
+**Phase 6: Integration Testing**
+- [ ] Create tests/e2e/quest-template-full-workflow.spec.ts
+- [ ] Write E2E test for new family registration
+- [ ] Write E2E test verifying default templates exist
+- [ ] Write E2E test for Guild Master creates custom template
+- [ ] Write E2E test for Guild Master creates quest from custom template
+- [ ] Write E2E test for Hero picks up and completes quest
+- [ ] Write E2E test verifying class bonuses applied correctly
+- [ ] Test realtime updates when templates change
+- [ ] Test template deletion doesn't break existing quests
+- [ ] Test family isolation for templates
+- [ ] Run all E2E tests until pass
+- [ ] Commit Phase 6
+
+**Phase 7: Quality Assurance**
+- [ ] Run npm run build
+- [ ] Run npm run lint
+- [ ] Run npm run test
+- [ ] Run npx playwright test
+- [ ] Fix any failing tests or errors
+- [ ] Verify all quality gates pass
+- [ ] Commit Phase 7
+
+**Phase 8: Manual Testing**
+- [ ] Create family, verify default templates loaded
+- [ ] Create custom template with all fields
+- [ ] Edit template, verify changes persist
+- [ ] Deactivate template, verify it hides from quest creation
+- [ ] Create quest from template
+- [ ] Complete quest, verify class bonuses work
+- [ ] Test on mobile viewport
+- [ ] Test with different character classes
+- [ ] Document any issues found
+- [ ] Fix any issues found
+- [ ] Commit manual testing fixes
+
+**Phase 9: Documentation & Memory**
+- [ ] Create serena memory: quest_template_system_implementation
+- [ ] Document template data structure in memory
+- [ ] Document class_bonuses format in memory
+- [ ] Document RLS policies for templates in memory
+- [ ] Document default template system in memory
+- [ ] Update TASKS.md to mark all completed tasks
+- [ ] Commit Phase 9
+
+**Phase 10: Merge & Cleanup**
+- [ ] Run all quality gates one final time
+- [ ] Merge feature/quest-template-implementation to feature/supabase-native-migration
+- [ ] Delete feature/quest-template-implementation branch
+- [ ] Verify parent branch tests still pass
 
 **Final Step: PR to Main**
 - [ ] Verify all sub-branches merged to feature/supabase-native-migration
