@@ -999,13 +999,13 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Create tests/unit/quest-template-service.test.ts
 - [x] Write test for getTemplatesForFamily
 - [x] Write test for createTemplate
-- [ ] Write test for updateTemplate
-- [ ] Write test for deleteTemplate (soft delete)
-- [ ] Write test for activateTemplate
-- [ ] Write test for createQuestFromTemplate
-- [ ] Write tests for RLS policy compliance
-- [ ] Write tests for class_bonuses handling
-- [ ] Write tests for error cases
+- [x] Write test for updateTemplate
+- [x] Write test for deleteTemplate (soft delete)
+- [x] Write test for activateTemplate
+- [x] Write test for createQuestFromTemplate
+- [x] Write tests for RLS policy compliance
+- [x] Write tests for class_bonuses handling
+- [x] Write tests for error cases
 - [ ] Create lib/quest-template-service.ts
 - [ ] Implement getTemplatesForFamily function
 - [ ] Implement createTemplate function
