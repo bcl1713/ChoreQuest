@@ -976,7 +976,8 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Commit and push changes
 - [x] User testing and verification (Docker networking, migrations, database reset)
 - [x] Add database reset instructions to README
-- [ ] Merge back to feature/supabase-native-migration
+- [x] Merge back to feature/supabase-native-migration
+- [x] Delete feature/update-production-deployment branch
 
 **Sub-branch 3: feature/quest-template-implementation**
 - [ ] Create branch from feature/supabase-native-migration
