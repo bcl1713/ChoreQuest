@@ -24,6 +24,8 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # Internal server-side URL (for Docker-to-Docker communication)
+      - SUPABASE_INTERNAL_URL=${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
 
       # Application Configuration
       - NODE_ENV=production

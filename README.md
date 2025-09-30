@@ -282,8 +282,9 @@ cd ..  # Back to project root
 cp .env.production.example .env.production
 
 # Edit .env.production with the following:
-# IMPORTANT: Use container name for Docker networking
-NEXT_PUBLIC_SUPABASE_URL=http://supabase-kong:8000
+# IMPORTANT: Client needs localhost, server needs container name
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000  # For browser
+SUPABASE_INTERNAL_URL=http://supabase-kong:8000  # For server-side migrations
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-from-supabase/.env>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key-from-supabase/.env>
 

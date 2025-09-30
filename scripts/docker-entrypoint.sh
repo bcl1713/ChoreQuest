@@ -17,6 +17,10 @@ fi
 
 echo "✓ Supabase configuration detected: $NEXT_PUBLIC_SUPABASE_URL"
 
+# Use internal URL for server-side API calls if available
+SUPABASE_API_URL="${SUPABASE_INTERNAL_URL:-$NEXT_PUBLIC_SUPABASE_URL}"
+echo "✓ Using internal API URL for migrations: $SUPABASE_API_URL"
+
 # Function to check if database is initialized
 check_database_initialized() {
     echo "Checking if database is initialized..."
@@ -25,7 +29,7 @@ check_database_initialized() {
     response=$(curl -s -o /dev/null -w "%{http_code}" \
         -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
         -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-        "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/families?limit=1")
+        "${SUPABASE_API_URL}/rest/v1/families?limit=1")
 
     if [ "$response" = "200" ]; then
         echo "✓ Database already initialized"
@@ -65,7 +69,7 @@ run_migrations() {
                 -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
                 -H "Content-Type: application/json" \
                 -d "{\"query\": $(echo "$migration_sql" | jq -Rs .)}" \
-                "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/exec_sql" \
+                "${SUPABASE_API_URL}/rest/v1/rpc/exec_sql" \
                 > /dev/null 2>&1
 
             migration_count=$((migration_count + 1))
