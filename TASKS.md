@@ -1013,8 +1013,8 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Implement deleteTemplate function
 - [x] Implement activateTemplate function
 - [x] Implement createQuestFromTemplate function
-- [ ] Run unit tests until all pass
-- [ ] Commit Phase 2
+- [x] Run unit tests until all pass
+- [x] Commit Phase 2
 
 **Phase 3: Quest Creation from Templates**
 - [ ] Write unit tests for template selection logic
