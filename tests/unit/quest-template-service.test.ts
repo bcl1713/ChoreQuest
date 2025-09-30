@@ -29,55 +29,288 @@ describe("QuestTemplateService", () => {
 
   describe("getTemplatesForFamily", () => {
     it("should return only family-scoped templates", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const mockTemplates: QuestTemplate[] = [
+        {
+          id: "template-1",
+          title: "Clean Room",
+          description: "Clean your bedroom",
+          xp_reward: 50,
+          gold_reward: 25,
+          difficulty: "EASY",
+          category: "DAILY",
+          family_id: mockFamilyId,
+          is_active: true,
+          class_bonuses: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ];
+
+      const { supabase } = require("@/lib/supabase");
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockEq = jest.fn().mockResolvedValue({ data: mockTemplates, error: null });
+
+      supabase.from.mockReturnValue({
+        select: mockSelect,
+        eq: mockEq,
+      });
+
+      mockSelect.mockReturnValue({ eq: mockEq });
+
+      const result = await service.getTemplatesForFamily(mockFamilyId);
+
+      expect(result).toEqual(mockTemplates);
+      expect(supabase.from).toHaveBeenCalledWith("quest_templates");
+      expect(mockSelect).toHaveBeenCalledWith("*");
     });
 
     it("should filter by is_active=true by default", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const { supabase } = require("@/lib/supabase");
+      const mockEq = jest.fn().mockReturnThis();
+      const mockResolve = jest.fn().mockResolvedValue({ data: [], error: null });
+
+      supabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: mockEq,
+        }),
+      });
+
+      mockEq.mockReturnValue({ eq: mockResolve });
+
+      await service.getTemplatesForFamily(mockFamilyId);
+
+      expect(mockEq).toHaveBeenCalledWith("family_id", mockFamilyId);
+      expect(mockEq).toHaveBeenCalledWith("is_active", true);
     });
 
     it("should return empty array when no templates exist", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const { supabase } = require("@/lib/supabase");
+      const mockEq = jest.fn().mockReturnThis();
+      const mockResolve = jest.fn().mockResolvedValue({ data: [], error: null });
+
+      supabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: mockEq,
+        }),
+      });
+
+      mockEq.mockReturnValue({ eq: mockResolve });
+
+      const result = await service.getTemplatesForFamily(mockFamilyId);
+
+      expect(result).toEqual([]);
     });
 
     it("should respect RLS policies for family isolation", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const { supabase } = require("@/lib/supabase");
+      const mockEq = jest.fn().mockReturnThis();
+      const mockResolve = jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "RLS policy violation", code: "42501" },
+      });
+
+      supabase.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: mockEq,
+        }),
+      });
+
+      mockEq.mockReturnValue({ eq: mockResolve });
+
+      await expect(service.getTemplatesForFamily("wrong-family-id")).rejects.toThrow();
     });
   });
 
   describe("createTemplate", () => {
     it("should successfully create template with all fields", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const templateInput: CreateQuestTemplateInput = {
+        title: "New Quest Template",
+        description: "Complete this epic quest",
+        xp_reward: 100,
+        gold_reward: 50,
+        difficulty: "MEDIUM",
+        category: "DAILY",
+        family_id: mockFamilyId,
+        is_active: true,
+        class_bonuses: {
+          KNIGHT: { xp: 1.05, gold: 1.05 },
+          MAGE: { xp: 1.2, gold: 1.0 },
+        },
+      };
+
+      const mockCreatedTemplate: QuestTemplate = {
+        id: "new-template-id",
+        ...templateInput,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { supabase } = require("@/lib/supabase");
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn().mockResolvedValue({ data: mockCreatedTemplate, error: null });
+
+      supabase.from.mockReturnValue({
+        insert: mockInsert,
+      });
+
+      mockInsert.mockReturnValue({
+        select: mockSelect,
+      });
+
+      mockSelect.mockReturnValue({
+        single: mockSingle,
+      });
+
+      const result = await service.createTemplate(templateInput);
+
+      expect(result).toEqual(mockCreatedTemplate);
+      expect(supabase.from).toHaveBeenCalledWith("quest_templates");
+      expect(mockInsert).toHaveBeenCalledWith(templateInput);
     });
 
     it("should properly store class_bonuses as JSONB", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const classBonuses: ClassBonuses = {
+        KNIGHT: { xp: 1.05, gold: 1.05 },
+        MAGE: { xp: 1.2, gold: 1.0 },
+        RANGER: { xp: 1.0, gold: 1.0, gems: 1.3 },
+      };
+
+      const templateInput: CreateQuestTemplateInput = {
+        title: "Test Template",
+        description: "Test",
+        xp_reward: 50,
+        gold_reward: 25,
+        difficulty: "EASY",
+        category: "DAILY",
+        family_id: mockFamilyId,
+        class_bonuses: classBonuses,
+      };
+
+      const { supabase } = require("@/lib/supabase");
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: { ...templateInput, id: "test-id", created_at: "", updated_at: "" },
+        error: null,
+      });
+
+      supabase.from.mockReturnValue({ insert: mockInsert });
+      mockInsert.mockReturnValue({ select: mockSelect });
+      mockSelect.mockReturnValue({ single: mockSingle });
+
+      await service.createTemplate(templateInput);
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          class_bonuses: classBonuses,
+        })
+      );
     });
 
     it("should associate template with correct family_id", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const templateInput: CreateQuestTemplateInput = {
+        title: "Family Template",
+        description: "For specific family",
+        xp_reward: 75,
+        gold_reward: 35,
+        difficulty: "MEDIUM",
+        category: "WEEKLY",
+        family_id: mockFamilyId,
+      };
+
+      const { supabase } = require("@/lib/supabase");
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: { ...templateInput, id: "test-id", created_at: "", updated_at: "" },
+        error: null,
+      });
+
+      supabase.from.mockReturnValue({ insert: mockInsert });
+      mockInsert.mockReturnValue({ select: mockSelect });
+      mockSelect.mockReturnValue({ single: mockSingle });
+
+      await service.createTemplate(templateInput);
+
+      expect(mockInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          family_id: mockFamilyId,
+        })
+      );
     });
 
     it("should validate required fields", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const invalidInput = {
+        description: "Missing title",
+        xp_reward: 50,
+      } as CreateQuestTemplateInput;
+
+      const { supabase } = require("@/lib/supabase");
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "Missing required fields", code: "23502" },
+      });
+
+      supabase.from.mockReturnValue({ insert: mockInsert });
+      mockInsert.mockReturnValue({ select: mockSelect });
+      mockSelect.mockReturnValue({ single: mockSingle });
+
+      await expect(service.createTemplate(invalidInput)).rejects.toThrow();
     });
 
     it("should reject creation without proper authentication", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const templateInput: CreateQuestTemplateInput = {
+        title: "Unauthorized Template",
+        description: "Should fail",
+        xp_reward: 50,
+        gold_reward: 25,
+        difficulty: "EASY",
+        category: "DAILY",
+        family_id: mockFamilyId,
+      };
+
+      const { supabase } = require("@/lib/supabase");
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "Not authenticated", code: "42501" },
+      });
+
+      supabase.from.mockReturnValue({ insert: mockInsert });
+      mockInsert.mockReturnValue({ select: mockSelect });
+      mockSelect.mockReturnValue({ single: mockSingle });
+
+      await expect(service.createTemplate(templateInput)).rejects.toThrow();
     });
 
     it("should reject creation for wrong family_id", async () => {
-      // Test placeholder - will implement
-      expect(true).toBe(true);
+      const templateInput: CreateQuestTemplateInput = {
+        title: "Wrong Family Template",
+        description: "Should fail RLS",
+        xp_reward: 50,
+        gold_reward: 25,
+        difficulty: "EASY",
+        category: "DAILY",
+        family_id: "wrong-family-id",
+      };
+
+      const { supabase } = require("@/lib/supabase");
+      const mockInsert = jest.fn().mockReturnThis();
+      const mockSelect = jest.fn().mockReturnThis();
+      const mockSingle = jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "RLS policy violation", code: "42501" },
+      });
+
+      supabase.from.mockReturnValue({ insert: mockInsert });
+      mockInsert.mockReturnValue({ select: mockSelect });
+      mockSelect.mockReturnValue({ single: mockSingle });
+
+      await expect(service.createTemplate(templateInput)).rejects.toThrow();
     });
   });
 
