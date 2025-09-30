@@ -1006,13 +1006,13 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Write tests for RLS policy compliance
 - [x] Write tests for class_bonuses handling
 - [x] Write tests for error cases
-- [ ] Create lib/quest-template-service.ts
-- [ ] Implement getTemplatesForFamily function
-- [ ] Implement createTemplate function
-- [ ] Implement updateTemplate function
-- [ ] Implement deleteTemplate function
-- [ ] Implement activateTemplate function
-- [ ] Implement createQuestFromTemplate function
+- [x] Create lib/quest-template-service.ts
+- [x] Implement getTemplatesForFamily function
+- [x] Implement createTemplate function
+- [x] Implement updateTemplate function
+- [x] Implement deleteTemplate function
+- [x] Implement activateTemplate function
+- [x] Implement createQuestFromTemplate function
 - [ ] Run unit tests until all pass
 - [ ] Commit Phase 2
 
