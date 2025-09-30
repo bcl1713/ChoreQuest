@@ -850,3 +850,25 @@ export type QuestCategory = Enums<'quest_category'>
 export type CharacterClass = Enums<'character_class'>
 export type UserRole = Enums<'user_role'>
 export type RewardType = Enums<'reward_type'>
+
+// Class bonus structure for quest templates
+export interface ClassBonuses {
+  KNIGHT?: { xp?: number; gold?: number; gems?: number; honor?: number };
+  MAGE?: { xp?: number; gold?: number; gems?: number; honor?: number };
+  RANGER?: { xp?: number; gold?: number; gems?: number; honor?: number };
+  ROGUE?: { xp?: number; gold?: number; gems?: number; honor?: number };
+  HEALER?: { xp?: number; gold?: number; gems?: number; honor?: number };
+}
+
+// Template-specific types for operations
+export type QuestTemplateWithBonuses = QuestTemplate & {
+  class_bonuses: ClassBonuses | null;
+};
+
+export type CreateQuestTemplateInput = TablesInsert<'quest_templates'> & {
+  class_bonuses?: ClassBonuses;
+};
+
+export type UpdateQuestTemplateInput = TablesUpdate<'quest_templates'> & {
+  class_bonuses?: ClassBonuses;
+};
