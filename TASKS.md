@@ -974,7 +974,8 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - [x] Portainer deployment instructions
 - [x] Run quality gates (build ✅, lint ✅, test ✅ 26/26)
 - [x] Commit and push changes
-- [ ] User testing and verification
+- [x] User testing and verification (Docker networking, migrations, database reset)
+- [x] Add database reset instructions to README
 - [ ] Merge back to feature/supabase-native-migration
 
 **Sub-branch 3: feature/quest-template-implementation**

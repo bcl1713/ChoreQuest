@@ -366,6 +366,29 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 - Check that Supabase services are running: `docker ps` (Option C)
 - Test API: `curl <SUPABASE_URL>/rest/v1/`
 
+**Need to reset the database? (Option C - Self-hosted)**
+
+To completely reset the Supabase database and start fresh:
+
+```bash
+cd supabase-docker
+
+# Stop containers and remove volumes
+docker compose down -v
+
+# Remove persistent data directory (requires sudo)
+sudo rm -rf ./volumes/db/data
+
+# Start fresh
+docker compose up -d
+
+# Restart ChoreQuest to re-run migrations
+cd ..
+docker restart chorequest-app
+```
+
+This will give you a clean database and re-run all migrations on the ChoreQuest app startup.
+
 ## 🎨 Design Philosophy
 
 ### Fantasy RPG Theme
