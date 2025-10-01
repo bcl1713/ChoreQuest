@@ -2,34 +2,35 @@ import { test, expect, Page } from '@playwright/test';
 import { setupUserWithCharacter, clearBrowserState } from './helpers/setup-helpers';
 
 /**
- * Helper to get family code from the families table
+ * Helper to get family code from the dashboard page
+ * The family code is displayed as "Guild: Family Name (CODE)"
  */
 async function getFamilyCode(page: Page): Promise<string> {
-  const code = await page.evaluate(async () => {
-    const { createClient } = await import('@/lib/supabase');
-    const supabase = createClient();
+  // Navigate to dashboard if not already there
+  const currentUrl = page.url();
+  if (!currentUrl.includes('/dashboard')) {
+    await page.goto('/dashboard');
+    await page.waitForURL(/.*dashboard/);
+  }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No authenticated user');
+  // Get the family code from the dashboard - it's displayed as "Guild: Family Name (CODE)"
+  const familyCodeElement = await page.locator('text=/Guild:.*\\([A-Z0-9]{6}\\)/').first();
 
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('family_id')
-      .eq('user_id', user.id)
-      .single();
+  if (!(await familyCodeElement.isVisible())) {
+    throw new Error('Family code not found on dashboard');
+  }
 
-    if (!profile) throw new Error('No profile found');
+  const familyCodeText = await familyCodeElement.textContent();
+  if (!familyCodeText) {
+    throw new Error('Could not read family code text');
+  }
 
-    const { data: family } = await supabase
-      .from('families')
-      .select('invite_code')
-      .eq('id', profile.family_id)
-      .single();
+  const codeMatch = familyCodeText.match(/\(([A-Z0-9]{6})\)/);
+  if (!codeMatch) {
+    throw new Error(`Could not extract family code from: ${familyCodeText}`);
+  }
 
-    return family?.invite_code || '';
-  });
-
-  return code;
+  return codeMatch[1];
 }
 
 test.describe('Quest Template Management', () => {
@@ -69,13 +70,18 @@ test.describe('Quest Template Management', () => {
     // Wait for modal to close and template to appear in list
     await expect(page.getByTestId('create-template-modal')).not.toBeVisible();
 
-    // Verify the new template appears in the list
-    await expect(page.getByText('Custom Cleaning Quest')).toBeVisible();
-    await expect(page.getByText('A custom quest for cleaning tasks')).toBeVisible();
-    await expect(page.getByText('WEEKLY')).toBeVisible();
-    await expect(page.getByText('MEDIUM')).toBeVisible();
-    await expect(page.getByText('100 XP')).toBeVisible();
-    await expect(page.getByText('25 gold')).toBeVisible();
+    // Find the newly created template card
+    const newTemplateCard = page.locator('[data-testid^="template-card-"]').filter({
+      hasText: 'Custom Cleaning Quest',
+    });
+
+    // Verify the new template appears with correct details
+    await expect(newTemplateCard).toBeVisible();
+    await expect(newTemplateCard.getByText('A custom quest for cleaning tasks')).toBeVisible();
+    await expect(newTemplateCard.getByText('WEEKLY')).toBeVisible();
+    await expect(newTemplateCard.getByText('MEDIUM')).toBeVisible();
+    await expect(newTemplateCard.getByText('100 XP')).toBeVisible();
+    await expect(newTemplateCard.getByText('25 gold')).toBeVisible();
   });
 
   test('Guild Master edits an existing quest template', async ({ page }) => {
@@ -122,9 +128,15 @@ test.describe('Quest Template Management', () => {
 
     // Verify modal closes and changes are reflected
     await expect(page.getByTestId('edit-template-modal')).not.toBeVisible();
-    await expect(page.getByText('Modified Template Title')).toBeVisible();
-    await expect(page.getByText('Updated description')).toBeVisible();
-    await expect(page.getByText('150 XP')).toBeVisible();
+
+    // Find the edited template card
+    const editedTemplateCard = page.locator('[data-testid^="template-card-"]').filter({
+      hasText: 'Modified Template Title',
+    });
+
+    await expect(editedTemplateCard).toBeVisible();
+    await expect(editedTemplateCard.getByText('Updated description')).toBeVisible();
+    await expect(editedTemplateCard.getByText('150 XP')).toBeVisible();
   });
 
   test('Guild Master deactivates and reactivates a quest template', async ({ page }) => {
