@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
+import { useRealtime } from '@/lib/realtime-context';
 import QuestDashboard from '@/components/quest-dashboard';
 import QuestCreateModal from '@/components/quest-create-modal';
 import RewardStore from '@/components/reward-store';
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, profile, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
+  const { onQuestTemplateUpdate } = useRealtime();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates'>('quests');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
@@ -70,6 +72,37 @@ export default function Dashboard() {
       loadQuestTemplates();
     }
   }, [user, character, loadQuestTemplates]);
+
+  // Set up realtime quest template updates
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    const unsubscribe = onQuestTemplateUpdate((event) => {
+      setQuestTemplates(currentTemplates => {
+        if (event.action === 'INSERT') {
+          // Add new template
+          const newTemplate = event.record as QuestTemplate;
+          // Only add active templates
+          if (newTemplate.is_active) {
+            return [...currentTemplates, newTemplate];
+          }
+          return currentTemplates;
+        } else if (event.action === 'UPDATE') {
+          // Update existing template
+          const updatedTemplate = event.record as QuestTemplate;
+          return currentTemplates.map(template =>
+            template.id === updatedTemplate.id ? updatedTemplate : template
+          ).filter(template => template.is_active); // Filter out deactivated templates
+        } else if (event.action === 'DELETE') {
+          // Remove template
+          return currentTemplates.filter(template => template.id !== event.old_record?.id);
+        }
+        return currentTemplates;
+      });
+    });
+
+    return unsubscribe;
+  }, [user, profile, onQuestTemplateUpdate]);
 
   // Listen for character stats updates from quest approvals
   useEffect(() => {

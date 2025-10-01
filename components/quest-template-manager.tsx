@@ -3,15 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
-import type { QuestTemplate, CharacterClass } from '@/lib/types/database';
-
-interface ClassBonuses {
-  KNIGHT: { xp_multiplier: number; gold_multiplier: number };
-  MAGE: { xp_multiplier: number; gold_multiplier: number };
-  RANGER: { xp_multiplier: number; gold_multiplier: number };
-  ROGUE: { xp_multiplier: number; gold_multiplier: number };
-  HEALER: { xp_multiplier: number; gold_multiplier: number };
-}
+import type { QuestTemplate } from '@/lib/types/database';
 
 interface TemplateFormData {
   title: string;
@@ -20,16 +12,7 @@ interface TemplateFormData {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   xp_reward: number;
   gold_reward: number;
-  class_bonuses: ClassBonuses;
 }
-
-const defaultClassBonuses: ClassBonuses = {
-  KNIGHT: { xp_multiplier: 1.0, gold_multiplier: 1.0 },
-  MAGE: { xp_multiplier: 1.0, gold_multiplier: 1.0 },
-  RANGER: { xp_multiplier: 1.0, gold_multiplier: 1.0 },
-  ROGUE: { xp_multiplier: 1.0, gold_multiplier: 1.0 },
-  HEALER: { xp_multiplier: 1.0, gold_multiplier: 1.0 },
-};
 
 export function QuestTemplateManager() {
   const { profile } = useAuth();
@@ -50,7 +33,6 @@ export function QuestTemplateManager() {
     difficulty: 'EASY',
     xp_reward: 50,
     gold_reward: 10,
-    class_bonuses: defaultClassBonuses,
   });
 
   const loadTemplates = useCallback(async () => {
@@ -88,7 +70,6 @@ export function QuestTemplateManager() {
       difficulty: 'EASY',
       xp_reward: 50,
       gold_reward: 10,
-      class_bonuses: defaultClassBonuses,
     });
     setIsCreateModalOpen(true);
   };
@@ -102,7 +83,6 @@ export function QuestTemplateManager() {
       difficulty: template.difficulty as 'EASY' | 'MEDIUM' | 'HARD',
       xp_reward: template.xp_reward,
       gold_reward: template.gold_reward,
-      class_bonuses: (template.class_bonuses as unknown as ClassBonuses) || defaultClassBonuses,
     });
     setIsEditModalOpen(true);
   };
@@ -116,6 +96,7 @@ export function QuestTemplateManager() {
         {
           family_id: profile.family_id,
           ...formData,
+          class_bonuses: null, // Class bonuses are character-class intrinsic, not quest-specific
         },
       ])
       .select();
@@ -141,7 +122,7 @@ export function QuestTemplateManager() {
         difficulty: formData.difficulty,
         xp_reward: formData.xp_reward,
         gold_reward: formData.gold_reward,
-        class_bonuses: formData.class_bonuses,
+        class_bonuses: null, // Class bonuses are character-class intrinsic, not quest-specific
       })
       .eq('id', selectedTemplate.id)
       .select();
@@ -186,23 +167,6 @@ export function QuestTemplateManager() {
       setSelectedTemplate(null);
       loadTemplates();
     }
-  };
-
-  const updateClassBonus = (
-    characterClass: CharacterClass,
-    field: 'xp_multiplier' | 'gold_multiplier',
-    value: number
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      class_bonuses: {
-        ...prev.class_bonuses,
-        [characterClass]: {
-          ...prev.class_bonuses[characterClass],
-          [field]: value,
-        },
-      },
-    }));
   };
 
   if (loading) {
@@ -333,7 +297,6 @@ export function QuestTemplateManager() {
               <TemplateForm
                 formData={formData}
                 setFormData={setFormData}
-                updateClassBonus={updateClassBonus}
               />
 
               <div className="flex gap-4 mt-6">
@@ -367,7 +330,6 @@ export function QuestTemplateManager() {
               <TemplateForm
                 formData={formData}
                 setFormData={setFormData}
-                updateClassBonus={updateClassBonus}
               />
 
               {/* Preview Section */}
@@ -458,24 +420,10 @@ export function QuestTemplateManager() {
 function TemplateForm({
   formData,
   setFormData,
-  updateClassBonus,
 }: {
   formData: TemplateFormData;
   setFormData: React.Dispatch<React.SetStateAction<TemplateFormData>>;
-  updateClassBonus: (
-    characterClass: CharacterClass,
-    field: 'xp_multiplier' | 'gold_multiplier',
-    value: number
-  ) => void;
 }) {
-  const characterClasses: CharacterClass[] = [
-    'KNIGHT',
-    'MAGE',
-    'RANGER',
-    'ROGUE',
-    'HEALER',
-  ];
-
   return (
     <div className="space-y-4">
       <div>
@@ -608,73 +556,8 @@ function TemplateForm({
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Class Bonuses</h3>
-        <div className="space-y-3">
-          {characterClasses.map((characterClass) => (
-            <div
-              key={characterClass}
-              className="border rounded p-3 bg-gray-50"
-            >
-              <h4 className="font-medium mb-2 capitalize">
-                {characterClass.toLowerCase()}
-              </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor={`${characterClass}-xp`}
-                    className="block text-xs text-gray-600 mb-1"
-                  >
-                    {characterClass} XP Multiplier
-                  </label>
-                  <input
-                    id={`${characterClass}-xp`}
-                    type="number"
-                    step="0.05"
-                    min="0.5"
-                    max="2.0"
-                    value={formData.class_bonuses[characterClass].xp_multiplier}
-                    onChange={(e) =>
-                      updateClassBonus(
-                        characterClass,
-                        'xp_multiplier',
-                        parseFloat(e.target.value) || 1.0
-                      )
-                    }
-                    className="w-full px-2 py-1 border rounded text-sm focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor={`${characterClass}-gold`}
-                    className="block text-xs text-gray-600 mb-1"
-                  >
-                    {characterClass} Gold Multiplier
-                  </label>
-                  <input
-                    id={`${characterClass}-gold`}
-                    type="number"
-                    step="0.05"
-                    min="0.5"
-                    max="2.0"
-                    value={
-                      formData.class_bonuses[characterClass].gold_multiplier
-                    }
-                    onChange={(e) =>
-                      updateClassBonus(
-                        characterClass,
-                        'gold_multiplier',
-                        parseFloat(e.target.value) || 1.0
-                      )
-                    }
-                    className="w-full px-2 py-1 border rounded text-sm focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Note: Class bonuses are intrinsic to character classes (defined in RewardCalculator)
+          and not customizable per quest template */}
     </div>
   );
 }

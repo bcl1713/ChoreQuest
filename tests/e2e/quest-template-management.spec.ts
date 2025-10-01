@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { setupUserWithCharacter, clearBrowserState } from './helpers/setup-helpers';
+import { setupUserWithCharacter } from './helpers/setup-helpers';
 
 /**
  * Helper to get family code from the dashboard page

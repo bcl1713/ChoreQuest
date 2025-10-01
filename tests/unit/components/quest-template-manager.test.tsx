@@ -16,7 +16,7 @@ jest.mock('@/lib/supabase', () => ({
 
 jest.mock('@/lib/auth-context', () => ({
   useAuth: () => ({
-    userProfile: {
+    profile: {
       id: 'user-1',
       family_id: 'family-1',
       role: 'GUILD_MASTER',
