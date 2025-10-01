@@ -6,7 +6,6 @@ test.describe('Quest Template Realtime Updates', () => {
   let context2: BrowserContext;
   let page1: Page;
   let page2: Page;
-  let familyCode: string;
 
   test.beforeEach(async ({ browser }) => {
     // Create two browser contexts to simulate two users/tabs
@@ -17,7 +16,6 @@ test.describe('Quest Template Realtime Updates', () => {
 
     // Setup family and login as Guild Master in first context
     const setup = await setupFamilyAndLogin(page1);
-    familyCode = setup.familyCode;
 
     // Login as the same Guild Master in second context
     await loginAsGuildMaster(page2, setup.email, setup.password);
