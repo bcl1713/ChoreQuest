@@ -126,12 +126,13 @@ development tasks organized by implementation phases.
 - [x] **Test Output Cleanup** - Suppressed console.error output during tests for
       clean PASS-only results by mocking console.error in test setup
 - [x] **QuestDashboard Dependency Fix** - Applied proper useEffect dependency
-      management to QuestDashboard component, removed ESLint disable workarounds,
-      and implemented same stable pattern as RewardStore fix
+      management to QuestDashboard component, removed ESLint disable
+      workarounds, and implemented same stable pattern as RewardStore fix
 
 ### Recently Completed
 
-- [x] Mobile Optimization - Complete touch-friendly controls and responsive design optimization
+- [x] Mobile Optimization - Complete touch-friendly controls and responsive
+      design optimization
   - [x] Responsive header layout
   - [x] Touch-friendly controls
   - [x] Optimized spacing and sizing
@@ -145,7 +146,9 @@ development tasks organized by implementation phases.
 ## 🚀 Supabase Native Migration - "Infrastructure Modernization"
 
 ### COMPLETED (2025-09-27)
+
 **Realtime System Issues Resolved**
+
 - [x] Fixed "Maximum update depth exceeded" error in RealtimeProvider
 - [x] Resolved infinite re-render loop caused by improper useEffect dependencies
 - [x] Implemented proper channel management using useRef pattern
@@ -156,30 +159,42 @@ development tasks organized by implementation phases.
 
 ### Overview
 
-Complete migration from custom authentication/database/realtime system to native Supabase stack. This foundational change will eliminate complex custom implementations, resolve ongoing realtime issues, and provide a more maintainable, scalable platform for future development.
+Complete migration from custom authentication/database/realtime system to native
+Supabase stack. This foundational change will eliminate complex custom
+implementations, resolve ongoing realtime issues, and provide a more
+maintainable, scalable platform for future development.
 
 ### Migration Rationale
 
 **Current System Issues:**
-- Complex custom SSE realtime implementation with authentication and connection management issues
+
+- Complex custom SSE realtime implementation with authentication and connection
+  management issues
 - 8/8 realtime E2E tests failing due to SSE connection establishment problems
 - Manual JWT authentication system requiring custom middleware
 - Custom database connection and transaction management
 - Difficult to test and maintain custom realtime infrastructure
 
 **Supabase Benefits:**
-- **Proven Realtime**: Battle-tested websocket infrastructure used by thousands of apps
+
+- **Proven Realtime**: Battle-tested websocket infrastructure used by thousands
+  of apps
 - **Integrated Auth**: Built-in JWT authentication with session management
-- **Database Triggers**: Automatic realtime updates without manual event emission
-- **Better Testing**: Superior tooling for mocking and testing realtime connections
-- **Simplified Architecture**: Eliminates ~500+ lines of custom infrastructure code
+- **Database Triggers**: Automatic realtime updates without manual event
+  emission
+- **Better Testing**: Superior tooling for mocking and testing realtime
+  connections
+- **Simplified Architecture**: Eliminates ~500+ lines of custom infrastructure
+  code
 - **Industry Standard**: Well-maintained platform with excellent documentation
 
 ### Phase 1: Environment & Schema Setup (2-3 days)
 
 #### ✅ Setup & Migration Planning (COMPLETED 2025-09-26)
+
 - [x] **Install Supabase CLI and initialize local project**
-  - [x] Install Supabase CLI as project dependency (`npm install --save-dev supabase`)
+  - [x] Install Supabase CLI as project dependency
+        (`npm install --save-dev supabase`)
   - [x] Run `supabase init` in project root
   - [x] Configure local Supabase development environment
   - [ ] Update Docker compose to include Supabase services
@@ -191,41 +206,57 @@ Complete migration from custom authentication/database/realtime system to native
   - [x] Plan foreign key relationships and constraints migration
 
 - [x] **Data Export & Migration Strategy**
-  - [x] Create data export scripts for existing database (`scripts/export-database.js`)
-  - [x] Design data transformation scripts for Supabase import format (`scripts/import-to-supabase.js`)
-  - [x] Plan user re-authentication strategy (password hash migration complexity)
+  - [x] Create data export scripts for existing database
+        (`scripts/export-database.js`)
+  - [x] Design data transformation scripts for Supabase import format
+        (`scripts/import-to-supabase.js`)
+  - [x] Plan user re-authentication strategy (password hash migration
+        complexity)
   - [ ] Create rollback scripts for emergency reversion
 
 ### Phase 2: Core Infrastructure Migration (3-4 days) - ✅ **COMPLETED 2025-09-27**
 
 #### ✅ Authentication System Replacement (COMPLETED 2025-09-27)
-- [x] **Implement Supabase Auth** - Complete auth context with login, register, createFamily
+
+- [x] **Implement Supabase Auth** - Complete auth context with login, register,
+      createFamily
 - [x] **Remove Custom JWT System** - ✅ **COMPLETED 2025-09-27**
-  - [x] Remove JWT auth API routes (`/api/auth/login`, `/api/auth/register`, `/api/auth/create-family`)
+  - [x] Remove JWT auth API routes (`/api/auth/login`, `/api/auth/register`,
+        `/api/auth/create-family`)
   - [x] Remove profile API route (replaced by auth context)
   - [x] Components migrated from JWT tokens to Supabase session
   - [x] Remove bcryptjs password hashing (handled by Supabase)
   - [x] Remove custom session management logic
 
 #### ✅ Database Layer Migration (COMPLETED 2025-09-27)
+
 - [x] **Replace Prisma with Supabase Client** - ✅ **COMPLETED 2025-09-27**
-  - [x] Create Supabase schema migrations (`001_initial_schema.sql`, `002_row_level_security.sql`)
-  - [x] Apply database migrations with RLS policies for family-scoped data access
+  - [x] Create Supabase schema migrations (`001_initial_schema.sql`,
+        `002_row_level_security.sql`)
+  - [x] Apply database migrations with RLS policies for family-scoped data
+        access
   - [x] Set up local Supabase development environment
-  - [x] Remove all Prisma-based API routes (19 files eliminated, 1,765 lines of code removed)
+  - [x] Remove all Prisma-based API routes (19 files eliminated, 1,765 lines of
+        code removed)
   - [x] Replace all components with direct Supabase client usage
   - [x] Update error handling for Supabase patterns
 
 - [x] **Data Access Pattern Updates** - ✅ **COMPLETED 2025-09-27**
-  - [x] Update `components/character/CharacterCreation.tsx` to use Supabase client
-  - [x] Update `components/quest-dashboard.tsx` - complete Supabase migration with quest management
-  - [x] Update `components/reward-store.tsx` - complete Supabase migration with reward operations
+  - [x] Update `components/character/CharacterCreation.tsx` to use Supabase
+        client
+  - [x] Update `components/quest-dashboard.tsx` - complete Supabase migration
+        with quest management
+  - [x] Update `components/reward-store.tsx` - complete Supabase migration with
+        reward operations
   - [x] Update `lib/character-context.tsx` to use Supabase client directly
-  - [x] Remove `lib/quest-service.ts` and `lib/user-service.ts` (replaced by direct Supabase calls)
+  - [x] Remove `lib/quest-service.ts` and `lib/user-service.ts` (replaced by
+        direct Supabase calls)
   - [x] Remove custom database connection and transaction management
 
 #### ✅ Realtime System Migration (COMPLETED 2025-09-27)
-- [x] **Replace Custom SSE with Supabase Realtime** - ✅ **COMPLETED 2025-09-27**
+
+- [x] **Replace Custom SSE with Supabase Realtime** - ✅ **COMPLETED
+      2025-09-27**
   - [x] Verified no existing SSE endpoint existed
   - [x] Created comprehensive `lib/realtime-context.tsx` with Supabase Realtime
   - [x] Implemented family-scoped realtime subscriptions for all data types
@@ -240,16 +271,21 @@ Complete migration from custom authentication/database/realtime system to native
 ### Phase 3: Frontend Integration (2-3 days) - ✅ **COMPLETED 2025-09-27**
 
 #### ✅ Authentication UI Migration (COMPLETED 2025-09-27)
+
 - [x] **Update Authentication Forms** - Auth forms now use Supabase auth context
-  - [x] Auth context (`lib/auth-context.tsx`) provides login, register, createFamily functions
+  - [x] Auth context (`lib/auth-context.tsx`) provides login, register,
+        createFamily functions
   - [x] Update login/register workflows for Supabase patterns
   - [x] Implement Supabase session management with automatic token refresh
   - [x] Components use auth context instead of custom JWT middleware
 
 #### ✅ Component Data Migration (COMPLETED 2025-09-27)
+
 - [x] **Update React Components for Supabase** - All major components migrated
-  - [x] Update `components/quest-dashboard.tsx` - complete Supabase integration with quest management
-  - [x] Update `components/reward-store.tsx` - complete Supabase integration with reward operations
+  - [x] Update `components/quest-dashboard.tsx` - complete Supabase integration
+        with quest management
+  - [x] Update `components/reward-store.tsx` - complete Supabase integration
+        with reward operations
   - [x] Replace all API calls with direct Supabase client queries
   - [x] Implement family-scoped data access with RLS policies
   - [x] Update `lib/character-context.tsx` for direct Supabase character loading
@@ -262,43 +298,68 @@ Complete migration from custom authentication/database/realtime system to native
 ### Phase 4: Testing & Quality Assurance (2-3 days)
 
 #### ✅ Unit Test Migration (COMPLETED 2025-09-27)
+
 - [x] **Unit Test Updates** - ✅ **COMPLETED 2025-09-27**
-  - [x] Remove obsolete API route tests (Prisma-based routes no longer exist) - Deleted 4 test files
-  - [x] Update component tests for new data access methods - Fixed quest-interaction-buttons.test.tsx with Supabase mocks
-  - [x] Update component tests to include required context providers - Added RealtimeProvider and AuthProvider mocks
+  - [x] Remove obsolete API route tests (Prisma-based routes no longer exist) -
+        Deleted 4 test files
+  - [x] Update component tests for new data access methods - Fixed
+        quest-interaction-buttons.test.tsx with Supabase mocks
+  - [x] Update component tests to include required context providers - Added
+        RealtimeProvider and AuthProvider mocks
   - [x] Remove obsolete database seed test - Deleted database-seed.test.ts
-  - [x] Clean up debug logs in components - Removed console.log statements from QuestDashboard
-  - [x] Ensure all unit tests pass with new architecture - All 26 unit tests passing
+  - [x] Clean up debug logs in components - Removed console.log statements from
+        QuestDashboard
+  - [x] Ensure all unit tests pass with new architecture - All 26 unit tests
+        passing
 
 #### ✅ E2E Test Suite Migration (COMPLETED 2025-09-27)
+
 - [x] **Update E2E Tests for Supabase** - ✅ **COMPLETED 2025-09-27**
   - [x] Update authentication flow tests for Supabase Auth
-  - [x] Identified and resolved user profile creation issue in createFamily function
+  - [x] Identified and resolved user profile creation issue in createFamily
+        function
   - [x] Added comprehensive test debugging and error handling
   - [x] Updated setup-helpers.ts for Supabase authentication patterns
   - [x] Added test IDs for better E2E test reliability
   - [x] Fixed foreign key constraint validation in character creation
-  - [x] **RESOLVED**: User profile creation and navigation issues during family registration
-    - **Root Cause #1**: RLS policies on families table preventing INSERT operations despite valid authentication
-    - **Issue #1**: `auth.uid()` function evaluation conflicts in families table context vs user_profiles table
-    - **Solution #1**: Temporarily disabled RLS on families table (migration 010) for development
-    - **Root Cause #2**: Next.js router navigation conflicts during rapid auth state changes in createFamily flow
-    - **Issue #2**: `router.push()` calls not working due to auth context realtime subscription interference
-    - **Solution #2**: Replaced `router.push()` with `window.location.href` for reliable navigation
-    - **Status**: ✅ Complete end-to-end family creation and navigation now working perfectly
-    - **Result**: Family creation → dashboard → character creation pipeline functioning correctly with all E2E tests passing
+  - [x] **RESOLVED**: User profile creation and navigation issues during family
+        registration
+    - **Root Cause #1**: RLS policies on families table preventing INSERT
+      operations despite valid authentication
+    - **Issue #1**: `auth.uid()` function evaluation conflicts in families table
+      context vs user_profiles table
+    - **Solution #1**: Temporarily disabled RLS on families table
+      (migration 010) for development
+    - **Root Cause #2**: Next.js router navigation conflicts during rapid auth
+      state changes in createFamily flow
+    - **Issue #2**: `router.push()` calls not working due to auth context
+      realtime subscription interference
+    - **Solution #2**: Replaced `router.push()` with `window.location.href` for
+      reliable navigation
+    - **Status**: ✅ Complete end-to-end family creation and navigation now
+      working perfectly
+    - **Result**: Family creation → dashboard → character creation pipeline
+      functioning correctly with all E2E tests passing
 
 #### ✅ Critical Bug Fix (COMPLETED 2025-09-27)
+
 - [x] **RealtimeProvider Infinite Loop Fix** - ✅ **COMPLETED 2025-09-27**
-  - [x] **Root Cause**: useEffect dependency array included `channel` state, causing infinite re-render loop
-  - [x] **Symptom**: "Maximum update depth exceeded" error preventing app from loading
-  - [x] **Solution**: Replaced channel state dependency with `useRef` pattern for proper cleanup
-  - [x] **Result**: Application now loads correctly, authentication/family creation functional
+  - [x] **Root Cause**: useEffect dependency array included `channel` state,
+        causing infinite re-render loop
+  - [x] **Symptom**: "Maximum update depth exceeded" error preventing app from
+        loading
+  - [x] **Solution**: Replaced channel state dependency with `useRef` pattern
+        for proper cleanup
+  - [x] **Result**: Application now loads correctly, authentication/family
+        creation functional
   - [x] **Impact**: Resolved critical blocker preventing all user interactions
-  - [x] **Testing**: Unit tests pass (26/26), home page loads with proper UI elements
-  - [x] **Code Quality**: Removed need for ESLint disable rules, proper React patterns implemented
+  - [x] **Testing**: Unit tests pass (26/26), home page loads with proper UI
+        elements
+  - [x] **Code Quality**: Removed need for ESLint disable rules, proper React
+        patterns implemented
 
 #### Security & Performance Validation
+
 - [ ] **Row Level Security Testing**
   - [ ] Verify RLS policies prevent cross-family data access
   - [ ] Test edge cases for family data isolation
@@ -312,6 +373,7 @@ Complete migration from custom authentication/database/realtime system to native
 ### Phase 5: Deployment & Migration (1-2 days)
 
 #### Production Migration
+
 - [ ] **Supabase Production Setup**
   - [ ] Create Supabase production project
   - [ ] Configure production environment variables
@@ -324,6 +386,7 @@ Complete migration from custom authentication/database/realtime system to native
   - [ ] Test user authentication flows in production
 
 #### Deployment & Monitoring
+
 - [ ] **Application Deployment**
   - [ ] Deploy new Supabase-native application version
   - [ ] Update Docker configuration for Supabase integration
@@ -333,24 +396,29 @@ Complete migration from custom authentication/database/realtime system to native
 ### Expected Benefits
 
 **Code Reduction:** Eliminate ~500+ lines of custom infrastructure code
-**Reliability:** Battle-tested Supabase infrastructure instead of custom implementations
-**Testing:** Superior testing tools and patterns for realtime functionality
-**Maintenance:** Industry-standard platform with comprehensive documentation
-**Development Speed:** Faster feature development with integrated platform
-**Scalability:** Built-in scalability and performance optimization
+**Reliability:** Battle-tested Supabase infrastructure instead of custom
+implementations **Testing:** Superior testing tools and patterns for realtime
+functionality **Maintenance:** Industry-standard platform with comprehensive
+documentation **Development Speed:** Faster feature development with integrated
+platform **Scalability:** Built-in scalability and performance optimization
 
 ### Critical Risk Mitigation
 
-**User Migration:** Users may need to re-register due to password hash differences
+**User Migration:** Users may need to re-register due to password hash
+differences
+
 - Mitigation: Clear communication and streamlined re-registration process
 
 **Data Integrity:** Comprehensive validation required for data migration
+
 - Mitigation: Extensive testing and rollback procedures
 
 **Learning Curve:** Team needs Supabase best practices knowledge
+
 - Mitigation: Documentation review and gradual implementation approach
 
 **Rollback Plan:** Keep current implementation available for emergency reversion
+
 - Mitigation: Feature branch preservation and rollback procedures
 
 ### Quality Gates
@@ -360,10 +428,12 @@ Complete migration from custom authentication/database/realtime system to native
 - ✅ **Unit Tests**: All tests pass (npm run test)
 - ✅ **E2E Tests**: All 30 tests pass including realtime functionality
 - ✅ **RLS Security**: Family data isolation verified
-- ✅ **Performance**: Realtime updates faster and more reliable than current system
+- ✅ **Performance**: Realtime updates faster and more reliable than current
+  system
 - ✅ **Authentication**: All user flows functional with Supabase Auth
 
-**Estimated Timeline:** 10-15 days for complete migration vs ongoing maintenance of complex custom system
+**Estimated Timeline:** 10-15 days for complete migration vs ongoing maintenance
+of complex custom system
 
 ---
 
@@ -371,97 +441,145 @@ Complete migration from custom authentication/database/realtime system to native
 
 ### Overview
 
-ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a fully customizable family management platform. This release introduces quest template creation, reward management, multi-Guild Master support, real-time updates, and enhanced character creation with class bonuses.
+ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a
+fully customizable family management platform. This release introduces quest
+template creation, reward management, multi-Guild Master support, real-time
+updates, and enhanced character creation with class bonuses.
 
 ### Core Features for 0.2.0
 
 #### 🔧 Multi-Guild Master System
-- [ ] **Multi-Guild Master Role Support** - Allow couples to co-manage families with equal permissions
-  - [ ] **Update API role checks** - Modify 6 existing API endpoints to support multiple Guild Masters per family
-  - [ ] **Create user promotion endpoint** - `POST /api/users/[id]/promote` - Promote family member to Guild Master
-  - [ ] **Create user demotion endpoint** - `POST /api/users/[id]/demote` - Demote Guild Master to Hero (with last-GM safeguards)
-  - [ ] **Update quest-templates API** - Support multiple Guild Masters in quest template creation
-  - [ ] **Update quest-instances APIs** - Support multiple Guild Masters in quest management (6 endpoints)
-  - [ ] **Create Guild Master management UI** - Interface for promoting/demoting family members
-  - [ ] **Add safeguard logic** - Prevent demoting the last Guild Master in a family
+
+- [ ] **Multi-Guild Master Role Support** - Allow couples to co-manage families
+      with equal permissions
+  - [ ] **Update API role checks** - Modify 6 existing API endpoints to support
+        multiple Guild Masters per family
+  - [ ] **Create user promotion endpoint** - `POST /api/users/[id]/promote` -
+        Promote family member to Guild Master
+  - [ ] **Create user demotion endpoint** - `POST /api/users/[id]/demote` -
+        Demote Guild Master to Hero (with last-GM safeguards)
+  - [ ] **Update quest-templates API** - Support multiple Guild Masters in quest
+        template creation
+  - [ ] **Update quest-instances APIs** - Support multiple Guild Masters in
+        quest management (6 endpoints)
+  - [ ] **Create Guild Master management UI** - Interface for promoting/demoting
+        family members
+  - [ ] **Add safeguard logic** - Prevent demoting the last Guild Master in a
+        family
 
 #### 📝 Quest Template Management System
-- [ ] **Quest Template Management UI** - Complete CRUD interface for Guild Masters
-  - [ ] **Create QuestTemplateManager component** - Full template creation and editing interface
-  - [ ] **Add template editing modal** - Edit existing quest templates with all fields
+
+- [ ] **Quest Template Management UI** - Complete CRUD interface for Guild
+      Masters
+  - [ ] **Create QuestTemplateManager component** - Full template creation and
+        editing interface
+  - [ ] **Add template editing modal** - Edit existing quest templates with all
+        fields
   - [ ] **Add template deletion** - Safe deletion with usage confirmation
   - [ ] **Add template activation/deactivation** - Toggle template availability
-  - [ ] **Add class bonus configuration** - Interface for setting class-specific bonuses
+  - [ ] **Add class bonus configuration** - Interface for setting class-specific
+        bonuses
   - [ ] **Add template preview** - Show how template will appear to users
-  - [ ] **Integrate with admin dashboard** - Add template management to Guild Master interface
+  - [ ] **Integrate with admin dashboard** - Add template management to Guild
+        Master interface
 
 #### 🎁 Reward Management System
+
 - [ ] **Reward Creation & Editing APIs** - Complete CRUD backend for rewards
   - [ ] **Add POST /api/rewards** - Create new family rewards
   - [ ] **Create /api/rewards/[id]** - PUT/DELETE endpoints for reward editing
-  - [ ] **Add reward validation schemas** - Zod schemas for reward data validation
+  - [ ] **Add reward validation schemas** - Zod schemas for reward data
+        validation
   - [ ] **Add reward ownership checks** - Ensure family-scoped reward access
 - [ ] **Reward Management UI** - Complete CRUD interface for Guild Masters
-  - [ ] **Create RewardManager component** - Full reward creation and editing interface
+  - [ ] **Create RewardManager component** - Full reward creation and editing
+        interface
   - [ ] **Add reward editing modal** - Edit existing rewards with all fields
   - [ ] **Add reward deletion** - Safe deletion with redemption history checks
   - [ ] **Add reward activation/deactivation** - Toggle reward availability
   - [ ] **Add reward cost management** - Dynamic pricing controls
-  - [ ] **Integrate with admin dashboard** - Add reward management to Guild Master interface
+  - [ ] **Integrate with admin dashboard** - Add reward management to Guild
+        Master interface
 
 #### ⚡ Real-time Updates System
+
 - [ ] **Server-Sent Events Implementation** - Live database synchronization
-  - [ ] **Create /api/events SSE endpoint** - Server-sent events for real-time updates
-  - [ ] **Add database change triggers** - Detect changes to quests, rewards, character stats
-  - [ ] **Create realtime context** - `lib/realtime-context.tsx` for React state management
+  - [ ] **Create /api/events SSE endpoint** - Server-sent events for real-time
+        updates
+  - [ ] **Add database change triggers** - Detect changes to quests, rewards,
+        character stats
+  - [ ] **Create realtime context** - `lib/realtime-context.tsx` for React state
+        management
   - [ ] **Update QuestDashboard for realtime** - Live quest status updates
   - [ ] **Update RewardStore for realtime** - Live reward redemption updates
   - [ ] **Update character stats for realtime** - Live XP/gold/level updates
-  - [ ] **Add connection management** - Handle SSE disconnections and reconnections
+  - [ ] **Add connection management** - Handle SSE disconnections and
+        reconnections
   - [ ] **Add event filtering** - Family-scoped event delivery only
 
 #### 🎭 Enhanced Character Creation
-- [ ] **Class Bonus Display System** - Show class advantages during character selection
-  - [ ] **Update CharacterCreation component** - Add class bonus information display
-  - [ ] **Create class bonus calculation** - Calculate bonuses from quest templates
+
+- [ ] **Class Bonus Display System** - Show class advantages during character
+      selection
+  - [ ] **Update CharacterCreation component** - Add class bonus information
+        display
+  - [ ] **Create class bonus calculation** - Calculate bonuses from quest
+        templates
   - [ ] **Add visual bonus indicators** - Show XP/gold bonuses for each class
   - [ ] **Add quest type examples** - Show which quest types benefit each class
-  - [ ] **Add class recommendation engine** - Suggest classes based on family quest patterns
-  - [ ] **Add bonus explanation tooltips** - Detailed explanations of class advantages
+  - [ ] **Add class recommendation engine** - Suggest classes based on family
+        quest patterns
+  - [ ] **Add bonus explanation tooltips** - Detailed explanations of class
+        advantages
 
 #### 🏠 Extended Demo Families
-- [ ] **Second Demo Family Creation** - "The Johnson Family" with different dynamics
-  - [ ] **Create Johnson family seed data** - Alternative quest templates and rewards
-  - [ ] **Add multi-Guild Master examples** - Show co-parenting scenarios in demo data
-  - [ ] **Create age-appropriate quest variations** - Different quest complexity levels
+
+- [ ] **Second Demo Family Creation** - "The Johnson Family" with different
+      dynamics
+  - [ ] **Create Johnson family seed data** - Alternative quest templates and
+        rewards
+  - [ ] **Add multi-Guild Master examples** - Show co-parenting scenarios in
+        demo data
+  - [ ] **Create age-appropriate quest variations** - Different quest complexity
+        levels
   - [ ] **Add diverse reward types** - Various reward categories and costs
-  - [ ] **Add family personality differences** - Different management styles in demos
-  - [ ] **Document family differences** - Clear differentiation between demo families
+  - [ ] **Add family personality differences** - Different management styles in
+        demos
+  - [ ] **Document family differences** - Clear differentiation between demo
+        families
 
 #### 🛡️ Admin Management Interface
-- [ ] **Consolidated Admin Dashboard** - Central management for all Guild Master functions
+
+- [ ] **Consolidated Admin Dashboard** - Central management for all Guild Master
+      functions
   - [ ] **Create /app/admin page** - Dedicated admin interface
-  - [ ] **Add quest template management section** - Template CRUD in admin dashboard
+  - [ ] **Add quest template management section** - Template CRUD in admin
+        dashboard
   - [ ] **Add reward management section** - Reward CRUD in admin dashboard
   - [ ] **Add Guild Master management section** - User role promotion/demotion
-  - [ ] **Add family statistics panel** - Overview of family engagement and progress
-  - [ ] **Add real-time activity monitor** - Live feed of family member activities
+  - [ ] **Add family statistics panel** - Overview of family engagement and
+        progress
+  - [ ] **Add real-time activity monitor** - Live feed of family member
+        activities
   - [ ] **Add admin navigation** - Easy access to all management functions
 
 ### Implementation Timeline
 
 #### Week 1: Core Management Systems
+
 1. Multi-Guild Master API updates and role system
 2. Quest Template Management UI and integration
 3. Reward Management APIs and UI
 4. Admin dashboard foundation
 
 #### Week 2: Real-time Features
+
 5. Server-Sent Events implementation
 6. Real-time context and component updates
 7. Live synchronization testing and optimization
 
 #### Week 3: Enhanced Experience
+
 8. Character creation class bonus display
 9. Extended demo family with multi-GM examples
 10. Final testing, documentation, and release preparation
@@ -710,27 +828,49 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 
 #### ✅ Docker Production Deployment (2025-09-25) - COMPLETED
 
-- [x] **Feature Branch Setup** - Created `feature/docker-production-deployment` branch following development workflow
-- [x] **Task Planning** - Added comprehensive Docker deployment subtasks to TASKS.md
-- [x] **PostgreSQL Migration** - Updated Prisma schema from SQLite to PostgreSQL, successfully created migrations and tested database connectivity
-- [x] **Production Dockerfile** - Created multi-stage production build with automatic database initialization, health checks, and security best practices
-- [x] **Container Entrypoint** - Created entrypoint.sh for automatic database migration, seeding, and startup orchestration
-- [x] **Production Compose File** - Created zero-interaction docker-compose.prod.yml for user deployment via Portainer with persistent volumes
-- [x] **Health Check API** - Added `/api/health` endpoint for container health monitoring with database connectivity testing
-- [x] **Environment Configuration** - Set up production environment variables with secure defaults and configuration guidance
-- [x] **Next.js Configuration** - Updated Next.js config for standalone output mode with security headers and production optimizations
-- [x] **Documentation Update** - Updated README.md with comprehensive Docker deployment instructions for Portainer and command-line deployment
-- [x] **Quality Validation** - All quality gates pass: build (✅), lint (✅), test (✅ 60/60), health check (✅), PostgreSQL integration (✅)
-- [x] **Development Environment Fix** - Fixed obsolete version attribute in docker-compose.yml to eliminate warnings
-- [x] **PR Creation** - Created PR #23 with comprehensive deployment documentation, merged successfully to main
-- [x] **Release Preparation** - Created GitHub release v0.1.0 with zero-interaction Docker deployment as primary installation method
+- [x] **Feature Branch Setup** - Created `feature/docker-production-deployment`
+      branch following development workflow
+- [x] **Task Planning** - Added comprehensive Docker deployment subtasks to
+      TASKS.md
+- [x] **PostgreSQL Migration** - Updated Prisma schema from SQLite to
+      PostgreSQL, successfully created migrations and tested database
+      connectivity
+- [x] **Production Dockerfile** - Created multi-stage production build with
+      automatic database initialization, health checks, and security best
+      practices
+- [x] **Container Entrypoint** - Created entrypoint.sh for automatic database
+      migration, seeding, and startup orchestration
+- [x] **Production Compose File** - Created zero-interaction
+      docker-compose.prod.yml for user deployment via Portainer with persistent
+      volumes
+- [x] **Health Check API** - Added `/api/health` endpoint for container health
+      monitoring with database connectivity testing
+- [x] **Environment Configuration** - Set up production environment variables
+      with secure defaults and configuration guidance
+- [x] **Next.js Configuration** - Updated Next.js config for standalone output
+      mode with security headers and production optimizations
+- [x] **Documentation Update** - Updated README.md with comprehensive Docker
+      deployment instructions for Portainer and command-line deployment
+- [x] **Quality Validation** - All quality gates pass: build (✅), lint (✅),
+      test (✅ 60/60), health check (✅), PostgreSQL integration (✅)
+- [x] **Development Environment Fix** - Fixed obsolete version attribute in
+      docker-compose.yml to eliminate warnings
+- [x] **PR Creation** - Created PR #23 with comprehensive deployment
+      documentation, merged successfully to main
+- [x] **Release Preparation** - Created GitHub release v0.1.0 with
+      zero-interaction Docker deployment as primary installation method
 
 #### 🔄 Current Infrastructure Tasks
 
-- [x] **Docker Entrypoint Syntax Error Fix** - Fixed shell syntax error preventing container startup (line 63 bash-specific syntax in /bin/sh script)
-  - [x] **Identify syntax error** - Found bash-specific here-string syntax (`<<<`) causing "unexpected redirection" error
-  - [x] **Fix POSIX compatibility** - Replace with `echo` pipe for /bin/sh compatibility
-  - [x] **Test container startup** - Verify fix resolves production deployment issue
+- [x] **Docker Entrypoint Syntax Error Fix** - Fixed shell syntax error
+      preventing container startup (line 63 bash-specific syntax in /bin/sh
+      script)
+  - [x] **Identify syntax error** - Found bash-specific here-string syntax
+        (`<<<`) causing "unexpected redirection" error
+  - [x] **Fix POSIX compatibility** - Replace with `echo` pipe for /bin/sh
+        compatibility
+  - [x] **Test container startup** - Verify fix resolves production deployment
+        issue
   - [x] **Update documentation** - Record fix in development session history
 
 #### 🔄 Future Infrastructure Tasks
@@ -802,45 +942,65 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 ## 🧪 E2E Test Suite Fixes
 
 ### ✅ Recently Completed (2025-09-27)
-- [x] **Environment Setup** - Supabase local environment running, development server started
+
+- [x] **Environment Setup** - Supabase local environment running, development
+      server started
 
 ### ✅ E2E Test Fixing Progress (2025-09-27)
 
 - [x] **Run initial test scan** - Assessed all current test failures
-- [x] **Fix character-creation.spec.ts** - Fixed 3 tests for character creation flow (3/3 passing)
-- [x] **Fix quest-system.spec.ts** - Fixed 4 tests for quest management (4/4 passing)
-- [x] **Fix reward-store.spec.ts** - Fixed 4 tests for reward store functionality (4/4 passing)
-- [x] **Identify core issue: Field name mismatch** - Found Prisma types (camelCase) vs Supabase data (snake_case) mismatch
-- [x] **Add quest action button data-testids** - Added data-testid attributes for reliable E2E testing
-- [x] **Fix quest pickup functionality** - Fixed field name references (assigned_to_id vs assignedToId)
-- [x] **quest-completion-rewards.spec.ts partially fixed** - Quest pickup and status transitions working, approval workflow needs type migration
+- [x] **Fix character-creation.spec.ts** - Fixed 3 tests for character creation
+      flow (3/3 passing)
+- [x] **Fix quest-system.spec.ts** - Fixed 4 tests for quest management (4/4
+      passing)
+- [x] **Fix reward-store.spec.ts** - Fixed 4 tests for reward store
+      functionality (4/4 passing)
+- [x] **Identify core issue: Field name mismatch** - Found Prisma types
+      (camelCase) vs Supabase data (snake_case) mismatch
+- [x] **Add quest action button data-testids** - Added data-testid attributes
+      for reliable E2E testing
+- [x] **Fix quest pickup functionality** - Fixed field name references
+      (assigned_to_id vs assignedToId)
+- [x] **quest-completion-rewards.spec.ts partially fixed** - Quest pickup and
+      status transitions working, approval workflow needs type migration
 
 ### 🔄 Current E2E Test Status
 
 - **11/22 tests passing** (50% success rate)
-- **Main blocker identified**: Hybrid Prisma/Supabase type system causing runtime mismatches
+- **Main blocker identified**: Hybrid Prisma/Supabase type system causing
+  runtime mismatches
 - **Solution needed**: Complete migration to native Supabase types
 
 ### 🎯 **NEXT PRIORITY: Complete Supabase Type Migration**
 
-**Root Cause**: Currently using Prisma types (camelCase fields) while fetching Supabase data (snake_case fields), causing UI component filtering and conditional logic failures.
+**Root Cause**: Currently using Prisma types (camelCase fields) while fetching
+Supabase data (snake_case fields), causing UI component filtering and
+conditional logic failures.
 
-**Impact**: Quest approval buttons not appearing, realtime subscriptions not working properly, data filtering logic broken.
+**Impact**: Quest approval buttons not appearing, realtime subscriptions not
+working properly, data filtering logic broken.
 
-**Solution**: Migrate all components from `@/lib/generated/prisma` types to native Supabase types from `@/lib/types/database`.
+**Solution**: Migrate all components from `@/lib/generated/prisma` types to
+native Supabase types from `@/lib/types/database`.
 
 ---
 
 ## 🔄 **Supabase Type Migration Tasks**
 
 ### Phase 1: Core Type Infrastructure (1-2 hours)
-- [x] **Create comprehensive Supabase types** - `/lib/types/database.ts` with all table and enum definitions
-- [x] **Update component imports** - Replace all Prisma type imports with Supabase types
-- [x] **Fix interface mismatches** - Update User → UserProfile, handle field name differences
-- [x] **Update auth context types** - Ensure auth context uses proper Supabase types
+
+- [x] **Create comprehensive Supabase types** - `/lib/types/database.ts` with
+      all table and enum definitions
+- [x] **Update component imports** - Replace all Prisma type imports with
+      Supabase types
+- [x] **Fix interface mismatches** - Update User → UserProfile, handle field
+      name differences
+- [x] **Update auth context types** - Ensure auth context uses proper Supabase
+      types
 - [x] **Update character context types** - Migrate character-related type usage
 
 ### Phase 2: Component Migration (2-3 hours)
+
 - [x] **quest-dashboard.tsx** - Complete migration from Prisma to Supabase types
 - [x] **reward-store.tsx** - Update reward and redemption types
 - [x] **character-creation.tsx** - Update character class and related types
@@ -848,22 +1008,27 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] **Update all form components** - Ensure form validation uses correct types
 
 ### Phase 3: Context and State Migration (1-2 hours)
+
 - [x] **auth-context.tsx** - Update user profile and family types
 - [x] **character-context.tsx** - Update character state management types
 - [x] **realtime-context.tsx** - Update event handling for proper field names
 
 ### Phase 4: Test Updates (1 hour)
+
 - [x] **Update unit tests** - Fix type-related test failures
 - [x] **Update E2E test helpers** - Ensure test setup uses correct types
 - [x] **Remove debug files** - Clean up debug-quest-pickup.spec.ts
 
 ### Phase 5: Validation and Cleanup (1 hour)
+
 - [x] **Run full test suite** - Ensure all unit and E2E tests pass
 - [x] **Remove Prisma type dependencies** - Clean up unused imports
 - [x] **Update documentation** - Document the type system migration
-- [x] **Verify quest approval workflow** - Ensure all quest state transitions work correctly
+- [x] **Verify quest approval workflow** - Ensure all quest state transitions
+      work correctly
 
 ### Expected Outcomes
+
 - ✅ All 22 E2E tests passing
 - ✅ Quest approval buttons appearing correctly
 - ✅ Realtime subscriptions working properly
@@ -871,11 +1036,17 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - ✅ Better developer experience with accurate autocomplete
 
 ### ✅ **COMPLETED (2025-09-28)**
+
 **Field Name Mismatch Resolution & Quest Reward System Fixed**
-- ✅ **Fixed camelCase/snake_case field mismatches** - Updated CalculatedRewards interface from `honorPoints` to `honor_points`
-- ✅ **Integrated RewardCalculator into quest approval workflow** - Quest approval now properly calculates class bonuses (KNIGHT 1.05x XP, etc.)
-- ✅ **Fixed reward calculation precision** - Changed to Math.floor() to match PostgreSQL truncation behavior
-- ✅ **Updated unit tests** - All 26 unit tests passing with proper reward calculations
+
+- ✅ **Fixed camelCase/snake_case field mismatches** - Updated CalculatedRewards
+  interface from `honorPoints` to `honor_points`
+- ✅ **Integrated RewardCalculator into quest approval workflow** - Quest
+  approval now properly calculates class bonuses (KNIGHT 1.05x XP, etc.)
+- ✅ **Fixed reward calculation precision** - Changed to Math.floor() to match
+  PostgreSQL truncation behavior
+- ✅ **Updated unit tests** - All 26 unit tests passing with proper reward
+  calculations
 - ✅ **Files Updated**:
   - `types/QuestRewards.ts` - Fixed field names
   - `lib/reward-calculator.ts` - Integrated proper calculations
@@ -883,56 +1054,93 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - `tests/unit/rewards/reward-calculator.test.ts` - Updated expectations
 
 ### ✅ **COMPLETED (2025-09-28) - Session 2**
+
 **Quest Pickup Investigation & Fixes**
-- ✅ **Quest pickup RLS policy fixed** - Created migration `20250928121800_fix_quest_pickup_rls.sql` to allow family members to assign unassigned quests to themselves
-- ✅ **E2E test selectors fixed** - Updated quest-pickup-management.spec.ts to use `[data-testid="create-quest-button"]` instead of brittle text selectors
-- ✅ **Debug logging added** - Enhanced quest pickup function with comprehensive logging for troubleshooting
-- ✅ **Root cause identified** - Quest pickup issue caused by combination of RLS policy restrictions + realtime connection WebSocket 403 errors
-- ✅ **Database migrations applied** - All pending Supabase migrations including realtime permissions are up to date
+
+- ✅ **Quest pickup RLS policy fixed** - Created migration
+  `20250928121800_fix_quest_pickup_rls.sql` to allow family members to assign
+  unassigned quests to themselves
+- ✅ **E2E test selectors fixed** - Updated quest-pickup-management.spec.ts to
+  use `[data-testid="create-quest-button"]` instead of brittle text selectors
+- ✅ **Debug logging added** - Enhanced quest pickup function with comprehensive
+  logging for troubleshooting
+- ✅ **Root cause identified** - Quest pickup issue caused by combination of RLS
+  policy restrictions + realtime connection WebSocket 403 errors
+- ✅ **Database migrations applied** - All pending Supabase migrations including
+  realtime permissions are up to date
 
 ### ✅ **COMPLETED (2025-09-28) - Session 3**
+
 **WebSocket 403 Authentication Issue Resolved & E2E Test Improvements**
-- ✅ **Fixed critical app crash** - Resolved undefined `supabaseUrl` variable causing "supabaseUrl is not defined" runtime error
-- ✅ **Implemented WebSocket JWT authentication** - Added proper `access_token` message sending to authenticate realtime connections
-  - **Key changes**: Added `private: true` channel config and `realtimeChannel.send({ type: 'access_token', access_token: session.access_token })`
-  - **Result**: WebSocket 403 errors resolved, realtime authentication working in development
-- ✅ **Fixed syntax error** - Removed extra closing parentheses in realtime-context.tsx causing compilation errors
-- [x] E2E test improvement - Tests now progress through family creation, authentication, and basic quest operations
-- ✅ **Manual refresh fallbacks working** - Quest pickup functionality operational with manual UI refresh
+
+- ✅ **Fixed critical app crash** - Resolved undefined `supabaseUrl` variable
+  causing "supabaseUrl is not defined" runtime error
+- ✅ **Implemented WebSocket JWT authentication** - Added proper `access_token`
+  message sending to authenticate realtime connections
+  - **Key changes**: Added `private: true` channel config and
+    `realtimeChannel.send({ type: 'access_token', access_token: session.access_token })`
+  - **Result**: WebSocket 403 errors resolved, realtime authentication working
+    in development
+- ✅ **Fixed syntax error** - Removed extra closing parentheses in
+  realtime-context.tsx causing compilation errors
+- [x] E2E test improvement - Tests now progress through family creation,
+      authentication, and basic quest operations
+- ✅ **Manual refresh fallbacks working** - Quest pickup functionality
+  operational with manual UI refresh
 
 ### ✅ **COMPLETED (2025-09-28) - Session 4**
+
 **Quest State Management & E2E Test Fixes**
-- [x] Fixed quest pickup workflow - Quest pickup now sets status to `PENDING` instead of `IN_PROGRESS`
-- [x] Fixed "Start Quest" button visibility - Button now appears correctly after quest pickup
-- [x] Updated E2E tests for correct quest workflow - Added missing "Start Quest" step in quest completion tests
+
+- [x] Fixed quest pickup workflow - Quest pickup now sets status to `PENDING`
+      instead of `IN_PROGRESS`
+- [x] Fixed "Start Quest" button visibility - Button now appears correctly after
+      quest pickup
+- [x] Updated E2E tests for correct quest workflow - Added missing "Start Quest"
+      step in quest completion tests
 - [x] All quest pickup management E2E tests passing (3/3)
 - [x] Quest completion rewards tests fixed and passing
 
 ### ✅ **COMPLETED (2025-09-28) - Session 4 continued**
+
 **Family Joining Functionality Fixed**
-- [x] Fixed family code validation RLS policies - Created migration 011 to allow unauthenticated family code lookups for registration
-- [x] Root cause identified - RLS policies prevented new users from reading families table during registration
-- [x] Solution implemented - New policy allows SELECT on families table for registration while maintaining security
+
+- [x] Fixed family code validation RLS policies - Created migration 011 to allow
+      unauthenticated family code lookups for registration
+- [x] Root cause identified - RLS policies prevented new users from reading
+      families table during registration
+- [x] Solution implemented - New policy allows SELECT on families table for
+      registration while maintaining security
 - [x] Created comprehensive E2E test for family joining workflow
 - [x] Invalid family code validation confirmed working
 
 ### ✅ **COMPLETED (2025-09-28) - Session 5**
+
 **CRITICAL: Supabase JWT Anon Key Fix**
-- [x] **Root cause identified** - `NEXT_PUBLIC_SUPABASE_ANON_KEY` was invalid non-JWT token (`sb_publishable_*`) causing "Expected 3 parts in JWT; got 1" errors
-- [x] **Generated proper JWT anon token** - Used default Supabase local secret to create valid JWT token starting with `eyJh`
-- [x] **Updated .env file** - Replaced invalid key with proper JWT: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-- [x] **Family joining now works** - Users can successfully join families with valid codes like "9R7BIW"
-- [x] **Documented fix** - Added critical Supabase configuration section to CLAUDE.md and created memory
+
+- [x] **Root cause identified** - `NEXT_PUBLIC_SUPABASE_ANON_KEY` was invalid
+      non-JWT token (`sb_publishable_*`) causing "Expected 3 parts in JWT; got
+      1" errors
+- [x] **Generated proper JWT anon token** - Used default Supabase local secret
+      to create valid JWT token starting with `eyJh`
+- [x] **Updated .env file** - Replaced invalid key with proper JWT:
+      `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+- [x] **Family joining now works** - Users can successfully join families with
+      valid codes like "9R7BIW"
+- [x] **Documented fix** - Added critical Supabase configuration section to
+      CLAUDE.md and created memory
 
 ### Supabase Migration Completion Workflow
 
 **Current Branch: feature/supabase-native-migration**
+
 - [ ] All quality gates passing (build, lint, unit tests, E2E tests)
 - [ ] Three sub-branches to complete before PR to main
 - [ ] Each sub-branch merges back to feature/supabase-native-migration
 - [ ] Final PR to main after all sub-branches merged
 
 **Sub-branch 1: feature/cleanup-obsolete-code**
+
 - [x] Create branch from feature/supabase-native-migration
 - [x] Delete app/api/test/character/update-stats/route.ts
 - [x] Delete app/api/test/user/update-family/route.ts
@@ -942,7 +1150,8 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Delete prisma/seed.ts
 - [x] Delete lib/generated/prisma/ directory
 - [x] Delete obsolete Prisma database files (dev.db, test.db)
-- [x] Archive scripts/export-database.js and scripts/import-to-supabase.js to scripts/archive/
+- [x] Archive scripts/export-database.js and scripts/import-to-supabase.js to
+      scripts/archive/
 - [x] Delete scripts/create-demo-family.js and scripts/create-demo-user.js
 - [x] Remove unused JWT functions from lib/auth.ts
 - [x] Delete lib/middleware.ts entirely (no longer used)
@@ -956,9 +1165,11 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Run quality gates (build ✅, lint ✅, test ✅ 26/26)
 - [x] Fix ESLint warning (unused 'data' variable in quest-dashboard.tsx)
 - [x] Commit and push changes
-- [x] Merge back to feature/supabase-native-migration (removed 2,300+ lines of code)
+- [x] Merge back to feature/supabase-native-migration (removed 2,300+ lines of
+      code)
 
 **Sub-branch 2: feature/update-production-deployment**
+
 - [x] Create fresh branch from feature/supabase-native-migration
 - [x] Create supabase-docker/ directory with official Supabase docker setup
 - [x] Create supabase-docker/.env.example with secure defaults
@@ -974,17 +1185,20 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
   - [x] Portainer deployment instructions
 - [x] Run quality gates (build ✅, lint ✅, test ✅ 26/26)
 - [x] Commit and push changes
-- [x] User testing and verification (Docker networking, migrations, database reset)
+- [x] User testing and verification (Docker networking, migrations, database
+      reset)
 - [x] Add database reset instructions to README
 - [x] Merge back to feature/supabase-native-migration
 - [x] Delete feature/update-production-deployment branch
 
 **Sub-branch 3: feature/quest-template-implementation**
+
 - [x] Create branch from feature/supabase-native-migration
 - [x] Update TASKS.md with detailed implementation tasks
 - [x] Commit and push initial branch setup
 
 **Phase 1: Database & Type Infrastructure (COMPLETED 2025-09-30)**
+
 - [x] Create migration 013_create_default_quest_templates.sql
 - [x] Add 8-10 default templates for common household chores
 - [x] Include class_bonuses for each character class
@@ -996,6 +1210,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Commit Phase 1
 
 **Phase 2: Backend Template Service - TDD** (COMPLETED)
+
 - [x] Create tests/unit/quest-template-service.test.ts
 - [x] Write test for getTemplatesForFamily
 - [x] Write test for createTemplate
@@ -1019,6 +1234,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Commit Phase 2
 
 **Phase 3: Quest Creation from Templates** (✅ COMPLETED)
+
 - [x] Write unit tests for template selection logic
 - [x] Write unit tests for quest instantiation from template
 - [x] Update quest-create-modal.tsx handleSubmit
@@ -1042,6 +1258,11 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Commit Phase 3
 
 **Phase 4: Template Management Interface** (✅ COMPLETED 2025-10-01)
+
+- [ ] Fix: Class bonuses should not be template specific
+- [ ] Fix: Dashboard must be reloaded to see new templates after creation
+  - [ ] Add state refresh after template CRUD operations
+  - [ ] Ensure realtime updates if possible
 - [x] Create tests/unit/components/quest-template-manager.test.tsx
 - [x] Write test for template list rendering
 - [x] Write test for template creation form
@@ -1075,6 +1296,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] Commit Phase 4
 
 **Phase 5: Default Templates on Family Creation**
+
 - [ ] Write unit test for default template copying
 - [ ] Write E2E test verifying new families get templates
 - [ ] Create database function to copy default templates
@@ -1085,6 +1307,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] Commit Phase 5
 
 **Phase 6: Integration Testing**
+
 - [ ] Create tests/e2e/quest-template-full-workflow.spec.ts
 - [ ] Write E2E test for new family registration
 - [ ] Write E2E test verifying default templates exist
@@ -1099,6 +1322,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] Commit Phase 6
 
 **Phase 7: Quality Assurance**
+
 - [ ] Run npm run build
 - [ ] Run npm run lint
 - [ ] Run npm run test
@@ -1108,6 +1332,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] Commit Phase 7
 
 **Phase 8: Manual Testing**
+
 - [ ] Create family, verify default templates loaded
 - [ ] Create custom template with all fields
 - [ ] Edit template, verify changes persist
@@ -1121,6 +1346,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] Commit manual testing fixes
 
 **Phase 9: Documentation & Memory**
+
 - [ ] Create serena memory: quest_template_system_implementation
 - [ ] Document template data structure in memory
 - [ ] Document class_bonuses format in memory
@@ -1130,58 +1356,88 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [ ] Commit Phase 9
 
 **Phase 10: Merge & Cleanup**
+
 - [ ] Run all quality gates one final time
-- [ ] Merge feature/quest-template-implementation to feature/supabase-native-migration
+- [ ] Merge feature/quest-template-implementation to
+      feature/supabase-native-migration
 - [ ] Delete feature/quest-template-implementation branch
 - [ ] Verify parent branch tests still pass
 
 **Final Step: PR to Main**
+
 - [ ] Verify all sub-branches merged to feature/supabase-native-migration
 - [ ] Run final quality gate checks
 - [ ] Create PR from feature/supabase-native-migration to main
 - [ ] Review and merge PR
 
 ### ✅ **COMPLETED (2025-09-29) - Hero Reward Display Fix**
+
 **Critical Bug: Heroes Not Receiving XP/Gold After Quest Approval**
-- [x] **Root cause identified** - Row Level Security (RLS) policies blocked Guild Masters from updating Hero character stats
-- [x] **RLS migration created** - Added `012_allow_gm_character_updates.sql` to allow family-scoped character updates by Guild Masters
-- [x] **Realtime subscription implemented** - Added automatic character context refresh when character stats are updated
-- [x] **Character context enhanced** - Fixed SSR/SSG compatibility and added proper realtime integration
-- [x] **Error handling improved** - Better error visibility for character update failures in quest approval workflow
-- [x] **Test infrastructure added** - E2E test for Hero reward display (tests will pass after applying RLS migration)
-- [x] **Data-testid attributes added** - Enhanced dashboard character stats with test identifiers for reliable E2E testing
-- [x] **Quest dashboard improvements** - Better error handling and user feedback for character update operations
-- [x] **Realtime subscription debugging and fixes** - Fixed React hooks rule violation and provider hierarchy order
-- [x] **Provider hierarchy correction** - Moved RealtimeProvider before CharacterProvider in app layout
-- [x] **Debug logging added** - Comprehensive logging for character updates and realtime events
+
+- [x] **Root cause identified** - Row Level Security (RLS) policies blocked
+      Guild Masters from updating Hero character stats
+- [x] **RLS migration created** - Added `012_allow_gm_character_updates.sql` to
+      allow family-scoped character updates by Guild Masters
+- [x] **Realtime subscription implemented** - Added automatic character context
+      refresh when character stats are updated
+- [x] **Character context enhanced** - Fixed SSR/SSG compatibility and added
+      proper realtime integration
+- [x] **Error handling improved** - Better error visibility for character update
+      failures in quest approval workflow
+- [x] **Test infrastructure added** - E2E test for Hero reward display (tests
+      will pass after applying RLS migration)
+- [x] **Data-testid attributes added** - Enhanced dashboard character stats with
+      test identifiers for reliable E2E testing
+- [x] **Quest dashboard improvements** - Better error handling and user feedback
+      for character update operations
+- [x] **Realtime subscription debugging and fixes** - Fixed React hooks rule
+      violation and provider hierarchy order
+- [x] **Provider hierarchy correction** - Moved RealtimeProvider before
+      CharacterProvider in app layout
+- [x] **Debug logging added** - Comprehensive logging for character updates and
+      realtime events
 
 ### Known Issues
+
 - [ ] Fix page scroll jump during realtime character refresh
 
 ### E2E Test Fixes (2025-09-28)
+
 - [x] **Fix family-joining.spec.ts test**
   - [x] Fixed character creation flow for Guild Masters who create families
   - [x] Fixed family code extraction and usage in second user registration
   - [x] Fixed duplicate element selectors with `.first()` pattern
 - [x] **Fix quest-system.spec.ts duplicate element issues**
-  - [x] Fixed "Test Custom Quest" and "Valid Quest Title" duplicate element issues
-  - [x] Used `.getByRole('heading', { name: '...' }).first()` pattern for specificity
+  - [x] Fixed "Test Custom Quest" and "Valid Quest Title" duplicate element
+        issues
+  - [x] Used `.getByRole('heading', { name: '...' }).first()` pattern for
+        specificity
 - [x] **Remove debug console.log statements from E2E tests**
   - [x] Removed all debug logging from test files
   - [x] Cleaned up setup helpers error handling
 
 ### E2E Test Fixes (2025-09-29)
+
 - [x] **Fix remaining E2E test failures**
-  - [x] Fixed test-family-joining-simple.spec.ts duplicate element issue with `.first()` pattern
-  - [x] Created demo family seed data for Supabase with "The Smith Family" (DEMO123)
-  - [x] Created demo user parent@demo.com with Lady Sarah character (HEALER, Level 10)
-  - [x] Fixed quest-template-due-date.spec.ts to use "From Template" tab correctly
-  - [x] Identified quest template functionality not yet implemented in Supabase migration
+  - [x] Fixed test-family-joining-simple.spec.ts duplicate element issue with
+        `.first()` pattern
+  - [x] Created demo family seed data for Supabase with "The Smith Family"
+        (DEMO123)
+  - [x] Created demo user <parent@demo.com> with Lady Sarah character (HEALER,
+        Level 10)
+  - [x] Fixed quest-template-due-date.spec.ts to use "From Template" tab
+        correctly
+  - [x] Identified quest template functionality not yet implemented in Supabase
+        migration
   - [x] **COMPLETED (2025-09-29) - Final E2E Test Cleanup**
-    - [x] **Removed duplicate test-family-joining-simple.spec.ts** - Eliminated duplicate test using hardcoded family code 'A0GX31' that doesn't exist
-    - [x] **Removed quest-template-due-date.spec.ts** - Removed test for unimplemented quest template functionality
-    - [x] **Added Quest Template Implementation tasks** - Created high-priority section in TASKS.md for implementing missing template system
-    - [x] **Test suite reduced from 23 to 21 tests** - Eliminated 2 failing tests, all remaining tests should pass
+    - [x] **Removed duplicate test-family-joining-simple.spec.ts** - Eliminated
+          duplicate test using hardcoded family code 'A0GX31' that doesn't exist
+    - [x] **Removed quest-template-due-date.spec.ts** - Removed test for
+          unimplemented quest template functionality
+    - [x] **Added Quest Template Implementation tasks** - Created high-priority
+          section in TASKS.md for implementing missing template system
+    - [x] **Test suite reduced from 23 to 21 tests** - Eliminated 2 failing
+          tests, all remaining tests should pass
 
 ---
 
