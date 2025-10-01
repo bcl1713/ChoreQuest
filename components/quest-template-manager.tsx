@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useRealtime } from '@/lib/realtime-context';
 import type { QuestTemplate } from '@/lib/types/database';
 
 interface TemplateFormData {
@@ -16,6 +17,7 @@ interface TemplateFormData {
 
 export function QuestTemplateManager() {
   const { profile } = useAuth();
+  const { onQuestTemplateUpdate } = useRealtime();
 
   const [templates, setTemplates] = useState<QuestTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,35 @@ export function QuestTemplateManager() {
     loadTemplates();
   }, [loadTemplates]);
 
+  // Realtime subscription for template updates
+  useEffect(() => {
+    const unsubscribe = onQuestTemplateUpdate((event) => {
+      if (event.action === 'INSERT') {
+        // Add new template to the list
+        const newTemplate = event.record as QuestTemplate;
+        setTemplates((prev) => {
+          // Prevent duplicates by checking if template already exists
+          if (prev.some((t) => t.id === newTemplate.id)) {
+            return prev;
+          }
+          return [newTemplate, ...prev];
+        });
+      } else if (event.action === 'UPDATE') {
+        // Update existing template in the list
+        const updatedTemplate = event.record as QuestTemplate;
+        setTemplates((prev) =>
+          prev.map((t) => (t.id === updatedTemplate.id ? updatedTemplate : t))
+        );
+      } else if (event.action === 'DELETE') {
+        // Remove template from the list
+        const deletedTemplate = event.old_record as QuestTemplate;
+        setTemplates((prev) => prev.filter((t) => t.id !== deletedTemplate.id));
+      }
+    });
+
+    return unsubscribe;
+  }, [onQuestTemplateUpdate]);
+
   const openCreateModal = () => {
     setFormData({
       title: '',
@@ -106,7 +137,7 @@ export function QuestTemplateManager() {
       setError('Failed to create template');
     } else {
       setIsCreateModalOpen(false);
-      loadTemplates();
+      // Realtime subscription will handle UI update automatically
     }
   };
 
@@ -133,7 +164,7 @@ export function QuestTemplateManager() {
     } else {
       setIsEditModalOpen(false);
       setSelectedTemplate(null);
-      loadTemplates();
+      // Realtime subscription will handle UI update automatically
     }
   };
 
@@ -146,9 +177,8 @@ export function QuestTemplateManager() {
     if (updateError) {
       console.error('Error toggling template:', updateError);
       setError('Failed to toggle template');
-    } else {
-      loadTemplates();
     }
+    // Realtime subscription will handle UI update automatically
   };
 
   const handleDeleteTemplate = async () => {
@@ -165,7 +195,7 @@ export function QuestTemplateManager() {
     } else {
       setIsDeleteConfirmOpen(false);
       setSelectedTemplate(null);
-      loadTemplates();
+      // Realtime subscription will handle UI update automatically
     }
   };
 
