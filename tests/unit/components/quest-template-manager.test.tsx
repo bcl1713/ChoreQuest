@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QuestTemplateManager } from '@/components/quest-template-manager';
 
 // Mock dependencies
@@ -36,21 +36,29 @@ describe('QuestTemplateManager', () => {
 
     // Should show loading initially, then show content
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+    // Wait for async state updates to complete
+    await waitFor(() => {
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+    });
   });
 
   it('should render main heading', async () => {
     render(<QuestTemplateManager />);
 
-    // Wait for component to load
-    await screen.findByText('Quest Templates');
-
-    expect(screen.getByText('Quest Templates')).toBeInTheDocument();
+    // Wait for component to load and async updates to complete
+    await waitFor(async () => {
+      expect(await screen.findByText('Quest Templates')).toBeInTheDocument();
+    });
   });
 
   it('should render create template button', async () => {
     render(<QuestTemplateManager />);
 
-    await screen.findByText('Quest Templates');
+    // Wait for component to load and async updates to complete
+    await waitFor(async () => {
+      expect(await screen.findByText('Quest Templates')).toBeInTheDocument();
+    });
 
     const createButton = screen.getByRole('button', { name: /create template/i });
     expect(createButton).toBeInTheDocument();

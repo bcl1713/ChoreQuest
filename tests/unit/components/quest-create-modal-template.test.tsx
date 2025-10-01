@@ -22,16 +22,20 @@ jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(() => ({
       select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: [
-            {
-              id: "member-1",
-              name: "Test Member",
-              role: "HERO",
-            },
-          ],
-          error: null,
-        })),
+        eq: jest.fn(async () => {
+          // Use setTimeout to ensure async resolution happens after render
+          await new Promise(resolve => setTimeout(resolve, 0));
+          return {
+            data: [
+              {
+                id: "member-1",
+                name: "Test Member",
+                role: "HERO",
+              },
+            ],
+            error: null,
+          };
+        }),
       })),
     })),
   },
