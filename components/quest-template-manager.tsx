@@ -228,34 +228,36 @@ export function QuestTemplateManager() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6" data-testid="quest-template-manager">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Quest Templates</h2>
         <button
           onClick={openCreateModal}
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          data-testid="create-template-button"
         >
           Create Template
         </button>
       </div>
 
       {templates.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12" data-testid="no-templates-message">
           <p className="text-gray-600">No quest templates found</p>
           <p className="text-sm text-gray-500 mt-2">
             Create your first template to get started!
           </p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4" data-testid="template-list">
           {templates.map((template) => (
             <div
               key={template.id}
               className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+              data-testid={`template-card-${template.id}`}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{template.title}</h3>
+                  <h3 className="text-lg font-semibold" data-testid={`template-title-${template.id}`}>{template.title}</h3>
                   <p className="text-gray-600 text-sm mt-1">
                     {template.description}
                   </p>
@@ -282,6 +284,7 @@ export function QuestTemplateManager() {
                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
                         : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
+                    data-testid={`template-status-${template.id}`}
                   >
                     {template.is_active ? 'Active' : 'Inactive'}
                   </button>
@@ -292,12 +295,14 @@ export function QuestTemplateManager() {
                         : handleToggleActive(template)
                     }
                     className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded text-sm hover:bg-yellow-200"
+                    data-testid={`template-toggle-${template.id}`}
                   >
                     {template.is_active ? 'Deactivate' : 'Activate'}
                   </button>
                   <button
                     onClick={() => openEditModal(template)}
                     className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200"
+                    data-testid={`template-edit-${template.id}`}
                   >
                     Edit
                   </button>
@@ -307,6 +312,7 @@ export function QuestTemplateManager() {
                       setIsDeleteConfirmOpen(true);
                     }}
                     className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200"
+                    data-testid={`template-delete-${template.id}`}
                   >
                     Delete
                   </button>
@@ -319,7 +325,7 @@ export function QuestTemplateManager() {
 
       {/* Create Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="create-template-modal">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-2xl font-bold mb-4">Create Quest Template</h2>
@@ -334,12 +340,14 @@ export function QuestTemplateManager() {
                 <button
                   onClick={handleCreateTemplate}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  data-testid="save-template-button"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
                   className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  data-testid="cancel-template-button"
                 >
                   Cancel
                 </button>
@@ -351,7 +359,7 @@ export function QuestTemplateManager() {
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="edit-template-modal">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-2xl font-bold mb-4">Edit Quest Template</h2>
@@ -363,7 +371,7 @@ export function QuestTemplateManager() {
               />
 
               {/* Preview Section */}
-              <div className="mt-6 p-4 bg-gray-50 rounded">
+              <div className="mt-6 p-4 bg-gray-50 rounded" data-testid="template-preview">
                 <h3 className="font-semibold mb-2">Preview</h3>
                 <div className="border rounded p-3 bg-white">
                   <h4 className="font-bold">{formData.title || 'Quest Title'}</h4>
@@ -391,6 +399,7 @@ export function QuestTemplateManager() {
                 <button
                   onClick={handleUpdateTemplate}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  data-testid="update-template-button"
                 >
                   Save
                 </button>
@@ -400,6 +409,7 @@ export function QuestTemplateManager() {
                     setSelectedTemplate(null);
                   }}
                   className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  data-testid="cancel-edit-button"
                 >
                   Cancel
                 </button>
@@ -411,7 +421,7 @@ export function QuestTemplateManager() {
 
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="delete-confirm-modal">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
             <p className="text-gray-600 mb-6">
@@ -422,6 +432,7 @@ export function QuestTemplateManager() {
               <button
                 onClick={handleDeleteTemplate}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                data-testid="confirm-delete-button"
               >
                 Confirm
               </button>
@@ -431,6 +442,7 @@ export function QuestTemplateManager() {
                   setSelectedTemplate(null);
                 }}
                 className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                data-testid="cancel-delete-button"
               >
                 Cancel
               </button>
@@ -478,6 +490,7 @@ function TemplateForm({
             setFormData((prev) => ({ ...prev, title: e.target.value }))
           }
           className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+          data-testid="template-title-input"
           required
         />
       </div>
@@ -496,6 +509,7 @@ function TemplateForm({
             setFormData((prev) => ({ ...prev, description: e.target.value }))
           }
           className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+          data-testid="template-description-input"
           rows={3}
         />
       </div>
@@ -515,6 +529,7 @@ function TemplateForm({
               }))
             }
             className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            data-testid="template-category-select"
           >
             <option value="DAILY">DAILY</option>
             <option value="WEEKLY">WEEKLY</option>
@@ -539,6 +554,7 @@ function TemplateForm({
               }))
             }
             className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            data-testid="template-difficulty-select"
           >
             <option value="EASY">EASY</option>
             <option value="MEDIUM">MEDIUM</option>
@@ -563,6 +579,7 @@ function TemplateForm({
               }))
             }
             className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            data-testid="template-xp-input"
             min="0"
           />
         </div>
@@ -585,6 +602,7 @@ function TemplateForm({
               }))
             }
             className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            data-testid="template-gold-input"
             min="0"
           />
         </div>
