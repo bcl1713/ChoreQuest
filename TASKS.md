@@ -1299,8 +1299,9 @@ native Supabase types from `@/lib/types/database`.
 - [x] Handle UPDATE events to update existing templates
 - [x] Handle DELETE events to remove templates from UI
 - [x] Remove manual loadTemplates() calls after CRUD operations
-- [x] Test realtime updates work across browser tabs
-- [x] Verify E2E tests still pass with realtime subscriptions
+- [x] Create E2E test for realtime updates (quest-template-realtime.spec.ts)
+- [x] Fix React act() warnings in unit tests
+- [ ] Run E2E tests to verify realtime functionality
 - [x] Commit Phase 4
 
 **Phase 5: Default Templates on Family Creation** (COMPLETED via migration 013)
