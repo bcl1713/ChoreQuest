@@ -1294,14 +1294,14 @@ native Supabase types from `@/lib/types/database`.
 - [x] Fix unit tests: mock realtime context
 - [x] Fix E2E test timing and element queries
 - [x] All quality gates passing (build, lint, unit 41/41, E2E 6/6)
-- [ ] Add realtime subscription listener to QuestTemplateManager component
-- [ ] Handle INSERT events to add new templates to UI
-- [ ] Handle UPDATE events to update existing templates
-- [ ] Handle DELETE events to remove templates from UI
-- [ ] Remove manual loadTemplates() calls after CRUD operations
-- [ ] Test realtime updates work across browser tabs
-- [ ] Verify E2E tests still pass with realtime subscriptions
-- [ ] Commit Phase 4
+- [x] Add realtime subscription listener to QuestTemplateManager component
+- [x] Handle INSERT events to add new templates to UI
+- [x] Handle UPDATE events to update existing templates
+- [x] Handle DELETE events to remove templates from UI
+- [x] Remove manual loadTemplates() calls after CRUD operations
+- [x] Test realtime updates work across browser tabs
+- [x] Verify E2E tests still pass with realtime subscriptions
+- [x] Commit Phase 4
 
 **Phase 5: Default Templates on Family Creation** (COMPLETED via migration 013)
 
