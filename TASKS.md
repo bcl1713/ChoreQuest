@@ -1041,30 +1041,30 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Add data-testid attributes to AuthForm inputs
 - [x] Commit Phase 3
 
-**Phase 4: Template Management Interface**
-- [ ] Create tests/unit/components/quest-template-manager.test.tsx
-- [ ] Write test for template list rendering
-- [ ] Write test for template creation form
-- [ ] Write test for template editing modal
-- [ ] Write test for template activation/deactivation
-- [ ] Write test for class bonus editor
-- [ ] Create components/quest-template-manager.tsx
-- [ ] Implement template table/list view
-- [ ] Implement create new template button and modal
-- [ ] Implement edit existing template functionality
-- [ ] Implement activate/deactivate toggle
-- [ ] Implement delete with confirmation
-- [ ] Implement class bonus configuration UI
-- [ ] Implement template preview
-- [ ] Run unit tests until all pass
-- [ ] Write unit tests for template manager integration in dashboard
-- [ ] Write unit test for Guild Master role check
-- [ ] Update app/dashboard/page.tsx
-- [ ] Add Quest Templates tab or section for Guild Masters
-- [ ] Load template manager component
-- [ ] Wire up refresh after CRUD operations
-- [ ] Handle permissions (Guild Masters + Heroes only)
-- [ ] Run unit tests until all pass
+**Phase 4: Template Management Interface** (✅ COMPLETED 2025-10-01)
+- [x] Create tests/unit/components/quest-template-manager.test.tsx
+- [x] Write test for template list rendering
+- [x] Write test for template creation form
+- [x] Write test for template editing modal
+- [x] Write test for template activation/deactivation
+- [x] Write test for class bonus editor
+- [x] Create components/quest-template-manager.tsx
+- [x] Implement template table/list view
+- [x] Implement create new template button and modal
+- [x] Implement edit existing template functionality
+- [x] Implement activate/deactivate toggle
+- [x] Implement delete with confirmation
+- [x] Implement class bonus configuration UI
+- [x] Implement template preview
+- [x] Run unit tests until all pass
+- [x] Write unit tests for template manager integration in dashboard
+- [x] Write unit test for Guild Master role check
+- [x] Update app/dashboard/page.tsx
+- [x] Add Quest Templates tab or section for Guild Masters
+- [x] Load template manager component
+- [x] Wire up refresh after CRUD operations
+- [x] Handle permissions (Guild Masters + Heroes only)
+- [x] Run unit tests until all pass
 - [ ] Create tests/e2e/quest-template-management.spec.ts
 - [ ] Write E2E test for Guild Master creates template
 - [ ] Write E2E test for Guild Master edits template

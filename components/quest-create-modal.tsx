@@ -346,6 +346,7 @@ export default function QuestCreateModal({
                         Difficulty
                       </label>
                       <select
+                        data-testid="quest-difficulty-select"
                         value={difficulty}
                         onChange={(e) =>
                           setDifficulty(e.target.value as QuestDifficulty)

@@ -7,6 +7,7 @@ import { useCharacter } from '@/lib/character-context';
 import QuestDashboard from '@/components/quest-dashboard';
 import QuestCreateModal from '@/components/quest-create-modal';
 import RewardStore from '@/components/reward-store';
+import { QuestTemplateManager } from '@/components/quest-template-manager';
 import { QuestTemplate } from '@/lib/types/database';
 import { supabase } from '@/lib/supabase';
 
@@ -15,7 +16,7 @@ export default function Dashboard() {
   const { user, profile, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<'quests' | 'rewards'>('quests');
+  const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates'>('quests');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -240,6 +241,19 @@ export default function Dashboard() {
             <span className="hidden sm:inline">🏪 Reward Store</span>
             <span className="sm:hidden">🏪 Rewards</span>
           </button>
+          {profile?.role === 'GUILD_MASTER' && (
+            <button
+              onClick={() => setActiveTab('templates')}
+              className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
+                activeTab === 'templates'
+                  ? 'bg-gold-600 text-white'
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
+              }`}
+            >
+              <span className="hidden sm:inline">📜 Quest Templates</span>
+              <span className="sm:hidden">📜 Templates</span>
+            </button>
+          )}
         </div>
 
         {/* Error Display */}
@@ -257,9 +271,11 @@ export default function Dashboard() {
               dashboardLoadQuestsRef.current = loadQuests;
             }}
           />
-        ) : (
+        ) : activeTab === 'rewards' ? (
           <RewardStore onError={handleError} />
-        )}
+        ) : activeTab === 'templates' ? (
+          <QuestTemplateManager />
+        ) : null}
 
         {/* Quest Create Modal */}
         <QuestCreateModal
