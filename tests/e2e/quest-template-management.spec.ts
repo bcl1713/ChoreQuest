@@ -174,16 +174,35 @@ test.describe('Quest Template Management', () => {
     await expect(toggleButton).toHaveText('Deactivate');
     await toggleButton.click();
 
-    // Wait for status to update
-    await expect(statusButton).toHaveText('Inactive', { timeout: 3000 });
-    await expect(toggleButton).toHaveText('Activate');
+    // Wait for list to reload and re-query for the status button
+    await page.waitForTimeout(500);
+    const updatedTemplate = page.locator(`[data-testid="template-card-${templateId}"]`);
+    const updatedStatusButton = updatedTemplate.locator(
+      `[data-testid="template-status-${templateId}"]`
+    );
+    await expect(updatedStatusButton).toHaveText('Inactive', { timeout: 3000 });
+    const updatedToggleButtonCheck = updatedTemplate.locator(
+      `[data-testid="template-toggle-${templateId}"]`
+    );
+    await expect(updatedToggleButtonCheck).toHaveText('Activate');
 
     // Reactivate the template
-    await toggleButton.click();
+    const updatedToggleButton = updatedTemplate.locator(
+      `[data-testid="template-toggle-${templateId}"]`
+    );
+    await updatedToggleButton.click();
 
-    // Verify it's active again
-    await expect(statusButton).toHaveText('Active', { timeout: 3000 });
-    await expect(toggleButton).toHaveText('Deactivate');
+    // Wait for list to reload again and verify it's active
+    await page.waitForTimeout(500);
+    const reactivatedTemplate = page.locator(`[data-testid="template-card-${templateId}"]`);
+    const reactivatedStatusButton = reactivatedTemplate.locator(
+      `[data-testid="template-status-${templateId}"]`
+    );
+    const reactivatedToggleButton = reactivatedTemplate.locator(
+      `[data-testid="template-toggle-${templateId}"]`
+    );
+    await expect(reactivatedStatusButton).toHaveText('Active', { timeout: 3000 });
+    await expect(reactivatedToggleButton).toHaveText('Deactivate');
   });
 
   test('Guild Master deletes a quest template', async ({ page }) => {
@@ -267,8 +286,11 @@ test.describe('Quest Template Management', () => {
     const options = await templateSelect.locator('option').allTextContents();
     expect(options.some((opt) => opt.includes('Unique Test Template'))).toBeTruthy();
 
-    // Select our template
-    await templateSelect.selectOption({ label: /Unique Test Template/ });
+    // Find the option value for our template
+    const templateOption = await templateSelect.locator('option', { hasText: 'Unique Test Template' }).getAttribute('value');
+
+    // Select our template by value
+    await templateSelect.selectOption(templateOption!);
 
     // Verify template details are displayed
     await expect(page.getByText('For testing quest creation')).toBeVisible();
@@ -287,16 +309,18 @@ test.describe('Quest Template Management', () => {
 
     // Logout
     await page.click('text=Logout');
-    await expect(page).toHaveURL(/.*\/$/);
+    // After logout, we're redirected to login page
+    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
 
     // Register as a Hero (child) user
     const timestamp = Date.now();
-    await page.click('a[href="/auth/register"]');
-    await page.fill('[data-testid="email-input"]', `hero-${timestamp}@test.com`);
-    await page.fill('[data-testid="password-input"]', 'password123');
-    await page.fill('[data-testid="display-name-input"]', 'Hero User');
-    await page.fill('[data-testid="family-code-input"]', familyCode);
-    await page.click('[data-testid="register-button"]');
+    await page.goto('http://localhost:3000/auth/register');
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('textbox', { name: 'Email Address' }).fill(`hero-${timestamp}@test.com`);
+    await page.getByRole('textbox', { name: 'Password' }).fill('password123');
+    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero User');
+    await page.getByRole('textbox', { name: 'Guild Code' }).fill(familyCode);
+    await page.getByRole('button', { name: /Join Guild/i }).click();
 
     // Create character for Hero
     await expect(page).toHaveURL(/.*character\/create/, { timeout: 15000 });

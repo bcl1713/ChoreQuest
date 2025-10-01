@@ -24,6 +24,12 @@ jest.mock('@/lib/auth-context', () => ({
   }),
 }));
 
+jest.mock('@/lib/realtime-context', () => ({
+  useRealtime: () => ({
+    onQuestTemplateUpdate: jest.fn(() => () => {}),
+  }),
+}));
+
 describe('QuestTemplateManager', () => {
   it('should render without crashing', async () => {
     render(<QuestTemplateManager />);

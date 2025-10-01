@@ -1,6 +1,7 @@
 # /e2e
 
-Runs end-to-end Playwright tests with intelligent test identification and component validation.
+Runs end-to-end Playwright tests with intelligent test identification and
+component validation.
 
 ## Usage
 
@@ -10,12 +11,14 @@ Runs end-to-end Playwright tests with intelligent test identification and compon
 
 ## Behavior
 
-1. If a specific test suite is requested, identify and run only that suite
-2. If no arguments provided, run all test suites one at a time sequentially
-3. Output is unfiltered to capture full error context
-4. Validate components have `data-testid` attributes when tests fail to locate elements
-5. Add missing `data-testid` attributes as needed and update tests accordingly
-6. Final tests should contain no console.log statements
+1. Ensure that supabase and a dev server ar running before executing tests
+2. If a specific test suite is requested, identify and run only that suite
+3. If no arguments provided, run all test suites one at a time sequentially
+4. Output is unfiltered to capture full error context
+5. Validate components have `data-testid` attributes when tests fail to locate
+   elements
+6. Add missing `data-testid` attributes as needed and update tests accordingly
+7. Final tests should contain no console.log statements
 
 ## Quality Standards
 
@@ -28,15 +31,15 @@ Runs end-to-end Playwright tests with intelligent test identification and compon
 
 ```javascript
 async function e2e(args) {
-  const testArg = args || '';
+  const testArg = args || "";
 
   if (!testArg) {
     // Run all tests sequentially, one suite at a time
-    const testFiles = await glob('tests/**/*.spec.ts');
+    const testFiles = await glob("tests/**/*.spec.ts");
     for (const file of testFiles) {
       await bash(`npx playwright test ${file} --reporter=line`);
     }
-  } else if (testArg.includes('.spec.ts')) {
+  } else if (testArg.includes(".spec.ts")) {
     // Direct filename
     await bash(`npx playwright test ${testArg} --reporter=line`);
   } else {
@@ -52,6 +55,7 @@ async function e2e(args) {
 ## Example Workflow
 
 When a test fails due to missing element:
+
 1. Identify the component being tested
 2. Check if component has `data-testid`
 3. If missing, add `data-testid` to component
