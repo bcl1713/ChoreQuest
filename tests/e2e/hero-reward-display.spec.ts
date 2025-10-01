@@ -20,21 +20,26 @@ test.describe("Hero Reward Display After GM Approval", () => {
     // Setup Guild Master (creates family)
     await commonBeforeEach(gmPage);
     await gmPage.goto('/auth/create-family');
-    await gmPage.fill('input[name="email"]', 'gm@example.com');
-    await gmPage.fill('input[name="password"]', 'password123');
-    await gmPage.fill('input[name="familyName"]', 'Test Family');
-    await gmPage.click('button[type="submit"]');
+    await gmPage.fill('[data-testid="input-name"]', 'Test Family');
+    await gmPage.fill('[data-testid="input-userName"]', 'Guild Master');
+    await gmPage.fill('[data-testid="input-email"]', 'gm@example.com');
+    await gmPage.fill('[data-testid="input-password"]', 'password123');
+    await gmPage.click('[data-testid="auth-submit-button"]');
 
-    // Wait for family creation and get family code
-    await expect(gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
-    const familyCodeElement = await gmPage.locator('text=/Guild:.*\\((.*)\\)/')
+    // Wait for navigation after family creation (should redirect to character creation or dashboard)
+    await gmPage.waitForTimeout(2000); // Give time for navigation to complete
+
+    // Extract family code from current page
+    const familyCodeElement = await gmPage.locator('text=/Guild:.*\\((.*)\\)/', { timeout: 10000 }).first();
     const familyCode = await familyCodeElement.textContent();
     const code = familyCode?.match(/\(([^)]+)\)/)?.[1] || '';
 
     expect(code).toBeTruthy();
 
-    // Create GM character
-    await gmPage.goto('/character/create');
+    // Create GM character (navigate if not already there)
+    if (!gmPage.url().includes('/character/create')) {
+      await gmPage.goto('/character/create');
+    }
     await gmPage.fill('input[name="characterName"]', 'Guild Master GM');
     await gmPage.click('button[data-class="KNIGHT"]');
     await gmPage.click('button[type="submit"]');
@@ -131,12 +136,17 @@ test.describe("Hero Reward Display After GM Approval", () => {
     // Create GM and family (abbreviated setup)
     await commonBeforeEach(gmPage);
     await gmPage.goto('/auth/create-family');
-    await gmPage.fill('input[name="email"]', 'gm2@example.com');
-    await gmPage.fill('input[name="password"]', 'password123');
-    await gmPage.fill('input[name="familyName"]', 'Multi Hero Family');
-    await gmPage.click('button[type="submit"]');
+    await gmPage.fill('[data-testid="input-name"]', 'Multi Hero Family');
+    await gmPage.fill('[data-testid="input-userName"]', 'Multi GM');
+    await gmPage.fill('[data-testid="input-email"]', 'gm2@example.com');
+    await gmPage.fill('[data-testid="input-password"]', 'password123');
+    await gmPage.click('[data-testid="auth-submit-button"]');
 
-    const familyCodeElement = await gmPage.locator('text=/Guild:.*\\((.*)\\)/')
+    // Wait for dashboard navigation
+    await gmPage.waitForURL(/.*\/dashboard/, { timeout: 10000 });
+
+    // Extract family code from dashboard
+    const familyCodeElement = await gmPage.locator('text=/Guild:.*\\((.*)\\)/').first();
     const familyCode = await familyCodeElement.textContent();
     const code = familyCode?.match(/\(([^)]+)\)/)?.[1] || '';
 

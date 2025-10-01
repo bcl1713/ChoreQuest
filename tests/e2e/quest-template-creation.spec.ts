@@ -18,10 +18,10 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(page.locator('text=Create New Quest')).toBeVisible();
 
     // Switch to template mode
-    await page.click('text=From Template');
+    await page.click('[data-testid="template-mode-button"]');
 
     // Select a template (should have default templates from database migration)
-    const templateSelect = page.locator('select#template-select');
+    const templateSelect = page.locator('[data-testid="template-select"]');
     await expect(templateSelect).toBeVisible();
 
     // Get first template option (not the placeholder)
@@ -36,10 +36,10 @@ test.describe("Quest Template Creation E2E", () => {
     await templateSelect.selectOption(templateValue!);
 
     // Verify template preview appears
-    await expect(page.locator('.bg-dark-800')).toBeVisible();
+    await expect(page.locator('[data-testid="template-preview"]')).toBeVisible();
 
     // Submit the quest
-    await page.click('button:has-text("Create Quest")');
+    await page.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
     await expect(page.locator('text=Create New Quest')).not.toBeVisible();
@@ -56,10 +56,10 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(page.locator('text=Create New Quest')).toBeVisible();
 
     // Switch to template mode
-    await page.click('text=From Template');
+    await page.click('[data-testid="template-mode-button"]');
 
     // Select a template
-    const templateSelect = page.locator('select#template-select');
+    const templateSelect = page.locator('[data-testid="template-select"]');
     const firstTemplateValue = await templateSelect.locator('option').nth(1).getAttribute('value');
     await templateSelect.selectOption(firstTemplateValue!);
 
@@ -73,7 +73,7 @@ test.describe("Quest Template Creation E2E", () => {
     }
 
     // Submit the quest
-    await page.click('button:has-text("Create Quest")');
+    await page.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
     await expect(page.locator('text=Create New Quest')).not.toBeVisible();
@@ -88,10 +88,10 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(page.locator('text=Create New Quest')).toBeVisible();
 
     // Switch to template mode
-    await page.click('text=From Template');
+    await page.click('[data-testid="template-mode-button"]');
 
     // Select a template
-    const templateSelect = page.locator('select#template-select');
+    const templateSelect = page.locator('[data-testid="template-select"]');
     const firstTemplateValue = await templateSelect.locator('option').nth(1).getAttribute('value');
     await templateSelect.selectOption(firstTemplateValue!);
 
@@ -103,7 +103,7 @@ test.describe("Quest Template Creation E2E", () => {
     await page.locator('input#due-date').fill(dueDateString);
 
     // Submit the quest
-    await page.click('button:has-text("Create Quest")');
+    await page.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
     await expect(page.locator('text=Create New Quest')).not.toBeVisible();
@@ -118,22 +118,23 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(page.locator('text=Create New Quest')).toBeVisible();
 
     // Switch to template mode
-    await page.click('text=From Template');
+    await page.click('[data-testid="template-mode-button"]');
 
     // Initially, no preview should be visible
-    await expect(page.locator('.bg-dark-800')).not.toBeVisible();
+    await expect(page.locator('[data-testid="template-preview"]')).not.toBeVisible();
 
     // Select a template
-    const templateSelect = page.locator('select#template-select');
+    const templateSelect = page.locator('[data-testid="template-select"]');
     const firstTemplateValue = await templateSelect.locator('option').nth(1).getAttribute('value');
     await templateSelect.selectOption(firstTemplateValue!);
 
     // Preview should now be visible
-    await expect(page.locator('.bg-dark-800')).toBeVisible();
+    await expect(page.locator('[data-testid="template-preview"]')).toBeVisible();
 
-    // Preview should contain XP and Gold information
-    await expect(page.locator('text=/.*XP/')).toBeVisible();
-    await expect(page.locator('text=/💰.*/')).toBeVisible();
+    // Preview should contain XP and Gold information within the preview
+    const preview = page.locator('[data-testid="template-preview"]');
+    await expect(preview.locator('text=/.*XP/')).toBeVisible();
+    await expect(preview.locator('text=/💰.*/')).toBeVisible();
   });
 
   test("should preserve template fields in created quest", async ({ page }) => {
@@ -142,10 +143,10 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(page.locator('text=Create New Quest')).toBeVisible();
 
     // Switch to template mode
-    await page.click('text=From Template');
+    await page.click('[data-testid="template-mode-button"]');
 
     // Select a template and capture its details
-    const templateSelect = page.locator('select#template-select');
+    const templateSelect = page.locator('[data-testid="template-select"]');
     const firstTemplate = await templateSelect.locator('option').nth(1);
     const templateValue = await firstTemplate.getAttribute('value');
     const templateFullText = await firstTemplate.textContent();
@@ -153,17 +154,17 @@ test.describe("Quest Template Creation E2E", () => {
     await templateSelect.selectOption(templateValue!);
 
     // Wait for preview to load
-    await expect(page.locator('.bg-dark-800')).toBeVisible();
+    await expect(page.locator('[data-testid="template-preview"]')).toBeVisible();
 
     // Extract template title from the option text (format: "Title - DIFFICULTY (XP XP, Gold Gold)")
     const templateTitle = templateFullText!.split(' - ')[0];
 
     // Extract XP and Gold from preview
-    const previewText = await page.locator('.bg-dark-800').textContent();
+    const previewText = await page.locator('[data-testid="template-preview"]').textContent();
     expect(previewText).toContain('XP');
 
     // Submit the quest
-    await page.click('button:has-text("Create Quest")');
+    await page.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
     await expect(page.locator('text=Create New Quest')).not.toBeVisible();
@@ -178,14 +179,14 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(page.locator('text=Create New Quest')).toBeVisible();
 
     // Switch to template mode
-    await page.click('text=From Template');
+    await page.click('[data-testid="template-mode-button"]');
 
-    const templateSelect = page.locator('select#template-select');
+    const templateSelect = page.locator('[data-testid="template-select"]');
 
     // Select first template
     const firstTemplateValue = await templateSelect.locator('option').nth(1).getAttribute('value');
     await templateSelect.selectOption(firstTemplateValue!);
-    await expect(page.locator('.bg-dark-800')).toBeVisible();
+    await expect(page.locator('[data-testid="template-preview"]')).toBeVisible();
 
     // Check if there's a second template option
     const secondTemplate = templateSelect.locator('option').nth(2);
@@ -196,11 +197,11 @@ test.describe("Quest Template Creation E2E", () => {
       await templateSelect.selectOption(secondTemplateValue);
 
       // Preview should still be visible but with different content
-      await expect(page.locator('.bg-dark-800')).toBeVisible();
+      await expect(page.locator('[data-testid="template-preview"]')).toBeVisible();
     }
 
     // Cancel the modal
-    await page.click('button:has-text("Cancel")');
+    await page.click('[data-testid="cancel-quest-button"]');
     await expect(page.locator('text=Create New Quest')).not.toBeVisible();
   });
 });

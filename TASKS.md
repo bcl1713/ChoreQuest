@@ -1018,7 +1018,7 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Run integration tests against local Supabase (6/6 PASS)
 - [x] Commit Phase 2
 
-**Phase 3: Quest Creation from Templates** (IN PROGRESS)
+**Phase 3: Quest Creation from Templates** (✅ COMPLETED)
 - [x] Write unit tests for template selection logic
 - [x] Write unit tests for quest instantiation from template
 - [x] Update quest-create-modal.tsx handleSubmit
@@ -1035,8 +1035,11 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Write E2E test for assignment and due date overrides
 - [x] Write E2E test for template preview display
 - [x] Write E2E test for multiple template selections
-- [ ] Run E2E tests until all pass (requires dev server running)
-- [ ] Commit Phase 3
+- [x] Run E2E tests until all pass (6/6 PASS)
+- [x] Fix quest template trigger security (migration 014)
+- [x] Add data-testid attributes to quest creation modal
+- [x] Add data-testid attributes to AuthForm inputs
+- [x] Commit Phase 3
 
 **Phase 4: Template Management Interface**
 - [ ] Create tests/unit/components/quest-template-manager.test.tsx
