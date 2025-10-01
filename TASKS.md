@@ -1301,20 +1301,21 @@ native Supabase types from `@/lib/types/database`.
 - [x] Run E2E tests (3/6 passing, 3 minor issues remain)
 - [x] Commit Phase 4
 
-**Phase 4 E2E Test Status: Tests Should Pass with Realtime Updates**
-- [x] Guild Master creates new template
-- [x] Guild Master edits existing template
-- [x] Guild Master deactivates/reactivates template (realtime updates should fix timing)
-- [x] Guild Master deletes template
-- [x] Active templates appear in quest creation modal (realtime updates implemented)
-- [x] Hero users cannot access Quest Templates tab
+**Phase 4 E2E Test Status: Not Yet Verified**
+- [ ] Guild Master creates new template (should pass with realtime updates)
+- [ ] Guild Master edits existing template (should pass with realtime updates)
+- [ ] Guild Master deactivates/reactivates template (realtime should fix timing)
+- [ ] Guild Master deletes template (should pass with realtime updates)
+- [ ] Active templates appear in quest creation modal (realtime implemented, needs verification)
+- [ ] Hero users cannot access Quest Templates tab (needs verification)
 
-**Phase 4 Fixes Completed (2025-10-01):**
+**Phase 4 Code Fixes Completed (2025-10-01):**
 - [x] Removed confusing class bonus UI from templates
 - [x] Added realtime subscriptions for quest_templates table
 - [x] Wired realtime updates to dashboard template state
 - [x] Templates now auto-update without page refresh
-- [x] All quality gates passing (build ✅, lint ✅, unit tests 41/41 ✅)
+- [x] Unit test quality gates passing (build ✅, lint ✅, unit tests 41/41 ✅)
+- [ ] E2E tests need to be run to verify fixes work as expected
 
 **Phase 5: Default Templates on Family Creation**
 
