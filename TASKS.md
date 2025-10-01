@@ -1029,12 +1029,13 @@ ChoreQuest 0.2.0 focuses on transforming the system from a functional MVP to a f
 - [x] Preserve override fields (assigned_to, due_date)
 - [x] Handle class_bonuses properly
 - [x] Run unit tests until all pass (6/6 PASS)
-- [ ] Create tests/e2e/quest-template-creation.spec.ts
-- [ ] Write E2E test for creating quest from template
-- [ ] Write E2E test for template field copying
-- [ ] Write E2E test for assignment and due date overrides
-- [ ] Write E2E test with different character classes
-- [ ] Run E2E tests until all pass
+- [x] Create tests/e2e/quest-template-creation.spec.ts
+- [x] Write E2E test for creating quest from template
+- [x] Write E2E test for template field copying
+- [x] Write E2E test for assignment and due date overrides
+- [x] Write E2E test for template preview display
+- [x] Write E2E test for multiple template selections
+- [ ] Run E2E tests until all pass (requires dev server running)
 - [ ] Commit Phase 3
 
 **Phase 4: Template Management Interface**
