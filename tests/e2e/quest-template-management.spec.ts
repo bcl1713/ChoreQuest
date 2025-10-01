@@ -1,18 +1,43 @@
-import { test, expect } from '@playwright/test';
-import { createFamilyAndLogin } from './helpers/setup-helpers';
+import { test, expect, Page } from '@playwright/test';
+import { setupUserWithCharacter, clearBrowserState } from './helpers/setup-helpers';
+
+/**
+ * Helper to get family code from the families table
+ */
+async function getFamilyCode(page: Page): Promise<string> {
+  const code = await page.evaluate(async () => {
+    const { createClient } = await import('@/lib/supabase');
+    const supabase = createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('family_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile) throw new Error('No profile found');
+
+    const { data: family } = await supabase
+      .from('families')
+      .select('invite_code')
+      .eq('id', profile.family_id)
+      .single();
+
+    return family?.invite_code || '';
+  });
+
+  return code;
+}
 
 test.describe('Quest Template Management', () => {
   test('Guild Master creates a new quest template', async ({ page }) => {
-    // Create family and login as Guild Master
-    const { familyName } = await createFamilyAndLogin(page);
+    // Create family and character as Guild Master
+    await setupUserWithCharacter(page, 'template-test', { characterClass: 'KNIGHT' });
 
-    // Create a character first
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Sir Test');
-    await page.click('[data-testid="class-KNIGHT"]');
-    await page.click('[data-testid="create-character-button"]');
-
-    // Wait for dashboard to load
+    // Should already be on dashboard
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Quest Templates tab
@@ -54,16 +79,10 @@ test.describe('Quest Template Management', () => {
   });
 
   test('Guild Master edits an existing quest template', async ({ page }) => {
-    // Create family and login
-    await createFamilyAndLogin(page);
+    // Create family and character
+    await setupUserWithCharacter(page, 'template-edit', { characterClass: 'MAGE' });
 
-    // Create character
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Sir Editor');
-    await page.click('[data-testid="class-MAGE"]');
-    await page.click('[data-testid="create-character-button"]');
-
-    // Wait for dashboard
+    // Should be on dashboard
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Quest Templates
@@ -109,16 +128,10 @@ test.describe('Quest Template Management', () => {
   });
 
   test('Guild Master deactivates and reactivates a quest template', async ({ page }) => {
-    // Create family and login
-    await createFamilyAndLogin(page);
+    // Create family and character
+    await setupUserWithCharacter(page, 'template-toggle', { characterClass: 'RANGER' });
 
-    // Create character
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Sir Toggle');
-    await page.click('[data-testid="class-RANGER"]');
-    await page.click('[data-testid="create-character-button"]');
-
-    // Wait for dashboard
+    // Should be on dashboard
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Quest Templates
@@ -162,16 +175,10 @@ test.describe('Quest Template Management', () => {
   });
 
   test('Guild Master deletes a quest template', async ({ page }) => {
-    // Create family and login
-    await createFamilyAndLogin(page);
+    // Create family and character
+    await setupUserWithCharacter(page, 'template-delete', { characterClass: 'ROGUE' });
 
-    // Create character
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Sir Deleter');
-    await page.click('[data-testid="class-ROGUE"]');
-    await page.click('[data-testid="create-character-button"]');
-
-    // Wait for dashboard
+    // Should be on dashboard
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Quest Templates
@@ -215,16 +222,10 @@ test.describe('Quest Template Management', () => {
   });
 
   test('Active templates appear in quest creation modal', async ({ page }) => {
-    // Create family and login
-    await createFamilyAndLogin(page);
+    // Create family and character
+    await setupUserWithCharacter(page, 'template-quest', { characterClass: 'HEALER' });
 
-    // Create character
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Sir Quester');
-    await page.click('[data-testid="class-HEALER"]');
-    await page.click('[data-testid="create-character-button"]');
-
-    // Wait for dashboard
+    // Should be on dashboard
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Quest Templates and create a custom template
@@ -262,37 +263,35 @@ test.describe('Quest Template Management', () => {
   });
 
   test('Hero users cannot access Quest Templates tab', async ({ page }) => {
-    // First, create a family as Guild Master
-    const { familyCode } = await createFamilyAndLogin(page);
-
-    // Create character for Guild Master
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Guild Master');
-    await page.click('[data-testid="class-KNIGHT"]');
-    await page.click('[data-testid="create-character-button"]');
+    // Create family and character as Guild Master
+    await setupUserWithCharacter(page, 'template-gm', { characterClass: 'KNIGHT' });
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Verify Guild Master can see Quest Templates tab
     await expect(page.getByText('Quest Templates')).toBeVisible();
+
+    // Get the family code for joining
+    const familyCode = await getFamilyCode(page);
 
     // Logout
     await page.click('text=Logout');
     await expect(page).toHaveURL(/.*\/$/);
 
     // Register as a Hero (child) user
+    const timestamp = Date.now();
     await page.click('a[href="/auth/register"]');
-    await page.fill('[data-testid="email-input"]', 'hero@test.com');
+    await page.fill('[data-testid="email-input"]', `hero-${timestamp}@test.com`);
     await page.fill('[data-testid="password-input"]', 'password123');
     await page.fill('[data-testid="display-name-input"]', 'Hero User');
     await page.fill('[data-testid="family-code-input"]', familyCode);
     await page.click('[data-testid="register-button"]');
 
     // Create character for Hero
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Hero Character');
-    await page.click('[data-testid="class-MAGE"]');
-    await page.click('[data-testid="create-character-button"]');
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expect(page).toHaveURL(/.*character\/create/, { timeout: 15000 });
+    await page.fill('input#characterName', 'Hero Character');
+    await page.click('[data-testid="class-mage"]');
+    await page.click('button:text("Begin Your Quest")');
+    await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });
 
     // Verify Hero CANNOT see Quest Templates tab
     await expect(page.getByText('Quest Templates')).not.toBeVisible();
