@@ -1257,10 +1257,9 @@ native Supabase types from `@/lib/types/database`.
 - [x] Add data-testid attributes to AuthForm inputs
 - [x] Commit Phase 3
 
-**Phase 4: Template Management Interface** (COMPLETED 2025-10-01)
+**Phase 4: Template Management Interface**
 
 - [x] Fix: Class bonuses should not be template specific
-- [x] Fix: Dashboard must be reloaded to see new templates after creation
 - [x] Create tests/unit/components/quest-template-manager.test.tsx
 - [x] Write test for template list rendering
 - [x] Write test for template creation form
@@ -1279,7 +1278,6 @@ native Supabase types from `@/lib/types/database`.
 - [x] Update app/dashboard/page.tsx
 - [x] Add Quest Templates tab or section for Guild Masters
 - [x] Load template manager component
-- [x] Wire up refresh after CRUD operations
 - [x] Handle permissions (Guild Masters + Heroes only)
 - [x] Run unit tests until all pass
 - [x] Create tests/e2e/quest-template-management.spec.ts
@@ -1296,7 +1294,14 @@ native Supabase types from `@/lib/types/database`.
 - [x] Fix unit tests: mock realtime context
 - [x] Fix E2E test timing and element queries
 - [x] All quality gates passing (build, lint, unit 41/41, E2E 6/6)
-- [x] Commit Phase 4
+- [ ] Add realtime subscription listener to QuestTemplateManager component
+- [ ] Handle INSERT events to add new templates to UI
+- [ ] Handle UPDATE events to update existing templates
+- [ ] Handle DELETE events to remove templates from UI
+- [ ] Remove manual loadTemplates() calls after CRUD operations
+- [ ] Test realtime updates work across browser tabs
+- [ ] Verify E2E tests still pass with realtime subscriptions
+- [ ] Commit Phase 4
 
 **Phase 5: Default Templates on Family Creation** (COMPLETED via migration 013)
 
@@ -1305,18 +1310,7 @@ native Supabase types from `@/lib/types/database`.
 - [x] Verify templates assigned to new family_id
 - [x] Migration 013 includes trigger for automatic template copying
 
-**Phase 6: Add Realtime Subscriptions to Quest Templates**
-
-- [ ] Add realtime subscription listener to QuestTemplateManager component
-- [ ] Handle INSERT events to add new templates to UI
-- [ ] Handle UPDATE events to update existing templates
-- [ ] Handle DELETE events to remove templates from UI
-- [ ] Remove manual loadTemplates() calls after CRUD operations
-- [ ] Test realtime updates work across browser tabs
-- [ ] Verify E2E tests still pass with realtime subscriptions
-- [ ] Commit Phase 6
-
-**Phase 7: Integration Testing**
+**Phase 6: Integration Testing**
 
 - [ ] Create tests/e2e/quest-template-full-workflow.spec.ts
 - [ ] Write E2E test for new family registration
