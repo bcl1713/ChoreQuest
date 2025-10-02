@@ -8,6 +8,7 @@ import {
   QuestCategory,
   QuestTemplate,
 } from "@/lib/types/database";
+import { questTemplateService } from "@/lib/quest-template-service";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestCreateModalProps {
@@ -127,9 +128,15 @@ export default function QuestCreateModal({
           return;
         }
 
-        // Create quest from template (we'll implement this when templates are available)
-        setError("Template creation not yet implemented in current migration");
-        return;
+        // Create quest from template using quest template service
+        await questTemplateService.createQuestFromTemplate(
+          selectedTemplateId,
+          user.id,
+          {
+            assignedToId: assignedToId || undefined,
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          }
+        );
       } else {
         if (!title.trim() || !description.trim()) {
           setError("Please fill in all required fields");
@@ -208,6 +215,7 @@ export default function QuestCreateModal({
             {/* Mode Selection */}
             <div className="flex mb-6">
               <button
+                data-testid="template-mode-button"
                 onClick={() => setMode("template")}
                 className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-colors ${
                   mode === "template"
@@ -218,6 +226,7 @@ export default function QuestCreateModal({
                 From Template
               </button>
               <button
+                data-testid="adhoc-mode-button"
                 onClick={() => setMode("adhoc")}
                 className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-colors ${
                   mode === "adhoc"
@@ -234,10 +243,12 @@ export default function QuestCreateModal({
                 <>
                   {/* Template Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-2">
+                    <label htmlFor="template-select" className="block text-sm font-medium text-gray-200 mb-2">
                       Select Template
                     </label>
                     <select
+                      id="template-select"
+                      data-testid="template-select"
                       value={selectedTemplateId}
                       onChange={(e) => setSelectedTemplateId(e.target.value)}
                       className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
@@ -255,7 +266,7 @@ export default function QuestCreateModal({
 
                   {/* Template Preview */}
                   {selectedTemplate && (
-                    <div className="bg-dark-800 p-4 rounded-lg">
+                    <div data-testid="template-preview" className="bg-dark-800 p-4 rounded-lg">
                       <h4 className="font-medium text-gray-100 mb-2">
                         {selectedTemplate.title}
                       </h4>
@@ -335,6 +346,7 @@ export default function QuestCreateModal({
                         Difficulty
                       </label>
                       <select
+                        data-testid="quest-difficulty-select"
                         value={difficulty}
                         onChange={(e) =>
                           setDifficulty(e.target.value as QuestDifficulty)
@@ -385,10 +397,11 @@ export default function QuestCreateModal({
               {/* Common Fields */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">
+                  <label htmlFor="assign-to" className="block text-sm font-medium text-gray-200 mb-2">
                     Assign To (Optional)
                   </label>
                   <select
+                    id="assign-to"
                     value={assignedToId}
                     onChange={(e) => setAssignedToId(e.target.value)}
                     className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
@@ -403,10 +416,11 @@ export default function QuestCreateModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">
+                  <label htmlFor="due-date" className="block text-sm font-medium text-gray-200 mb-2">
                     Due Date (Optional)
                   </label>
                   <input
+                    id="due-date"
                     type="datetime-local"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
@@ -425,6 +439,7 @@ export default function QuestCreateModal({
               <div className="flex gap-4 justify-end">
                 <button
                   type="button"
+                  data-testid="cancel-quest-button"
                   onClick={handleClose}
                   className="px-6 py-2 border border-gray-600 rounded-lg text-gray-400 hover:text-gray-200 hover:border-gray-500 transition-colors"
                 >
@@ -432,6 +447,7 @@ export default function QuestCreateModal({
                 </button>
                 <button
                   type="submit"
+                  data-testid="submit-quest-button"
                   disabled={loading}
                   className="px-6 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >

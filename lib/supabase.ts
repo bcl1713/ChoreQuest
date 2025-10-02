@@ -22,7 +22,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    // Suppress debug warnings for expected auth states (no session, invalid refresh token)
+    debug: false
   },
   realtime: {
     params: {

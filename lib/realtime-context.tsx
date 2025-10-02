@@ -17,6 +17,7 @@ import { useAuth } from './auth-context';
 // Event types for realtime updates
 export type RealtimeEventType =
   | 'quest_updated'
+  | 'quest_template_updated'
   | 'character_updated'
   | 'reward_redemption_updated'
   | 'family_member_updated';
@@ -35,11 +36,13 @@ export interface RealtimeContextType {
   lastEvent: RealtimeEvent | null;
   // Event listeners
   onQuestUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
+  onQuestTemplateUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   onCharacterUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   onRewardRedemptionUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   onFamilyMemberUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   // Manual refresh triggers
   refreshQuests: () => void;
+  refreshQuestTemplates: () => void;
   refreshCharacters: () => void;
   refreshRewards: () => void;
 }
@@ -69,6 +72,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
   // Event listener management using refs to avoid dependency issues
   const questListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
+  const questTemplateListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const characterListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const rewardListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const familyMemberListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
@@ -132,6 +136,26 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
           };
           setLastEvent(event);
           questListeners.current.forEach(listener => listener(event));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quest_templates',
+          filter: `family_id=eq.${familyId}`
+        },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          const event: RealtimeEvent = {
+            type: 'quest_template_updated',
+            table: 'quest_templates',
+            action: payload.eventType,
+            record: payload.new,
+            old_record: payload.old
+          };
+          setLastEvent(event);
+          questTemplateListeners.current.forEach(listener => listener(event));
         }
       )
       .on(
@@ -270,6 +294,13 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     };
   }, []);
 
+  const onQuestTemplateUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
+    questTemplateListeners.current.add(callback);
+    return () => {
+      questTemplateListeners.current.delete(callback);
+    };
+  }, []);
+
   const onCharacterUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
     characterListeners.current.add(callback);
     return () => {
@@ -296,6 +327,10 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     window.dispatchEvent(new CustomEvent('refreshQuests'));
   }, []);
 
+  const refreshQuestTemplates = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('refreshQuestTemplates'));
+  }, []);
+
   const refreshCharacters = useCallback(() => {
     window.dispatchEvent(new CustomEvent('refreshCharacters'));
   }, []);
@@ -309,10 +344,12 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     connectionError,
     lastEvent,
     onQuestUpdate,
+    onQuestTemplateUpdate,
     onCharacterUpdate,
     onRewardRedemptionUpdate,
     onFamilyMemberUpdate,
     refreshQuests,
+    refreshQuestTemplates,
     refreshCharacters,
     refreshRewards,
   };
