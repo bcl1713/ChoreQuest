@@ -129,7 +129,7 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 
 ##### Phase 8.5: Critical Bug Fixes from Manual Testing - IN PROGRESS
 
-**Bug 1: Delete vs Deactivate buttons do the same thing - COMPLETED** ✅
+**Bug 1: Delete vs Deactivate buttons do the same thing - IN PROGRESS**
 Following template blueprint pattern for consistency:
 - [x] Create migration to remove FK constraint on reward_redemptions.reward_id
 - [x] Create migration to add reward_name, reward_description, reward_type to redemptions
@@ -142,8 +142,9 @@ Following template blueprint pattern for consistency:
 - [x] Remove activateReward() method (use updateReward instead)
 - [x] Update E2E tests to expect new behaviors
 - [x] Run quality gates (build ✓, lint ✓, unit 50/50 ✓)
-- [ ] Manual testing of toggle and delete (READY FOR TESTING)
-- [x] Committed (2 commits: migrations + implementation)
+- [ ] Run E2E tests (server restarted, running now...)
+- [ ] Manual testing of toggle and delete
+- [x] Committed (3 commits: migrations + implementation + tasks update)
 
 **Bug 2: No GM approval/denial UI for reward redemptions**
 - [ ] Move handleApproval logic from reward-store.tsx to reward-manager.tsx

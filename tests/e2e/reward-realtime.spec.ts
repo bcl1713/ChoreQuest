@@ -124,13 +124,13 @@ test.describe('Reward Realtime Updates', () => {
     await rewardCard1.locator('[data-testid="delete-reward-button"]').click();
     await page1.click('[data-testid="confirm-delete-button"]');
 
-    // Verify reward is deactivated on page1 (soft delete - shown with opacity-50)
-    await expect(rewardCard1).toHaveClass(/opacity-50/);
+    // Verify reward is permanently deleted on page1 (hard delete - removed from UI)
+    await expect(rewardCard1).not.toBeVisible();
 
-    // Page 2: Verify reward is deactivated automatically (soft delete)
+    // Page 2: Verify reward is deleted automatically (hard delete via realtime)
     const rewardCard2 = page2.locator('[data-testid^="reward-card-"]').filter({
       hasText: 'Delete Test',
     });
-    await expect(rewardCard2).toHaveClass(/opacity-50/, { timeout: 5000 });
+    await expect(rewardCard2).not.toBeVisible({ timeout: 5000 });
   });
 });
