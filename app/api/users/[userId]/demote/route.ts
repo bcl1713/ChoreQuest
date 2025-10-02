@@ -12,10 +12,10 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const targetUserId = params.userId;
+    const { userId: targetUserId } = await params;
 
     // Get authorization header
     const authHeader = request.headers.get('authorization');

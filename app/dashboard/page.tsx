@@ -10,6 +10,7 @@ import QuestCreateModal from '@/components/quest-create-modal';
 import RewardStore from '@/components/reward-store';
 import { QuestTemplateManager } from '@/components/quest-template-manager';
 import RewardManager from '@/components/reward-manager';
+import { FamilyManagement } from '@/components/family-management';
 import { QuestTemplate } from '@/lib/types/database';
 import { supabase } from '@/lib/supabase';
 
@@ -19,7 +20,7 @@ export default function Dashboard() {
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
   const { onQuestTemplateUpdate } = useRealtime();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates' | 'reward-management'>('quests');
+  const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates' | 'reward-management' | 'family'>('quests');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -316,6 +317,18 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">⚙️ Reward Management</span>
                 <span className="sm:hidden">⚙️ Manage</span>
               </button>
+              <button
+                onClick={() => setActiveTab('family')}
+                data-testid="tab-family"
+                className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
+                  activeTab === 'family'
+                    ? 'bg-gold-600 text-white'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
+                }`}
+              >
+                <span className="hidden sm:inline">👥 Family Management</span>
+                <span className="sm:hidden">👥 Family</span>
+              </button>
             </>
           )}
         </div>
@@ -341,6 +354,8 @@ export default function Dashboard() {
           <QuestTemplateManager />
         ) : activeTab === 'reward-management' ? (
           <RewardManager />
+        ) : activeTab === 'family' ? (
+          <FamilyManagement />
         ) : null}
 
         {/* Quest Create Modal */}
