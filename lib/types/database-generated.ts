@@ -325,13 +325,6 @@ export type Database = {
             referencedRelation: "families"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "quest_instances_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "quest_templates"
-            referencedColumns: ["id"]
-          },
         ]
       }
       quest_templates: {
@@ -396,7 +389,10 @@ export type Database = {
           id: string
           notes: string | null
           requested_at: string | null
+          reward_description: string | null
           reward_id: string | null
+          reward_name: string | null
+          reward_type: string | null
           status: string | null
           user_id: string | null
         }
@@ -408,7 +404,10 @@ export type Database = {
           id?: string
           notes?: string | null
           requested_at?: string | null
+          reward_description?: string | null
           reward_id?: string | null
+          reward_name?: string | null
+          reward_type?: string | null
           status?: string | null
           user_id?: string | null
         }
@@ -420,7 +419,10 @@ export type Database = {
           id?: string
           notes?: string | null
           requested_at?: string | null
+          reward_description?: string | null
           reward_id?: string | null
+          reward_name?: string | null
+          reward_type?: string | null
           status?: string | null
           user_id?: string | null
         }
@@ -430,13 +432,6 @@ export type Database = {
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reward_redemptions_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "rewards"
             referencedColumns: ["id"]
           },
           {
@@ -834,45 +829,34 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
-// Convenience type aliases
-export type QuestInstance = Tables<'quest_instances'>
-export type QuestTemplate = Tables<'quest_templates'>
-export type Character = Tables<'characters'>
-export type UserProfile = Tables<'user_profiles'>
-export type Family = Tables<'families'>
-export type Reward = Tables<'rewards'>
-export type RewardRedemption = Tables<'reward_redemptions'>
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      boss_battle_status: ["ACTIVE", "DEFEATED", "EXPIRED"],
+      character_class: ["KNIGHT", "MAGE", "RANGER", "ROGUE", "HEALER"],
+      quest_category: ["DAILY", "WEEKLY", "BOSS_BATTLE"],
+      quest_difficulty: ["EASY", "MEDIUM", "HARD"],
+      quest_status: [
+        "PENDING",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "APPROVED",
+        "EXPIRED",
+      ],
+      reward_type: ["SCREEN_TIME", "PRIVILEGE", "PURCHASE", "EXPERIENCE"],
+      transaction_type: [
+        "QUEST_REWARD",
+        "BOSS_VICTORY",
+        "STORE_PURCHASE",
+        "REWARD_REFUND",
+        "BONUS_AWARD",
+        "SOS_HELP",
+      ],
+      user_role: ["GUILD_MASTER", "HERO", "YOUNG_HERO"],
+    },
+  },
+} as const
 
-// Enum types
-export type QuestDifficulty = Enums<'quest_difficulty'>
-export type QuestStatus = Enums<'quest_status'>
-export type QuestCategory = Enums<'quest_category'>
-export type CharacterClass = Enums<'character_class'>
-export type UserRole = Enums<'user_role'>
-export type RewardType = Enums<'reward_type'>
-
-// Class bonus structure for quest templates
-export interface ClassBonuses {
-  KNIGHT?: { xp?: number; gold?: number; gems?: number; honor?: number };
-  MAGE?: { xp?: number; gold?: number; gems?: number; honor?: number };
-  RANGER?: { xp?: number; gold?: number; gems?: number; honor?: number };
-  ROGUE?: { xp?: number; gold?: number; gems?: number; honor?: number };
-  HEALER?: { xp?: number; gold?: number; gems?: number; honor?: number };
-}
-
-// Template-specific types for operations
-export type QuestTemplateWithBonuses = QuestTemplate & {
-  class_bonuses: ClassBonuses | null;
-};
-
-export type CreateQuestTemplateInput = TablesInsert<'quest_templates'> & {
-  class_bonuses?: ClassBonuses;
-};
-
-export type UpdateQuestTemplateInput = TablesUpdate<'quest_templates'> & {
-  class_bonuses?: ClassBonuses;
-};
-
-// Reward-specific types for operations
-export type CreateRewardInput = TablesInsert<'rewards'>;
-export type UpdateRewardInput = TablesUpdate<'rewards'>;
