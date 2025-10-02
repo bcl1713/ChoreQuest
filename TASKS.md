@@ -356,19 +356,22 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Integration testing (42/42 E2E tests passing)
 - [x] Quality assurance (build, lint, unit 41/41, E2E 42/42 all passing)
 
-### Phase 8: Manual Testing (IN PROGRESS)
+### Phase 8: Manual Testing
 
-- [ ] Create family, verify default templates loaded
-- [ ] Create custom template with all fields
-- [ ] Edit template, verify changes persist
-- [ ] Deactivate template, verify it hides from quest creation
-- [ ] Create quest from template
-- [ ] Complete quest, verify class bonuses work
-- [ ] Test on mobile viewport
-- [ ] Test with different character classes
-- [ ] Document any issues found
-- [ ] Fix any issues found
-- [ ] Commit manual testing fixes
+- [x] Create family, verify default templates loaded
+- [x] Create custom template with all fields
+- [x] Edit template, verify changes persist
+- [x] Deactivate template, verify it hides from quest creation
+- [x] Create quest from template
+- [x] Complete quest, verify class bonuses work
+- [x] Test on mobile viewport
+- [x] Test with different character classes
+
+### Phase 8.5: Bug Fixes from Manual Testing
+
+- [ ] Fix invalid refresh token console error on home page before login
+- [ ] Fix template reactivation not appearing in quest creation dropdown without refresh
+- [ ] Fix template deletion failing with empty error object (deleteError: {})
 
 ### Phase 9: Documentation & Memory
 
