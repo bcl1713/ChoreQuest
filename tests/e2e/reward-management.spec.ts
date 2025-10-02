@@ -160,8 +160,8 @@ test.describe('Reward Management', () => {
     await expect(page.getByTestId('delete-confirmation-dialog')).toBeVisible();
     await page.click('[data-testid="confirm-delete-button"]');
 
-    // Verify reward is deactivated (soft delete - shown with reduced opacity)
-    await expect(rewardCard).toHaveClass(/opacity-50/);
+    // Verify reward is permanently deleted (removed from UI entirely)
+    await expect(rewardCard).not.toBeVisible();
   });
 
   test('Validates reward form inputs', async ({ page }) => {

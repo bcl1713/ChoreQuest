@@ -63,11 +63,10 @@ describe("RewardService", () => {
   });
 
   describe("getRewardsForFamily", () => {
-    it("should fetch all active rewards for a family", async () => {
-      const mockRewards = [mockReward];
+    it("should fetch all rewards for a family (active and inactive)", async () => {
+      const mockRewards = [mockReward, { ...mockReward, id: "reward-789", is_active: false }];
 
       mockSelect.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValueOnce({ eq: mockEq });
       mockEq.mockResolvedValueOnce({ data: mockRewards, error: null });
 
       const result = await service.getRewardsForFamily(mockFamilyId);
@@ -75,13 +74,11 @@ describe("RewardService", () => {
       expect(mockFrom).toHaveBeenCalledWith("rewards");
       expect(mockSelect).toHaveBeenCalledWith("*");
       expect(mockEq).toHaveBeenCalledWith("family_id", mockFamilyId);
-      expect(mockEq).toHaveBeenCalledWith("is_active", true);
       expect(result).toEqual(mockRewards);
     });
 
     it("should return empty array when no rewards exist", async () => {
       mockSelect.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValueOnce({ eq: mockEq });
       mockEq.mockResolvedValueOnce({ data: null, error: null });
 
       const result = await service.getRewardsForFamily(mockFamilyId);
@@ -93,7 +90,6 @@ describe("RewardService", () => {
       const mockError = { message: "Database error" };
 
       mockSelect.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValueOnce({ eq: mockEq });
       mockEq.mockResolvedValueOnce({ data: null, error: mockError });
 
       await expect(service.getRewardsForFamily(mockFamilyId)).rejects.toThrow(
@@ -182,29 +178,34 @@ describe("RewardService", () => {
   });
 
   describe("deleteReward", () => {
-    it("should soft delete a reward by setting is_active to false", async () => {
-      const deletedReward = { ...mockReward, is_active: false };
+    let mockDelete: jest.Mock;
 
-      mockUpdate.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValue({ select: mockSelect });
-      mockSelect.mockReturnValue({ single: mockSingle });
-      mockSingle.mockResolvedValue({ data: deletedReward, error: null });
+    beforeEach(() => {
+      mockDelete = jest.fn();
+      mockFrom.mockReturnValue({
+        select: mockSelect,
+        insert: mockInsert,
+        update: mockUpdate,
+        delete: mockDelete,
+      });
+    });
 
-      const result = await service.deleteReward(mockRewardId);
+    it("should hard delete a reward (permanently removes from database)", async () => {
+      mockDelete.mockReturnValue({ eq: mockEq });
+      mockEq.mockResolvedValue({ data: null, error: null });
+
+      await service.deleteReward(mockRewardId);
 
       expect(mockFrom).toHaveBeenCalledWith("rewards");
-      expect(mockUpdate).toHaveBeenCalledWith({ is_active: false });
+      expect(mockDelete).toHaveBeenCalled();
       expect(mockEq).toHaveBeenCalledWith("id", mockRewardId);
-      expect(result).toEqual(deletedReward);
     });
 
     it("should throw error when deletion fails", async () => {
       const mockError = { message: "Deletion failed" };
 
-      mockUpdate.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValue({ select: mockSelect });
-      mockSelect.mockReturnValue({ single: mockSingle });
-      mockSingle.mockResolvedValue({ data: null, error: mockError });
+      mockDelete.mockReturnValue({ eq: mockEq });
+      mockEq.mockResolvedValue({ data: null, error: mockError });
 
       await expect(service.deleteReward(mockRewardId)).rejects.toThrow(
         "Failed to delete reward: Deletion failed"
@@ -212,34 +213,4 @@ describe("RewardService", () => {
     });
   });
 
-  describe("activateReward", () => {
-    it("should reactivate a soft-deleted reward", async () => {
-      const activatedReward = { ...mockReward, is_active: true };
-
-      mockUpdate.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValue({ select: mockSelect });
-      mockSelect.mockReturnValue({ single: mockSingle });
-      mockSingle.mockResolvedValue({ data: activatedReward, error: null });
-
-      const result = await service.activateReward(mockRewardId);
-
-      expect(mockFrom).toHaveBeenCalledWith("rewards");
-      expect(mockUpdate).toHaveBeenCalledWith({ is_active: true });
-      expect(mockEq).toHaveBeenCalledWith("id", mockRewardId);
-      expect(result).toEqual(activatedReward);
-    });
-
-    it("should throw error when activation fails", async () => {
-      const mockError = { message: "Activation failed" };
-
-      mockUpdate.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValue({ select: mockSelect });
-      mockSelect.mockReturnValue({ single: mockSingle });
-      mockSingle.mockResolvedValue({ data: null, error: mockError });
-
-      await expect(service.activateReward(mockRewardId)).rejects.toThrow(
-        "Failed to activate reward: Activation failed"
-      );
-    });
-  });
 });

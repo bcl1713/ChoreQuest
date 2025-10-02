@@ -8,16 +8,15 @@ import { Reward, CreateRewardInput, UpdateRewardInput } from "@/lib/types/databa
 
 export class RewardService {
   /**
-   * Get all active rewards for a family
+   * Get all rewards for a family (active and inactive)
    * @param familyId - The family ID to fetch rewards for
-   * @returns Array of active rewards
+   * @returns Array of all rewards
    */
   async getRewardsForFamily(familyId: string): Promise<Reward[]> {
     const { data, error } = await supabase
       .from("rewards")
       .select("*")
-      .eq("family_id", familyId)
-      .eq("is_active", true);
+      .eq("family_id", familyId);
 
     if (error) {
       throw new Error(`Failed to fetch rewards: ${error.message}`);
@@ -70,42 +69,20 @@ export class RewardService {
   }
 
   /**
-   * Soft delete a reward by setting is_active to false
+   * Hard delete a reward (permanently removes from database)
+   * Safe because reward_redemptions no longer has FK constraint
+   * Redemptions preserve reward details and survive deletion
    * @param rewardId - The reward ID to delete
-   * @returns The deleted reward
    */
-  async deleteReward(rewardId: string): Promise<Reward> {
-    const { data, error } = await supabase
+  async deleteReward(rewardId: string): Promise<void> {
+    const { error } = await supabase
       .from("rewards")
-      .update({ is_active: false })
-      .eq("id", rewardId)
-      .select()
-      .single();
+      .delete()
+      .eq("id", rewardId);
 
     if (error) {
       throw new Error(`Failed to delete reward: ${error.message}`);
     }
-
-    return data;
   }
 
-  /**
-   * Reactivate a soft-deleted reward
-   * @param rewardId - The reward ID to activate
-   * @returns The activated reward
-   */
-  async activateReward(rewardId: string): Promise<Reward> {
-    const { data, error } = await supabase
-      .from("rewards")
-      .update({ is_active: true })
-      .eq("id", rewardId)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to activate reward: ${error.message}`);
-    }
-
-    return data;
-  }
 }

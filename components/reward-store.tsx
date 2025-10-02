@@ -163,12 +163,17 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
     try {
       // Create reward redemption in Supabase
+      // Copy reward details into redemption for independent transaction history
+      // Follows same blueprint pattern as quest instances from templates
       const { error: redemptionError } = await supabase
         .from('reward_redemptions')
         .insert({
           user_id: user.id,
-          reward_id: reward.id,
+          reward_id: reward.id, // Blueprint reference only (not a FK)
           cost: reward.cost,
+          reward_name: reward.name,
+          reward_description: reward.description,
+          reward_type: reward.type,
           status: 'PENDING',
           notes: notes || null,
         });

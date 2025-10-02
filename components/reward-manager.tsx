@@ -114,11 +114,10 @@ export default function RewardManager() {
 
   const handleToggleActive = async (reward: Reward) => {
     try {
-      if (reward.is_active) {
-        await rewardService.deleteReward(reward.id);
-      } else {
-        await rewardService.activateReward(reward.id);
-      }
+      // Toggle is_active field directly (like templates)
+      await rewardService.updateReward(reward.id, {
+        is_active: !reward.is_active,
+      });
     } catch (err) {
       console.error("Failed to toggle reward status:", err);
       setError("Failed to update reward status");
