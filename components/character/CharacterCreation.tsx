@@ -7,6 +7,7 @@ import { Character, CharacterClass } from '@/lib/types/database';
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
+  initialCharacterName?: string;
 }
 
 const characterClasses = [
@@ -47,8 +48,8 @@ const characterClasses = [
   }
 ];
 
-export default function CharacterCreation({ onCharacterCreated }: CharacterCreationProps) {
-  const [name, setName] = useState('');
+export default function CharacterCreation({ onCharacterCreated, initialCharacterName = '' }: CharacterCreationProps) {
+  const [name, setName] = useState(initialCharacterName);
   const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

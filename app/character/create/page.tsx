@@ -9,7 +9,7 @@ import { Character } from '@/lib/types/database';
 
 export default function CreateCharacterPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, characterName } = useAuth();
   const { refreshCharacter } = useCharacter();
 
   useEffect(() => {
@@ -53,7 +53,10 @@ export default function CreateCharacterPage() {
           </p>
         </div>
         
-        <CharacterCreation onCharacterCreated={handleCharacterCreated} />
+        <CharacterCreation
+          onCharacterCreated={handleCharacterCreated}
+          initialCharacterName={characterName}
+        />
       </div>
     </div>
   );

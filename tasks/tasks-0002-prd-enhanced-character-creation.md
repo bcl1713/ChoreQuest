@@ -43,22 +43,22 @@ Generated from: `tasks/0002-prd-enhanced-character-creation.md`
     - All required fields (name, description, icon, bonuses) are present
   - [x] 1.5 Run `npx jest lib/constants/character-classes.test.ts` to verify tests pass
 
-- [ ] 2.0 Update Character Name Flow (Family Creation/Join → Character Creation)
-  - [ ] 2.1 Update `lib/auth-context.tsx`:
+- [x] 2.0 Update Character Name Flow (Family Creation/Join → Character Creation)
+  - [x] 2.1 Update `lib/auth-context.tsx`:
     - Add `characterName` state to `AuthProvider`
     - Add `setCharacterName(name: string)` method to context
     - Store character name when `createFamily()` is called (from `userName` field)
     - Store character name when `register()` is called (from `name` field)
-  - [ ] 2.2 Update `app/auth/create-family/page.tsx`:
+  - [x] 2.2 Update `app/auth/create-family/page.tsx`:
     - After successful `createFamily()`, call `setCharacterName(data.userName)` before navigation
-  - [ ] 2.3 Update `app/auth/register/page.tsx`:
+  - [x] 2.3 Update `app/auth/register/page.tsx`:
     - After successful `register()`, call `setCharacterName(data.name)` before navigation
-  - [ ] 2.4 Update `components/character/CharacterCreation.tsx`:
+  - [x] 2.4 Update `components/character/CharacterCreation.tsx`:
     - Add optional `initialCharacterName?: string` prop
     - Pre-fill character name input with `initialCharacterName` if provided
     - Make name field editable (user can change pre-filled value)
     - Validate that name is still required even if pre-filled
-  - [ ] 2.5 Update character creation page to pass `characterName` from auth context to `CharacterCreation` component
+  - [x] 2.5 Update character creation page to pass `characterName` from auth context to `CharacterCreation` component
 
 - [ ] 3.0 Build Enhanced Character Creation UI with Class Bonus Display
   - [ ] 3.1 Update `components/character/CharacterCreation.tsx` to import `CHARACTER_CLASSES` from constants

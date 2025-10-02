@@ -8,7 +8,7 @@ import AuthForm from '@/components/auth/AuthForm';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { user, register, isLoading, error } = useAuth();
+  const { user, register, isLoading, error, setCharacterName } = useAuth();
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -27,12 +27,24 @@ export default function RegisterPage() {
     );
   }
 
+  const handleRegister = async (data: { name: string; email: string; password: string; familyCode: string }) => {
+    try {
+      await register(data);
+      // Store character name for pre-filling in character creation
+      setCharacterName(data.name);
+      // Navigation will be handled by auth state change
+    } catch (err) {
+      // Error will be handled by register function
+      console.error('Register - Registration failed:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <AuthForm
           type="register"
-          onSubmit={register}
+          onSubmit={handleRegister}
           isLoading={isLoading}
           error={error}
         />

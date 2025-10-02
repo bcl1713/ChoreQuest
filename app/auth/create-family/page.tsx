@@ -8,7 +8,7 @@ import AuthForm from '@/components/auth/AuthForm';
 
 export default function CreateFamilyPage() {
   const router = useRouter();
-  const { user, family, createFamily, isLoading, error } = useAuth();
+  const { user, family, createFamily, isLoading, error, setCharacterName } = useAuth();
 
   useEffect(() => {
     if (user && !isLoading) {
@@ -19,6 +19,8 @@ export default function CreateFamilyPage() {
   const handleCreateFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
     try {
       await createFamily(data);
+      // Store character name for pre-filling in character creation
+      setCharacterName(data.userName);
       // Navigate to character creation after successful family creation
       // New Guild Masters need to create their character before accessing dashboard
       window.location.href = '/character/create';
