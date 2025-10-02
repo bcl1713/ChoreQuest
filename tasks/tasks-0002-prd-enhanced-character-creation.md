@@ -60,24 +60,24 @@ Generated from: `tasks/0002-prd-enhanced-character-creation.md`
     - Validate that name is still required even if pre-filled
   - [x] 2.5 Update character creation page to pass `characterName` from auth context to `CharacterCreation` component
 
-- [ ] 3.0 Build Enhanced Character Creation UI with Class Bonus Display
-  - [ ] 3.1 Update `components/character/CharacterCreation.tsx` to import `CHARACTER_CLASSES` from constants
-  - [ ] 3.2 Replace hardcoded `characterClasses` array with imported `CHARACTER_CLASSES` configuration
-  - [ ] 3.3 Update class card display to show accurate bonus information:
+- [x] 3.0 Build Enhanced Character Creation UI with Class Bonus Display
+  - [x] 3.1 Update `components/character/CharacterCreation.tsx` to import `CHARACTER_CLASSES` from constants
+  - [x] 3.2 Replace hardcoded `characterClasses` array with imported `CHARACTER_CLASSES` configuration
+  - [x] 3.3 Update class card display to show accurate bonus information:
     - Display XP bonus if > 1.0 (e.g., "1.2" → "+20% XP on all quests")
     - Display Gold bonus if > 1.0 (e.g., "1.15" → "+15% Gold on all quests")
     - Display Honor bonus if > 1.0 (e.g., "1.25" → "+25% Honor Points on all quests")
     - Display Gems bonus if > 1.0 (e.g., "1.3" → "+30% Gems on all quests")
     - Show "No [type] bonus" for multipliers = 1.0
-  - [ ] 3.4 Update class card layout for mobile responsiveness:
+  - [x] 3.4 Update class card layout for mobile responsiveness:
     - Desktop: Grid layout (3 columns for 5 classes)
     - Mobile (<768px): Horizontal scrollable/swipeable card layout
-  - [ ] 3.5 Implement mobile swipe functionality:
+  - [x] 3.5 Implement mobile swipe functionality:
     - Use CSS `scroll-snap-type: x mandatory` for snap scrolling
     - Add visual scroll indicators (dots or arrows) showing current position
     - Ensure touch-friendly card sizes (minimum 44px touch targets)
-  - [ ] 3.6 Add bonus formatting helper function to convert multipliers to percentage display (e.g., `1.2 → "+20%"`)
-  - [ ] 3.7 Update class descriptions to be more accurate and remove outdated "quest type" references
+  - [x] 3.6 Add bonus formatting helper function to convert multipliers to percentage display (e.g., `1.2 → "+20%"`)
+  - [x] 3.7 Update class descriptions to be more accurate and remove outdated "quest type" references
 
 - [ ] 4.0 Update E2E Tests for New Character Name Flow
   - [ ] 4.1 Review `tests/e2e/character-creation.spec.ts`:
