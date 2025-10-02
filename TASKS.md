@@ -129,7 +129,7 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 
 ##### Phase 8.5: Critical Bug Fixes from Manual Testing - IN PROGRESS
 
-**Bug 1: Delete vs Deactivate buttons do the same thing - IN PROGRESS**
+**Bug 1: Delete vs Deactivate buttons do the same thing - COMPLETED** ✅
 Following template blueprint pattern for consistency:
 - [x] Create migration to remove FK constraint on reward_redemptions.reward_id
 - [x] Create migration to add reward_name, reward_description, reward_type to redemptions
@@ -142,9 +142,11 @@ Following template blueprint pattern for consistency:
 - [x] Remove activateReward() method (use updateReward instead)
 - [x] Update E2E tests to expect new behaviors
 - [x] Run quality gates (build ✓, lint ✓, unit 50/50 ✓)
-- [ ] Run E2E tests (server restarted, running now...)
-- [ ] Manual testing of toggle and delete
-- [x] Committed (3 commits: migrations + implementation + tasks update)
+- [x] Run E2E tests (reward-management 5/5 ✓, reward-realtime 3/3 ✓, reward-store 4/4 ✓)
+- [x] Manual testing of toggle and delete - PASSED ✅
+- [x] Committed (4 commits: migrations + implementation + tasks + E2E test fix)
+
+**RESULT**: Toggle and Delete buttons now work correctly with distinct behaviors!
 
 **Bug 2: No GM approval/denial UI for reward redemptions**
 - [ ] Move handleApproval logic from reward-store.tsx to reward-manager.tsx
@@ -154,6 +156,16 @@ Following template blueprint pattern for consistency:
 - [ ] Show redemption history with status (pending/approved/denied/fulfilled)
 - [ ] Add realtime updates for redemption status changes
 - [ ] Update tests to cover approval workflow
+
+**Bug 3: Reward redemptions broken after migration changes** 🚨
+Error: "Failed to load redemptions: {}" in reward-store.tsx:87
+Root cause: Migration added new columns (reward_name, reward_description, reward_type) to reward_redemptions
+Impact: Reward store fails to load redemption history
+- [ ] Investigate query error - likely missing columns in SELECT or RLS policy issue
+- [ ] Fix redemption loading query to handle new schema
+- [ ] Verify existing redemptions still work
+- [ ] Test redemption creation with new denormalized fields
+- [ ] Update any affected queries/services
 
 ##### Phase 9: Documentation - COMPLETED
 - [x] Create serena memory: reward_management_system_implementation
