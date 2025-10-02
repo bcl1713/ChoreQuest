@@ -26,6 +26,9 @@ export interface TestUser {
 export interface SetupOptions {
   characterClass?: 'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER';
   skipCharacterCreation?: boolean;
+  email?: string;
+  password?: string;
+  userName?: string;
 }
 
 /**
@@ -51,7 +54,15 @@ export async function setupUserWithCharacter(
   prefix: string,
   options: SetupOptions = {}
 ): Promise<TestUser> {
-  const user = createTestUser(prefix);
+  const user = options.email && options.password
+    ? {
+        email: options.email,
+        password: options.password,
+        userName: options.userName || `${prefix} User`,
+        familyName: `${prefix} Family`,
+        characterName: `${prefix} Character`,
+      }
+    : createTestUser(prefix);
   const characterClass = options.characterClass || 'KNIGHT';
 
   // Clear browser state
