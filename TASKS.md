@@ -79,11 +79,11 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Create feature branch feature/reward-management-system
 - [x] Update TASKS.md with detailed subtasks
 
-##### Phase 2: Database & Realtime Setup
-- [ ] Create migration to add rewards to realtime publication
-- [ ] Create migration to set rewards REPLICA IDENTITY FULL
-- [ ] Verify RLS policies support CRUD operations
-- [ ] Test migrations
+##### Phase 2: Database & Realtime Setup - COMPLETED
+- [x] Create migration to add rewards to realtime publication
+- [x] Create migration to set rewards REPLICA IDENTITY FULL
+- [x] Verify RLS policies support CRUD operations
+- [x] Test migrations
 
 ##### Phase 3: Reward Service Layer (TDD)
 - [ ] Write unit tests for RewardService (getRewardsForFamily, createReward, updateReward, deleteReward, activateReward)
