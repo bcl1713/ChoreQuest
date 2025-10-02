@@ -10,6 +10,9 @@ import { supabase } from "@/lib/supabase";
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
+    auth: {
+      getSession: jest.fn(),
+    },
   },
 }));
 
@@ -41,6 +44,16 @@ describe("UserService", () => {
   const mockTargetUserId = "user-789";
 
   beforeEach(() => {
+    // Mock Supabase auth session
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: {
+        session: {
+          access_token: mockToken,
+          user: { id: mockUserId },
+        },
+      },
+    });
+
     // Setup localStorage with mock token
     localStorageMock.setItem(
       "chorequest-auth",
@@ -170,7 +183,10 @@ describe("UserService", () => {
     });
 
     it("should throw error if not authenticated", async () => {
-      localStorageMock.clear();
+      // Mock no session
+      (supabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: null },
+      });
 
       await expect(
         userService.promoteToGuildMaster(mockTargetUserId)
@@ -254,7 +270,10 @@ describe("UserService", () => {
     });
 
     it("should throw error if not authenticated", async () => {
-      localStorageMock.clear();
+      // Mock no session
+      (supabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: null },
+      });
 
       await expect(userService.demoteToHero(mockTargetUserId)).rejects.toThrow(
         "Authentication required"

@@ -52,15 +52,15 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 
 ### Core Features for 0.2.0
 
-#### Multi-Guild Master System
+#### Multi-Guild Master System - COMPLETED 2025-10-02
 
-- [ ] Update API role checks to support multiple Guild Masters per family
-- [ ] Create user promotion endpoint
-- [ ] Create user demotion endpoint with last-GM safeguards
-- [ ] Update quest-templates API for multiple Guild Masters
-- [ ] Update quest-instances APIs for multiple Guild Masters
-- [ ] Create Guild Master management UI
-- [ ] Add safeguard logic preventing demotion of last Guild Master
+- [x] Update API role checks to support multiple Guild Masters per family
+- [x] Create user promotion endpoint
+- [x] Create user demotion endpoint with last-GM safeguards
+- [x] Update quest-templates API for multiple Guild Masters
+- [x] Update quest-instances APIs for multiple Guild Masters
+- [x] Create Guild Master management UI
+- [x] Add safeguard logic preventing demotion of last Guild Master
 
 #### Quest Template Management System - COMPLETED 2025-10-01
 
