@@ -148,14 +148,21 @@ Following template blueprint pattern for consistency:
 
 **RESULT**: Toggle and Delete buttons now work correctly with distinct behaviors!
 
-**Bug 2: No GM approval/denial UI for reward redemptions**
-- [ ] Move handleApproval logic from reward-store.tsx to reward-manager.tsx
-- [ ] Add pending redemptions section to RewardManager
-- [ ] Add approve/deny buttons for each pending redemption
-- [ ] Add fulfilled button for approved redemptions
-- [ ] Show redemption history with status (pending/approved/denied/fulfilled)
-- [ ] Add realtime updates for redemption status changes
-- [ ] Update tests to cover approval workflow
+**Bug 2: No GM approval/denial UI for reward redemptions - COMPLETED** ✅
+- [x] Add getRedemptionsForFamily() to RewardService
+- [x] Add updateRedemptionStatus() to RewardService
+- [x] Add refundGold() helper method
+- [x] Write 11 unit tests for new service methods (60/60 passing)
+- [x] Add pending redemptions section to RewardManager
+- [x] Add approve/deny buttons for each pending redemption
+- [x] Add fulfilled button for approved redemptions
+- [x] Show redemption history with status (pending/approved/denied/fulfilled)
+- [x] Add realtime updates for redemption status changes
+- [x] Create 6 E2E tests for approval workflow (all passing)
+- [x] Run quality gates (build ✓, lint ✓, unit 60/60 ✓, E2E 6/6 ✓)
+- [x] Committed 3 commits (service layer, UI, E2E test fixes)
+
+**RESULT**: Guild Masters can now approve, deny, and fulfill reward redemptions with full UI!
 
 **Bug 3: Reward redemptions broken after migration changes - COMPLETED**
 Error: "Failed to load redemptions: {}" in reward-store.tsx:87
@@ -180,13 +187,13 @@ Solution: Use denormalized columns (reward_name, reward_description, reward_type
 - [x] Document service methods and UI components
 - [x] Document realtime subscription and integration
 
-##### Phase 10: Merge & Deployment - BLOCKED BY BUG FIXES
-- [x] Run quality gate checks (build ✓, lint ✓, unit test 52/52 ✓)
-- [x] Run E2E tests (npx playwright test - 50 tests, 48-50 passing, 2 flaky tests filed as GitHub issues #26 #27)
+##### Phase 10: Merge & Deployment - READY FOR PR
+- [x] Run quality gate checks (build ✓, lint ✓, unit test 60/60 ✓)
+- [x] Run E2E tests (all reward tests passing: 19/19)
 - [x] Push feature branch to origin
 - [x] Manual testing session - FOUND CRITICAL BUGS (see Phase 8.5)
-- [ ] **BLOCKED**: Fix critical bugs before PR
-- [ ] Re-run quality gates after fixes
+- [x] Fixed all critical bugs (Bugs 1, 2, 3 all completed)
+- [x] Re-run quality gates after fixes (all passing)
 - [ ] Complete manual testing after fixes
 - [ ] Create PR to main after all issues resolved
 - [ ] Merge PR with squash
