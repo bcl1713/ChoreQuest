@@ -118,9 +118,13 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Run npm run test (52/52 unit tests passing - PASSED)
 - [x] Fix TypeScript errors (RealtimeEventType, ESLint warnings)
 
-##### Phase 8: Manual Testing & Bug Fixes - SKIPPED
-- Manual testing deferred to post-merge validation
-- E2E tests provide comprehensive coverage
+##### Phase 8: E2E and Manual Testing - PENDING
+- [ ] Run npx playwright test (all E2E tests pass)
+- [ ] Manual testing: Test reward CRUD operations
+- [ ] Manual testing: Test realtime updates across browser windows
+- [ ] Manual testing: Test on mobile viewport
+- [ ] Fix any bugs found
+- [ ] Rerun quality gates after fixes
 
 ##### Phase 9: Documentation - COMPLETED
 - [x] Create serena memory: reward_management_system_implementation
@@ -128,10 +132,12 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Document service methods and UI components
 - [x] Document realtime subscription and integration
 
-##### Phase 10: Merge & Deployment - IN PROGRESS
-- [x] Run final quality gate checks (build, lint, test all passing)
-- [ ] Push feature branch
-- [ ] Create PR to main
+##### Phase 10: Merge & Deployment - READY FOR TESTING
+- [x] Run quality gate checks (build ✓, lint ✓, unit test 52/52 ✓)
+- [x] Push feature branch to origin
+- [ ] **NEXT**: Run E2E tests (npx playwright test)
+- [ ] **NEXT**: Manual testing session
+- [ ] Create PR to main after testing complete
 - [ ] Merge PR with squash
 - [ ] Delete feature branch
 
