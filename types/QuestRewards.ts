@@ -8,7 +8,7 @@ export interface CalculatedRewards {
   gold: number;
   xp: number;
   gems: number;
-  honorPoints: number;
+  honor_points: number;
   levelUp?: {
     newLevel: number;
     previousLevel: number;

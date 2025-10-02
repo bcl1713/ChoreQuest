@@ -26,118 +26,24 @@ A fantasy RPG-themed family chore management system that transforms household ta
 
 ## 🚀 Getting Started
 
-### 🐳 Production Deployment (Recommended)
+### 🐳 Quick Start for Production
 
-**Ready to deploy? ChoreQuest v0.1.0 includes zero-interaction Docker deployment!**
+ChoreQuest can be deployed in three ways depending on your needs:
 
-#### Option 1: Portainer Deployment (Easiest)
+- **Option A**: Local Supabase (fastest for development/testing)
+- **Option B**: Hosted Supabase (easiest for production, no infrastructure)
+- **Option C**: Self-hosted Supabase (full control, runs in Docker)
 
-1. **Copy the production docker-compose.yml**:
-   ```yaml
-   services:
-     postgres:
-       image: postgres:16-alpine
-       container_name: chorequest-postgres
-       environment:
-         POSTGRES_DB: chorequest
-         POSTGRES_USER: chorequest_user
-         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chorequest_secure_password}
-       ports:
-         - "5432:5432"
-       volumes:
-         - postgres_data:/var/lib/postgresql/data
-       networks:
-         - chorequest
-       healthcheck:
-         test: ["CMD-SHELL", "pg_isready -U chorequest_user -d chorequest"]
-         interval: 10s
-         timeout: 5s
-         retries: 5
-         start_period: 30s
-       restart: unless-stopped
-
-     web:
-       build: https://github.com/your-username/chorequest.git#v0.1.0
-       container_name: chorequest-app
-       ports:
-         - "3000:3000"
-       environment:
-         - DATABASE_URL=postgresql://chorequest_user:${POSTGRES_PASSWORD:-chorequest_secure_password}@postgres:5432/chorequest?schema=public
-         - JWT_SECRET=${JWT_SECRET:-CHANGE_THIS_IN_PRODUCTION_VERY_IMPORTANT}
-         - JWT_EXPIRES_IN=7d
-         - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-CHANGE_THIS_NEXTAUTH_SECRET_TOO}
-         - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
-         - NODE_ENV=production
-         - NEXT_TELEMETRY_DISABLED=1
-       depends_on:
-         postgres:
-           condition: service_healthy
-       networks:
-         - chorequest
-       restart: unless-stopped
-       healthcheck:
-         test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-         interval: 30s
-         timeout: 10s
-         retries: 3
-         start_period: 60s
-
-   volumes:
-     postgres_data:
-       driver: local
-   networks:
-     chorequest:
-       driver: bridge
-   ```
-
-2. **Deploy in Portainer**:
-   - Create new stack
-   - Paste the compose file above
-   - Set environment variables (see Security section below)
-   - Deploy!
-
-3. **Visit your application**:
-   Open [http://your-server:3000](http://your-server:3000)
-
-#### Option 2: Command Line Deployment
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/chorequest.git
-cd chorequest
-
-# Set up environment variables (IMPORTANT!)
-export POSTGRES_PASSWORD="your_secure_database_password"
-export JWT_SECRET="your_super_secure_jwt_secret_32_chars_min"
-export NEXTAUTH_SECRET="your_nextauth_secret_32_chars_minimum"
-export NEXTAUTH_URL="https://your-domain.com"
-
-# Deploy with production compose
-docker compose -f docker-compose.prod.yml up -d
-
-# Visit http://localhost:3000
-```
-
-### 🔒 Security Configuration (IMPORTANT!)
-
-**⚠️ Before deployment, set these environment variables in Portainer:**
-
-```bash
-# Generate secure random values for production
-POSTGRES_PASSWORD=your_secure_database_password
-JWT_SECRET=your_super_secure_jwt_secret_32_chars_min
-NEXTAUTH_SECRET=your_nextauth_secret_32_chars_minimum
-NEXTAUTH_URL=https://your-domain.com  # Your actual domain
-```
+**👉 See the [Production Deployment](#-production-deployment) section below for complete step-by-step instructions for all three options, including Portainer deployment.**
 
 ### ✨ What Happens Automatically
 
 When you deploy ChoreQuest with Docker:
 
-1. **🗄️ Database Setup**: PostgreSQL automatically initializes with schema
-2. **🔄 Migrations**: Database migrations run automatically on startup
-3. **🌱 Sample Data**: If database is empty, sample family data is created
-4. **🔍 Health Checks**: Container monitors application and database health
+1. **🗄️ Database Detection**: Automatically checks if database is initialized
+2. **🔄 Migrations**: Runs all Supabase migrations if needed
+3. **🌱 Demo Data**: Seeds demo family data on first run
+4. **🔍 Health Checks**: Monitors application health
 5. **🚀 Ready to Use**: Visit the URL and start creating your family guild!
 
 ### 🔧 Development Setup
@@ -270,6 +176,218 @@ ChoreQuest follows Test-Driven Development (TDD) principles:
 - **E2E Tests (5%)**: Complete user workflows
 
 Target: **80%+ code coverage** across all modules.
+
+## 🚀 Production Deployment
+
+ChoreQuest can be deployed using three different Supabase options. All options use the same ChoreQuest Docker container, which automatically initializes the database on first run.
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Git (for cloning the repository)
+
+### Deployment Options
+
+#### Option A: Local Supabase CLI (Development/Testing)
+
+**Best for:** Quick local development and testing
+
+```bash
+# 1. Start local Supabase
+npx supabase start
+
+# 2. Get credentials
+npx supabase status
+# Copy: API URL, anon key, service_role key
+
+# 3. Configure ChoreQuest
+cp .env.production.example .env.production
+# Edit .env.production with credentials from step 2
+
+# 4. Build and deploy ChoreQuest
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+
+# 5. Access application
+# ChoreQuest: http://localhost:3000
+# Database auto-initializes on first run
+```
+
+#### Option B: Hosted Supabase (supabase.com)
+
+**Best for:** Production deployments without infrastructure management
+
+```bash
+# 1. Create Supabase project
+# Go to https://supabase.com and create a new project
+
+# 2. Get credentials from Supabase Dashboard
+# Project Settings → API
+# Copy: Project URL, anon/public key, service_role key
+# ⚠️ Use "anon key" not "publishable key" (JWT format: eyJ...)
+
+# 3. Run database migrations
+# In Supabase Dashboard → SQL Editor
+# Copy and run each migration from supabase/migrations/*.sql in order
+
+# 4. Configure ChoreQuest
+cp .env.production.example .env.production
+# Edit .env.production with credentials from step 2
+
+# 5. Build and deploy ChoreQuest
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+
+# 6. Access application
+# ChoreQuest: http://localhost:3000
+```
+
+#### Option C: Self-Hosted Supabase Docker (Full Control)
+
+**Best for:** Production deployments with full infrastructure control
+
+This is a **two-step process**: First deploy Supabase, then deploy ChoreQuest.
+
+**Step 1: Deploy Supabase**
+
+```bash
+# 1. Configure Supabase
+cd supabase-docker
+cp .env.example .env
+# Edit .env and CHANGE DEFAULT PASSWORDS!
+
+# 2. Start Supabase
+docker compose up -d
+
+# Wait 30-60 seconds for services to start
+docker compose ps  # Verify all services are healthy
+
+# 3. Access Supabase Studio
+# Open: http://localhost:8000
+# Login: supabase / this_password_is_insecure_and_should_be_updated
+# ⚠️ Change these credentials immediately!
+
+# 4. Get API credentials from .env file
+# The keys are already in your supabase-docker/.env file
+cd supabase-docker
+cat .env | grep -E "ANON_KEY=|SERVICE_ROLE_KEY="
+# Copy these JWT tokens (starting with eyJ...)
+```
+
+**Step 2: Deploy ChoreQuest**
+
+```bash
+# 5. Configure ChoreQuest
+cd ..  # Back to project root
+cp .env.production.example .env.production
+
+# Edit .env.production with the following:
+# IMPORTANT: Client needs localhost, server needs container name
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000  # For browser
+SUPABASE_INTERNAL_URL=http://supabase-kong:8000  # For server-side migrations
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-from-supabase/.env>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key-from-supabase/.env>
+
+# 6. Build ChoreQuest with Supabase credentials
+docker compose --env-file .env.production -f docker-compose.prod.yml build
+
+# 7. Deploy ChoreQuest
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+
+# 8. Verify deployment
+# ChoreQuest: http://localhost:3000
+# Supabase Studio: http://localhost:8000
+# Database auto-initializes and migrates on first run
+```
+
+### Portainer Deployment
+
+**Works with all three Supabase options**
+
+1. **Setup Supabase** (choose your option):
+   - Option A: Run `npx supabase start` on your server
+   - Option B: Create project at supabase.com
+   - Option C: Deploy Supabase stack in Portainer first
+
+2. **Get Supabase credentials** (see option-specific instructions above)
+
+3. **Deploy ChoreQuest in Portainer**:
+   - Stacks → Add Stack
+   - Name: `chorequest`
+   - Build method: **Repository**
+   - Repository URL: `https://github.com/your-org/ChoreQuest`
+   - Compose path: `docker-compose.prod.yml`
+
+4. **Add Environment Variables**:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+   ```
+
+5. **Deploy Stack**
+
+6. **Verify**: Access ChoreQuest at `http://your-server:3000`
+
+### Important Notes
+
+⚠️ **Supabase Keys:** Always use the "anon key" from Supabase, NOT the "publishable key". The correct key is a JWT token (3 parts separated by dots, starting with `eyJ...`).
+
+⚠️ **Security:** For production deployments:
+- Change all default passwords (Option C)
+- Use HTTPS with SSL/TLS certificates
+- Set up regular database backups
+- Review and secure all environment variables
+- Keep Docker images updated
+
+⚠️ **Database Initialization:** The ChoreQuest container automatically:
+- Detects if the database is initialized
+- Runs all migrations from `supabase/migrations/` if needed
+- Seeds demo data from `supabase/seed.sql` if needed
+- Skips initialization if database already exists
+
+### Troubleshooting
+
+**Build fails with "Missing NEXT_PUBLIC_SUPABASE_URL"**
+- Ensure your `.env.production` file has all required variables
+- Variables must be set at build time (can't be added after building)
+
+**"Invalid family code" for all codes**
+- Check that you're using the "anon key" not "publishable key"
+- Verify the key is a JWT token (starts with `eyJ...`)
+
+**Database tables don't exist**
+- Check container logs: `docker logs chorequest-app`
+- Verify Supabase is running and accessible
+- Ensure `SUPABASE_SERVICE_ROLE_KEY` is correctly set
+
+**Can't connect to Supabase**
+- Verify Supabase URL is accessible from the container
+- Check that Supabase services are running: `docker ps` (Option C)
+- Test API: `curl <SUPABASE_URL>/rest/v1/`
+
+**Need to reset the database? (Option C - Self-hosted)**
+
+To completely reset the Supabase database and start fresh:
+
+```bash
+cd supabase-docker
+
+# Stop containers and remove volumes
+docker compose down -v
+
+# Remove persistent data directory (requires sudo)
+sudo rm -rf ./volumes/db/data
+
+# Start fresh
+docker compose up -d
+
+# Restart ChoreQuest to re-run migrations
+cd ..
+docker restart chorequest-app
+```
+
+This will give you a clean database and re-run all migrations on the ChoreQuest app startup.
 
 ## 🎨 Design Philosophy
 

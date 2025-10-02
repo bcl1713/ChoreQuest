@@ -1,61 +1,42 @@
 # ChoreQuest Production Docker Compose
-# Zero-interaction deployment for Portainer or docker-compose
+# Deploys ChoreQuest app only - requires external Supabase instance
+#
+# Usage: docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#
+# Prerequisites:
+# 1. Supabase instance running (local CLI, hosted, or self-hosted Docker)
+# 2. .env.production configured with Supabase credentials
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: chorequest-postgres
-    environment:
-      POSTGRES_DB: chorequest
-      POSTGRES_USER: chorequest_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chorequest_secure_password}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - chorequest
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chorequest_user -d chorequest"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
-
   # ChoreQuest Application
-  web:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: chorequest-app
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     environment:
-      # Database Configuration
-      - DATABASE_URL=postgresql://chorequest_user:${POSTGRES_PASSWORD:-chorequest_secure_password}@postgres:5432/chorequest?schema=public
-
-      # Authentication (CHANGE THESE IN PRODUCTION!)
-      - JWT_SECRET=${JWT_SECRET:-CHANGE_THIS_IN_PRODUCTION_VERY_IMPORTANT}
-      - JWT_EXPIRES_IN=7d
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-CHANGE_THIS_NEXTAUTH_SECRET_TOO}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      # Supabase Configuration (from external instance)
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # Internal server-side URL (for Docker-to-Docker communication)
+      - SUPABASE_INTERNAL_URL=${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
+      # Database credentials for migrations (Option C only)
+      - DB_HOST=${DB_HOST:-supabase-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-postgres}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
 
       # Application Configuration
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
-
-      # Redis Configuration (optional)
-      - REDIS_URL=redis://redis:6379
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - chorequest
+      - PORT=3000
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
@@ -63,36 +44,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  # Redis Cache (Optional - for future real-time features)
-  redis:
-    image: redis:7-alpine
-    container_name: chorequest-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
     networks:
       - chorequest
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-
-# Persistent Data Volumes
-volumes:
-  postgres_data:
-    driver: local
-    name: chorequest_postgres_data
-  redis_data:
-    driver: local
-    name: chorequest_redis_data
+      - supabase_default
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 # Network Configuration
 networks:
   chorequest:
     driver: bridge
     name: chorequest_network
+  supabase_default:
+    external: true
+    name: supabase_default

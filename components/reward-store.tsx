@@ -3,26 +3,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useCharacter } from "@/lib/character-context";
+import { useRealtime } from "@/lib/realtime-context";
+import { supabase } from "@/lib/supabase";
+import { Reward, RewardRedemption, UserProfile } from "@/lib/types/database";
 import { motion } from "framer-motion";
 
-interface Reward {
-  id: string;
-  name: string;
-  description: string;
-  type: 'SCREEN_TIME' | 'PRIVILEGE' | 'PURCHASE' | 'EXPERIENCE';
-  cost: number;
-}
-
-interface RewardRedemption {
-  id: string;
-  status: 'PENDING' | 'APPROVED' | 'FULFILLED' | 'DENIED';
-  requestedAt: string;
-  reward: Reward;
-  user: {
-    id: string;
-    name: string;
-  };
-  notes?: string;
+interface RewardRedemptionWithDetails extends RewardRedemption {
+  rewards: Reward;
+  user_profiles: UserProfile;
 }
 
 
@@ -45,16 +33,17 @@ const REWARD_TYPE_LABELS = {
 };
 
 export default function RewardStore({ onError }: RewardStoreProps) {
-  const { user, token } = useAuth();
+  const { user, session, profile } = useAuth();
   const { character, refreshCharacter } = useCharacter();
+  const { onRewardRedemptionUpdate, onCharacterUpdate } = useRealtime();
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
+  const [redemptions, setRedemptions] = useState<RewardRedemptionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!user || !token || !character) {
+    if (!user || !session || !character || !profile) {
       return;
     }
 
@@ -69,36 +58,37 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       setLoading(true);
 
       try {
-        // Load rewards
-        const rewardsResponse = await fetch('/api/rewards', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Load rewards for the family
+        const { data: rewardsData, error: rewardsError } = await supabase
+          .from('rewards')
+          .select('*')
+          .eq('family_id', profile?.family_id)
+          .eq('is_active', true);
 
-        if (rewardsResponse.ok) {
-          const rewardsData = await rewardsResponse.json();
-          setRewards(rewardsData.rewards);
-        } else {
-          console.error('Failed to load rewards');
+        if (rewardsError) {
+          console.error('Failed to load rewards:', rewardsError);
           onError?.('Failed to load rewards');
+        } else {
+          setRewards(rewardsData || []);
         }
 
-        // Load redemptions
-        const redemptionsResponse = await fetch('/api/rewards/redemptions', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        // Load redemptions with reward and user details
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('reward_redemptions')
+          .select(`
+            *,
+            rewards:reward_id(id, name, description, type, cost),
+            user_profiles:user_id(id, name)
+          `)
+          .eq('rewards.family_id', profile?.family_id)
+          .order('requested_at', { ascending: false });
 
-        if (redemptionsResponse.ok) {
-          const redemptionsData = await redemptionsResponse.json();
-          setRedemptions(redemptionsData.redemptions);
-        } else {
-          console.error('Failed to load redemptions');
+        if (redemptionsError) {
+          console.error('Failed to load redemptions:', redemptionsError);
           onError?.('Failed to load redemption history');
+        } else {
+          // Use Supabase data directly (no transformation needed)
+          setRedemptions(redemptionsData || []);
         }
       } catch (error) {
         console.error('Failed to load data:', error);
@@ -109,12 +99,62 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     };
 
     loadData();
-  }, [user, token, character, onError]); // Proper dependencies - onError is stable via useCallback
+  }, [user, session, character, profile, onError]); // Proper dependencies - onError is stable via useCallback
+
+  // Set up realtime reward redemption listener
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    console.log('Setting up realtime reward redemption listener for RewardStore');
+
+    const unsubscribe = onRewardRedemptionUpdate(async (event) => {
+      console.log('Reward redemption realtime event received:', event);
+
+      // Reload redemptions data to get the full joined data
+      try {
+        const { data: redemptionsData, error: redemptionsError } = await supabase
+          .from('reward_redemptions')
+          .select(`
+            *,
+            rewards:reward_id(id, name, description, type, cost),
+            user_profiles:user_id(id, name)
+          `)
+          .eq('rewards.family_id', profile.family_id)
+          .order('requested_at', { ascending: false });
+
+        if (!redemptionsError && redemptionsData) {
+          setRedemptions(redemptionsData);
+        }
+      } catch (error) {
+        console.error('Failed to reload redemptions after realtime event:', error);
+      }
+    });
+
+    return unsubscribe;
+  }, [user, profile, onRewardRedemptionUpdate]);
+
+  // Set up realtime character update listener for gold changes
+  useEffect(() => {
+    if (!user || !character) return;
+
+    console.log('Setting up realtime character listener for RewardStore');
+
+    const unsubscribe = onCharacterUpdate((event) => {
+      console.log('Character realtime event received in RewardStore:', event);
+
+      // If this is our character, refresh the character context
+      if (event.record?.user_id === user.id) {
+        refreshCharacter();
+      }
+    });
+
+    return unsubscribe;
+  }, [user, character, onCharacterUpdate, refreshCharacter]);
 
   const handleRedeem = async (reward: Reward, notes?: string) => {
-    if (!token || !character) return;
+    if (!user || !character) return;
 
-    if (character.gold < reward.cost) {
+    if ((character.gold || 0) < reward.cost) {
       onError?.('Insufficient gold to redeem this reward');
       return;
     }
@@ -122,46 +162,35 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     setRedeeming(reward.id);
 
     try {
-      const response = await fetch('/api/rewards/redeem', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rewardId: reward.id,
-          notes,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to redeem reward');
-      }
-
-      await response.json();
-
-      // Refresh character data to get updated gold balance
-      await refreshCharacter();
-
-      // Reload redemptions to show new request
-      try {
-        const response = await fetch('/api/rewards/redemptions', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      // Create reward redemption in Supabase
+      const { error: redemptionError } = await supabase
+        .from('reward_redemptions')
+        .insert({
+          user_id: user.id,
+          reward_id: reward.id,
+          cost: reward.cost,
+          status: 'PENDING',
+          notes: notes || null,
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setRedemptions(data.redemptions);
-        }
-      } catch (error) {
-        console.error('Failed to reload redemptions:', error);
+      if (redemptionError) {
+        throw redemptionError;
       }
 
-      // UI will update to show pending status automatically
+      // Update character gold
+      const newGold = (character.gold || 0) - reward.cost;
+      const { error: characterError } = await supabase
+        .from('characters')
+        .update({ gold: newGold })
+        .eq('user_id', user.id);
+
+      if (characterError) {
+        throw characterError;
+      }
+
+      // Character and redemption updates will be handled by realtime subscriptions
+      // Refresh character data to get updated gold balance immediately
+      await refreshCharacter();
 
     } catch (error) {
       console.error('Failed to redeem reward:', error);
@@ -171,44 +200,83 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     }
   };
 
-  const canAfford = (cost: number) => character ? character.gold >= cost : false;
+  const canAfford = (cost: number) => character ? (character.gold || 0) >= cost : false;
 
   const handleApproval = async (redemptionId: string, status: 'APPROVED' | 'DENIED' | 'FULFILLED', notes?: string) => {
-    if (!token) return;
+    if (!user) return;
 
     try {
-      const response = await fetch(`/api/rewards/redemptions/${redemptionId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status, notes }),
-      });
+      // Get the redemption details first if we need to process a refund
+      let redemptionData = null;
+      if (status === 'DENIED') {
+        const { data, error } = await supabase
+          .from('reward_redemptions')
+          .select('*')
+          .eq('id', redemptionId)
+          .single();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update redemption');
-      }
-
-      // Reload redemptions to reflect changes
-      try {
-        const response = await fetch('/api/rewards/redemptions', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setRedemptions(data.redemptions);
+        if (error) {
+          throw error;
         }
-      } catch (error) {
-        console.error('Failed to reload redemptions:', error);
+        redemptionData = data;
       }
 
-      // If this was a refund, refresh character data for all users
+      // Update the redemption status
+      const updateData: {
+        status: string;
+        notes: string | null;
+        approved_at?: string;
+        approved_by?: string;
+        fulfilled_at?: string;
+      } = {
+        status,
+        notes: notes || null,
+      };
+
+      if (status === 'APPROVED') {
+        updateData.approved_at = new Date().toISOString();
+        updateData.approved_by = user.id;
+      } else if (status === 'FULFILLED') {
+        updateData.fulfilled_at = new Date().toISOString();
+      }
+
+      const { error: updateError } = await supabase
+        .from('reward_redemptions')
+        .update(updateData)
+        .eq('id', redemptionId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // If denied, refund the gold
+      if (status === 'DENIED' && redemptionData) {
+        // First get current gold amount
+        const { data: characterData, error: characterError } = await supabase
+          .from('characters')
+          .select('gold')
+          .eq('user_id', redemptionData.user_id)
+          .single();
+
+        if (characterError) {
+          throw characterError;
+        }
+
+        // Update with refunded amount
+        const { error: refundError } = await supabase
+          .from('characters')
+          .update({
+            gold: characterData.gold + redemptionData.cost
+          })
+          .eq('user_id', redemptionData.user_id);
+
+        if (refundError) {
+          throw refundError;
+        }
+      }
+
+      // Character and redemption updates will be handled by realtime subscriptions
+      // If this was a refund, refresh character data immediately
       if (status === 'DENIED') {
         await refreshCharacter();
       }
@@ -223,9 +291,9 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
   const getRedemptionStatus = (rewardId: string) => {
     const pending = redemptions.find(r =>
-      r.reward.id === rewardId &&
-      r.user.id === user?.id &&  // Only check current user's redemptions
-      ['PENDING', 'APPROVED'].includes(r.status)
+      r.rewards.id === rewardId &&
+      r.user_profiles.id === user?.id &&  // Only check current user's redemptions
+      ['PENDING', 'APPROVED'].includes(r.status || '')
     );
     return pending ? pending.status : null;
   };
@@ -245,7 +313,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       {/* Header with Gold Balance */}
       <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-yellow-800">⭐ Reward Store</h2>
+          <h2 className="text-2xl font-bold text-yellow-800" data-testid="reward-store-title">⭐ Reward Store</h2>
           <div className="flex items-center space-x-4">
             {user?.role === 'GUILD_MASTER' && pendingRedemptions.length > 0 && (
               <div className="flex items-center space-x-2 bg-orange-100 px-3 py-1 rounded-full">
@@ -254,7 +322,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
             )}
             <div className="flex items-center space-x-2">
               <span className="text-2xl">🪙</span>
-              <span className="text-xl font-bold text-yellow-700">
+              <span className="text-xl font-bold text-yellow-700" data-testid="gold-balance">
                 {character?.gold || 0} Gold
               </span>
             </div>
@@ -339,7 +407,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
       {rewards.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <p>No rewards available at this time.</p>
+          <p data-testid="no-rewards-message">No rewards available at this time.</p>
         </div>
       )}
 
@@ -355,18 +423,18 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-bold text-gray-900">{redemption.reward.name}</span>
-                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward.type]}</span>
+                      <span className="font-bold text-gray-900">{redemption.rewards.name}</span>
+                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.rewards.type]}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-sm">🪙</span>
-                        <span className="text-sm font-bold text-yellow-600">{redemption.reward.cost}</span>
+                        <span className="text-sm font-bold text-yellow-600">{redemption.rewards.cost}</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-600 mb-2">
-                      <strong>Requested by:</strong> {redemption.user.name}
+                      <strong>Requested by:</strong> {redemption.user_profiles.name}
                     </div>
                     <div className="text-sm text-gray-500 mb-2">
-                      <strong>Request Date:</strong> {new Date(redemption.requestedAt).toLocaleDateString()}
+                      <strong>Request Date:</strong> {redemption.requested_at ? new Date(redemption.requested_at).toLocaleDateString() : 'N/A'}
                     </div>
                     {redemption.notes && (
                       <div className="text-sm text-gray-600 mb-2">
@@ -413,15 +481,15 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward.type]}</span>
-                      <span className="font-medium text-gray-100">{redemption.reward.name}</span>
+                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.rewards.type]}</span>
+                      <span className="font-medium text-gray-100">{redemption.rewards.name}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-gold-400">🪙</span>
-                        <span className="text-sm font-bold gold-text">{redemption.reward.cost}</span>
+                        <span className="text-sm font-bold gold-text">{redemption.rewards.cost}</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-400 mb-2">
-                      Requested by <span className="text-gray-300 font-medium">{redemption.user.name}</span> • {new Date(redemption.requestedAt).toLocaleDateString()}
+                      Requested by <span className="text-gray-300 font-medium">{redemption.user_profiles.name}</span> • {redemption.requested_at ? new Date(redemption.requested_at).toLocaleDateString() : 'N/A'}
                     </div>
                     {redemption.notes && (
                       <div className="text-sm text-gray-300 mb-2 bg-dark-600 p-2 rounded">
@@ -439,7 +507,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                         ? 'bg-blue-900/30 text-blue-300 border-blue-600/50'
                         : 'bg-red-900/30 text-red-300 border-red-600/50'
                     }`}>
-                      {redemption.status.toLowerCase()}
+                      {(redemption.status || 'unknown').toLowerCase()}
                     </div>
                   </div>
                 </div>

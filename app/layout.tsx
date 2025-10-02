@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel, Orbitron } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { CharacterProvider } from "@/lib/character-context";
+import { RealtimeProvider } from "@/lib/realtime-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,9 +43,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${orbitron.variable} antialiased`}
       >
         <AuthProvider>
-          <CharacterProvider>
-            {children}
-          </CharacterProvider>
+          <RealtimeProvider>
+            <CharacterProvider>
+              {children}
+            </CharacterProvider>
+          </RealtimeProvider>
         </AuthProvider>
       </body>
     </html>

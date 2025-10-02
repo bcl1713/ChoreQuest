@@ -30,15 +30,15 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             {user ? (
-              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block">
+              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block" data-testid="enter-realm-button">
                 🏰 Enter Your Realm
               </Link>
             ) : (
               <>
-                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block">
+                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block" data-testid="create-family-button">
                   🏰 Create Family Guild
                 </Link>
-                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block">
+                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block" data-testid="join-guild-button">
                   ⚔️ Join Existing Guild
                 </Link>
               </>
@@ -121,7 +121,7 @@ export default function Home() {
         </p>
         {!user && (
           <p className="text-sm mt-4">
-            <Link href="/auth/login" className="text-primary-400 hover:text-primary-300">
+            <Link href="/auth/login" className="text-primary-400 hover:text-primary-300" data-testid="login-link">
               Already have an account? Login here
             </Link>
           </p>

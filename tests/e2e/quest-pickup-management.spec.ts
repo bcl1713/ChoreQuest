@@ -7,10 +7,16 @@ test.describe('Quest Pickup and Management', () => {
   });
 
   test('Guild Master can pick up available quests', async ({ page }) => {
+    // Capture console logs for debugging
+    const consoleLogs: string[] = [];
+    page.on('console', msg => {
+      consoleLogs.push(`${msg.type().toUpperCase()}: ${msg.text()}`);
+    });
+
     await setupUserWithCharacter(page, 'PickupGM');
 
     // Create unassigned quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await expect(page.locator("text=Create New Quest")).toBeVisible();
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
@@ -25,18 +31,22 @@ test.describe('Quest Pickup and Management', () => {
 
     // Verify quest appears in Available Quests
     await expect(page.getByText('📋 Available Quests')).toBeVisible();
-    await expect(page.getByText('Clean the Kitchen')).toBeVisible();
+    await expect(page.getByText('Clean the Kitchen').first()).toBeVisible();
 
     // Pick up the quest
     const questCard = page.locator('.fantasy-card:has-text("Clean the Kitchen")');
-    const pickupButton = questCard.locator('button:has-text("Pick Up Quest")');
-    await expect(pickupButton).toBeVisible();
-    await pickupButton.click();
+    const pickupButton = questCard.locator('[data-testid="pick-up-quest-button"]');
+    await expect(pickupButton.first()).toBeVisible();
+    await pickupButton.first().click();
     await page.waitForTimeout(2000);
 
     // Verify quest moved to My Quests
     await expect(page.getByText('🗡️ My Quests')).toBeVisible();
     const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
+
+    // Print console logs for debugging
+    console.log('Console logs during quest pickup:', consoleLogs);
+
     await expect(myQuestsSection.getByText('Clean the Kitchen')).toBeVisible();
   });
 
@@ -44,7 +54,7 @@ test.describe('Quest Pickup and Management', () => {
     await setupUserWithCharacter(page, 'PermissionTester');
 
     // Create and pick up a quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
     await page.fill('input[placeholder="Enter quest title..."]', 'Test Permission Quest');
@@ -79,12 +89,14 @@ test.describe('Quest Pickup and Management', () => {
 
   test('quest workflow state transitions', async ({ page }) => {
     await setupUserWithCharacter(page, 'WorkflowTester');
+    const timestamp = Date.now();
 
     // Create quest
-    await page.click('button:text("⚡ Create Quest")');
+    await page.click('[data-testid="create-quest-button"]');
     await page.locator('.fixed button:has-text("Custom Quest")').click();
 
-    await page.fill('input[placeholder="Enter quest title..."]', 'Workflow Test Quest');
+    const questTitle = `Workflow Test Quest ${timestamp}`;
+    await page.fill('input[placeholder="Enter quest title..."]', questTitle);
     await page.fill('textarea[placeholder="Describe the quest..."]', 'Testing quest state transitions');
     await page.fill('input[type="number"]:near(:text("XP Reward"))', "40");
 
@@ -92,20 +104,20 @@ test.describe('Quest Pickup and Management', () => {
     await page.waitForTimeout(2000);
 
     // Verify quest was created and appears somewhere on the page
-    await expect(page.getByText('Workflow Test Quest')).toBeVisible();
+    await expect(page.getByText(questTitle).first()).toBeVisible();
 
     // Look for Available Quests section or quest card
     const availableQuestExists = await page.locator('text=📋 Available Quests').isVisible().catch(() => false);
-    const questCard = page.locator('.fantasy-card:has-text("Workflow Test Quest")');
+    const questCard = page.locator(`.fantasy-card:has-text("${questTitle}")`);
 
     if (availableQuestExists) {
       // Pick up quest if it's in Available Quests
-      await questCard.locator('button:has-text("Pick Up Quest")').click();
+      await questCard.locator('button:has-text("Pick Up Quest")').first().click();
       await page.waitForTimeout(1000);
     }
 
     // Find the quest in My Quests and complete the workflow
-    const myQuestsQuest = page.locator('text=🗡️ My Quests').locator('..').getByText('Workflow Test Quest');
+    const myQuestsQuest = page.locator('text=🗡️ My Quests').locator('..').getByText(questTitle);
     await expect(myQuestsQuest).toBeVisible();
 
     // Complete quest workflow

@@ -16,6 +16,18 @@ export default function CreateFamilyPage() {
     }
   }, [user, isLoading, router]);
 
+  const handleCreateFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
+    try {
+      await createFamily(data);
+      // Navigate to character creation after successful family creation
+      // New Guild Masters need to create their character before accessing dashboard
+      window.location.href = '/character/create';
+    } catch (err) {
+      // Error will be handled by createFamily function
+      console.error('CreateFamily - Family creation failed:', err);
+    }
+  };
+
   if (user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
@@ -32,7 +44,7 @@ export default function CreateFamilyPage() {
       <div className="w-full max-w-md">
         <AuthForm
           type="create-family"
-          onSubmit={createFamily}
+          onSubmit={handleCreateFamily}
           isLoading={isLoading}
           error={error}
         />

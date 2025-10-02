@@ -82,11 +82,16 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
     e.preventDefault();
     setValidationErrors({});
 
+    console.log('AuthForm handleSubmit called, type:', type, 'formData:', formData);
+
     try {
       const schema = getSchema();
       const validatedData = schema.parse(formData);
+      console.log('AuthForm calling onSubmit with:', validatedData);
       await onSubmit(validatedData);
+      console.log('AuthForm onSubmit completed');
     } catch (error) {
+      console.log('AuthForm onSubmit error:', error);
       if (error instanceof z.ZodError) {
         const errors: Record<string, string> = {};
         error.issues.forEach((err) => {
@@ -139,6 +144,7 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
               type={field.type}
               id={field.name}
               name={field.name}
+              data-testid={`input-${field.name}`}
               placeholder={field.placeholder}
               value={formData[field.name] || ''}
               onChange={(e) => handleChange(field.name, e.target.value)}
@@ -159,6 +165,7 @@ export default function AuthForm({ type, onSubmit, isLoading = false, error }: A
 
         <button
           type="submit"
+          data-testid="auth-submit-button"
           disabled={isLoading}
           className="w-full fantasy-button py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed touch-target"
         >

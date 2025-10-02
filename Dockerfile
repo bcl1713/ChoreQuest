@@ -30,11 +30,16 @@ RUN npm ci --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Accept build arguments for Supabase credentials
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Set environment variables for build
+ENV NODE_ENV=production
+ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 
 # Build the application
-ENV NODE_ENV=production
 RUN npm run build
 
 # ============================================================================
@@ -45,6 +50,9 @@ FROM node:20-alpine AS runner
 # Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install required tools for entrypoint script
+RUN apk add --no-cache curl jq postgresql16-client
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
@@ -60,18 +68,17 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy Prisma files for database operations
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/lib/generated ./lib/generated
-
 # Copy package.json for scripts
 COPY --from=builder /app/package*.json ./
 
+# Copy Supabase migrations and seed data for database initialization
+COPY --from=builder /app/supabase ./supabase
+
 # Create entrypoint script for database initialization
-COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
+COPY --from=builder /app/scripts/docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Make entrypoint executable
-RUN chmod +x ./entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 # Set ownership to non-root user
 RUN chown -R nextjs:nodejs /app
@@ -87,7 +94,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
 # Set entrypoint to initialization script
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Default command to start the application
 CMD ["node", "server.js"]

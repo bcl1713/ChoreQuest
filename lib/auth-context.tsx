@@ -1,16 +1,21 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { AuthUser, AuthResponse } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import type { User, Session } from '@supabase/supabase-js';
+import { UserProfile, Family } from '@/lib/types/database';
+
+// Using types from @/lib/types/database
 
 interface AuthContextType {
-  user: AuthUser | null;
-  family: { id: string; name: string; code: string } | null;
-  token: string | null;
+  user: User | null;
+  profile: UserProfile | null;
+  family: Family | null;
+  session: Session | null;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (data: { name: string; email: string; password: string; familyCode: string }) => Promise<void>;
   createFamily: (data: { name: string; email: string; password: string; userName: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -18,68 +23,145 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [family, setFamily] = useState<{ id: string; name: string; code: string } | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [family, setFamily] = useState<Family | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('chorequest-auth');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setUser(parsed.user);
-        setFamily(parsed.family);
-        setToken(parsed.token);
-      } catch {
-        localStorage.removeItem('chorequest-auth');
+  // Load user profile and family data
+  const loadUserData = async (userId: string) => {
+    console.log('AuthContext: loadUserData called for userId:', userId);
+    try {
+      // Get user profile
+      console.log('AuthContext: Fetching user profile...');
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('AuthContext: Error loading user profile:', profileError);
+        return;
       }
+
+      console.log('AuthContext: Profile data loaded:', profileData);
+      setProfile(profileData);
+
+      // Get family data
+      console.log('AuthContext: Fetching family data for family_id:', profileData.family_id);
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .select('*')
+        .eq('id', profileData.family_id)
+        .single();
+
+      if (familyError) {
+        console.error('AuthContext: Error loading family:', familyError);
+        return;
+      }
+
+      console.log('AuthContext: Family data loaded:', familyData);
+      setFamily(familyData);
+    } catch (err) {
+      console.error('AuthContext: Error loading user data:', err);
     }
-    setIsLoading(false);
-  }, []);
+  };
 
-  const storeAuth = (data: { user: AuthUser; token: string; family?: { id: string; name: string; code: string } }) => {
-    const authData = {
-      user: data.user,
-      token: data.token,
-      family: data.family || family
+  // Initialize auth state
+  useEffect(() => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      console.log('AuthContext: Starting auth initialization...');
+      try {
+        // Get initial session
+        console.log('AuthContext: Getting initial session...');
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('AuthContext: Initial session result:', initialSession ? 'Session found' : 'No session');
+
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+
+          if (initialSession?.user) {
+            console.log('AuthContext: Loading user data for user:', initialSession.user.id);
+            await loadUserData(initialSession.user.id);
+            console.log('AuthContext: User data loaded successfully');
+          } else {
+            console.log('AuthContext: No user session, skipping user data load');
+          }
+        }
+      } catch (err) {
+        console.error('AuthContext: Error initializing auth:', err);
+      } finally {
+        if (mounted) {
+          console.log('AuthContext: Setting isLoading to false');
+          setIsLoading(false);
+        }
+      }
     };
-    localStorage.setItem('chorequest-auth', JSON.stringify(authData));
-    setUser(data.user);
-    setToken(data.token);
-    if (data.family) setFamily(data.family);
-  };
 
-  const clearAuth = () => {
-    localStorage.removeItem('chorequest-auth');
-    setUser(null);
-    setFamily(null);
-    setToken(null);
-  };
+    initAuth();
 
-  const makeRequest = async (endpoint: string, data: Record<string, string>): Promise<AuthResponse & { family?: { id: string; name: string; code: string } }> => {
-    setError(null);
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id, 'Creating family:', isCreatingFamily);
+
+        // If we're in the middle of creating a family, ignore auth state changes
+        // to prevent premature navigation before profile creation completes
+        if (isCreatingFamily) {
+          console.log('Ignoring auth state change during family creation');
+          return;
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await loadUserData(session.user.id);
+        } else {
+          setProfile(null);
+          setFamily(null);
+        }
+
+        if (event === 'SIGNED_OUT') {
+          setError(null);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [isCreatingFamily]);
+
+  const clearError = () => setError(null);
+
+  const login = async (credentials: { email: string; password: string }) => {
+    clearError();
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/auth/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      const { error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Authentication failed');
+      if (error) {
+        throw error;
       }
 
-      return result;
+      // User data will be loaded automatically via auth state change
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
       throw err;
     } finally {
@@ -87,31 +169,270 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (credentials: { email: string; password: string }) => {
-    const result = await makeRequest('login', credentials);
-    storeAuth(result);
-  };
-
   const register = async (data: { name: string; email: string; password: string; familyCode: string }) => {
-    const result = await makeRequest('register', data);
-    storeAuth(result);
+    clearError();
+    setIsLoading(true);
+
+    try {
+      console.log('Attempting to register with family code:', data.familyCode);
+
+      // First, verify the family code exists
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .select('id, name, code')
+        .eq('code', data.familyCode)
+        .single();
+
+      console.log('DEBUG: Family lookup result:', { familyData, familyError });
+      console.log('DEBUG: Family error details:', familyError ? {
+        message: familyError.message,
+        details: familyError.details,
+        hint: familyError.hint,
+        code: familyError.code
+      } : 'No error');
+
+      if (familyError || !familyData) {
+        console.error('Family code validation failed:', { familyError, familyData });
+        throw new Error('Invalid family code');
+      }
+
+      console.log('Family code validated successfully:', familyData);
+
+      // Create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Create user profile
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          name: data.name,
+          role: 'YOUNG_HERO',
+          family_id: familyData.id,
+        });
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      // User data will be loaded automatically via auth state change
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const createFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
-    const result = await makeRequest('create-family', data);
-    storeAuth(result);
+    clearError();
+    setIsLoading(true);
+    setIsCreatingFamily(true); // Prevent premature auth state changes
+
+    try {
+      console.log('Starting family creation process...');
+
+      // Generate family code
+      const familyCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      console.log('Generated family code:', familyCode);
+
+      // Create the auth user first
+      console.log('Creating auth user...');
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        console.error('Auth user creation failed:', authError);
+        throw new Error(`User creation failed: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account - no user returned');
+      }
+
+      console.log('Auth user created successfully:', authData.user.id);
+
+      // If user is not automatically signed in (email confirmation required), sign them in
+      if (!authData.session) {
+        console.log('No session from signup, attempting to sign in...');
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+
+        if (signInError) {
+          console.error('Sign in after signup failed:', signInError);
+          throw new Error(`Sign in failed: ${signInError.message}`);
+        }
+
+        console.log('Successfully signed in after signup');
+      }
+
+      // Wait a moment for auth state to settle
+      console.log('Waiting for auth state to settle...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify authentication is properly established
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log('Current authenticated user before family creation:', currentUser?.id);
+
+      if (!currentUser) {
+        throw new Error('User authentication not established properly');
+      }
+
+
+      // Create the family
+      console.log('Creating family with name:', data.name);
+      const { data: familyData, error: familyError } = await supabase
+        .from('families')
+        .insert({
+          name: data.name,
+          code: familyCode,
+        })
+        .select()
+        .single();
+
+      if (familyError) {
+        console.error('Family creation failed:', familyError);
+        console.error('Family error details:', {
+          message: familyError.message,
+          details: familyError.details,
+          hint: familyError.hint,
+          code: familyError.code
+        });
+        throw new Error(`Family creation failed: ${familyError.message}`);
+      }
+
+      console.log('Family created successfully:', familyData);
+
+      // Create user profile with Guild Master role
+      console.log('Creating user profile for:', {
+        id: authData.user.id,
+        email: data.email,
+        name: data.userName,
+        role: 'GUILD_MASTER',
+        family_id: familyData.id
+      });
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          name: data.userName,
+          role: 'GUILD_MASTER',
+          family_id: familyData.id,
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Failed to create user profile:', profileError);
+        console.error('Profile error details:', {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code
+        });
+
+        // Add the error to the page for debugging
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'profile-error-debug';
+        errorDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;';
+        errorDiv.innerHTML = `Profile Error: ${profileError.message}<br>Code: ${profileError.code}<br>Hint: ${profileError.hint || 'None'}`;
+        document.body.appendChild(errorDiv);
+
+        throw new Error(`Profile creation failed: ${profileError.message}`);
+      }
+
+      console.log('Profile data created:', profileData);
+
+      // Verify the profile was actually created and is accessible with RLS
+      console.log('Verifying profile was created and is accessible...');
+      let verificationAttempts = 0;
+      const maxAttempts = 3;
+      let profileVerified = false;
+
+      while (verificationAttempts < maxAttempts && !profileVerified) {
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('user_profiles')
+          .select('id, name, role, family_id')
+          .eq('id', authData.user.id)
+          .single();
+
+        if (verifyData && !verifyError) {
+          console.log('Profile verification successful:', verifyData);
+          profileVerified = true;
+        } else {
+          console.log(`Profile verification attempt ${verificationAttempts + 1} failed:`, verifyError);
+          if (verificationAttempts < maxAttempts - 1) {
+            console.log('Waiting 1 second before retry...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          verificationAttempts++;
+        }
+      }
+
+      if (!profileVerified) {
+        console.error('Profile verification failed after all attempts');
+        throw new Error('Profile creation verification failed. Please try again.');
+      }
+
+      console.log('User profile created and verified successfully for user:', authData.user.id);
+      console.log('Family creation process completed successfully!');
+
+      // Now that everything is complete, manually set the auth state
+      setIsCreatingFamily(false);
+
+      // Get the current session and set auth state
+      const { data: { session: finalSession } } = await supabase.auth.getSession();
+      if (finalSession) {
+        setSession(finalSession);
+        setUser(finalSession.user);
+        await loadUserData(finalSession.user.id);
+        // Set loading to false immediately after setting user state
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error('Family creation process failed:', err);
+      const message = err instanceof Error ? err.message : 'Family creation failed';
+      setError(message);
+      setIsCreatingFamily(false); // Clear flag on error too
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    clearAuth();
-    setError(null);
+  const logout = async () => {
+    clearError();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
     <AuthContext.Provider value={{
       user,
+      profile,
       family,
-      token,
+      session,
       login,
       register,
       createFamily,

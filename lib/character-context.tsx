@@ -2,18 +2,11 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './auth-context';
+import { useRealtime } from './realtime-context';
+import { supabase } from './supabase';
+import { Character } from '@/lib/types/database';
 
-interface Character {
-  id: string;
-  name: string;
-  class: string;
-  level: number;
-  xp: number;
-  gold: number;
-  gems: number;
-  honorPoints: number;
-  avatarUrl?: string;
-}
+// Using Character type from @/lib/types/database
 
 interface CharacterContextType {
   character: Character | null;
@@ -26,38 +19,46 @@ interface CharacterContextType {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
+  const { onCharacterUpdate } = useRealtime();
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
 
   const fetchCharacter = useCallback(async () => {
-    if (!user || !token) {
+    if (!user) {
       setCharacter(null);
       setIsLoading(false);
       // Don't set hasLoaded=true here - we haven't actually tried to fetch
       return;
     }
 
+    console.log('CharacterContext: Fetching character for user:', user.id);
     setIsLoading(true);
     setError(null);
     setHasLoaded(false);
 
     try {
-      const response = await fetch('/api/character', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch character');
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No character found - this is not an error, just no character created yet
+          console.log('CharacterContext: No character found for user');
+          setCharacter(null);
+        } else {
+          throw error;
+        }
+      } else {
+        // Use Supabase data directly
+        console.log('CharacterContext: Character fetched successfully:', data);
+        setCharacter(data);
       }
-
-      setCharacter(data.character);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch character';
       setError(message);
@@ -66,11 +67,36 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       setHasLoaded(true); // Mark as loaded regardless of success/failure
     }
-  }, [user, token]);
+  }, [user]);
 
   useEffect(() => {
     fetchCharacter();
   }, [fetchCharacter]);
+
+  // Set up realtime character update listener to automatically refresh
+  // when character stats change (e.g., after quest approval by Guild Master)
+  useEffect(() => {
+    if (!user || !onCharacterUpdate) return;
+
+    console.log('CharacterContext: Setting up realtime subscription for user:', user.id);
+
+    const unsubscribe = onCharacterUpdate((event) => {
+      console.log('CharacterContext: Received realtime event:', event);
+      console.log('CharacterContext: Current user ID:', user.id);
+      console.log('CharacterContext: Event user ID:', event.record?.user_id);
+
+      // Only refresh if this is our character being updated
+      if (event.record?.user_id === user.id) {
+        console.log('CharacterContext: Event matches current user, refreshing character data');
+        // Automatically refresh character data when realtime event detected
+        fetchCharacter().catch(console.error);
+      } else {
+        console.log('CharacterContext: Event does not match current user, ignoring');
+      }
+    });
+
+    return unsubscribe;
+  }, [user, onCharacterUpdate, fetchCharacter]);
 
   const refreshCharacter = async () => {
     await fetchCharacter();

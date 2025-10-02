@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Family Registration</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug Family Registration</h1>
+    <button onclick="testFamilyLookup()">Test Family Lookup</button>
+    <div id="result"></div>
+
+    <script>
+        const supabaseUrl = 'http://127.0.0.1:54321';
+        const supabaseKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true
+            }
+        });
+
+        async function testFamilyLookup() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+
+            try {
+                console.log('Starting family lookup test...');
+
+                const familyCode = 'A0GX31';
+                console.log('Looking up family code:', familyCode);
+
+                const { data: familyData, error: familyError } = await supabaseClient
+                    .from('families')
+                    .select('id, name, code')
+                    .eq('code', familyCode)
+                    .single();
+
+                console.log('Family lookup result:', { familyData, familyError });
+
+                if (familyError) {
+                    resultDiv.innerHTML = `<h2>Error:</h2><pre>${JSON.stringify(familyError, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<h2>Success:</h2><pre>${JSON.stringify(familyData, null, 2)}</pre>`;
+                }
+            } catch (err) {
+                console.error('Test error:', err);
+                resultDiv.innerHTML = `<h2>Exception:</h2><pre>${err.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

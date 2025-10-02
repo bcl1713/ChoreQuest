@@ -5,7 +5,7 @@ import {
   QuestDifficulty,
   QuestCategory,
   QuestStatus,
-} from "@/lib/generated/prisma";
+} from "@/lib/types/database";
 
 export interface CreateQuestTemplateRequest {
   title: string;

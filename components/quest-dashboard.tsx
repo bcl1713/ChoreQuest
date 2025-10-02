@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { questService } from "@/lib/quest-service";
-import { userService } from "@/lib/user-service";
-import { QuestInstance, QuestDifficulty } from "@/lib/generated/prisma";
-import { User } from "@/types";
+import { useRealtime } from "@/lib/realtime-context";
+import { supabase } from "@/lib/supabase";
+import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
+import { RewardCalculator } from "@/lib/reward-calculator";
 import { motion } from "framer-motion";
 
 interface QuestDashboardProps {
@@ -17,18 +17,19 @@ export default function QuestDashboard({
   onError,
   onLoadQuestsRef,
 }: QuestDashboardProps) {
-  const { user, token } = useAuth();
+  const { user, session, profile } = useAuth();
+  const { onQuestUpdate } = useRealtime();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [familyMembers, setFamilyMembers] = useState<User[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
   const [selectedAssignee, setSelectedAssignee] = useState<{
     [questId: string]: string;
   }>({});
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!user || !token) {
+    if (!user || !session || !profile) {
       if (!user) {
         // If no user, set error state
         setError("User not authenticated");
@@ -48,14 +49,30 @@ export default function QuestDashboard({
       setLoading(true);
 
       try {
-        // Load quests
-        const instancesResult = await questService.getQuestInstances();
-        setQuestInstances(instancesResult.instances);
+        // Load quest instances for the family
+        const { data: questData, error: questError } = await supabase
+          .from('quest_instances')
+          .select('*')
+          .eq('family_id', profile.family_id)
+          .order('created_at', { ascending: false });
+
+        if (questError) {
+          throw questError;
+        }
+
+        setQuestInstances(deduplicateQuests(questData || []));
 
         // Load family members for assignment dropdown
         try {
-          const members = await userService.getFamilyMembers();
-          setFamilyMembers(members);
+          const { data: membersData, error: membersError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('family_id', profile.family_id);
+
+          if (!membersError && membersData) {
+            // Use UserProfile data directly (no transformation needed)
+            setFamilyMembers(membersData);
+          }
         } catch (err) {
           console.error("Failed to load family members:", err);
         }
@@ -70,13 +87,24 @@ export default function QuestDashboard({
     };
 
     loadData();
-  }, [user, token, onError]);
+  }, [user, session, profile, onError]);
 
   const loadQuests = useCallback(async () => {
+    if (!profile) return;
+
     try {
       setLoading(true);
-      const instancesResult = await questService.getQuestInstances();
-      setQuestInstances(instancesResult.instances);
+      const { data: questData, error: questError } = await supabase
+        .from('quest_instances')
+        .select('*')
+        .eq('family_id', profile.family_id)
+        .order('created_at', { ascending: false });
+
+      if (questError) {
+        throw questError;
+      }
+
+      setQuestInstances(deduplicateQuests(questData || []));
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to load quests";
@@ -85,7 +113,19 @@ export default function QuestDashboard({
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [profile, onError]);
+
+  // Helper function to deduplicate quests by ID
+  const deduplicateQuests = (quests: QuestInstance[]): QuestInstance[] => {
+    const seen = new Set<string>();
+    return quests.filter(quest => {
+      if (seen.has(quest.id)) {
+        return false;
+      }
+      seen.add(quest.id);
+      return true;
+    });
+  };
 
   useEffect(() => {
     // Pass the loadQuests function to parent
@@ -94,33 +134,173 @@ export default function QuestDashboard({
     }
   }, [onLoadQuestsRef, loadQuests]);
 
+  // Set up realtime quest update listener
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    const unsubscribe = onQuestUpdate((event) => {
+
+      setQuestInstances(currentQuests => {
+        if (event.action === 'INSERT') {
+          // Check if quest already exists before adding
+          const questExists = currentQuests.some(quest => quest.id === event.record.id);
+          if (questExists) {
+            return currentQuests;
+          }
+          // Add new quest to the list
+          return deduplicateQuests([event.record as QuestInstance, ...currentQuests]);
+        } else if (event.action === 'UPDATE') {
+          // Update existing quest
+          const updatedQuests = currentQuests.map(quest =>
+            quest.id === event.record.id ? { ...quest, ...event.record } as QuestInstance : quest
+          );
+          return deduplicateQuests(updatedQuests);
+        } else if (event.action === 'DELETE') {
+          // Remove quest from the list
+          return currentQuests.filter(quest => quest.id !== event.old_record?.id);
+        }
+        return deduplicateQuests(currentQuests);
+      });
+    });
+
+    return unsubscribe;
+  }, [user, profile, onQuestUpdate]);
+
   const handleStatusUpdate = async (questId: string, status: string) => {
     try {
-      if (status === "APPROVED" && user?.role === "GUILD_MASTER") {
+      if (status === "APPROVED" && profile?.role === "GUILD_MASTER") {
         // Handle quest approval with reward processing
-        const approvalResponse = await questService.approveQuest(questId, user.id);
-        await loadQuests(); // Refresh quest list
-        
-        // Emit a custom event that the dashboard can listen to
+        // First get quest details
+        const { data: questData, error: questError } = await supabase
+          .from('quest_instances')
+          .select('*')
+          .eq('id', questId)
+          .single();
+
+        if (questError) {
+          throw questError;
+        }
+
+        // Update quest status
+        const { error: updateError } = await supabase
+          .from('quest_instances')
+          .update({
+            status: 'APPROVED',
+            approved_at: new Date().toISOString(),
+          })
+          .eq('id', questId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Calculate rewards for events (before character update)
+        let finalRewards = {
+          xp: questData.xp_reward,
+          gold: questData.gold_reward,
+        };
+
+        // Update character stats if quest is assigned
+        if (questData.assigned_to_id) {
+          // First get current character stats and class
+          const { data: characterData, error: characterFetchError } = await supabase
+            .from('characters')
+            .select('xp, gold, level, class')
+            .eq('user_id', questData.assigned_to_id)
+            .single();
+
+          if (characterFetchError) {
+            console.error('Failed to fetch character stats:', characterFetchError);
+          } else {
+            // Calculate rewards using RewardCalculator with class bonuses
+            const baseRewards = {
+              xpReward: questData.xp_reward,
+              goldReward: questData.gold_reward,
+              gemsReward: questData.gems_reward || 0,
+              honorPointsReward: questData.honor_points_reward || 0,
+            };
+
+            const calculatedRewards = RewardCalculator.calculateQuestRewards(
+              baseRewards,
+              questData.difficulty,
+              characterData.class,
+              characterData.level
+            );
+
+            // Update final rewards with calculated values
+            finalRewards = {
+              xp: calculatedRewards.xp,
+              gold: calculatedRewards.gold,
+            };
+
+            // Calculate new stats with proper rewards
+            const newXp = characterData.xp + calculatedRewards.xp;
+            const newGold = characterData.gold + calculatedRewards.gold;
+
+            // Calculate level up using RewardCalculator
+            const levelUpResult = RewardCalculator.calculateLevelUp(
+              characterData.xp,
+              calculatedRewards.xp,
+              characterData.level
+            );
+            const newLevel = levelUpResult ? levelUpResult.newLevel : characterData.level;
+
+            const { error: characterError } = await supabase
+              .from('characters')
+              .update({
+                xp: newXp,
+                gold: newGold,
+                level: newLevel,
+              })
+              .eq('user_id', questData.assigned_to_id);
+
+            if (characterError) {
+              // Throw error to prevent quest from being marked as approved if character update fails
+              throw new Error(`Failed to award rewards: ${characterError.message}`);
+            }
+          }
+        }
+
+        // Character stats updates will be handled by realtime subscriptions
+        // Emit a custom event that the dashboard can listen to for character stats updates
         window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
           detail: {
             questId,
-            rewards: approvalResponse.rewards,
-            characterUpdates: approvalResponse.characterUpdates
+            rewards: finalRewards,
+            characterUpdates: {
+              assigned_to_id: questData.assigned_to_id,
+            }
           }
         }));
-        
+
       } else {
         // Handle other status updates normally
-        await questService.updateQuestStatus(questId, {
+        const updateData: {
+          status: string;
+          completed_at?: string;
+        } = {
           status: status as
             | "PENDING"
             | "IN_PROGRESS"
             | "COMPLETED"
             | "APPROVED"
             | "EXPIRED",
-        });
-        await loadQuests(); // Refresh the list
+        };
+
+        if (status === "COMPLETED") {
+          updateData.completed_at = new Date().toISOString();
+        }
+
+        const { error } = await supabase
+          .from('quest_instances')
+          .update(updateData)
+          .eq('id', questId);
+
+        if (error) {
+          throw error;
+        }
+
+        // Quest updates will be handled automatically by realtime subscriptions
       }
     } catch (err) {
       const errorMsg =
@@ -135,13 +315,24 @@ export default function QuestDashboard({
     if (!user) return;
 
     try {
-      await questService.assignQuest(questId, user.id);
+      const { error } = await supabase
+        .from('quest_instances')
+        .update({
+          assigned_to_id: user.id,
+          status: 'PENDING',
+        })
+        .eq('id', questId)
+        .select();
 
-      //Refresh quest list to show updated assignments
-      await loadQuests();
+      if (error) {
+        throw error;
+      }
+
+      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to pick up quest";
+      console.error('Quest pickup failed:', err);
       setError(errorMsg);
       onError?.(errorMsg);
     }
@@ -152,14 +343,24 @@ export default function QuestDashboard({
     if (!assigneeId) return;
 
     try {
-      await questService.assignQuest(questId, assigneeId);
+      const { error } = await supabase
+        .from('quest_instances')
+        .update({
+          assigned_to_id: assigneeId,
+          status: 'PENDING',
+        })
+        .eq('id', questId);
+
+      if (error) {
+        throw error;
+      }
 
       // Clear the dropdown selection
       setSelectedAssignee((prev) => ({
         ...prev,
         [questId]: "",
       }));
-      await loadQuests();
+      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to assign quest";
@@ -175,8 +376,16 @@ export default function QuestDashboard({
     if (!confirmed) return;
 
     try {
-      await questService.cancelQuest(questId);
-      await loadQuests();
+      const { error } = await supabase
+        .from('quest_instances')
+        .delete()
+        .eq('id', questId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to cancel quest";
@@ -249,13 +458,13 @@ export default function QuestDashboard({
     // Heroes can mark their own quests as IN_PROGRESS or COMPLETED
     if (
       (newStatus === "IN_PROGRESS" || newStatus === "COMPLETED") &&
-      quest.assignedToId === user.id
+      quest.assigned_to_id === user.id
     ) {
       return true;
     }
 
     // Guild masters can approve quests
-    if (newStatus === "APPROVED" && user.role === "GUILD_MASTER") {
+    if (newStatus === "APPROVED" && profile?.role === "GUILD_MASTER") {
       return true;
     }
 
@@ -285,10 +494,10 @@ export default function QuestDashboard({
     );
   }
 
-  const myQuests = questInstances.filter((q) => q.assignedToId === user?.id);
-  const unassignedQuests = questInstances.filter((q) => !q.assignedToId);
+  const myQuests = questInstances.filter((q) => q.assigned_to_id === user?.id);
+  const unassignedQuests = questInstances.filter((q) => !q.assigned_to_id);
   const otherQuests = questInstances.filter(
-    (q) => q.assignedToId && q.assignedToId !== user?.id,
+    (q) => q.assigned_to_id && q.assigned_to_id !== user?.id,
   );
 
   return (
@@ -326,9 +535,9 @@ export default function QuestDashboard({
                     <p className="text-gray-400 text-sm">{quest.description}</p>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status)}`}
+                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
                   >
-                    {quest.status.replace("_", " ")}
+                    {(quest.status || 'PENDING').replace("_", " ")}
                   </span>
                 </div>
 
@@ -337,11 +546,11 @@ export default function QuestDashboard({
                     <span className={getDifficultyColor(quest.difficulty)}>
                       {quest.difficulty}
                     </span>
-                    <span className="text-gold-400">💰 {quest.goldReward}</span>
-                    <span className="xp-text">⚡ {quest.xpReward} XP</span>
-                    {formatDueDate(quest.dueDate) && (
+                    <span className="text-gold-400">💰 {quest.gold_reward}</span>
+                    <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                    {formatDueDate(quest.due_date) && (
                       <span className="text-blue-400">
-                        {formatDueDate(quest.dueDate)}
+                        {formatDueDate(quest.due_date)}
                       </span>
                     )}
                   </div>
@@ -354,6 +563,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "IN_PROGRESS")
                           }
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid="start-quest-button"
                         >
                           Start Quest
                         </button>
@@ -365,6 +575,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "COMPLETED")
                           }
                           className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid="complete-quest-button"
                         >
                           Complete
                         </button>
@@ -376,6 +587,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "APPROVED")
                           }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          data-testid="approve-quest-button"
                         >
                           Approve
                         </button>
@@ -389,7 +601,7 @@ export default function QuestDashboard({
       </section>
 
       {/* Available Quests (for guild masters and unassigned quests) */}
-      {(user?.role === "GUILD_MASTER" || unassignedQuests.length > 0) && (
+      {(profile?.role === "GUILD_MASTER" || unassignedQuests.length > 0) && (
         <section>
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             📋 Available Quests
@@ -413,12 +625,12 @@ export default function QuestDashboard({
                         {quest.difficulty}
                       </span>
                       <span className="text-gold-400">
-                        💰 {quest.goldReward}
+                        💰 {quest.gold_reward}
                       </span>
-                      <span className="xp-text">⚡ {quest.xpReward} XP</span>
-                      {formatDueDate(quest.dueDate) && (
+                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                      {formatDueDate(quest.due_date) && (
                         <span className="text-blue-400">
-                          {formatDueDate(quest.dueDate)}
+                          {formatDueDate(quest.due_date)}
                         </span>
                       )}
                     </div>
@@ -427,10 +639,11 @@ export default function QuestDashboard({
                   {/* Quest Action Buttons */}
                   <div className="flex flex-col gap-3 min-w-[200px]">
                     {/* Hero Pickup Button */}
-                    {user?.role !== "GUILD_MASTER" && (
+                    {profile?.role !== "GUILD_MASTER" && (
                       <button
                         onClick={() => handlePickupQuest(quest.id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                        data-testid="pick-up-quest-button"
                       >
                         <span>⚔️</span>
                         Pick Up Quest
@@ -438,12 +651,13 @@ export default function QuestDashboard({
                     )}
 
                     {/* Guild Master Controls */}
-                    {user?.role === "GUILD_MASTER" && (
+                    {profile?.role === "GUILD_MASTER" && (
                       <div className="space-y-2">
                         {/* GM can also pick up quests */}
                         <button
                           onClick={() => handlePickupQuest(quest.id)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
+                          data-testid="pick-up-quest-button"
                         >
                           <span>⚔️</span>
                           Pick Up Quest
@@ -512,7 +726,7 @@ export default function QuestDashboard({
       )}
 
       {/* Other Family Quests (visible to guild masters) */}
-      {user?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
+      {profile?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
         <section>
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             👥 Family Quests
@@ -536,21 +750,21 @@ export default function QuestDashboard({
                         {quest.difficulty}
                       </span>
                       <span className="text-gold-400">
-                        💰 {quest.goldReward}
+                        💰 {quest.gold_reward}
                       </span>
-                      <span className="xp-text">⚡ {quest.xpReward} XP</span>
-                      {formatDueDate(quest.dueDate) && (
+                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                      {formatDueDate(quest.due_date) && (
                         <span className="text-blue-400">
-                          {formatDueDate(quest.dueDate)}
+                          {formatDueDate(quest.due_date)}
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status)}`}
+                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
                     >
-                      {quest.status.replace("_", " ")}
+                      {(quest.status || 'PENDING').replace("_", " ")}
                     </span>
                     {quest.status === "COMPLETED" &&
                       canUpdateStatus(quest, "APPROVED") && (
@@ -559,6 +773,7 @@ export default function QuestDashboard({
                             handleStatusUpdate(quest.id, "APPROVED")
                           }
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors mt-2 block"
+                          data-testid="approve-quest-button"
                         >
                           Approve
                         </button>

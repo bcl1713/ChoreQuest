@@ -5,17 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
 import CharacterCreation from '@/components/character/CharacterCreation';
-
-interface Character {
-  id: string;
-  name: string;
-  class: string;
-  level: number;
-  xp: number;
-  gold: number;
-  gems: number;
-  honorPoints: number;
-}
+import { Character } from '@/lib/types/database';
 
 export default function CreateCharacterPage() {
   const router = useRouter();

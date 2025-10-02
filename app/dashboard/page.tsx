@@ -4,18 +4,21 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
+import { useRealtime } from '@/lib/realtime-context';
 import QuestDashboard from '@/components/quest-dashboard';
 import QuestCreateModal from '@/components/quest-create-modal';
 import RewardStore from '@/components/reward-store';
-import { questService } from '@/lib/quest-service';
-import { QuestTemplate } from '@/lib/generated/prisma';
+import { QuestTemplateManager } from '@/components/quest-template-manager';
+import { QuestTemplate } from '@/lib/types/database';
+import { supabase } from '@/lib/supabase';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, family, logout, isLoading } = useAuth();
+  const { user, profile, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
+  const { onQuestTemplateUpdate } = useRealtime();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<'quests' | 'rewards'>('quests');
+  const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates'>('quests');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export default function Dashboard() {
     // 4. No character was found (character === null)
     // 5. No error occurred during fetch (successful "no character" response)
     if (!isLoading && user && characterHasLoaded && character === null && !characterError) {
-      router.push('/character/create');
+      window.location.href = '/character/create';
     }
   }, [user, character, isLoading, characterHasLoaded, characterError, router]);
 
@@ -47,11 +50,73 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  const loadQuestTemplates = useCallback(async () => {
+    if (!profile?.family_id) return;
+
+    try {
+      const { data: templates, error } = await supabase
+        .from('quest_templates')
+        .select('*')
+        .eq('family_id', profile.family_id)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setQuestTemplates(templates || []);
+    } catch (err) {
+      console.error('Failed to load quest templates:', err);
+    }
+  }, [profile?.family_id]);
+
   useEffect(() => {
     if (user && character) {
       loadQuestTemplates();
     }
-  }, [user, character]);
+  }, [user, character, loadQuestTemplates]);
+
+  // Set up realtime quest template updates
+  useEffect(() => {
+    if (!user || !profile) return;
+
+    const unsubscribe = onQuestTemplateUpdate((event) => {
+      setQuestTemplates(currentTemplates => {
+        if (event.action === 'INSERT') {
+          // Add new template
+          const newTemplate = event.record as QuestTemplate;
+          // Only add active templates
+          if (newTemplate.is_active) {
+            return [...currentTemplates, newTemplate];
+          }
+          return currentTemplates;
+        } else if (event.action === 'UPDATE') {
+          // Update existing template
+          const updatedTemplate = event.record as QuestTemplate;
+          const existsInList = currentTemplates.some(t => t.id === updatedTemplate.id);
+
+          if (updatedTemplate.is_active) {
+            // Template is active
+            if (existsInList) {
+              // Update existing template
+              return currentTemplates.map(template =>
+                template.id === updatedTemplate.id ? updatedTemplate : template
+              );
+            } else {
+              // Add newly activated template
+              return [...currentTemplates, updatedTemplate];
+            }
+          } else {
+            // Template is inactive - remove it from the list
+            return currentTemplates.filter(template => template.id !== updatedTemplate.id);
+          }
+        } else if (event.action === 'DELETE') {
+          // Remove template (old_record requires REPLICA IDENTITY FULL on table)
+          return currentTemplates.filter(template => template.id !== event.old_record?.id);
+        }
+        return currentTemplates;
+      });
+    });
+
+    return unsubscribe;
+  }, [user, profile, onQuestTemplateUpdate]);
 
   // Listen for character stats updates from quest approvals
   useEffect(() => {
@@ -61,20 +126,11 @@ export default function Dashboard() {
     };
 
     window.addEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
-    
+
     return () => {
       window.removeEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
     };
   }, [refreshCharacter]);
-
-  const loadQuestTemplates = async () => {
-    try {
-      const result = await questService.getQuestTemplates();
-      setQuestTemplates(result.templates);
-    } catch (err) {
-      console.error('Failed to load quest templates:', err);
-    }
-  };
 
   const handleQuestCreated = async () => {
     loadQuestTemplates();
@@ -149,16 +205,17 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="text-left sm:text-right">
                 <p className="text-gray-300 font-medium">{character.name}</p>
-                <p className="text-sm text-gray-400">{getClassDisplay(character.class)} • Level {character.level}</p>
-                <p className="text-xs text-gray-500">{getRoleDisplay(user.role)}</p>
+                <p className="text-sm text-gray-400" data-testid="character-level">{character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}</p>
+                <p className="text-xs text-gray-500">{profile?.role ? getRoleDisplay(profile.role) : ''}</p>
               </div>
 
               {/* Action buttons - mobile-optimized */}
               <div className="flex gap-2 sm:gap-3">
-                {user.role === 'GUILD_MASTER' && (
+                {profile?.role === 'GUILD_MASTER' && (
                   <button
                     onClick={() => setShowCreateQuest(true)}
                     className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                    data-testid="create-quest-button"
                   >
                     <span className="hidden sm:inline">⚡ Create Quest</span>
                     <span className="sm:hidden">⚡ Quest</span>
@@ -179,7 +236,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4">
+          <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4" data-testid="welcome-message">
             Welcome back, {character.name}!
           </h2>
           <p className="text-base sm:text-lg text-gray-400">
@@ -190,19 +247,19 @@ export default function Dashboard() {
         {/* Character Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2">💰 {character.gold}</div>
+            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2" data-testid="character-gold">💰 {character.gold}</div>
             <div className="text-xs sm:text-sm text-gray-400">Gold</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2">⚡ {character.xp}</div>
+            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2" data-testid="character-xp">⚡ {character.xp}</div>
             <div className="text-xs sm:text-sm text-gray-400">Experience</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2">💎 {character.gems}</div>
+            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2" data-testid="character-gems">💎 {character.gems}</div>
             <div className="text-xs sm:text-sm text-gray-400">Gems</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2">🏅 {character.honorPoints}</div>
+            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2" data-testid="character-honor-points">🏅 {character.honor_points}</div>
             <div className="text-xs sm:text-sm text-gray-400">Honor Points</div>
           </div>
         </div>
@@ -211,6 +268,7 @@ export default function Dashboard() {
         <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('quests')}
+            data-testid="tab-quests"
             className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
               activeTab === 'quests'
                 ? 'bg-gold-600 text-white'
@@ -222,6 +280,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setActiveTab('rewards')}
+            data-testid="tab-rewards"
             className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
               activeTab === 'rewards'
                 ? 'bg-gold-600 text-white'
@@ -231,6 +290,20 @@ export default function Dashboard() {
             <span className="hidden sm:inline">🏪 Reward Store</span>
             <span className="sm:hidden">🏪 Rewards</span>
           </button>
+          {profile?.role === 'GUILD_MASTER' && (
+            <button
+              onClick={() => setActiveTab('templates')}
+              data-testid="tab-templates"
+              className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
+                activeTab === 'templates'
+                  ? 'bg-gold-600 text-white'
+                  : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
+              }`}
+            >
+              <span className="hidden sm:inline">📜 Quest Templates</span>
+              <span className="sm:hidden">📜 Templates</span>
+            </button>
+          )}
         </div>
 
         {/* Error Display */}
@@ -248,9 +321,11 @@ export default function Dashboard() {
               dashboardLoadQuestsRef.current = loadQuests;
             }}
           />
-        ) : (
+        ) : activeTab === 'rewards' ? (
           <RewardStore onError={handleError} />
-        )}
+        ) : activeTab === 'templates' ? (
+          <QuestTemplateManager />
+        ) : null}
 
         {/* Quest Create Modal */}
         <QuestCreateModal

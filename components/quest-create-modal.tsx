@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { questService } from "@/lib/quest-service";
-import { userService } from "@/lib/user-service";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 import {
   QuestDifficulty,
   QuestCategory,
   QuestTemplate,
-} from "@/lib/generated/prisma";
+} from "@/lib/types/database";
+import { questTemplateService } from "@/lib/quest-template-service";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestCreateModalProps {
@@ -23,11 +24,6 @@ interface User {
   role: string;
 }
 
-interface FamilyMember {
-  id: string;
-  name: string;
-  role: string;
-}
 
 export default function QuestCreateModal({
   isOpen,
@@ -35,7 +31,8 @@ export default function QuestCreateModal({
   onQuestCreated,
   templates,
 }: QuestCreateModalProps) {
-  const [mode, setMode] = useState<"template" | "adhoc">("template");
+  const { user, profile } = useAuth();
+  const [mode, setMode] = useState<"template" | "adhoc">("adhoc");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -52,30 +49,41 @@ export default function QuestCreateModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadFamilyMembers = useCallback(async () => {
+    if (!profile) return;
+
+    try {
+      const { data: membersData, error: membersError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('family_id', profile.family_id);
+
+      if (membersError) {
+        throw membersError;
+      }
+
+      if (membersData) {
+        // Transform to match User interface
+        const transformedMembers = membersData.map(member => ({
+          id: member.id,
+          username: member.name,
+          role: member.role,
+        }));
+        setFamilyMembers(transformedMembers);
+      }
+    } catch {
+      setError("Failed to load family members");
+    }
+  }, [profile]);
+
   useEffect(() => {
     if (isOpen) {
       loadFamilyMembers();
     }
-  }, [isOpen]);
-
-  const loadFamilyMembers = async () => {
-    try {
-      const members = await userService.getFamilyMembers();
-      // Transform API response to match expected interface
-      setFamilyMembers(
-        members.map((member: FamilyMember) => ({
-          id: member.id,
-          username: member.name,
-          role: member.role,
-        }))
-      );
-    } catch {
-      setError("Failed to load family members");
-    }
-  };
+  }, [isOpen, loadFamilyMembers]);
 
   const resetForm = () => {
-    setMode("template");
+    setMode("adhoc");
     setSelectedTemplateId("");
     setAssignedToId("");
     setDueDate("");
@@ -100,6 +108,11 @@ export default function QuestCreateModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user || !profile) {
+      setError("User not authenticated");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -115,27 +128,43 @@ export default function QuestCreateModal({
           return;
         }
 
-        await questService.createQuestInstanceFromTemplate({
-          templateId: selectedTemplateId,
-          assignedToId: assignedToId || undefined,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        });
+        // Create quest from template using quest template service
+        await questTemplateService.createQuestFromTemplate(
+          selectedTemplateId,
+          user.id,
+          {
+            assignedToId: assignedToId || undefined,
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          }
+        );
       } else {
         if (!title.trim() || !description.trim()) {
           setError("Please fill in all required fields");
           return;
         }
 
-        await questService.createQuestInstanceAdHoc({
+        // Create ad-hoc quest instance directly
+        const questData = {
           title: title.trim(),
           description: description.trim(),
-          xpReward,
-          goldReward,
-          difficulty,
-          category,
-          assignedToId: assignedToId || undefined,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        });
+          xp_reward: xpReward,
+          gold_reward: goldReward,
+          difficulty: difficulty,
+          category: category,
+          status: 'PENDING',
+          family_id: profile.family_id,
+          created_by_id: user.id,
+          assigned_to_id: assignedToId || null,
+          due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        };
+
+        const { error: insertError } = await supabase
+          .from('quest_instances')
+          .insert(questData);
+
+        if (insertError) {
+          throw insertError;
+        }
       }
 
       resetForm();
@@ -186,6 +215,7 @@ export default function QuestCreateModal({
             {/* Mode Selection */}
             <div className="flex mb-6">
               <button
+                data-testid="template-mode-button"
                 onClick={() => setMode("template")}
                 className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-colors ${
                   mode === "template"
@@ -196,6 +226,7 @@ export default function QuestCreateModal({
                 From Template
               </button>
               <button
+                data-testid="adhoc-mode-button"
                 onClick={() => setMode("adhoc")}
                 className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-colors ${
                   mode === "adhoc"
@@ -212,10 +243,12 @@ export default function QuestCreateModal({
                 <>
                   {/* Template Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-200 mb-2">
+                    <label htmlFor="template-select" className="block text-sm font-medium text-gray-200 mb-2">
                       Select Template
                     </label>
                     <select
+                      id="template-select"
+                      data-testid="template-select"
                       value={selectedTemplateId}
                       onChange={(e) => setSelectedTemplateId(e.target.value)}
                       className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
@@ -225,7 +258,7 @@ export default function QuestCreateModal({
                       {templates.map((template) => (
                         <option key={template.id} value={template.id}>
                           {template.title} - {template.difficulty} (
-                          {template.xpReward} XP, {template.goldReward} Gold)
+                          {template.xp_reward} XP, {template.gold_reward} Gold)
                         </option>
                       ))}
                     </select>
@@ -233,7 +266,7 @@ export default function QuestCreateModal({
 
                   {/* Template Preview */}
                   {selectedTemplate && (
-                    <div className="bg-dark-800 p-4 rounded-lg">
+                    <div data-testid="template-preview" className="bg-dark-800 p-4 rounded-lg">
                       <h4 className="font-medium text-gray-100 mb-2">
                         {selectedTemplate.title}
                       </h4>
@@ -248,10 +281,10 @@ export default function QuestCreateModal({
                           {selectedTemplate.category}
                         </span>
                         <span className="text-gold-400">
-                          💰 {selectedTemplate.goldReward}
+                          💰 {selectedTemplate.gold_reward}
                         </span>
                         <span className="xp-text">
-                          ⚡ {selectedTemplate.xpReward} XP
+                          ⚡ {selectedTemplate.xp_reward} XP
                         </span>
                       </div>
                     </div>
@@ -313,6 +346,7 @@ export default function QuestCreateModal({
                         Difficulty
                       </label>
                       <select
+                        data-testid="quest-difficulty-select"
                         value={difficulty}
                         onChange={(e) =>
                           setDifficulty(e.target.value as QuestDifficulty)
@@ -363,10 +397,11 @@ export default function QuestCreateModal({
               {/* Common Fields */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">
+                  <label htmlFor="assign-to" className="block text-sm font-medium text-gray-200 mb-2">
                     Assign To (Optional)
                   </label>
                   <select
+                    id="assign-to"
                     value={assignedToId}
                     onChange={(e) => setAssignedToId(e.target.value)}
                     className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
@@ -381,10 +416,11 @@ export default function QuestCreateModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-200 mb-2">
+                  <label htmlFor="due-date" className="block text-sm font-medium text-gray-200 mb-2">
                     Due Date (Optional)
                   </label>
                   <input
+                    id="due-date"
                     type="datetime-local"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
@@ -403,6 +439,7 @@ export default function QuestCreateModal({
               <div className="flex gap-4 justify-end">
                 <button
                   type="button"
+                  data-testid="cancel-quest-button"
                   onClick={handleClose}
                   className="px-6 py-2 border border-gray-600 rounded-lg text-gray-400 hover:text-gray-200 hover:border-gray-500 transition-colors"
                 >
@@ -410,6 +447,7 @@ export default function QuestCreateModal({
                 </button>
                 <button
                   type="submit"
+                  data-testid="submit-quest-button"
                   disabled={loading}
                   className="px-6 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
