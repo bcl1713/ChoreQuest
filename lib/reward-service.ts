@@ -8,6 +8,9 @@ import { Reward, CreateRewardInput, UpdateRewardInput, RewardRedemption, UserPro
 
 export interface RewardRedemptionWithUser extends RewardRedemption {
   user_profiles: UserProfile;
+  reward_name: string;
+  reward_description: string;
+  reward_type: 'SCREEN_TIME' | 'PRIVILEGE' | 'PURCHASE' | 'EXPERIENCE';
 }
 
 export class RewardService {

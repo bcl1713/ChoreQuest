@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
-import { RewardService } from "@/lib/reward-service";
+import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
 import { Reward, RewardType } from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,9 +24,10 @@ const REWARD_TYPE_LABELS = {
 const rewardService = new RewardService();
 
 export default function RewardManager() {
-  const { profile } = useAuth();
-  const { onRewardUpdate } = useRealtime();
+  const { profile, user } = useAuth();
+  const { onRewardUpdate, onRewardRedemptionUpdate } = useRealtime();
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [redemptions, setRedemptions] = useState<RewardRedemptionWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -42,27 +43,31 @@ export default function RewardManager() {
     cost: "",
   });
 
-  // Load rewards on mount
+  // Load rewards and redemptions on mount
   useEffect(() => {
     if (!profile?.family_id) return;
 
-    const loadRewards = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const data = await rewardService.getRewardsForFamily(profile.family_id!);
-        setRewards(data);
+        const [rewardsData, redemptionsData] = await Promise.all([
+          rewardService.getRewardsForFamily(profile.family_id!),
+          rewardService.getRedemptionsForFamily(profile.family_id!)
+        ]);
+        setRewards(rewardsData);
+        setRedemptions(redemptionsData);
       } catch (err) {
-        console.error("Failed to load rewards:", err);
-        setError("Failed to load rewards");
+        console.error("Failed to load data:", err);
+        setError("Failed to load rewards and redemptions");
       } finally {
         setLoading(false);
       }
     };
 
-    loadRewards();
+    loadData();
   }, [profile?.family_id]);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime reward updates
   useEffect(() => {
     const unsubscribe = onRewardUpdate((event) => {
       if (event.action === "INSERT") {
@@ -81,6 +86,23 @@ export default function RewardManager() {
 
     return unsubscribe;
   }, [onRewardUpdate]);
+
+  // Subscribe to realtime redemption updates
+  useEffect(() => {
+    if (!profile?.family_id) return;
+
+    const unsubscribe = onRewardRedemptionUpdate(async () => {
+      // Reload all redemptions when any change occurs
+      try {
+        const redemptionsData = await rewardService.getRedemptionsForFamily(profile.family_id!);
+        setRedemptions(redemptionsData);
+      } catch (err) {
+        console.error("Failed to reload redemptions:", err);
+      }
+    });
+
+    return unsubscribe;
+  }, [profile?.family_id, onRewardRedemptionUpdate]);
 
   const resetForm = () => {
     setFormData({
@@ -179,9 +201,48 @@ export default function RewardManager() {
     }
   };
 
+  const handleApproveRedemption = async (redemptionId: string) => {
+    if (!user) return;
+
+    try {
+      await rewardService.updateRedemptionStatus(redemptionId, "APPROVED", user.id);
+    } catch (err) {
+      console.error("Failed to approve redemption:", err);
+      setError("Failed to approve redemption");
+    }
+  };
+
+  const handleDenyRedemption = async (redemptionId: string) => {
+    if (!user) return;
+
+    try {
+      const redemption = redemptions.find(r => r.id === redemptionId);
+      if (!redemption || !redemption.user_id) return;
+
+      await rewardService.updateRedemptionStatus(redemptionId, "DENIED");
+      await rewardService.refundGold(redemption.user_id, redemption.cost);
+    } catch (err) {
+      console.error("Failed to deny redemption:", err);
+      setError("Failed to deny redemption");
+    }
+  };
+
+  const handleFulfillRedemption = async (redemptionId: string) => {
+    try {
+      await rewardService.updateRedemptionStatus(redemptionId, "FULFILLED");
+    } catch (err) {
+      console.error("Failed to fulfill redemption:", err);
+      setError("Failed to fulfill redemption");
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading rewards...</div>;
   }
+
+  const pendingRedemptions = redemptions.filter(r => r.status === 'PENDING');
+  const approvedRedemptions = redemptions.filter(r => r.status === 'APPROVED');
+  const completedRedemptions = redemptions.filter(r => ['DENIED', 'FULFILLED'].includes(r.status || ''));
 
   return (
     <div className="space-y-6" data-testid="reward-manager">
@@ -201,6 +262,80 @@ export default function RewardManager() {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {/* Pending Redemptions Section */}
+      {pendingRedemptions.length > 0 && (
+        <div data-testid="pending-redemptions-section" className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <h3 className="text-lg font-bold text-orange-900 mb-3">Pending Redemptions</h3>
+          <div className="space-y-2">
+            {pendingRedemptions.map((redemption) => (
+              <div
+                key={redemption.id}
+                data-testid="pending-redemption-item"
+                className="bg-white border rounded-lg p-3 flex items-center justify-between"
+              >
+                <div className="flex-1">
+                  <div className="font-semibold">{redemption.user_profiles.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {redemption.reward_name} ({redemption.cost} gold)
+                  </div>
+                  {redemption.notes && (
+                    <div className="text-sm text-gray-500 italic mt-1">{redemption.notes}</div>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <button
+                    onClick={() => handleApproveRedemption(redemption.id)}
+                    data-testid="approve-redemption-button"
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleDenyRedemption(redemption.id)}
+                    data-testid="deny-redemption-button"
+                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                  >
+                    Deny
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Approved Redemptions (Awaiting Fulfillment) */}
+      {approvedRedemptions.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h3 className="text-lg font-bold text-green-900 mb-3">Approved - Awaiting Fulfillment</h3>
+          <div className="space-y-2">
+            {approvedRedemptions.map((redemption) => (
+              <div
+                key={redemption.id}
+                className="bg-white border rounded-lg p-3 flex items-center justify-between"
+              >
+                <div className="flex-1">
+                  <div className="font-semibold">{redemption.user_profiles.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {redemption.reward_name} ({redemption.cost} gold)
+                  </div>
+                  <div className="text-xs text-green-600 mt-1">
+                    Approved {new Date(redemption.approved_at!).toLocaleString()}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleFulfillRedemption(redemption.id)}
+                  data-testid="fulfill-redemption-button"
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm ml-4"
+                >
+                  Mark Fulfilled
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -276,6 +411,41 @@ export default function RewardManager() {
       {rewards.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           No rewards yet. Create one to get started!
+        </div>
+      )}
+
+      {/* Redemption History */}
+      {completedRedemptions.length > 0 && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Redemption History</h3>
+          <div className="space-y-2">
+            {completedRedemptions.map((redemption) => (
+              <div
+                key={redemption.id}
+                className="bg-white border rounded-lg p-3"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="font-semibold">{redemption.user_profiles.name}</div>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    redemption.status === 'FULFILLED'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {redemption.status}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {redemption.reward_name} ({redemption.cost} gold)
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Requested {redemption.requested_at ? new Date(redemption.requested_at).toLocaleString() : 'Unknown'}
+                  {redemption.fulfilled_at && (
+                    <> • Fulfilled {new Date(redemption.fulfilled_at).toLocaleString()}</>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
