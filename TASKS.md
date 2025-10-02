@@ -118,14 +118,41 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Run npm run test (52/52 unit tests passing - PASSED)
 - [x] Fix TypeScript errors (RealtimeEventType, ESLint warnings)
 
-##### Phase 8: E2E and Manual Testing - COMPLETED
+##### Phase 8: E2E and Manual Testing - IN PROGRESS
 - [x] Run npx playwright test (50 E2E tests, 48-50 passing depending on flaky timing)
 - [x] Fix reward-management delete test (updated to expect soft delete with opacity-50)
 - [x] Fix reward-realtime tests (refactored to use same-user/two-tabs pattern like templates)
 - [x] All reward-specific tests passing (19/19: management 5/5, realtime 3/3, store 4/4, others 7/7)
-- [ ] Manual testing: Test reward CRUD operations
+- [x] Manual testing: Test reward CRUD operations (FOUND BUGS - see Phase 8.5)
 - [ ] Manual testing: Test realtime updates across browser windows
 - [ ] Manual testing: Test on mobile viewport
+
+##### Phase 8.5: Critical Bug Fixes from Manual Testing - IN PROGRESS
+
+**Bug 1: Delete vs Deactivate buttons do the same thing - IN PROGRESS**
+Following template blueprint pattern for consistency:
+- [ ] Create migration to remove FK constraint on reward_redemptions.reward_id
+- [ ] Create migration to add reward_name, reward_description, reward_type to redemptions
+- [ ] Test migrations with reset
+- [ ] Update reward redemption creation to copy reward details (like quest from template)
+- [ ] Update RewardService unit tests for new behaviors
+- [ ] Change deleteReward() to hard DELETE (safe after FK removal)
+- [ ] Fix handleToggleActive to use updateReward() for is_active toggle
+- [ ] Update getRewardsForFamily() to return ALL rewards (active + inactive)
+- [ ] Remove activateReward() method (use updateReward instead)
+- [ ] Update E2E tests to expect new behaviors
+- [ ] Run quality gates (build, lint, unit, E2E)
+- [ ] Manual testing of toggle and delete
+- [ ] Commit Bug 1 fix
+
+**Bug 2: No GM approval/denial UI for reward redemptions**
+- [ ] Move handleApproval logic from reward-store.tsx to reward-manager.tsx
+- [ ] Add pending redemptions section to RewardManager
+- [ ] Add approve/deny buttons for each pending redemption
+- [ ] Add fulfilled button for approved redemptions
+- [ ] Show redemption history with status (pending/approved/denied/fulfilled)
+- [ ] Add realtime updates for redemption status changes
+- [ ] Update tests to cover approval workflow
 
 ##### Phase 9: Documentation - COMPLETED
 - [x] Create serena memory: reward_management_system_implementation
@@ -133,12 +160,15 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Document service methods and UI components
 - [x] Document realtime subscription and integration
 
-##### Phase 10: Merge & Deployment - READY FOR MANUAL TESTING
+##### Phase 10: Merge & Deployment - BLOCKED BY BUG FIXES
 - [x] Run quality gate checks (build ✓, lint ✓, unit test 52/52 ✓)
 - [x] Run E2E tests (npx playwright test - 50 tests, 48-50 passing, 2 flaky tests filed as GitHub issues #26 #27)
 - [x] Push feature branch to origin
-- [ ] **NEXT**: Manual testing session
-- [ ] Create PR to main after manual testing complete
+- [x] Manual testing session - FOUND CRITICAL BUGS (see Phase 8.5)
+- [ ] **BLOCKED**: Fix critical bugs before PR
+- [ ] Re-run quality gates after fixes
+- [ ] Complete manual testing after fixes
+- [ ] Create PR to main after all issues resolved
 - [ ] Merge PR with squash
 - [ ] Delete feature branch
 
