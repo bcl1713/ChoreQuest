@@ -9,8 +9,11 @@ import { Reward, RewardRedemption, UserProfile } from "@/lib/types/database";
 import { motion } from "framer-motion";
 
 interface RewardRedemptionWithDetails extends RewardRedemption {
-  rewards: Reward;
   user_profiles: UserProfile;
+  // Denormalized reward fields (stored directly in reward_redemptions table)
+  reward_name: string;
+  reward_description: string;
+  reward_type: 'SCREEN_TIME' | 'PRIVILEGE' | 'PURCHASE' | 'EXPERIENCE';
 }
 
 
@@ -72,15 +75,16 @@ export default function RewardStore({ onError }: RewardStoreProps) {
           setRewards(rewardsData || []);
         }
 
-        // Load redemptions with reward and user details
+        // Load redemptions with user details
+        // Note: reward details are denormalized in reward_redemptions table
+        // (reward_name, reward_description, reward_type, cost) to preserve history
         const { data: redemptionsData, error: redemptionsError } = await supabase
           .from('reward_redemptions')
           .select(`
             *,
-            rewards:reward_id(id, name, description, type, cost),
             user_profiles:user_id(id, name)
           `)
-          .eq('rewards.family_id', profile?.family_id)
+          .eq('user_id', profile?.id)
           .order('requested_at', { ascending: false });
 
         if (redemptionsError) {
@@ -110,16 +114,16 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     const unsubscribe = onRewardRedemptionUpdate(async (event) => {
       console.log('Reward redemption realtime event received:', event);
 
-      // Reload redemptions data to get the full joined data
+      // Reload redemptions data with user details
+      // Note: reward details are denormalized in reward_redemptions table
       try {
         const { data: redemptionsData, error: redemptionsError } = await supabase
           .from('reward_redemptions')
           .select(`
             *,
-            rewards:reward_id(id, name, description, type, cost),
             user_profiles:user_id(id, name)
           `)
-          .eq('rewards.family_id', profile.family_id)
+          .eq('user_id', profile.id)
           .order('requested_at', { ascending: false });
 
         if (!redemptionsError && redemptionsData) {
@@ -296,7 +300,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
   const getRedemptionStatus = (rewardId: string) => {
     const pending = redemptions.find(r =>
-      r.rewards.id === rewardId &&
+      r.reward_id === rewardId &&
       r.user_profiles.id === user?.id &&  // Only check current user's redemptions
       ['PENDING', 'APPROVED'].includes(r.status || '')
     );
@@ -428,11 +432,11 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-bold text-gray-900">{redemption.rewards.name}</span>
-                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.rewards.type]}</span>
+                      <span className="font-bold text-gray-900">{redemption.reward_name}</span>
+                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward_type]}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-sm">🪙</span>
-                        <span className="text-sm font-bold text-yellow-600">{redemption.rewards.cost}</span>
+                        <span className="text-sm font-bold text-yellow-600">{redemption.cost}</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-600 mb-2">
@@ -486,11 +490,11 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.rewards.type]}</span>
-                      <span className="font-medium text-gray-100">{redemption.rewards.name}</span>
+                      <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward_type]}</span>
+                      <span className="font-medium text-gray-100">{redemption.reward_name}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-gold-400">🪙</span>
-                        <span className="text-sm font-bold gold-text">{redemption.rewards.cost}</span>
+                        <span className="text-sm font-bold gold-text">{redemption.cost}</span>
                       </div>
                     </div>
                     <div className="text-sm text-gray-400 mb-2">
