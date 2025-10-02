@@ -369,9 +369,9 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 
 ### Phase 8.5: Bug Fixes from Manual Testing
 
-- [ ] Fix invalid refresh token console error on home page before login
-- [ ] Fix template reactivation not appearing in quest creation dropdown without refresh
-- [ ] Fix template deletion failing with empty error object (deleteError: {})
+- [x] Fix invalid refresh token console error on home page before login
+- [x] Fix template reactivation not appearing in quest creation dropdown without refresh
+- [x] Fix template deletion failing with empty error object (deleteError: {})
 
 ### Phase 9: Documentation & Memory
 

@@ -184,6 +184,26 @@ export function QuestTemplateManager() {
   const handleDeleteTemplate = async () => {
     if (!selectedTemplate) return;
 
+    // First check if there are any quest instances using this template
+    const { data: questInstances, error: checkError } = await supabase
+      .from('quest_instances')
+      .select('id')
+      .eq('template_id', selectedTemplate.id)
+      .limit(1);
+
+    if (checkError) {
+      console.error('Error checking template usage:', checkError);
+      setError('Failed to check if template is in use');
+      return;
+    }
+
+    // If template is being used, show error
+    if (questInstances && questInstances.length > 0) {
+      setError('Cannot delete template that is being used by existing quests. Deactivate it instead.');
+      return;
+    }
+
+    // Proceed with deletion
     const { error: deleteError } = await supabase
       .from('quest_templates')
       .delete()
@@ -191,10 +211,23 @@ export function QuestTemplateManager() {
 
     if (deleteError) {
       console.error('Error deleting template:', deleteError);
-      setError('Failed to delete template');
+      console.error('Delete error details:', {
+        message: deleteError.message,
+        details: deleteError.details,
+        hint: deleteError.hint,
+        code: deleteError.code
+      });
+
+      // Provide user-friendly error message
+      if (deleteError.code === '23503') {
+        setError('Cannot delete template: it is referenced by existing quests');
+      } else {
+        setError(`Failed to delete template: ${deleteError.message || 'Unknown error'}`);
+      }
     } else {
       setIsDeleteConfirmOpen(false);
       setSelectedTemplate(null);
+      setError(null); // Clear any previous errors
       // Realtime subscription will handle UI update automatically
     }
   };

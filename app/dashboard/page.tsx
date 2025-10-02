@@ -90,9 +90,23 @@ export default function Dashboard() {
         } else if (event.action === 'UPDATE') {
           // Update existing template
           const updatedTemplate = event.record as QuestTemplate;
-          return currentTemplates.map(template =>
-            template.id === updatedTemplate.id ? updatedTemplate : template
-          ).filter(template => template.is_active); // Filter out deactivated templates
+          const existsInList = currentTemplates.some(t => t.id === updatedTemplate.id);
+
+          if (updatedTemplate.is_active) {
+            // Template is active
+            if (existsInList) {
+              // Update existing template
+              return currentTemplates.map(template =>
+                template.id === updatedTemplate.id ? updatedTemplate : template
+              );
+            } else {
+              // Add newly activated template
+              return [...currentTemplates, updatedTemplate];
+            }
+          } else {
+            // Template is inactive - remove it from the list
+            return currentTemplates.filter(template => template.id !== updatedTemplate.id);
+          }
         } else if (event.action === 'DELETE') {
           // Remove template (old_record requires REPLICA IDENTITY FULL on table)
           return currentTemplates.filter(template => template.id !== event.old_record?.id);
