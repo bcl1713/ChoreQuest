@@ -133,12 +133,12 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Document service methods and UI components
 - [x] Document realtime subscription and integration
 
-##### Phase 10: Merge & Deployment - READY FOR TESTING
+##### Phase 10: Merge & Deployment - READY FOR MANUAL TESTING
 - [x] Run quality gate checks (build ✓, lint ✓, unit test 52/52 ✓)
+- [x] Run E2E tests (npx playwright test - 50 tests, 48-50 passing, 2 flaky tests filed as GitHub issues #26 #27)
 - [x] Push feature branch to origin
-- [ ] **NEXT**: Run E2E tests (npx playwright test)
 - [ ] **NEXT**: Manual testing session
-- [ ] Create PR to main after testing complete
+- [ ] Create PR to main after manual testing complete
 - [ ] Merge PR with squash
 - [ ] Delete feature branch
 
