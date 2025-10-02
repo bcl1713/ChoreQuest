@@ -145,7 +145,7 @@ test.describe('Family Management', () => {
 
     // Navigate to Family Management
     await page.click('[data-testid="tab-family"]');
-    await expect(page.getByText('Family Management')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Family Management' })).toBeVisible();
 
     // Find own row (should have email in it)
     const ownRow = page.locator('tr').filter({ hasText: gmEmail });
