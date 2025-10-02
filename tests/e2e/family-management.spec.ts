@@ -21,17 +21,17 @@ test.describe('Family Management', () => {
     // Create second user (Hero) and join same family
     const heroEmail = `hero-${Date.now()}@test.com`;
     await page.goto('/auth/register');
-    await page.fill('[data-testid="email-input"]', heroEmail);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.fill('[data-testid="name-input"]', 'Hero User');
-    await page.fill('[data-testid="family-code-input"]', familyCode);
-    await page.click('[data-testid="register-button"]');
+    await page.fill('[data-testid="input-name"]', 'Hero User');
+    await page.fill('[data-testid="input-email"]', heroEmail);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.fill('[data-testid="input-familyCode"]', familyCode);
+    await page.click('button[type="submit"]');
 
     // Create character for Hero
     await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Hero Character');
-    await page.click('[data-testid="class-MAGE"]');
-    await page.click('[data-testid="create-character-button"]');
+    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero Character');
+    await page.click('[data-testid="class-mage"]');
+    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Logout Hero
@@ -39,21 +39,21 @@ test.describe('Family Management', () => {
 
     // Login as GM
     await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"]', gmEmail);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.click('[data-testid="login-button"]');
+    await page.fill('[data-testid="input-email"]', gmEmail);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Family Management tab
     await page.click('[data-testid="tab-family"]');
     await expect(page.getByText('Family Management')).toBeVisible();
 
-    // Verify Hero User is in the list with Hero role
+    // Verify Hero User is in the list with Young Hero role (default for new family members)
     const heroRow = page.locator('tr').filter({ hasText: 'Hero User' });
     await expect(heroRow).toBeVisible();
-    await expect(heroRow.getByText('Hero')).toBeVisible();
+    await expect(heroRow.getByText('Young Hero')).toBeVisible();
 
-    // Click Promote button
+    // Click Promote button (Young Heroes can now be promoted to GM)
     await heroRow.getByRole('button', { name: /Promote to GM/i }).click();
 
     // Confirm promotion in modal
@@ -87,24 +87,24 @@ test.describe('Family Management', () => {
     // Create second user and join
     const gm2Email = `gm2-${Date.now()}@test.com`;
     await page.goto('/auth/register');
-    await page.fill('[data-testid="email-input"]', gm2Email);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.fill('[data-testid="name-input"]', 'Second GM');
-    await page.fill('[data-testid="family-code-input"]', familyCode);
-    await page.click('[data-testid="register-button"]');
+    await page.fill('[data-testid="input-name"]', 'Second GM');
+    await page.fill('[data-testid="input-email"]', gm2Email);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.fill('[data-testid="input-familyCode"]', familyCode);
+    await page.click('button[type="submit"]');
 
     await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Second Character');
-    await page.click('[data-testid="class-RANGER"]');
-    await page.click('[data-testid="create-character-button"]');
+    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Second Character');
+    await page.click('[data-testid="class-ranger"]');
+    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
     await expect(page).toHaveURL(/.*dashboard/);
     await page.click('text=Logout');
 
     // Login as first GM
     await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"]', gm1Email);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.click('[data-testid="login-button"]');
+    await page.fill('[data-testid="input-email"]', gm1Email);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Navigate to Family Management and promote second user
@@ -120,7 +120,7 @@ test.describe('Family Management', () => {
     await secondUserRow.getByRole('button', { name: /Demote to Hero/i }).click();
 
     // Confirm demotion in modal
-    await expect(page.getByText('Demote to Hero')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Demote to Hero' })).toBeVisible();
     await expect(page.getByText(/Are you sure you want to demote/)).toBeVisible();
     await page.getByRole('button', { name: /Confirm Demotion/i }).click();
 
@@ -151,24 +151,24 @@ test.describe('Family Management', () => {
     // Create second GM
     const gm2Email = `gm2-last-${Date.now()}@test.com`;
     await page.goto('/auth/register');
-    await page.fill('[data-testid="email-input"]', gm2Email);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.fill('[data-testid="name-input"]', 'Second GM');
-    await page.fill('[data-testid="family-code-input"]', familyCode);
-    await page.click('[data-testid="register-button"]');
+    await page.fill('[data-testid="input-name"]', 'Second GM');
+    await page.fill('[data-testid="input-email"]', gm2Email);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.fill('[data-testid="input-familyCode"]', familyCode);
+    await page.click('button[type="submit"]');
 
     await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Second Character');
-    await page.click('[data-testid="class-ROGUE"]');
-    await page.click('[data-testid="create-character-button"]');
+    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Second Character');
+    await page.click('[data-testid="class-rogue"]');
+    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Promote self to GM (second user needs to be promoted)
     await page.click('text=Logout');
     await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"]', gmEmail);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.click('[data-testid="login-button"]');
+    await page.fill('[data-testid="input-email"]', gmEmail);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.click('button[type="submit"]');
 
     await page.click('[data-testid="tab-family"]');
     const secondUserRow = page.locator('tr').filter({ hasText: 'Second GM' });
@@ -180,9 +180,9 @@ test.describe('Family Management', () => {
     // Login as second GM
     await page.click('text=Logout');
     await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"]', gm2Email);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.click('[data-testid="login-button"]');
+    await page.fill('[data-testid="input-email"]', gm2Email);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.click('button[type="submit"]');
 
     await page.click('[data-testid="tab-family"]');
 
@@ -224,8 +224,9 @@ test.describe('Family Management', () => {
     // Verify NO demote button exists for self
     await expect(ownRow.getByRole('button', { name: /Demote/i })).not.toBeVisible();
 
-    // Should see a dash or empty actions
-    await expect(ownRow.getByText('-')).toBeVisible();
+    // Should see a dash in the actions cell
+    const actionsCell = ownRow.locator('td').last();
+    await expect(actionsCell).toContainText('-');
   });
 
   test('Non-GM cannot access Family Management tab', async ({ page }) => {
@@ -246,16 +247,16 @@ test.describe('Family Management', () => {
     // Create Hero user
     const heroEmail = `hero-access-${Date.now()}@test.com`;
     await page.goto('/auth/register');
-    await page.fill('[data-testid="email-input"]', heroEmail);
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.fill('[data-testid="name-input"]', 'Hero User');
-    await page.fill('[data-testid="family-code-input"]', familyCode);
-    await page.click('[data-testid="register-button"]');
+    await page.fill('[data-testid="input-name"]', 'Hero User');
+    await page.fill('[data-testid="input-email"]', heroEmail);
+    await page.fill('[data-testid="input-password"]', 'testpass123');
+    await page.fill('[data-testid="input-familyCode"]', familyCode);
+    await page.click('button[type="submit"]');
 
     await expect(page).toHaveURL(/.*character\/create/);
-    await page.fill('[data-testid="character-name-input"]', 'Hero Character');
-    await page.click('[data-testid="class-MAGE"]');
-    await page.click('[data-testid="create-character-button"]');
+    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero Character');
+    await page.click('[data-testid="class-mage"]');
+    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
     await expect(page).toHaveURL(/.*dashboard/);
 
     // Verify Family Management tab does NOT exist
@@ -286,7 +287,7 @@ test.describe('Family Management', () => {
 
     // Verify badge in family list
     const gmRow = page.locator('tr').filter({ hasText: 'Guild Master User' });
-    await expect(gmRow.getByText('👑')).toBeVisible();
-    await expect(gmRow.getByText('Guild Master')).toBeVisible();
+    // Check for role badge with crown emoji and text (no space between emoji and text)
+    await expect(gmRow.locator('td').nth(2)).toContainText('👑Guild Master');
   });
 });

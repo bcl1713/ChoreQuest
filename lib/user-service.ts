@@ -2,15 +2,13 @@ import { User } from "@/types";
 import { supabase } from "@/lib/supabase";
 
 class UserService {
-  private getAuthToken(): string | null {
-    // Get token from localStorage (same as auth-context)
+  private async getAuthToken(): Promise<string | null> {
+    // Get token from Supabase session
     if (typeof window === "undefined") return null;
-    const stored = localStorage.getItem("chorequest-auth");
-    if (!stored) return null;
 
     try {
-      const parsed = JSON.parse(stored);
-      return parsed.token;
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
     } catch {
       return null;
     }
@@ -49,7 +47,7 @@ class UserService {
    * @returns The updated user object
    */
   async promoteToGuildMaster(userId: string): Promise<User> {
-    const token = this.getAuthToken();
+    const token = await this.getAuthToken();
     if (!token) {
       throw new Error("Authentication required");
     }
@@ -88,7 +86,7 @@ class UserService {
    * @returns The updated user object
    */
   async demoteToHero(userId: string): Promise<User> {
-    const token = this.getAuthToken();
+    const token = await this.getAuthToken();
     if (!token) {
       throw new Error("Authentication required");
     }

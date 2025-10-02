@@ -161,7 +161,7 @@ export function FamilyManagement() {
             {familyMembers.map((member) => {
               const isCurrentUser = member.id === user?.id;
               const isGuildMaster = member.role === 'GUILD_MASTER';
-              const isHero = member.role === 'HERO';
+              const canBePromoted = member.role === 'HERO' || member.role === 'YOUNG_HERO';
 
               return (
                 <tr key={member.id} className="border-b border-gray-800 hover:bg-gray-800/50">
@@ -170,8 +170,8 @@ export function FamilyManagement() {
                   <td className="py-3 px-4">{getRoleBadge(member.role)}</td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {/* Show Promote button for Heroes */}
-                      {isHero && (
+                      {/* Show Promote button for Heroes and Young Heroes */}
+                      {canBePromoted && (
                         <button
                           onClick={() => openPromoteModal(member)}
                           disabled={actionLoading === member.id}
@@ -192,8 +192,8 @@ export function FamilyManagement() {
                         </button>
                       )}
 
-                      {/* No action buttons for current user or Young Heroes */}
-                      {(isCurrentUser || member.role === 'YOUNG_HERO') && (
+                      {/* No action buttons for current user */}
+                      {isCurrentUser && (
                         <span className="text-gray-600 text-sm">-</span>
                       )}
                     </div>
