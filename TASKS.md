@@ -373,6 +373,13 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Fix template reactivation not appearing in quest creation dropdown without refresh
 - [x] Fix template deletion failing with empty error object (deleteError: {})
 
+### Phase 8.6: Architecture Improvement - Template Independence
+
+- [x] Remove foreign key constraint from quest_instances.template_id
+- [x] Simplify template deletion logic (no FK checks needed)
+- [x] Update quest template service comments for clarity
+- [x] Templates are now true blueprints - quests remain independent after creation
+
 ### Phase 9: Documentation & Memory
 
 - [ ] Create serena memory: quest_template_system_implementation

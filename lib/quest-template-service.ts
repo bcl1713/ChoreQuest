@@ -141,6 +141,8 @@ export class QuestTemplateService {
     }
 
     // Create quest instance from template
+    // Note: template_id is stored for tracking/analytics only, not as a foreign key
+    // Templates are blueprints - quests remain independent after creation
     const questData = {
       title: template.title,
       description: template.description,
@@ -149,7 +151,7 @@ export class QuestTemplateService {
       difficulty: template.difficulty,
       category: template.category,
       family_id: template.family_id,
-      template_id: templateId,
+      template_id: templateId, // For tracking which template was used (not a FK)
       created_by_id: createdById,
       assigned_to_id: options?.assignedToId || null,
       due_date: options?.dueDate || null,
