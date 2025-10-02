@@ -4,7 +4,11 @@
  */
 
 import { supabase } from "@/lib/supabase";
-import { Reward, CreateRewardInput, UpdateRewardInput } from "@/lib/types/database";
+import { Reward, CreateRewardInput, UpdateRewardInput, RewardRedemption, UserProfile } from "@/lib/types/database";
+
+export interface RewardRedemptionWithUser extends RewardRedemption {
+  user_profiles: UserProfile;
+}
 
 export class RewardService {
   /**
@@ -82,6 +86,104 @@ export class RewardService {
 
     if (error) {
       throw new Error(`Failed to delete reward: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get all reward redemptions for a family
+   * @param familyId - The family ID to fetch redemptions for
+   * @returns Array of redemptions with user details
+   */
+  async getRedemptionsForFamily(familyId: string): Promise<RewardRedemptionWithUser[]> {
+    const { data, error } = await supabase
+      .from("reward_redemptions")
+      .select(`
+        *,
+        user_profiles:user_id(*)
+      `)
+      .eq("user_profiles.family_id", familyId)
+      .order("requested_at", { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch redemptions: ${error.message}`);
+    }
+
+    return data as RewardRedemptionWithUser[] || [];
+  }
+
+  /**
+   * Update redemption status (APPROVED, DENIED, FULFILLED)
+   * @param redemptionId - The redemption ID to update
+   * @param status - The new status
+   * @param approvedBy - User ID of approver (for APPROVED status)
+   * @param notes - Optional notes
+   * @returns The updated redemption
+   */
+  async updateRedemptionStatus(
+    redemptionId: string,
+    status: 'APPROVED' | 'DENIED' | 'FULFILLED',
+    approvedBy?: string,
+    notes?: string
+  ): Promise<RewardRedemption> {
+    const updateData: {
+      status: string;
+      notes?: string;
+      approved_at?: string;
+      approved_by?: string;
+      fulfilled_at?: string;
+    } = {
+      status,
+      notes: notes || undefined,
+    };
+
+    if (status === 'APPROVED') {
+      updateData.approved_at = new Date().toISOString();
+      updateData.approved_by = approvedBy;
+    } else if (status === 'FULFILLED') {
+      updateData.fulfilled_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabase
+      .from("reward_redemptions")
+      .update(updateData)
+      .eq("id", redemptionId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update redemption status: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  /**
+   * Refund gold to a character when redemption is denied
+   * @param userId - User ID whose character should receive refund
+   * @param goldAmount - Amount of gold to refund
+   */
+  async refundGold(userId: string, goldAmount: number): Promise<void> {
+    // Get current gold
+    const { data: characterData, error: characterError } = await supabase
+      .from("characters")
+      .select("gold")
+      .eq("user_id", userId)
+      .single();
+
+    if (characterError) {
+      throw new Error(`Failed to fetch character: ${characterError.message}`);
+    }
+
+    // Update with refunded amount
+    const { error: refundError } = await supabase
+      .from("characters")
+      .update({
+        gold: characterData.gold + goldAmount
+      })
+      .eq("user_id", userId);
+
+    if (refundError) {
+      throw new Error(`Failed to refund gold: ${refundError.message}`);
     }
   }
 
