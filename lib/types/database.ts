@@ -872,3 +872,7 @@ export type CreateQuestTemplateInput = TablesInsert<'quest_templates'> & {
 export type UpdateQuestTemplateInput = TablesUpdate<'quest_templates'> & {
   class_bonuses?: ClassBonuses;
 };
+
+// Reward-specific types for operations
+export type CreateRewardInput = TablesInsert<'rewards'>;
+export type UpdateRewardInput = TablesUpdate<'rewards'>;
