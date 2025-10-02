@@ -19,6 +19,7 @@ export type RealtimeEventType =
   | 'quest_updated'
   | 'quest_template_updated'
   | 'character_updated'
+  | 'reward_updated'
   | 'reward_redemption_updated'
   | 'family_member_updated';
 

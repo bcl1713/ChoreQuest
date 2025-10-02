@@ -488,7 +488,7 @@ export default function RewardManager() {
           >
             <h3 className="text-xl font-bold mb-4">Delete Reward?</h3>
             <p className="mb-6">
-              Are you sure you want to delete "{selectedReward?.name}"? This action
+              Are you sure you want to delete &ldquo;{selectedReward?.name}&rdquo;? This action
               will deactivate the reward.
             </p>
             <div className="flex gap-2">

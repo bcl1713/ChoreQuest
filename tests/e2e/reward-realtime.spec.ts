@@ -1,4 +1,4 @@
-import { test, expect, Browser } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { setupUserWithCharacter } from './helpers/setup-helpers';
 
 test.describe('Reward Realtime Updates', () => {
@@ -12,7 +12,7 @@ test.describe('Reward Realtime Updates', () => {
 
     try {
       // Setup first user (Guild Master)
-      const familyInfo = await setupUserWithCharacter(page1, 'reward-realtime-1', {
+      await setupUserWithCharacter(page1, 'reward-realtime-1', {
         characterClass: 'KNIGHT',
       });
 
