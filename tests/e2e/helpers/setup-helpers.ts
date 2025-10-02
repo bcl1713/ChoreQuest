@@ -299,3 +299,54 @@ export async function setupTestUser(page: Page, options?: SetupTestUserOptions):
     }
   };
 }
+
+/**
+ * Awards gold to the current character by creating and completing a quest
+ * This uses the actual game mechanics to award gold naturally
+ * @param page - Playwright page object
+ * @param goldAmount - Amount of gold to award (before difficulty multipliers)
+ */
+export async function giveCharacterGoldViaQuest(page: Page, goldAmount: number): Promise<void> {
+  const timestamp = Date.now();
+  const questTitle = `Test Gold Award ${timestamp}`;
+
+  // Create a quest with specified gold reward (using EASY difficulty for 1.0x multiplier)
+  await page.click('[data-testid="create-quest-button"]');
+  await page.locator('.fixed button:has-text("Custom Quest")').click();
+  await page.waitForTimeout(500);
+
+  await page.fill('input[placeholder="Enter quest title..."]', questTitle);
+  await page.fill('textarea[placeholder="Describe the quest..."]', 'Automated test quest for gold award');
+  await page.locator('select').nth(1).selectOption('EASY');
+  await page.fill('input[type="number"]:near(:text("Gold Reward"))', goldAmount.toString());
+  await page.fill('input[type="number"]:near(:text("XP Reward"))', '1');
+
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+
+  // Switch to Quests tab to see the created quest
+  await page.click('button:has-text("⚔️ Quests & Adventures")');
+  await page.waitForTimeout(500);
+
+  // Wait for quest to appear, then complete workflow
+  await expect(page.getByText(questTitle).first()).toBeVisible();
+
+  // Complete the quest workflow: pickup -> start -> complete -> approve
+  await page.locator('[data-testid="pick-up-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+
+  await expect(page.locator('[data-testid="start-quest-button"]').first()).toBeVisible();
+  await page.locator('[data-testid="start-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+
+  await expect(page.locator('[data-testid="complete-quest-button"]').first()).toBeVisible();
+  await page.locator('[data-testid="complete-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+
+  // Workaround for realtime issues - refresh to see COMPLETED status
+  await page.reload();
+  await page.waitForTimeout(1000);
+
+  await page.locator('[data-testid="approve-quest-button"]').first().click();
+  await page.waitForTimeout(1000);
+}

@@ -157,7 +157,7 @@ Following template blueprint pattern for consistency:
 - [ ] Add realtime updates for redemption status changes
 - [ ] Update tests to cover approval workflow
 
-**Bug 3: Reward redemptions broken after migration changes - CORE FIX COMPLETE, E2E TESTS NEED WORK**
+**Bug 3: Reward redemptions broken after migration changes - COMPLETED**
 Error: "Failed to load redemptions: {}" in reward-store.tsx:87
 Root cause: Query tried to JOIN rewards table after FK was removed
 Solution: Use denormalized columns (reward_name, reward_description, reward_type) directly
@@ -168,12 +168,11 @@ Solution: Use denormalized columns (reward_name, reward_description, reward_type
 - [x] Fix UI to display reward_name, reward_type, cost from redemptions table
 - [x] Run quality gates (build, lint, unit tests all passing)
 - [x] Core functionality verified - redemptions load with denormalized data
-- [x] Commit a18d2c6: Core bug fix committed
-- [ ] Fix E2E tests in new session - page.evaluate cannot import modules
-  - Tests at reward-store.spec.ts:76 and :132 fail on Supabase import
-  - Need different approach to give gold to characters in tests
-  - Consider using API helper or exposing function to page context
-- [ ] All E2E tests must pass before marking bug fully complete
+- [x] Commit 6112850: Core bug fix committed
+- [x] Fix E2E tests - replaced page.evaluate with giveCharacterGoldViaQuest helper
+- [x] Created helper that uses quest workflow to award gold naturally
+- [x] Updated tests to use correct button text and selectors
+- [x] All 6 reward-store E2E tests passing
 
 ##### Phase 9: Documentation - COMPLETED
 - [x] Create serena memory: reward_management_system_implementation
