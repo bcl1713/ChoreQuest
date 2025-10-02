@@ -94,7 +94,7 @@ export default function Dashboard() {
             template.id === updatedTemplate.id ? updatedTemplate : template
           ).filter(template => template.is_active); // Filter out deactivated templates
         } else if (event.action === 'DELETE') {
-          // Remove template
+          // Remove template (old_record requires REPLICA IDENTITY FULL on table)
           return currentTemplates.filter(template => template.id !== event.old_record?.id);
         }
         return currentTemplates;
@@ -254,6 +254,7 @@ export default function Dashboard() {
         <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('quests')}
+            data-testid="tab-quests"
             className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
               activeTab === 'quests'
                 ? 'bg-gold-600 text-white'
@@ -265,6 +266,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setActiveTab('rewards')}
+            data-testid="tab-rewards"
             className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
               activeTab === 'rewards'
                 ? 'bg-gold-600 text-white'
@@ -277,6 +279,7 @@ export default function Dashboard() {
           {profile?.role === 'GUILD_MASTER' && (
             <button
               onClick={() => setActiveTab('templates')}
+              data-testid="tab-templates"
               className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
                 activeTab === 'templates'
                   ? 'bg-gold-600 text-white'

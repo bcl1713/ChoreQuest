@@ -1301,7 +1301,11 @@ native Supabase types from `@/lib/types/database`.
 - [x] Remove manual loadTemplates() calls after CRUD operations
 - [x] Create E2E test for realtime updates (quest-template-realtime.spec.ts)
 - [x] Fix React act() warnings in unit tests
-- [ ] Run E2E tests to verify realtime functionality
+- [x] Run E2E tests to verify realtime functionality
+- [x] Add migration 017: REPLICA IDENTITY FULL for quest_templates (enables DELETE events)
+- [x] Fix DELETE event handlers to use optional chaining for old_record
+- [x] Fix create-family redirect to go directly to /character/create
+- [x] All E2E tests passing: quest-template-management (6/6), quest-template-realtime (5/5)
 - [x] Commit Phase 4
 
 **Phase 5: Default Templates on Family Creation** (COMPLETED via migration 013)

@@ -85,8 +85,8 @@ export function QuestTemplateManager() {
         );
       } else if (event.action === 'DELETE') {
         // Remove template from the list
-        const deletedTemplate = event.old_record as QuestTemplate;
-        setTemplates((prev) => prev.filter((t) => t.id !== deletedTemplate.id));
+        // Use optional chaining since old_record requires REPLICA IDENTITY FULL
+        setTemplates((prev) => prev.filter((t) => t.id !== event.old_record?.id));
       }
     });
 

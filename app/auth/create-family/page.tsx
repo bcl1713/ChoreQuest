@@ -19,8 +19,9 @@ export default function CreateFamilyPage() {
   const handleCreateFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
     try {
       await createFamily(data);
-      // Navigate immediately after successful family creation
-      window.location.href = '/dashboard';
+      // Navigate to character creation after successful family creation
+      // New Guild Masters need to create their character before accessing dashboard
+      window.location.href = '/character/create';
     } catch (err) {
       // Error will be handled by createFamily function
       console.error('CreateFamily - Family creation failed:', err);

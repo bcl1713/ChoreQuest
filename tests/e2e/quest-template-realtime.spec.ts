@@ -1,11 +1,12 @@
 import { test, expect, Page, BrowserContext } from '@playwright/test';
-import { loginAsGuildMaster, setupFamilyAndLogin } from './setup-helpers';
+import { setupUserWithCharacter, loginUser } from './helpers/setup-helpers';
 
 test.describe('Quest Template Realtime Updates', () => {
   let context1: BrowserContext;
   let context2: BrowserContext;
   let page1: Page;
   let page2: Page;
+  let testUser: { email: string; password: string };
 
   test.beforeEach(async ({ browser }) => {
     // Create two browser contexts to simulate two users/tabs
@@ -15,18 +16,18 @@ test.describe('Quest Template Realtime Updates', () => {
     page2 = await context2.newPage();
 
     // Setup family and login as Guild Master in first context
-    const setup = await setupFamilyAndLogin(page1);
+    testUser = await setupUserWithCharacter(page1, 'guildmaster');
 
     // Login as the same Guild Master in second context
-    await loginAsGuildMaster(page2, setup.email, setup.password);
+    await loginUser(page2, testUser.email, testUser.password);
 
     // Navigate both pages to the dashboard Quest Templates tab
     await page1.goto('http://localhost:3000/dashboard');
-    await page1.getByRole('tab', { name: /quest templates/i }).click();
+    await page1.getByTestId('tab-templates').click();
     await page1.waitForSelector('[data-testid="quest-template-manager"]');
 
     await page2.goto('http://localhost:3000/dashboard');
-    await page2.getByRole('tab', { name: /quest templates/i }).click();
+    await page2.getByTestId('tab-templates').click();
     await page2.waitForSelector('[data-testid="quest-template-manager"]');
   });
 
