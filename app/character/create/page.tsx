@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
@@ -9,14 +9,28 @@ import { Character } from '@/lib/types/database';
 
 export default function CreateCharacterPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, characterName, setCharacterName } = useAuth();
   const { refreshCharacter } = useCharacter();
+  const [initialName, setInitialName] = useState('');
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/auth/login');
     }
   }, [user, isLoading, router]);
+
+  // Load character name from sessionStorage on mount
+  useEffect(() => {
+    const pendingName = sessionStorage.getItem('pendingCharacterName');
+    if (pendingName) {
+      setCharacterName(pendingName);
+      setInitialName(pendingName);
+      // Clear from sessionStorage after loading
+      sessionStorage.removeItem('pendingCharacterName');
+    } else if (characterName) {
+      setInitialName(characterName);
+    }
+  }, [characterName, setCharacterName]);
 
   const handleCharacterCreated = async (character: Character) => {
     console.log('Character created:', character);
@@ -53,7 +67,10 @@ export default function CreateCharacterPage() {
           </p>
         </div>
         
-        <CharacterCreation onCharacterCreated={handleCharacterCreated} />
+        <CharacterCreation
+          onCharacterCreated={handleCharacterCreated}
+          initialCharacterName={initialName}
+        />
       </div>
     </div>
   );

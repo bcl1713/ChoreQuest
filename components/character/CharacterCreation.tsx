@@ -4,51 +4,15 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Character, CharacterClass } from '@/lib/types/database';
+import { CHARACTER_CLASSES, formatBonusPercentage } from '@/lib/constants/character-classes';
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
+  initialCharacterName?: string;
 }
 
-const characterClasses = [
-  {
-    id: 'KNIGHT',
-    name: 'Knight',
-    icon: '⚔️',
-    description: 'Brave protector with exceptional leadership skills',
-    specialty: '+25% XP from protection and organization tasks'
-  },
-  {
-    id: 'MAGE',
-    name: 'Mage',
-    icon: '🔮',
-    description: 'Wise scholar who excels at complex problem-solving',
-    specialty: '+25% XP from study and research tasks'
-  },
-  {
-    id: 'RANGER',
-    name: 'Ranger',
-    icon: '🏹',
-    description: 'Nature-loving explorer who thrives outdoors',
-    specialty: '+25% XP from outdoor and maintenance tasks'
-  },
-  {
-    id: 'ROGUE',
-    name: 'Rogue',
-    icon: '🗡️',
-    description: 'Cunning adventurer skilled in stealth and creativity',
-    specialty: '+25% XP from cleaning and creative tasks'
-  },
-  {
-    id: 'HEALER',
-    name: 'Healer',
-    icon: '🌿',
-    description: 'Compassionate helper who cares for others',
-    specialty: '+25% XP from helping and nurturing tasks'
-  }
-];
-
-export default function CharacterCreation({ onCharacterCreated }: CharacterCreationProps) {
-  const [name, setName] = useState('');
+export default function CharacterCreation({ onCharacterCreated, initialCharacterName = '' }: CharacterCreationProps) {
+  const [name, setName] = useState(initialCharacterName);
   const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -185,24 +149,37 @@ export default function CharacterCreation({ onCharacterCreated }: CharacterCreat
             <label className="block text-sm font-medium text-gray-300 mb-4">
               Choose Your Class
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {characterClasses.map((characterClass) => (
+            {/* Mobile: Horizontal scrollable cards, Desktop: Grid */}
+            <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 flex md:flex-none overflow-x-auto md:overflow-x-visible snap-x snap-mandatory gap-4 pb-4 md:pb-0 -mx-2 px-2 md:mx-0 md:px-0">
+              {CHARACTER_CLASSES.map((characterClass) => (
                 <div
                   key={characterClass.id}
                   data-testid={`class-${characterClass.name.toLowerCase()}`}
-                  className={`fantasy-card p-4 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-gold-500/20 ${
+                  className={`fantasy-card p-4 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-gold-500/20 min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
                     selectedClass === characterClass.id
                       ? 'ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50'
                       : 'hover:border-gold-500/30'
                   }`}
-                  onClick={() => setSelectedClass(characterClass.id as CharacterClass)}
+                  onClick={() => setSelectedClass(characterClass.id)}
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">{characterClass.icon}</div>
                     <h3 className="text-lg font-semibold text-gold-300 mb-2">{characterClass.name}</h3>
                     <p className="text-sm text-gray-400 mb-3">{characterClass.description}</p>
-                    <div className="text-xs text-gold-400">
-                      <strong>Specialty:</strong> {characterClass.specialty}
+                    <div className="text-xs space-y-1">
+                      <div className="font-semibold text-gold-400 mb-2">Bonuses on ALL quests:</div>
+                      {characterClass.bonuses.xp > 1.0 && (
+                        <div className="text-primary-400">⚡ {formatBonusPercentage(characterClass.bonuses.xp)} XP</div>
+                      )}
+                      {characterClass.bonuses.gold > 1.0 && (
+                        <div className="text-gold-400">💰 {formatBonusPercentage(characterClass.bonuses.gold)} Gold</div>
+                      )}
+                      {characterClass.bonuses.honor > 1.0 && (
+                        <div className="text-purple-400">🎖️ {formatBonusPercentage(characterClass.bonuses.honor)} Honor</div>
+                      )}
+                      {characterClass.bonuses.gems > 1.0 && (
+                        <div className="text-gem-400">💎 {formatBonusPercentage(characterClass.bonuses.gems)} Gems</div>
+                      )}
                     </div>
                   </div>
                 </div>

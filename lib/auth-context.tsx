@@ -18,6 +18,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  characterName: string;
+  setCharacterName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
+  const [characterName, setCharacterName] = useState<string>('');
 
   // Load user profile and family data
   const loadUserData = async (userId: string) => {
@@ -438,7 +441,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       createFamily,
       logout,
       isLoading,
-      error
+      error,
+      characterName,
+      setCharacterName
     }}>
       {children}
     </AuthContext.Provider>
