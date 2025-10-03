@@ -6,15 +6,15 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
 
 ### New Files to Create
 - `app/admin/page.tsx` - Main admin dashboard page component
-- `components/admin-dashboard.tsx` - Admin dashboard container with tabbed interface
-- `components/statistics-panel.tsx` - Family statistics overview component
-- `components/activity-feed.tsx` - Real-time activity feed component
-- `components/guild-master-manager.tsx` - Guild Master role management component
-- `components/family-settings.tsx` - Family settings and invite code component
-- `lib/statistics-service.ts` - Service for calculating family statistics
-- `lib/activity-service.ts` - Service for fetching family activity events
-- `lib/family-service.ts` - Service for family-related operations (invite code, etc.)
-- `tests/unit/lib/statistics-service.test.ts` - Unit tests for statistics service
+- `components/admin-dashboard.tsx` - **MODIFIED** Admin dashboard container with tabbed interface (integrated FamilySettings)
+- `components/statistics-panel.tsx` - **CREATED** Family statistics overview component with real-time updates
+- `components/activity-feed.tsx` - **CREATED** Real-time activity feed component with event aggregation and relative timestamps
+- `components/guild-master-manager.tsx` - **CREATED** Guild Master role management component with promote/demote functionality
+- `components/family-settings.tsx` - **CREATED** Family settings component with invite code management and member list
+- `lib/statistics-service.ts` - **CREATED** Service for calculating family statistics
+- `lib/activity-service.ts` - **CREATED** Service for fetching family activity events (aggregates from quests, rewards, characters)
+- `lib/family-service.ts` - **CREATED** Service for family-related operations (getFamilyInfo, regenerateInviteCode)
+- `tests/unit/statistics/statistics-service.test.ts` - **CREATED** Unit tests for statistics service (10/10 passing)
 - `tests/unit/lib/activity-service.test.ts` - Unit tests for activity service
 - `tests/unit/lib/family-service.test.ts` - Unit tests for family service
 - `tests/unit/components/statistics-panel.test.tsx` - Unit tests for statistics panel
@@ -44,7 +44,7 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
 
 ## Tasks
 
-- [ ] 1.0 Create Admin Dashboard Route and Layout Infrastructure
+- [x] 1.0 Create Admin Dashboard Route and Layout Infrastructure
   - [x] 1.1 Create `app/admin/page.tsx` with role-based access guard (redirect non-Guild Masters to dashboard)
   - [x] 1.2 Create `components/admin-dashboard.tsx` with @headlessui/react Tab component structure
   - [x] 1.3 Set up tab state management with URL query params (e.g., `?tab=overview`)
@@ -52,53 +52,53 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
   - [x] 1.5 Add loading states and error boundaries to admin dashboard
   - [x] 1.6 Ensure mobile-responsive tab navigation (horizontal scroll on mobile)
 
-- [ ] 2.0 Implement Family Statistics Service and Overview Tab
-  - [ ] 2.1 Create `lib/statistics-service.ts` with method to calculate family statistics
-  - [ ] 2.2 Implement `getFamilyStatistics(familyId: string)` returning all 7 statistics from PRD
-  - [ ] 2.3 Optimize queries to avoid N+1 problems and heavy database operations
-  - [ ] 2.4 Create `components/statistics-panel.tsx` with card-based layout for statistics
-  - [ ] 2.5 Display: total quests completed (week/month), total gold/XP, character progress, completion rates
-  - [ ] 2.6 Display: most active member, pending approvals count, redemption statistics
-  - [ ] 2.7 Integrate statistics panel into Overview tab of admin dashboard
-  - [ ] 2.8 Add real-time updates to statistics when quest/reward data changes
-  - [ ] 2.9 Add loading skeletons and empty states for statistics cards
+- [x] 2.0 Implement Family Statistics Service and Overview Tab
+  - [x] 2.1 Create `lib/statistics-service.ts` with method to calculate family statistics
+  - [x] 2.2 Implement `getFamilyStatistics(familyId: string)` returning all 7 statistics from PRD
+  - [x] 2.3 Optimize queries to avoid N+1 problems and heavy database operations
+  - [x] 2.4 Create `components/statistics-panel.tsx` with card-based layout for statistics
+  - [x] 2.5 Display: total quests completed (week/month), total gold/XP, character progress, completion rates
+  - [x] 2.6 Display: most active member, pending approvals count, redemption statistics
+  - [x] 2.7 Integrate statistics panel into Overview tab of admin dashboard
+  - [x] 2.8 Add real-time updates to statistics when quest/reward data changes
+  - [x] 2.9 Add loading skeletons and empty states for statistics cards
 
-- [ ] 3.0 Implement Activity Feed Service and Component
-  - [ ] 3.1 Create `lib/activity-service.ts` for fetching family activity events
-  - [ ] 3.2 Implement `getRecentActivity(familyId: string, limit: number)` method
-  - [ ] 3.3 Query and aggregate events from quest_instances, reward_redemptions, characters tables
-  - [ ] 3.4 Create `components/activity-feed.tsx` with scrollable event list
-  - [ ] 3.5 Display events: quest completions, reward redemptions, level-ups, pending approvals
-  - [ ] 3.6 Add relative timestamps (e.g., "5 minutes ago") using date-fns or similar
-  - [ ] 3.7 Implement quick action buttons for pending approvals in activity feed
-  - [ ] 3.8 Add real-time subscription to receive new events without page refresh
-  - [ ] 3.9 Integrate activity feed into Overview tab below statistics panel
-  - [ ] 3.10 Add manual refresh button and auto-scroll to new events
-  - [ ] 3.11 Limit feed to last 50 events for performance
+- [x] 3.0 Implement Activity Feed Service and Component
+  - [x] 3.1 Create `lib/activity-service.ts` for fetching family activity events
+  - [x] 3.2 Implement `getRecentActivity(familyId: string, limit: number)` method
+  - [x] 3.3 Query and aggregate events from quest_instances, reward_redemptions, characters tables
+  - [x] 3.4 Create `components/activity-feed.tsx` with scrollable event list
+  - [x] 3.5 Display events: quest completions, reward redemptions, level-ups, pending approvals
+  - [x] 3.6 Add relative timestamps (e.g., "5 minutes ago") using date-fns or similar
+  - [x] 3.7 Implement quick action buttons for pending approvals in activity feed
+  - [x] 3.8 Add real-time subscription to receive new events without page refresh
+  - [x] 3.9 Integrate activity feed into Overview tab below statistics panel
+  - [x] 3.10 Add manual refresh button and auto-scroll to new events
+  - [x] 3.11 Limit feed to last 50 events for performance
 
-- [ ] 4.0 Build Guild Master Management Tab
-  - [ ] 4.1 Create `components/guild-master-manager.tsx` component
-  - [ ] 4.2 Fetch and display all family members with display name, character name, and role
-  - [ ] 4.3 Add "Promote" button for Heroes to promote to Guild Master
-  - [ ] 4.4 Add "Demote" button for Guild Masters to demote to Hero
-  - [ ] 4.5 Implement confirmation modal for promote/demote actions
-  - [ ] 4.6 Call existing `/api/users/[userId]/promote` and `/demote` endpoints
-  - [ ] 4.7 Prevent demotion of last Guild Master with warning message
-  - [ ] 4.8 Add real-time updates when roles change (subscribe to users table)
-  - [ ] 4.9 Integrate Guild Master Manager into admin dashboard Guild Masters tab
-  - [ ] 4.10 Add loading and error states for role management actions
+- [x] 4.0 Build Guild Master Management Tab
+  - [x] 4.1 Create `components/guild-master-manager.tsx` component
+  - [x] 4.2 Fetch and display all family members with display name, character name, and role
+  - [x] 4.3 Add "Promote" button for Heroes to promote to Guild Master
+  - [x] 4.4 Add "Demote" button for Guild Masters to demote to Hero
+  - [x] 4.5 Implement confirmation modal for promote/demote actions
+  - [x] 4.6 Call existing `/api/users/[userId]/promote` and `/demote` endpoints
+  - [x] 4.7 Prevent demotion of last Guild Master with warning message
+  - [x] 4.8 Add real-time updates when roles change (subscribe to users table)
+  - [x] 4.9 Integrate Guild Master Manager into admin dashboard Guild Masters tab
+  - [x] 4.10 Add loading and error states for role management actions
 
 - [ ] 5.0 Build Family Settings Tab
-  - [ ] 5.1 Create `lib/family-service.ts` for family-related operations
-  - [ ] 5.2 Implement `getFamilyInfo(familyId: string)` to fetch family name, invite code, members
-  - [ ] 5.3 Implement `regenerateInviteCode(familyId: string)` method
-  - [ ] 5.4 Create `components/family-settings.tsx` component
-  - [ ] 5.5 Display family name and current invite code
-  - [ ] 5.6 Add "Copy Invite Code" button with clipboard API integration
-  - [ ] 5.7 Add "Regenerate Invite Code" button with confirmation modal
-  - [ ] 5.8 Display list of all family members with join dates
-  - [ ] 5.9 Integrate Family Settings into admin dashboard Family Settings tab
-  - [ ] 5.10 Add success notifications for copy and regenerate actions
+  - [x] 5.1 Create `lib/family-service.ts` for family-related operations
+  - [x] 5.2 Implement `getFamilyInfo(familyId: string)` to fetch family name, invite code, members
+  - [x] 5.3 Implement `regenerateInviteCode(familyId: string)` method
+  - [x] 5.4 Create `components/family-settings.tsx` component
+  - [x] 5.5 Display family name and current invite code
+  - [x] 5.6 Add "Copy Invite Code" button with clipboard API integration
+  - [x] 5.7 Add "Regenerate Invite Code" button with confirmation modal
+  - [x] 5.8 Display list of all family members with join dates
+  - [x] 5.9 Integrate Family Settings into admin dashboard Family Settings tab
+  - [x] 5.10 Add success notifications for copy and regenerate actions
 
 - [ ] 6.0 Add Admin Navigation Button and Access Control
   - [ ] 6.1 Modify `app/dashboard/page.tsx` to add admin button in header/navbar

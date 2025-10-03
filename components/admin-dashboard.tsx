@@ -3,6 +3,10 @@
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import StatisticsPanel from '@/components/statistics-panel';
+import ActivityFeed from '@/components/activity-feed';
+import GuildMasterManager from '@/components/guild-master-manager';
+import FamilySettings from '@/components/family-settings';
 
 type TabName = 'overview' | 'quest-templates' | 'rewards' | 'guild-masters' | 'family-settings';
 
@@ -68,9 +72,9 @@ export function AdminDashboard() {
         <TabPanels>
           {/* Overview Tab */}
           <TabPanel>
-            <div className="fantasy-card p-6">
-              <h2 className="text-2xl font-fantasy text-gold-400 mb-4">Family Overview</h2>
-              <p className="text-gray-400">Statistics and activity feed coming soon...</p>
+            <div className="space-y-6">
+              <StatisticsPanel />
+              <ActivityFeed />
             </div>
           </TabPanel>
 
@@ -92,18 +96,12 @@ export function AdminDashboard() {
 
           {/* Guild Masters Tab */}
           <TabPanel>
-            <div className="fantasy-card p-6">
-              <h2 className="text-2xl font-fantasy text-gold-400 mb-4">Guild Masters</h2>
-              <p className="text-gray-400">Role management coming soon...</p>
-            </div>
+            <GuildMasterManager />
           </TabPanel>
 
           {/* Family Settings Tab */}
           <TabPanel>
-            <div className="fantasy-card p-6">
-              <h2 className="text-2xl font-fantasy text-gold-400 mb-4">Family Settings</h2>
-              <p className="text-gray-400">Family settings coming soon...</p>
-            </div>
+            <FamilySettings />
           </TabPanel>
         </TabPanels>
       </TabGroup>
