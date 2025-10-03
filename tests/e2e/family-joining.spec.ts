@@ -105,6 +105,107 @@ test.describe('Family Joining', () => {
       // Verify we're on character creation page using a more specific selector
       await expect(newPage.getByRole('heading', { name: 'Create Your Hero' }).first()).toBeVisible({ timeout: 10000 });
 
+      // Verify character name is pre-filled from registration
+      const nameInput = newPage.locator('input#characterName');
+      await expect(nameInput).toHaveValue(newUserData.name);
+
+    } finally {
+      await newContext.close();
+    }
+  });
+
+  test('character name pre-fills from family join and is editable', async ({ page, browser }) => {
+    // Step 1: Create a family and get the family code
+    await page.goto('/auth/create-family');
+
+    const timestamp = Date.now();
+    const familyData = {
+      name: `Test Family ${timestamp}`,
+      userName: `Guild Master ${timestamp}`,
+      email: `gm-${timestamp}@example.com`,
+      password: 'testpass123'
+    };
+
+    // Fill out family creation form
+    await page.fill('input[placeholder="The Brave Knights"]', familyData.name);
+    await page.fill('input[placeholder="Sir Galahad"]', familyData.userName);
+    await page.fill('input[placeholder="hero@example.com"]', familyData.email);
+    await page.fill('input[placeholder="••••••••"]', familyData.password);
+
+    await page.click('button[type="submit"]');
+
+    // After family creation, handle character creation for Guild Master
+    await page.waitForURL(/.*\/(dashboard|character\/create)/, { timeout: 30000 });
+    await page.waitForTimeout(2000);
+
+    if (page.url().includes('/character/create')) {
+      await page.waitForTimeout(1000);
+      await page.fill('input#characterName', familyData.userName);
+      await page.waitForTimeout(500);
+      await page.click('[data-testid="class-knight"]');
+      await page.waitForTimeout(500);
+      const submitButton = page.locator('button:text("Begin Your Quest")');
+      await expect(submitButton).toBeEnabled({ timeout: 5000 });
+      await submitButton.click();
+      await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
+    }
+
+    // Wait for dashboard and get family code
+    await expect(page.getByText('Quest Dashboard')).toBeVisible({ timeout: 10000 });
+    const familyCodeElement = await page.locator('text=/Guild:.*\\([A-Z0-9]{6}\\)/')
+      .or(page.locator('text=/\\([A-Z0-9]{6}\\)/'))
+      .first();
+
+    const familyCodeText = await familyCodeElement.textContent();
+    const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
+    if (!codeMatch || !codeMatch[1]) {
+      throw new Error(`Could not extract family code from: ${familyCodeText}`);
+    }
+    const familyCode = codeMatch[1];
+
+    // Step 2: Open a new browser context for joining user
+    const newContext = await browser.newContext();
+    const newPage = await newContext.newPage();
+
+    try {
+      await newPage.goto('/auth/register');
+
+      const newUserData = {
+        name: `Hero ${timestamp}`,
+        email: `hero-${timestamp}@example.com`,
+        password: 'testpass123',
+        familyCode: familyCode
+      };
+
+      // Fill out registration form
+      await newPage.fill('input[placeholder="Sir Galahad"]', newUserData.name);
+      await newPage.fill('input[placeholder="hero@example.com"]', newUserData.email);
+      await newPage.fill('input[placeholder="••••••••"]', newUserData.password);
+      await newPage.fill('input[placeholder="BraveKnights123"]', newUserData.familyCode);
+
+      await newPage.click('button[type="submit"]');
+
+      // Wait for character creation page
+      await newPage.waitForURL(/.*\/character\/create/, { timeout: 15000 });
+      await expect(newPage.getByRole('heading', { name: 'Create Your Hero' }).first()).toBeVisible({ timeout: 10000 });
+
+      // Verify character name is pre-filled from registration
+      const nameInput = newPage.locator('input#characterName');
+      await expect(nameInput).toHaveValue(newUserData.name);
+
+      // Edit the pre-filled name
+      const editedName = 'Edited Hero Name';
+      await nameInput.fill(editedName);
+      await expect(nameInput).toHaveValue(editedName);
+
+      // Select class and complete character creation
+      await newPage.click('[data-testid="class-rogue"]');
+      await newPage.click('button:text("Begin Your Quest")');
+
+      // Verify character was created with edited name
+      await newPage.waitForURL(/.*\/dashboard/, { timeout: 20000 });
+      await expect(newPage.getByText(`Welcome back, ${editedName}!`)).toBeVisible();
+
     } finally {
       await newContext.close();
     }

@@ -10,19 +10,20 @@ Generated from: `tasks/0002-prd-enhanced-character-creation.md`
 - `lib/reward-calculator.ts` - Existing reward calculator with `getClassBonus()` method (reference for bonus values)
 
 ### State Management & Context
-- `lib/auth-context.tsx` - Auth context that handles family creation and registration (needs to store character name)
+- `lib/auth-context.tsx` - Auth context that handles family creation and registration (stores character name in state)
 - `lib/character-context.tsx` - Character state management context
-- `app/auth/create-family/page.tsx` - Family creation page (needs to pass character name)
-- `app/auth/register/page.tsx` - Join family/registration page (needs to pass character name)
+- `app/auth/create-family/page.tsx` - Family creation page (stores character name to sessionStorage before navigation)
+- `app/auth/register/page.tsx` - Join family/registration page (stores character name to sessionStorage)
+- `app/character/create/page.tsx` - Character creation page (loads character name from sessionStorage on mount)
 
 ### Components
 - `components/auth/AuthForm.tsx` - Authentication form component (already collects character name)
 - `components/character/CharacterCreation.tsx` - Character creation component (needs to accept pre-filled name and display class bonuses)
 
 ### E2E Tests
-- `tests/e2e/character-creation.spec.ts` - Character creation E2E tests (needs update for pre-filled name)
-- `tests/e2e/family-joining.spec.ts` - Family joining E2E tests (needs update for pre-filled name)
-- `tests/e2e/helpers/setup-helpers.ts` - Test helper functions (may need adjustments)
+- `tests/e2e/character-creation.spec.ts` - Character creation E2E tests (updated with pre-fill tests and class bonus tests)
+- `tests/e2e/family-joining.spec.ts` - Family joining E2E tests (updated with pre-fill verification)
+- `tests/e2e/helpers/setup-helpers.ts` - Test helper functions (updated with timing adjustments)
 
 ### Notes
 - Unit tests should be placed alongside code files (e.g., `character-classes.ts` and `character-classes.test.ts` in same directory)
@@ -79,42 +80,42 @@ Generated from: `tasks/0002-prd-enhanced-character-creation.md`
   - [x] 3.6 Add bonus formatting helper function to convert multipliers to percentage display (e.g., `1.2 → "+20%"`)
   - [x] 3.7 Update class descriptions to be more accurate and remove outdated "quest type" references
 
-- [ ] 4.0 Update E2E Tests for New Character Name Flow
-  - [ ] 4.1 Review `tests/e2e/character-creation.spec.ts`:
+- [x] 4.0 Update E2E Tests for New Character Name Flow
+  - [x] 4.1 Review `tests/e2e/character-creation.spec.ts`:
     - Identify all tests that fill character name input
     - Update assertions to expect pre-filled character name from family creation
     - Verify character name is editable in character creation form
-  - [ ] 4.2 Review `tests/e2e/family-joining.spec.ts`:
+  - [x] 4.2 Review `tests/e2e/family-joining.spec.ts`:
     - Update character name input expectations for join family flow
     - Verify character name from registration pre-fills into character creation
     - Test editing pre-filled character name before submission
-  - [ ] 4.3 Update `tests/e2e/helpers/setup-helpers.ts` if needed:
+  - [x] 4.3 Update `tests/e2e/helpers/setup-helpers.ts` if needed:
     - Adjust `setupUserAtCharacterCreation()` helper to handle pre-filled name
     - Adjust `setupUserWithCharacter()` helper if character name flow changed
-  - [ ] 4.4 Add new E2E test case: "character name pre-fills from family creation and is editable"
-  - [ ] 4.5 Add new E2E test case: "character name pre-fills from family join and is editable"
-  - [ ] 4.6 Add new E2E test case: "class bonus information displays correctly on desktop"
-  - [ ] 4.7 Add new E2E test case: "class selection swipe works on mobile viewport"
-  - [ ] 4.8 Run `npx playwright test tests/e2e/character-creation.spec.ts` to verify all tests pass
-  - [ ] 4.9 Run `npx playwright test tests/e2e/family-joining.spec.ts` to verify all tests pass
+  - [x] 4.4 Add new E2E test case: "character name pre-fills from family creation and is editable"
+  - [x] 4.5 Add new E2E test case: "character name pre-fills from family join and is editable"
+  - [x] 4.6 Add new E2E test case: "class bonus information displays correctly on desktop"
+  - [x] 4.7 Add new E2E test case: "class selection swipe works on mobile viewport"
+  - [x] 4.8 Run `npx playwright test tests/e2e/character-creation.spec.ts` to verify all tests pass
+  - [x] 4.9 Run `npx playwright test tests/e2e/family-joining.spec.ts` to verify all tests pass
 
-- [ ] 5.0 Quality Assurance and Documentation
-  - [ ] 5.1 Run `npm run build` - verify zero compilation errors
-  - [ ] 5.2 Run `npm run lint` - verify zero linting errors/warnings
-  - [ ] 5.3 Run `npx jest` - verify all unit tests pass (including new character-classes tests)
-  - [ ] 5.4 Run `npx playwright test` - verify all E2E tests pass with new character name flow
-  - [ ] 5.5 Manual testing on desktop:
+- [x] 5.0 Quality Assurance and Documentation
+  - [x] 5.1 Run `npm run build` - verify zero compilation errors
+  - [x] 5.2 Run `npm run lint` - verify zero linting errors/warnings
+  - [x] 5.3 Run `npx jest` - verify all unit tests pass (including new character-classes tests)
+  - [x] 5.4 Run `npx playwright test` - verify all E2E tests pass with new character name flow
+  - [x] 5.5 Manual testing on desktop:
     - Create family, verify character name pre-fills in character creation
     - Edit pre-filled character name before submitting
     - Verify class bonuses display correctly with accurate percentages
     - Join family, verify character name pre-fills
-  - [ ] 5.6 Manual testing on mobile viewport:
+  - [x] 5.6 Manual testing on mobile viewport:
     - Test class selection swipe/scroll on mobile (use browser dev tools)
     - Verify touch targets are large enough
     - Verify scroll indicators work correctly
-  - [ ] 5.7 Create serena memory: `enhanced_character_creation_implementation` documenting:
+  - [x] 5.7 Create serena memory: `enhanced_character_creation_implementation` documenting:
     - Character class configuration structure
     - Character name flow (family/join → character creation)
     - Class bonus display formatting
     - Mobile swipe implementation details
-  - [ ] 5.8 Update TASKS.md to mark enhanced character creation as completed
+  - [x] 5.8 Update TASKS.md to mark enhanced character creation as completed

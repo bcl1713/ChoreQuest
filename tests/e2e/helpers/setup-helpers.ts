@@ -105,6 +105,7 @@ export async function setupUserWithCharacter(
 
 /**
  * Sets up user but stops at character creation page
+ * Character name should be pre-filled from family creation
  */
 export async function setupUserAtCharacterCreation(page: Page, prefix: string): Promise<TestUser> {
   const user = createTestUser(prefix);
@@ -121,6 +122,9 @@ export async function setupUserAtCharacterCreation(page: Page, prefix: string): 
   await page.click('button[type="submit"]');
 
   await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
+
+  // Wait for character creation form to be ready
+  await page.waitForTimeout(500);
 
   return user;
 }

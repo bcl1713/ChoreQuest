@@ -21,6 +21,8 @@ export default function CreateFamilyPage() {
       await createFamily(data);
       // Store character name for pre-filling in character creation
       setCharacterName(data.userName);
+      // Also persist to sessionStorage since we're doing a full page navigation
+      sessionStorage.setItem('pendingCharacterName', data.userName);
       // Navigate to character creation after successful family creation
       // New Guild Masters need to create their character before accessing dashboard
       window.location.href = '/character/create';

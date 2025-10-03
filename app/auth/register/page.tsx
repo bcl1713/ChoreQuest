@@ -32,6 +32,8 @@ export default function RegisterPage() {
       await register(data);
       // Store character name for pre-filling in character creation
       setCharacterName(data.name);
+      // Also persist to sessionStorage for page navigation
+      sessionStorage.setItem('pendingCharacterName', data.name);
       // Navigation will be handled by auth state change
     } catch (err) {
       // Error will be handled by register function
