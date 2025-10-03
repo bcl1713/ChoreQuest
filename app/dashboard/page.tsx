@@ -214,14 +214,24 @@ export default function Dashboard() {
               {/* Action buttons - mobile-optimized */}
               <div className="flex gap-2 sm:gap-3">
                 {profile?.role === 'GUILD_MASTER' && (
-                  <button
-                    onClick={() => setShowCreateQuest(true)}
-                    className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
-                    data-testid="create-quest-button"
-                  >
-                    <span className="hidden sm:inline">⚡ Create Quest</span>
-                    <span className="sm:hidden">⚡ Quest</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => router.push('/app/admin')}
+                      className="bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                      data-testid="admin-button"
+                    >
+                      <span className="hidden sm:inline">⚙️ Admin</span>
+                      <span className="sm:hidden">⚙️</span>
+                    </button>
+                    <button
+                      onClick={() => setShowCreateQuest(true)}
+                      className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                      data-testid="create-quest-button"
+                    >
+                      <span className="hidden sm:inline">⚡ Create Quest</span>
+                      <span className="sm:hidden">⚡ Quest</span>
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={logout}

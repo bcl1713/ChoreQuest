@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { FamilyService, FamilyInfo } from "@/lib/family-service";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,10 +18,10 @@ export default function FamilySettings() {
     message: string;
   } | null>(null);
 
-  const familyService = new FamilyService();
+  const familyService = useMemo(() => new FamilyService(), []);
 
   // Load family information
-  const loadFamilyInfo = async () => {
+  const loadFamilyInfo = useCallback(async () => {
     if (!profile?.family_id) return;
 
     try {
@@ -35,12 +35,12 @@ export default function FamilySettings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.family_id, familyService]);
 
   // Initial load
   useEffect(() => {
     loadFamilyInfo();
-  }, [profile?.family_id]);
+  }, [loadFamilyInfo]);
 
   // Copy invite code to clipboard
   const handleCopyCode = async () => {

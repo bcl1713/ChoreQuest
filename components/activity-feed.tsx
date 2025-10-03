@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
@@ -108,7 +108,7 @@ export default function ActivityFeed() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Load activity events
-  const loadActivity = async () => {
+  const loadActivity = useCallback(async () => {
     if (!profile?.family_id) return;
 
     try {
@@ -123,12 +123,12 @@ export default function ActivityFeed() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [profile?.family_id]);
 
   // Initial load
   useEffect(() => {
     loadActivity();
-  }, [profile?.family_id]);
+  }, [loadActivity]);
 
   // Subscribe to realtime updates and refresh activity
   useEffect(() => {
@@ -149,7 +149,7 @@ export default function ActivityFeed() {
       unsubscribeRedemption();
       unsubscribeCharacter();
     };
-  }, [onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate]);
+  }, [onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate, loadActivity]);
 
   // Manual refresh
   const handleRefresh = () => {

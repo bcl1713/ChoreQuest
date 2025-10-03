@@ -88,7 +88,7 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
   - [x] 4.9 Integrate Guild Master Manager into admin dashboard Guild Masters tab
   - [x] 4.10 Add loading and error states for role management actions
 
-- [ ] 5.0 Build Family Settings Tab
+- [x] 5.0 Build Family Settings Tab
   - [x] 5.1 Create `lib/family-service.ts` for family-related operations
   - [x] 5.2 Implement `getFamilyInfo(familyId: string)` to fetch family name, invite code, members
   - [x] 5.3 Implement `regenerateInviteCode(familyId: string)` method
@@ -100,13 +100,13 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
   - [x] 5.9 Integrate Family Settings into admin dashboard Family Settings tab
   - [x] 5.10 Add success notifications for copy and regenerate actions
 
-- [ ] 6.0 Add Admin Navigation Button and Access Control
-  - [ ] 6.1 Modify `app/dashboard/page.tsx` to add admin button in header/navbar
-  - [ ] 6.2 Show admin button only if current user has Guild Master role
-  - [ ] 6.3 Add admin button with appropriate icon (e.g., Settings, Shield) and label
-  - [ ] 6.4 Link admin button to `/app/admin` route
-  - [ ] 6.5 Add hover and active states for admin button
-  - [ ] 6.6 Ensure admin button is responsive and visible on mobile
+- [x] 6.0 Add Admin Navigation Button and Access Control
+  - [x] 6.1 Modify `app/dashboard/page.tsx` to add admin button in header/navbar
+  - [x] 6.2 Show admin button only if current user has Guild Master role
+  - [x] 6.3 Add admin button with appropriate icon (e.g., Settings, Shield) and label
+  - [x] 6.4 Link admin button to `/app/admin` route
+  - [x] 6.5 Add hover and active states for admin button
+  - [x] 6.6 Ensure admin button is responsive and visible on mobile
 
 - [ ] 7.0 Unit Testing for Services and Components
   - [ ] 7.1 Write tests for `lib/statistics-service.ts` (test all statistics calculations)

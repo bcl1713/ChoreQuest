@@ -17,8 +17,6 @@ describe("StatisticsService", () => {
   let service: StatisticsService;
   let mockFrom: jest.Mock;
   let mockSelect: jest.Mock;
-  let mockEq: jest.Mock;
-  let mockIn: jest.Mock;
 
   const mockFamilyId = "family-123";
   const now = new Date("2025-10-15T12:00:00Z"); // Wednesday, Oct 15, 2025

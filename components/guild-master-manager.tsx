@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
@@ -16,7 +16,7 @@ interface FamilyMemberWithCharacter extends UserProfile {
 
 export default function GuildMasterManager() {
   const { profile, user } = useAuth();
-  const { onUserUpdate } = useRealtime();
+  const { onFamilyMemberUpdate } = useRealtime();
   const [members, setMembers] = useState<FamilyMemberWithCharacter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function GuildMasterManager() {
   } | null>(null);
 
   // Load family members
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     if (!profile?.family_id) return;
 
     try {
@@ -47,7 +47,7 @@ export default function GuildMasterManager() {
         `)
         .eq("family_id", profile.family_id)
         .order("role", { ascending: false }) // Guild Masters first
-        .order("display_name", { ascending: true });
+        .order("name", { ascending: true });
 
       if (fetchError) {
         throw new Error(fetchError.message);
@@ -68,26 +68,26 @@ export default function GuildMasterManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.family_id]);
 
   // Initial load
   useEffect(() => {
     loadMembers();
-  }, [profile?.family_id]);
+  }, [loadMembers]);
 
   // Subscribe to realtime user updates
   useEffect(() => {
-    const unsubscribe = onUserUpdate((event) => {
+    const unsubscribe = onFamilyMemberUpdate(() => {
       // Reload members when any user profile changes
       loadMembers();
     });
 
     return unsubscribe;
-  }, [onUserUpdate]);
+  }, [onFamilyMemberUpdate, loadMembers]);
 
   // Handle promote/demote confirmation
-  const handleConfirmAction = (type: "promote" | "demote", userId: string, userName: string) => {
-    setConfirmAction({ type, userId, userName });
+  const handleConfirmAction = (type: "promote" | "demote", userId: string) => {
+    setConfirmAction({ type, userId, userName: "" });
     setShowConfirmModal(true);
   };
 
@@ -95,7 +95,7 @@ export default function GuildMasterManager() {
   const executeAction = async () => {
     if (!confirmAction) return;
 
-    const { type, userId, userName } = confirmAction;
+    const { type, userId } = confirmAction;
     setActionLoading(userId);
     setShowConfirmModal(false);
 
@@ -127,9 +127,9 @@ export default function GuildMasterManager() {
       // Show success (members will update via realtime subscription)
       console.log(result.message);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to update role:", err);
-      setError(err.message || "Failed to update role");
+      setError(err instanceof Error ? err.message : "Failed to update role");
     } finally {
       setActionLoading(null);
       setConfirmAction(null);
@@ -221,7 +221,7 @@ export default function GuildMasterManager() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-white font-medium truncate">
-                        {member.display_name}
+                        {member.name}
                         {isCurrentUser && (
                           <span className="text-xs text-gray-400 ml-2">(You)</span>
                         )}
@@ -252,7 +252,7 @@ export default function GuildMasterManager() {
                     </span>
                   ) : isGuildMaster ? (
                     <button
-                      onClick={() => handleConfirmAction("demote", member.id, member.display_name)}
+                      onClick={() => handleConfirmAction("demote", member.id)}
                       disabled={actionLoading === member.id || isLastGM}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isLastGM
@@ -265,7 +265,7 @@ export default function GuildMasterManager() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleConfirmAction("promote", member.id, member.display_name)}
+                      onClick={() => handleConfirmAction("promote", member.id)}
                       disabled={actionLoading === member.id}
                       className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30"
                     >

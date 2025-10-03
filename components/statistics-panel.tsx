@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { StatisticsService, FamilyStatistics } from "@/lib/statistics-service";
@@ -16,7 +16,7 @@ export default function StatisticsPanel() {
   const [error, setError] = useState<string | null>(null);
 
   // Load statistics
-  const loadStatistics = async () => {
+  const loadStatistics = useCallback(async () => {
     if (!profile?.family_id) return;
 
     try {
@@ -30,12 +30,12 @@ export default function StatisticsPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile?.family_id]);
 
   // Initial load
   useEffect(() => {
     loadStatistics();
-  }, [profile?.family_id]);
+  }, [loadStatistics]);
 
   // Subscribe to realtime updates to refresh statistics
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function StatisticsPanel() {
       unsubscribeRedemption();
       unsubscribeCharacter();
     };
-  }, [onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate]);
+  }, [onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate, loadStatistics]);
 
   if (loading) {
     return (
