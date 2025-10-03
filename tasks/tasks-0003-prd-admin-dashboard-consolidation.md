@@ -17,10 +17,11 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
 - `tests/unit/statistics/statistics-service.test.ts` - **CREATED** Unit tests for statistics service (10/10 passing)
 - `tests/unit/lib/activity-service.test.ts` - Unit tests for activity service
 - `tests/unit/lib/family-service.test.ts` - Unit tests for family service
-- `tests/unit/components/statistics-panel.test.tsx` - Unit tests for statistics panel
-- `tests/unit/components/activity-feed.test.tsx` - Unit tests for activity feed
-- `tests/unit/components/guild-master-manager.test.tsx` - Unit tests for guild master manager
-- `tests/unit/components/family-settings.test.tsx` - Unit tests for family settings
+- `tests/unit/components/statistics-panel.test.tsx` - **CREATED** Unit tests for statistics panel (11/11 passing)
+- `tests/unit/components/activity-feed.test.tsx` - **CREATED** Unit tests for activity feed (20/20 passing)
+- `tests/unit/components/guild-master-manager.test.tsx` - **CREATED** Unit tests for guild master manager (27/27 passing)
+- `tests/unit/components/family-settings.test.tsx` - **CREATED** Unit tests for family settings (32/32 passing)
+- `tests/unit/components/admin-dashboard.test.tsx` - **CREATED** Unit tests for admin dashboard (31/31 passing)
 - `tests/e2e/admin-dashboard-access.spec.ts` - E2E tests for access control
 - `tests/e2e/admin-dashboard-tabs.spec.ts` - E2E tests for tab navigation
 - `tests/e2e/admin-statistics.spec.ts` - E2E tests for statistics display
@@ -108,16 +109,16 @@ Based on PRD: `0003-prd-admin-dashboard-consolidation.md`
   - [x] 6.5 Add hover and active states for admin button
   - [x] 6.6 Ensure admin button is responsive and visible on mobile
 
-- [ ] 7.0 Unit Testing for Services and Components
-  - [ ] 7.1 Write tests for `lib/statistics-service.ts` (test all statistics calculations)
-  - [ ] 7.2 Write tests for `lib/activity-service.ts` (test event fetching and aggregation)
-  - [ ] 7.3 Write tests for `lib/family-service.ts` (test family info and invite code operations)
-  - [ ] 7.4 Write tests for `components/statistics-panel.tsx` (test rendering and real-time updates)
-  - [ ] 7.5 Write tests for `components/activity-feed.tsx` (test event display and quick actions)
-  - [ ] 7.6 Write tests for `components/guild-master-manager.tsx` (test role management UI)
-  - [ ] 7.7 Write tests for `components/family-settings.tsx` (test settings display and actions)
-  - [ ] 7.8 Write tests for `components/admin-dashboard.tsx` (test tab navigation and access control)
-  - [ ] 7.9 Run `npm run test` and ensure all unit tests pass with good coverage
+- [x] 7.0 Unit Testing for Services and Components
+  - [x] 7.1 Write tests for `lib/statistics-service.ts` (test all statistics calculations) - 10/10 tests passing
+  - [x] 7.2 Write tests for `lib/activity-service.ts` (test event fetching and aggregation) - 15/15 tests passing
+  - [x] 7.3 Write tests for `lib/family-service.ts` (test family info and invite code operations) - 14/14 tests passing
+  - [x] 7.4 Write tests for `components/statistics-panel.tsx` (test rendering and real-time updates) - 11/11 tests passing
+  - [x] 7.5 Write tests for `components/activity-feed.tsx` (test event display and quick actions) - 20/20 tests passing
+  - [x] 7.6 Write tests for `components/guild-master-manager.tsx` (test role management UI) - 27/27 tests passing
+  - [x] 7.7 Write tests for `components/family-settings.tsx` (test settings display and actions) - 32/32 tests passing
+  - [x] 7.8 Write tests for `components/admin-dashboard.tsx` (test tab navigation and access control) - 31/31 tests passing
+  - [x] 7.9 Run `npm run test` and ensure all unit tests pass with good coverage - ✅ 259/259 tests passing (17 suites)
 
 - [ ] 8.0 E2E Testing (Manual/Separate Session)
   - [ ] 8.1 Create `tests/e2e/admin-dashboard-access.spec.ts` - Test Guild Masters can access, Heroes cannot

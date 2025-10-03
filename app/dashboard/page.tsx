@@ -216,7 +216,7 @@ export default function Dashboard() {
                 {profile?.role === 'GUILD_MASTER' && (
                   <>
                     <button
-                      onClick={() => router.push('/app/admin')}
+                      onClick={() => router.push('/admin')}
                       className="bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
                       data-testid="admin-button"
                     >

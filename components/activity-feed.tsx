@@ -259,8 +259,8 @@ export default function ActivityFeed() {
                     <div className="flex-shrink-0">
                       <button
                         onClick={() => {
-                          // Navigate to quest approval (implementation depends on routing)
-                          window.location.href = `/app/dashboard?highlight=${event.questId}`;
+                          // Navigate to quest approval
+                          window.location.href = `/dashboard?highlight=${event.questId}`;
                         }}
                         className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded transition-colors"
                       >

@@ -63,7 +63,7 @@ export default function AdminPage() {
 
     // Redirect to dashboard if user is not a Guild Master
     if (!isLoading && user && profile?.role !== 'GUILD_MASTER') {
-      router.push('/app/dashboard');
+      router.push('/dashboard');
     }
   }, [user, profile, isLoading, router]);
 
@@ -102,7 +102,7 @@ export default function AdminPage() {
                 )}
               </div>
               <button
-                onClick={() => router.push('/app/dashboard')}
+                onClick={() => router.push('/dashboard')}
                 className="bg-dark-700 hover:bg-dark-600 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors"
               >
                 ← Back to Dashboard
