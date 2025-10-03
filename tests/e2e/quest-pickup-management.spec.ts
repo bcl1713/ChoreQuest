@@ -30,7 +30,6 @@ test.describe("Quest Pickup and Management", () => {
     await page.fill('input[type="number"]:near(:text("XP Reward"))', "50");
 
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
 
     // Verify quest appears in Available Quests
     await expect(page.getByText("📋 Available Quests")).toBeVisible();
@@ -45,7 +44,6 @@ test.describe("Quest Pickup and Management", () => {
     );
     await expect(pickupButton.first()).toBeVisible();
     await pickupButton.first().click();
-    await page.waitForTimeout(2000);
 
     // Verify quest moved to My Quests
     await expect(page.getByText("🗡️ My Quests")).toBeVisible();
@@ -72,26 +70,21 @@ test.describe("Quest Pickup and Management", () => {
     await page.fill('input[type="number"]:near(:text("XP Reward"))', "30");
 
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
 
     // Pick up quest
     await page.locator('button:has-text("Pick Up Quest")').first().click();
-    await page.waitForTimeout(2000);
 
     // Start the quest
     await page.locator('button:has-text("Start Quest")').first().click();
-    await page.waitForTimeout(1000);
 
     // Complete the quest
     await page.locator('button:has-text("Complete")').first().click();
-    await page.waitForTimeout(1000);
 
     // Verify quest shows as completed
     await expect(page.getByText("COMPLETED")).toBeVisible();
 
     // Approve as Guild Master
     await page.locator('button:has-text("Approve")').first().click();
-    await page.waitForTimeout(2000);
 
     // Verify quest shows as approved
     await expect(page.getByText("APPROVED")).toBeVisible();
@@ -114,7 +107,6 @@ test.describe("Quest Pickup and Management", () => {
     await page.fill('input[type="number"]:near(:text("XP Reward"))', "40");
 
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
 
     // Verify quest was created and appears somewhere on the page
     await expect(page.getByText(questTitle).first()).toBeVisible();
@@ -132,7 +124,6 @@ test.describe("Quest Pickup and Management", () => {
         .locator('button:has-text("Pick Up Quest")')
         .first()
         .click();
-      await page.waitForTimeout(1000);
     }
 
     // Find the quest in My Quests and complete the workflow
@@ -144,14 +135,13 @@ test.describe("Quest Pickup and Management", () => {
 
     // Complete quest workflow
     await page.locator('button:has-text("Start Quest")').first().click();
-    await page.waitForTimeout(1000);
 
     await page.locator('button:has-text("Complete")').first().click();
-    await page.waitForTimeout(1000);
+
     await expect(page.getByText("COMPLETED")).toBeVisible();
 
     await page.locator('button:has-text("Approve")').first().click();
-    await page.waitForTimeout(2000);
+
     await expect(page.getByText("APPROVED")).toBeVisible();
   });
 });
