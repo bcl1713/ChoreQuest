@@ -3,6 +3,8 @@ import {
   setupTestUser,
   giveCharacterGoldViaQuest,
 } from "./helpers/setup-helpers";
+import { createReward } from "./helpers/reward-helpers";
+import { navigateToHeroTab } from "./helpers/navigation-helpers";
 
 test.describe("Reward Redemption Approval Workflow", () => {
   test.beforeEach(async ({ page }) => {
@@ -16,35 +18,21 @@ test.describe("Reward Redemption Approval Workflow", () => {
     await setupTestUser(page);
 
     // Create a reward
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill(
-      '[data-testid="reward-name-input"]',
-      "Approval Test Reward",
-    );
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test redemption approval",
-    );
-    await page.selectOption(
-      '[data-testid="reward-type-select"]',
-      "SCREEN_TIME",
-    );
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Approval Test Reward",
+      description: "Test redemption approval",
+      type: "SCREEN_TIME",
+      cost: 50,
+    });
 
     // Give hero gold and redeem reward
     await giveCharacterGoldViaQuest(page, 100);
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Navigate to Reward Management
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
+    await navigateToHeroTab(page, "Reward Management");
 
     // Verify pending redemptions section exists
     await expect(
@@ -62,28 +50,20 @@ test.describe("Reward Redemption Approval Workflow", () => {
     // Setup and create redemption
     await setupTestUser(page);
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Approve Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test approval",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "PRIVILEGE");
-    await page.fill('[data-testid="reward-cost-input"]', "75");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Approve Test",
+      description: "Test approval",
+      type: "PRIVILEGE",
+      cost: 75,
+    });
 
     await giveCharacterGoldViaQuest(page, 150);
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Go to Reward Management
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
+    await navigateToHeroTab(page, "Reward Management");
 
     // Approve the redemption
     await page.click('[data-testid="approve-redemption-button"]');
@@ -103,18 +83,16 @@ test.describe("Reward Redemption Approval Workflow", () => {
     // Setup and create redemption
     await setupTestUser(page);
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Deny Test");
-    await page.fill('[data-testid="reward-description-input"]', "Test denial");
-    await page.selectOption('[data-testid="reward-type-select"]', "PURCHASE");
-    await page.fill('[data-testid="reward-cost-input"]', "60");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Deny Test",
+      description: "Test denial",
+      type: "PURCHASE",
+      cost: 60,
+    });
 
     await giveCharacterGoldViaQuest(page, 100);
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
     await expect(page.locator('[data-testid="gold-balance"]')).not.toHaveText(
       "0 Gold",
     );
@@ -140,10 +118,7 @@ test.describe("Reward Redemption Approval Workflow", () => {
     expect(goldAfterRedeem).toBe(goldBefore - 60);
 
     // Go to Reward Management and deny
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
+    await navigateToHeroTab(page, "Reward Management");
     await page.click('[data-testid="deny-redemption-button"]');
 
     // Verify redemption is removed from pending
@@ -152,8 +127,7 @@ test.describe("Reward Redemption Approval Workflow", () => {
     ).toHaveCount(0);
 
     // Check gold was refunded
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     const goldAfterDenyText = await page
       .locator('[data-testid="gold-balance"]')
       .textContent();
@@ -165,29 +139,20 @@ test.describe("Reward Redemption Approval Workflow", () => {
     // Setup and create redemption
     await setupTestUser(page);
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Fulfill Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test fulfillment",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "EXPERIENCE");
-    await page.fill('[data-testid="reward-cost-input"]', "80");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Fulfill Test",
+      description: "Test fulfillment",
+      type: "EXPERIENCE",
+      cost: 80,
+    });
 
     await giveCharacterGoldViaQuest(page, 150);
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Go to Reward Management and approve
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
+    await navigateToHeroTab(page, "Reward Management");
     await page.click('[data-testid="approve-redemption-button"]');
 
     // Now fulfill the approved redemption
@@ -207,35 +172,23 @@ test.describe("Reward Redemption Approval Workflow", () => {
     await setupTestUser(page);
 
     // Create reward
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Realtime Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test realtime",
-    );
-    await page.selectOption(
-      '[data-testid="reward-type-select"]',
-      "SCREEN_TIME",
-    );
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Realtime Test",
+      description: "Test realtime",
+      type: "SCREEN_TIME",
+      cost: 50,
+    });
 
     // Give gold and redeem
     await giveCharacterGoldViaQuest(page, 100);
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Open second tab for same user
     const page2 = await context.newPage();
     await page2.goto("/dashboard");
-
-    await page2.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
+    await navigateToHeroTab(page2, "Reward Management");
 
     // Verify redemption appears in second tab
     await expect(
@@ -243,10 +196,7 @@ test.describe("Reward Redemption Approval Workflow", () => {
     ).toHaveCount(1);
 
     // Approve in first tab
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
+    await navigateToHeroTab(page, "Reward Management");
     await page.click('[data-testid="approve-redemption-button"]');
 
     // Verify realtime update in second tab - pending count goes to 0
@@ -261,24 +211,18 @@ test.describe("Reward Redemption Approval Workflow", () => {
     // Setup and create redemption
     await setupTestUser(page);
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Hero View Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test hero view",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "PRIVILEGE");
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Hero View Test",
+      description: "Test hero view",
+      type: "PRIVILEGE",
+      cost: 50,
+    });
 
     await giveCharacterGoldViaQuest(page, 100);
 
     // Hero redeems
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Verify hero sees pending status (button disabled with "Request Pending")
@@ -287,14 +231,11 @@ test.describe("Reward Redemption Approval Workflow", () => {
     ).toBeVisible();
 
     // GM approves
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
+    await navigateToHeroTab(page, "Reward Management");
     await page.click('[data-testid="approve-redemption-button"]');
 
     // Hero checks reward store
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
 
     // Verify request pending button is no longer visible (was approved)
     await expect(

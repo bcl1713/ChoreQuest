@@ -3,6 +3,8 @@ import {
   setupTestUser,
   giveCharacterGoldViaQuest,
 } from "./helpers/setup-helpers";
+import { createReward, deleteReward } from "./helpers/reward-helpers";
+import { navigateToHeroTab } from "./helpers/navigation-helpers";
 
 test.describe("Reward Store", () => {
   test.beforeEach(async ({ page }) => {
@@ -17,7 +19,7 @@ test.describe("Reward Store", () => {
     await setupTestUser(page);
 
     // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
 
     // Verify reward store is displayed
     await expect(
@@ -40,7 +42,7 @@ test.describe("Reward Store", () => {
     await setupTestUser(page);
 
     // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
 
     // Verify reward store displays empty state
     await expect(
@@ -61,7 +63,7 @@ test.describe("Reward Store", () => {
     await setupTestUser(page);
 
     // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
 
     // Verify reward store is displayed
     await expect(
@@ -90,11 +92,11 @@ test.describe("Reward Store", () => {
     await expect(page.locator('h2:has-text("Quest Dashboard")')).toBeVisible();
 
     // Switch to reward store tab
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
     await expect(page.locator('h2:has-text("⭐ Reward Store")')).toBeVisible();
 
     // Switch back to quest tab
-    await page.click('button:has-text("⚔️ Quests & Adventures")');
+    await navigateToHeroTab(page, "Quests & Adventures");
     await expect(page.locator('h2:has-text("Quest Dashboard")')).toBeVisible();
   });
 
@@ -105,32 +107,19 @@ test.describe("Reward Store", () => {
     await setupTestUser(page);
 
     // Create a reward as Guild Master
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill(
-      '[data-testid="reward-name-input"]',
-      "Test Reward for Redemption",
-    );
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "This reward will be redeemed and deleted",
-    );
-    await page.selectOption(
-      '[data-testid="reward-type-select"]',
-      "SCREEN_TIME",
-    );
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Test Reward for Redemption",
+      description: "This reward will be redeemed and deleted",
+      type: "SCREEN_TIME",
+      cost: 50,
+    });
 
-    // Give the hero some gold via quest completion (100 gold base with EASY difficulty + KNIGHT bonus = 105 gold)
+    // Give the hero some gold via quest completion
     await giveCharacterGoldViaQuest(page, 100);
 
-    // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    // Redeem the reward
+    // Switch to Reward Store tab and redeem the reward
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Verify redemption appears in history
@@ -142,20 +131,16 @@ test.describe("Reward Store", () => {
     ).toBeVisible();
 
     // Delete the reward as Guild Master
-    await page.click('button:has-text("⚙️ Reward Management")');
-
-    // Find and delete the reward - click the first Delete button (there's only one reward)
-    await page.locator('button:has-text("Delete")').first().click();
-    await page.locator('button:has-text("Delete")').nth(1).click(); // Confirm deletion in modal
+    await navigateToHeroTab(page, "Reward Management");
+    await deleteReward(page, "Test Reward for Redemption");
 
     // Switch back to Reward Store
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
 
-    // Verify redemption history still shows with denormalized data (name and cost)
+    // Verify redemption history still shows with denormalized data
     await expect(
       page.locator("text=Test Reward for Redemption").first(),
     ).toBeVisible();
-    // Note: Description and reward type may not be displayed in redemption history UI
   });
 
   test("should persist redemption history even after reward is deleted", async ({
@@ -165,41 +150,27 @@ test.describe("Reward Store", () => {
     await setupTestUser(page);
 
     // Create a reward
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill(
-      '[data-testid="reward-name-input"]',
-      "Persistence Test Reward",
-    );
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Testing redemption persistence",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "PRIVILEGE");
-    await page.fill('[data-testid="reward-cost-input"]', "75");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(page, "Reward Management");
+    await createReward(page, {
+      name: "Persistence Test Reward",
+      description: "Testing redemption persistence",
+      type: "PRIVILEGE",
+      cost: 75,
+    });
 
-    // Give gold to hero via quest completion (150 gold base with EASY difficulty + KNIGHT bonus = 157 gold)
+    // Give gold to hero via quest completion
     await giveCharacterGoldViaQuest(page, 150);
 
     // Redeem the reward
-    await page.click('button:has-text("🏪 Reward Store")');
-
+    await navigateToHeroTab(page, "Reward Store");
     await page.click('button:has-text("Redeem Reward")');
 
     // Delete the reward
-    await page.click('button:has-text("⚙️ Reward Management")');
-
-    await page.locator('button:has-text("Delete")').first().click();
-    await page.locator('button:has-text("Delete")').nth(1).click(); // Confirm deletion in modal
-
-    // Wait for deletion to be processed
-    await page.waitForLoadState('networkidle');
+    await navigateToHeroTab(page, "Reward Management");
+    await deleteReward(page, "Persistence Test Reward");
 
     // Navigate to Reward Store
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(page, "Reward Store");
 
     // Verify redemption still exists with reward name (denormalized data persisted)
     await expect(
