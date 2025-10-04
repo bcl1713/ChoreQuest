@@ -188,12 +188,12 @@
     - [x] 4.4.2 Update reward-realtime.spec.ts to use realtime helpers (136→114 lines, -22, -16.2%)
     - [x] 4.4.3 Run realtime tests to verify all pass (7/8 passing - 1 flaky test from test pollution)
     - [x] 4.4.4 Measure LOC reduction for realtime tests (353→286 lines, -67, -19.0%)
-  - [ ] 4.5 Refactor character and auth tests (3 files, ~9 tests)
-    - [ ] 4.5.1 Update character-creation.spec.ts to use helpers
-    - [ ] 4.5.2 Update family-joining.spec.ts to use helpers
-    - [ ] 4.5.3 Update family-management.spec.ts to use helpers
-    - [ ] 4.5.4 Run character/auth tests to verify all pass
-    - [ ] 4.5.5 Measure LOC reduction for character/auth tests
+  - [x] 4.5 Refactor character and auth tests (3 files, ~14 tests) - COMPLETED
+    - [x] 4.5.1 Update character-creation.spec.ts to use helpers (154→151 lines, -3, -1.9%)
+    - [x] 4.5.2 Update family-joining.spec.ts to use helpers (271→108 lines, -163, -60.1%)
+    - [x] 4.5.3 Update family-management.spec.ts to use helpers (224→203 lines, -21, -9.4%)
+    - [x] 4.5.4 Run character/auth tests to verify all pass (14/14 passing)
+    - [x] 4.5.5 Measure LOC reduction for character/auth tests (649→462 lines, -187, -28.8%)
   - [ ] 4.6 Verify all tests still pass after refactoring
     - [ ] 4.6.1 Run full test suite (97 tests)
     - [ ] 4.6.2 Verify 97/97 passing

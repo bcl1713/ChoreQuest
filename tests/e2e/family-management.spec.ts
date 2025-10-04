@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { setupUserWithCharacter } from './helpers/setup-helpers';
+import { setupUserWithCharacter, loginUser } from './helpers/setup-helpers';
+import { logout, getFamilyCode, joinExistingFamily } from './helpers/auth-helpers';
 
 test.describe('Family Management', () => {
   test('Guild Master promotes Hero to Guild Master successfully', async ({ page }) => {
@@ -11,21 +12,16 @@ test.describe('Family Management', () => {
       password: 'testpass123',
     });
 
-    // Get family code from dashboard
-    const familyCodeText = await page.locator('text=/Guild:.*\\((.+)\\)/').textContent();
-    const familyCode = familyCodeText?.match(/\(([^)]+)\)/)?.[1] || '';
-
-    // Logout
-    await page.click('text=Logout');
+    const familyCode = await getFamilyCode(page);
+    await logout(page);
 
     // Create second user (Hero) and join same family
     const heroEmail = `hero-${Date.now()}@test.com`;
-    await page.goto('/auth/register');
-    await page.fill('[data-testid="input-name"]', 'Hero User');
-    await page.fill('[data-testid="input-email"]', heroEmail);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.fill('[data-testid="input-familyCode"]', familyCode);
-    await page.click('button[type="submit"]');
+    await joinExistingFamily(page, familyCode, {
+      name: 'Hero User',
+      email: heroEmail,
+      password: 'testpass123',
+    });
 
     // Create character for Hero
     await expect(page).toHaveURL(/.*character\/create/);
@@ -34,15 +30,10 @@ test.describe('Family Management', () => {
     await page.getByRole('button', { name: /Begin Your Quest/i }).click();
     await expect(page).toHaveURL(/.*dashboard/);
 
-    // Logout Hero
-    await page.click('text=Logout');
+    await logout(page);
 
     // Login as GM
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="input-email"]', gmEmail);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard/);
+    await loginUser(page, gmEmail, 'testpass123');
 
     // Navigate to Family Management tab
     await page.click('[data-testid="tab-family"]');
@@ -78,34 +69,26 @@ test.describe('Family Management', () => {
       password: 'testpass123',
     });
 
-    const familyCodeText = await page.locator('text=/Guild:.*\\((.+)\\)/').textContent();
-    const familyCode = familyCodeText?.match(/\(([^)]+)\)/)?.[1] || '';
-
-    // Logout
-    await page.click('text=Logout');
+    const familyCode = await getFamilyCode(page);
+    await logout(page);
 
     // Create second user and join
     const gm2Email = `gm2-${Date.now()}@test.com`;
-    await page.goto('/auth/register');
-    await page.fill('[data-testid="input-name"]', 'Second GM');
-    await page.fill('[data-testid="input-email"]', gm2Email);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.fill('[data-testid="input-familyCode"]', familyCode);
-    await page.click('button[type="submit"]');
+    await joinExistingFamily(page, familyCode, {
+      name: 'Second GM',
+      email: gm2Email,
+      password: 'testpass123',
+    });
 
     await expect(page).toHaveURL(/.*character\/create/);
     await page.getByRole('textbox', { name: 'Hero Name' }).fill('Second Character');
     await page.click('[data-testid="class-ranger"]');
     await page.getByRole('button', { name: /Begin Your Quest/i }).click();
     await expect(page).toHaveURL(/.*dashboard/);
-    await page.click('text=Logout');
+    await logout(page);
 
     // Login as first GM
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="input-email"]', gm1Email);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard/);
+    await loginUser(page, gm1Email, 'testpass123');
 
     // Navigate to Family Management and promote second user
     await page.click('[data-testid="tab-family"]');
@@ -169,20 +152,16 @@ test.describe('Family Management', () => {
       password: 'testpass123',
     });
 
-    const familyCodeText = await page.locator('text=/Guild:.*\\((.+)\\)/').textContent();
-    const familyCode = familyCodeText?.match(/\(([^)]+)\)/)?.[1] || '';
-
-    // Logout
-    await page.click('text=Logout');
+    const familyCode = await getFamilyCode(page);
+    await logout(page);
 
     // Create Hero user
     const heroEmail = `hero-access-${Date.now()}@test.com`;
-    await page.goto('/auth/register');
-    await page.fill('[data-testid="input-name"]', 'Hero User');
-    await page.fill('[data-testid="input-email"]', heroEmail);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.fill('[data-testid="input-familyCode"]', familyCode);
-    await page.click('button[type="submit"]');
+    await joinExistingFamily(page, familyCode, {
+      name: 'Hero User',
+      email: heroEmail,
+      password: 'testpass123',
+    });
 
     await expect(page).toHaveURL(/.*character\/create/);
     await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero Character');
