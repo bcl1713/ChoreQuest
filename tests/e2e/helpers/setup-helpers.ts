@@ -1,4 +1,12 @@
 import { Page, expect } from "@playwright/test";
+import { clearBrowserState } from "./auth-helpers";
+import {
+  createCustomQuest,
+  pickupQuest,
+  startQuest,
+  completeQuest,
+  approveQuest,
+} from "./quest-helpers";
 
 // Type declarations for window objects used in tests
 declare global {
@@ -172,41 +180,14 @@ export async function loginUser(
   await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
 }
 
-/**
- * Clears all browser state (cookies, localStorage, sessionStorage)
- */
-export async function clearBrowserState(page: Page): Promise<void> {
-  await page.context().clearCookies();
-
-  // Only clear localStorage/sessionStorage if we have a proper page loaded
-  try {
-    await page.evaluate(() => {
-      if (typeof Storage !== "undefined") {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-    });
-  } catch {
-    // Ignore localStorage access errors (happens on initial page load)
-  }
-}
+// clearBrowserState has been moved to auth-helpers.ts and is imported above
 
 /**
  * Common beforeEach setup for E2E tests
  */
 export async function commonBeforeEach(page: Page): Promise<void> {
-  await page.context().clearCookies();
+  await clearBrowserState(page);
   await page.goto("/");
-
-  // Clear storage after page loads
-  try {
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
-  } catch {
-    // Ignore localStorage access errors
-  }
 }
 
 export interface TestUserInfo {
@@ -353,42 +334,24 @@ export async function giveCharacterGoldViaQuest(
   const questTitle = `Test Gold Award ${timestamp}`;
 
   // Create a quest with specified gold reward (using EASY difficulty for 1.0x multiplier)
-  await page.click('[data-testid="create-quest-button"]');
-  await page.locator('.fixed button:has-text("Custom Quest")').click();
-
-  await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-  await page.fill(
-    'textarea[placeholder="Describe the quest..."]',
-    "Automated test quest for gold award",
-  );
-  await page.locator("select").nth(1).selectOption("EASY");
-  await page.fill(
-    'input[type="number"]:near(:text("Gold Reward"))',
-    goldAmount.toString(),
-  );
-  await page.fill('input[type="number"]:near(:text("XP Reward"))', "1");
-
-  await page.click('button[type="submit"]');
+  await createCustomQuest(page, {
+    title: questTitle,
+    description: "Automated test quest for gold award",
+    difficulty: "EASY",
+    xpReward: 1,
+    goldReward: goldAmount,
+  });
 
   // Switch to Quests tab to see the created quest
   await page.click('button:has-text("⚔️ Quests & Adventures")');
 
-  // Wait for quest to appear, then complete workflow
+  // Wait for quest to appear
   await expect(page.getByText(questTitle).first()).toBeVisible();
 
   // Complete the quest workflow: pickup -> start -> complete -> approve
-  await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
-  await expect(
-    page.locator('[data-testid="start-quest-button"]').first(),
-  ).toBeVisible();
-  await page.locator('[data-testid="start-quest-button"]').first().click();
-
-  await expect(
-    page.locator('[data-testid="complete-quest-button"]').first(),
-  ).toBeVisible();
-  await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-  await page.locator('[data-testid="approve-quest-button"]').first().click();
+  await pickupQuest(page);
+  await startQuest(page);
+  await completeQuest(page);
+  await approveQuest(page);
 }
 

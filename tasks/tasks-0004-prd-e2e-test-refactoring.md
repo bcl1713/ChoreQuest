@@ -11,13 +11,13 @@
 - `tests/e2e/admin-statistics.spec.ts` - Fix undefined `statsPanel` variable at line 89
 
 ### Helper Modules to Create
-- `tests/e2e/helpers/auth-helpers.ts` - Login, logout, family code extraction (addresses patterns #1, #5, #6)
-- `tests/e2e/helpers/quest-helpers.ts` - Quest creation, completion workflows (addresses patterns #2, #10)
-- `tests/e2e/helpers/reward-helpers.ts` - Reward CRUD and redemption (addresses pattern #3)
-- `tests/e2e/helpers/navigation-helpers.ts` - Tab navigation, modal operations (addresses patterns #4, #8, #9)
-- `tests/e2e/helpers/realtime-helpers.ts` - Real-time update assertions (addresses pattern #7)
-- `tests/e2e/helpers/assertions.ts` - Custom Playwright assertions for ChoreQuest patterns
-- `tests/e2e/helpers/fixtures.ts` - Pre-configured test scenarios (family setups, quest workflows)
+- `tests/e2e/helpers/auth-helpers.ts` - ✅ CREATED - Login, logout, family code extraction (addresses patterns #1, #5, #6)
+- `tests/e2e/helpers/quest-helpers.ts` - ✅ CREATED - Quest creation, completion workflows (addresses patterns #2, #10)
+- `tests/e2e/helpers/reward-helpers.ts` - ✅ CREATED - Reward CRUD and redemption (addresses pattern #3)
+- `tests/e2e/helpers/navigation-helpers.ts` - ✅ CREATED - Tab navigation, modal operations (addresses patterns #4, #8, #9)
+- `tests/e2e/helpers/realtime-helpers.ts` - ✅ CREATED - Real-time update assertions (addresses pattern #7)
+- `tests/e2e/helpers/assertions.ts` - ✅ CREATED - Custom Playwright assertions for ChoreQuest patterns
+- `tests/e2e/helpers/fixtures.ts` - ✅ CREATED - Pre-configured test scenarios (family setups, quest workflows)
 
 ### Existing Helper to Refactor
 - `tests/e2e/helpers/setup-helpers.ts` - Current helper (395 lines), will be split into specialized modules
@@ -77,63 +77,69 @@
   - [x] 1.6 Run full test suite to verify 97/97 passing with zero anti-patterns
   - [x] 1.7 Commit fixes: "fix: resolve test code bugs and eliminate anti-patterns"
 
-- [ ] 2.0 Create Comprehensive Helper Library
-  - [ ] 2.1 Create auth-helpers.ts module
-    - [ ] 2.1.1 Extract `logout(page)` helper (13 occurrences)
-    - [ ] 2.1.2 Extract `getFamilyCode(page)` helper (8+ occurrences)
-    - [ ] 2.1.3 Extract `joinExistingFamily(page, inviteCode, userData)` helper
-    - [ ] 2.1.4 Add JSDoc comments with usage examples
-    - [ ] 2.1.5 Write unit tests for auth helpers (if feasible)
-  - [ ] 2.2 Create quest-helpers.ts module
-    - [ ] 2.2.1 Create `createCustomQuest(page, questData)` helper (addresses 349 form filling occurrences)
-    - [ ] 2.2.2 Create `createQuestTemplate(page, templateData)` helper
-    - [ ] 2.2.3 Create `createQuestFromTemplate(page, templateName, options)` helper
-    - [ ] 2.2.4 Create `pickupQuest(page, questName)` helper
-    - [ ] 2.2.5 Create `completeQuest(page, questName)` helper (12+ occurrences)
-    - [ ] 2.2.6 Create `approveQuest(page, questName)` helper (12+ occurrences)
-    - [ ] 2.2.7 Create `denyQuest(page, questName)` helper
-    - [ ] 2.2.8 Add JSDoc comments with usage examples
-  - [ ] 2.3 Create reward-helpers.ts module
-    - [ ] 2.3.1 Create `createReward(page, rewardData)` helper (32 occurrences)
-    - [ ] 2.3.2 Create `redeemReward(page, rewardName)` helper
-    - [ ] 2.3.3 Create `approveRewardRedemption(page, rewardName)` helper
-    - [ ] 2.3.4 Create `denyRewardRedemption(page, rewardName)` helper
-    - [ ] 2.3.5 Create `markRedemptionFulfilled(page, rewardName)` helper
-    - [ ] 2.3.6 Create `toggleRewardActive(page, rewardName)` helper
-    - [ ] 2.3.7 Add JSDoc comments with usage examples
-  - [ ] 2.4 Create navigation-helpers.ts module
-    - [ ] 2.4.1 Create `navigateToTab(page, tabName)` helper (40+ occurrences)
-    - [ ] 2.4.2 Create `navigateToAdmin(page)` helper (25+ occurrences)
-    - [ ] 2.4.3 Create `openModal(page, modalType)` helper (60+ occurrences)
-    - [ ] 2.4.4 Create `closeModal(page, modalType)` helper (60+ occurrences)
-    - [ ] 2.4.5 Create `switchAdminTab(page, tabName)` helper
-    - [ ] 2.4.6 Add JSDoc comments with usage examples
-  - [ ] 2.5 Create realtime-helpers.ts module
-    - [ ] 2.5.1 Create `setupTwoContextTest(browser)` fixture (15 occurrences)
-    - [ ] 2.5.2 Create `waitForRealtimeChange(page, selector, options)` generic helper
-    - [ ] 2.5.3 Create `waitForNewListItem(page, listSelector, itemText)` helper
-    - [ ] 2.5.4 Create `waitForListItemRemoved(page, listSelector, itemText)` helper
-    - [ ] 2.5.5 Create `waitForTextChange(page, selector, expectedText)` helper
-    - [ ] 2.5.6 Add JSDoc comments with usage examples
-  - [ ] 2.6 Create assertions.ts module
-    - [ ] 2.6.1 Create `expectCharacterStats(page, { gold?, xp?, level? })` assertion
-    - [ ] 2.6.2 Create `expectQuestStatus(page, questName, status)` assertion
-    - [ ] 2.6.3 Create `expectRewardInStore(page, rewardName)` assertion
-    - [ ] 2.6.4 Create `expectToastMessage(page, message)` assertion
-    - [ ] 2.6.5 Add JSDoc comments with usage examples
-  - [ ] 2.7 Create fixtures.ts module
-    - [ ] 2.7.1 Create `setupFamilyWithGM(page)` fixture
-    - [ ] 2.7.2 Create `setupFamilyWithMultipleGMs(page)` fixture
-    - [ ] 2.7.3 Create `setupFamilyWithHeroes(page, heroCount)` fixture
-    - [ ] 2.7.4 Create `setupQuestWorkflow(page)` fixture
-    - [ ] 2.7.5 Create `setupRewardStore(page)` fixture
-    - [ ] 2.7.6 Add JSDoc comments with usage examples
-  - [ ] 2.8 Refactor existing setup-helpers.ts
-    - [ ] 2.8.1 Keep `setupUserWithCharacter` (still needed, but can use new helpers internally)
-    - [ ] 2.8.2 Keep `loginUser` (still needed for realtime tests)
-    - [ ] 2.8.3 Update `giveCharacterGoldViaQuest` to use new quest helpers
-    - [ ] 2.8.4 Move `clearBrowserState` to auth-helpers if not already there
-    - [ ] 2.8.5 Update imports to reference new helper modules
+- [x] 2.0 Create Comprehensive Helper Library
+  - [x] 2.1 Create auth-helpers.ts module
+    - [x] 2.1.1 Extract `logout(page)` helper (13 occurrences)
+    - [x] 2.1.2 Extract `getFamilyCode(page)` helper (8+ occurrences)
+    - [x] 2.1.3 Extract `joinExistingFamily(page, inviteCode, userData)` helper
+    - [x] 2.1.4 Add JSDoc comments with usage examples
+    - [x] 2.1.5 Write unit tests for auth helpers (if feasible) - SKIPPED: Helpers are E2E-only, tested via test suite
+  - [x] 2.2 Create quest-helpers.ts module
+    - [x] 2.2.1 Create `createCustomQuest(page, questData)` helper (addresses 349 form filling occurrences)
+    - [x] 2.2.2 Create `createQuestTemplate(page, templateData)` helper
+    - [x] 2.2.3 Create `createQuestFromTemplate(page, templateName, options)` helper
+    - [x] 2.2.4 Create `pickupQuest(page, questName)` helper
+    - [x] 2.2.5 Create `completeQuest(page, questName)` helper (12+ occurrences)
+    - [x] 2.2.6 Create `approveQuest(page, questName)` helper (12+ occurrences)
+    - [x] 2.2.7 Create `denyQuest(page, questName)` helper
+    - [x] 2.2.8 Add JSDoc comments with usage examples
+    - [x] BONUS: Created `startQuest` and `createAndCompleteQuest` convenience helpers
+  - [x] 2.3 Create reward-helpers.ts module
+    - [x] 2.3.1 Create `createReward(page, rewardData)` helper (32 occurrences)
+    - [x] 2.3.2 Create `redeemReward(page, rewardName)` helper
+    - [x] 2.3.3 Create `approveRewardRedemption(page, rewardName)` helper
+    - [x] 2.3.4 Create `denyRewardRedemption(page, rewardName)` helper
+    - [x] 2.3.5 Create `markRedemptionFulfilled(page, rewardName)` helper
+    - [x] 2.3.6 Create `toggleRewardActive(page, rewardName)` helper
+    - [x] 2.3.7 Add JSDoc comments with usage examples
+    - [x] BONUS: Created `deleteReward` and `editReward` helpers
+  - [x] 2.4 Create navigation-helpers.ts module
+    - [x] 2.4.1 Create `navigateToTab(page, tabName)` helper (40+ occurrences)
+    - [x] 2.4.2 Create `navigateToAdmin(page)` helper (25+ occurrences)
+    - [x] 2.4.3 Create `openModal(page, modalType)` helper (60+ occurrences)
+    - [x] 2.4.4 Create `closeModal(page, modalType)` helper (60+ occurrences)
+    - [x] 2.4.5 Create `switchAdminTab(page, tabName)` helper
+    - [x] 2.4.6 Add JSDoc comments with usage examples
+    - [x] BONUS: Created `navigateToHeroTab`, `navigateToDashboard`, `navigateToAdminTabViaURL`, and modal convenience helpers
+  - [x] 2.5 Create realtime-helpers.ts module
+    - [x] 2.5.1 Create `setupTwoContextTest(browser)` fixture (15 occurrences)
+    - [x] 2.5.2 Create `waitForRealtimeChange(page, selector, options)` generic helper
+    - [x] 2.5.3 Create `waitForNewListItem(page, listSelector, itemText)` helper
+    - [x] 2.5.4 Create `waitForListItemRemoved(page, listSelector, itemText)` helper
+    - [x] 2.5.5 Create `waitForTextChange(page, selector, expectedText)` helper
+    - [x] 2.5.6 Add JSDoc comments with usage examples
+    - [x] BONUS: Created `navigateBothPages`, `waitForRealtimeElement`, `waitForCountChange`, and `cleanupTwoContextTest` helpers
+  - [x] 2.6 Create assertions.ts module
+    - [x] 2.6.1 Create `expectCharacterStats(page, { gold?, xp?, level? })` assertion
+    - [x] 2.6.2 Create `expectQuestStatus(page, questName, status)` assertion
+    - [x] 2.6.3 Create `expectRewardInStore(page, rewardName)` assertion
+    - [x] 2.6.4 Create `expectToastMessage(page, message)` assertion
+    - [x] 2.6.5 Add JSDoc comments with usage examples
+    - [x] BONUS: Created `expectInitialCharacterStats`, `expectRewardNotInStore`, `expectAdminTabActive`, `expectQuestInList`, `expectTemplateExists`, `expectOnDashboard`, and `expectOnAdmin` helpers
+  - [x] 2.7 Create fixtures.ts module
+    - [x] 2.7.1 Create `setupFamilyWithGM(page)` fixture
+    - [x] 2.7.2 Create `setupFamilyWithMultipleGMs(page)` fixture
+    - [x] 2.7.3 Create `setupFamilyWithHeroes(page, heroCount)` fixture
+    - [x] 2.7.4 Create `setupQuestWorkflow(page)` fixture
+    - [x] 2.7.5 Create `setupRewardStore(page)` fixture
+    - [x] 2.7.6 Add JSDoc comments with usage examples
+    - [x] BONUS: Created `setupQuestAndRewardEconomy` comprehensive economy fixture
+  - [x] 2.8 Refactor existing setup-helpers.ts
+    - [x] 2.8.1 Keep `setupUserWithCharacter` (still needed, but can use new helpers internally)
+    - [x] 2.8.2 Keep `loginUser` (still needed for realtime tests)
+    - [x] 2.8.3 Update `giveCharacterGoldViaQuest` to use new quest helpers (reduced from 47 lines to 25 lines)
+    - [x] 2.8.4 Move `clearBrowserState` to auth-helpers if not already there (already in auth-helpers, removed duplicate)
+    - [x] 2.8.5 Update imports to reference new helper modules (imported clearBrowserState and quest helpers)
   - [ ] 2.9 Commit helper library: "feat: create comprehensive E2E test helper library"
 
 - [ ] 3.0 Investigate and Fix Parallel Safety Issues
@@ -141,7 +147,7 @@
     - [ ] 3.1.1 Run 10 tests with `workers: 2` and document failures
     - [ ] 3.1.2 Categorize failure types (timeouts, assertion failures, race conditions)
     - [ ] 3.1.3 Identify common failure patterns across tests
-    - [ ] NOTE: Phase 1 testing found 96/97 pass with workers: 4. Only admin-activity-feed shows flakiness (input visibility timing issue)
+    - [ ] NOTE: Phase 1 testing found 96/97 pass with workers: 4. Failure in admin-activity-feed traced to helper function - input visibility timing issue. Since helpers are shared, this affects potential scope of many tests.
   - [ ] 3.2 Check database connection pool
     - [ ] 3.2.1 Review Supabase local config for connection limits
     - [ ] 3.2.2 Increase connection pool size if needed
