@@ -1,16 +1,19 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Family Joining', () => {
-  test('new user can join existing family with valid family code', async ({ page, browser }) => {
+test.describe("Family Joining", () => {
+  test("new user can join existing family with valid family code", async ({
+    page,
+    browser,
+  }) => {
     // Step 1: Create a family and get the family code
-    await page.goto('/auth/create-family');
+    await page.goto("/auth/create-family");
 
     const timestamp = Date.now();
     const familyData = {
       name: `Test Family ${timestamp}`,
       userName: `Guild Master ${timestamp}`,
       email: `gm-${timestamp}@example.com`,
-      password: 'testpass123'
+      password: "testpass123",
     };
 
     // Fill out family creation form
@@ -22,22 +25,21 @@ test.describe('Family Joining', () => {
     await page.click('button[type="submit"]');
 
     // After family creation, wait for page to settle and check where we end up
-    await page.waitForURL(/.*\/(dashboard|character\/create)/, { timeout: 30000 });
+    await page.waitForURL(/.*\/(dashboard|character\/create)/, {
+      timeout: 30000,
+    });
 
     // Give the page some time to potentially redirect to character creation
-    await page.waitForTimeout(2000);
 
     // Handle character creation if we end up there (Guild Masters need characters too)
-    if (page.url().includes('/character/create')) {
-      await page.waitForTimeout(1000); // Wait for form to be ready
+    if (page.url().includes("/character/create")) {
+      // Wait for form to be ready
 
       // Fill in character name using the ID selector (more reliable)
-      await page.fill('input#characterName', familyData.userName);
-      await page.waitForTimeout(500);
+      await page.fill("input#characterName", familyData.userName);
 
       // Select Knight class
       await page.click('[data-testid="class-knight"]');
-      await page.waitForTimeout(500);
 
       // Verify button is enabled before clicking
       const submitButton = page.locator('button:text("Begin Your Quest")');
@@ -55,11 +57,14 @@ test.describe('Family Joining', () => {
     }
 
     // Wait for dashboard to load completely
-    await expect(page.getByText('Quest Dashboard')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Quest Dashboard")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Get the family code from the dashboard - it's displayed as "Guild: Family Name (CODE)"
-    const familyCodeElement = await page.locator('text=/Guild:.*\\([A-Z0-9]{6}\\)/')
-      .or(page.locator('text=/\\([A-Z0-9]{6}\\)/'))
+    const familyCodeElement = await page
+      .locator("text=/Guild:.*\\([A-Z0-9]{6}\\)/")
+      .or(page.locator("text=/\\([A-Z0-9]{6}\\)/"))
       .first();
 
     let familyCode: string;
@@ -69,7 +74,9 @@ test.describe('Family Joining', () => {
       // Extract 6-character code from parentheses
       const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
       if (!codeMatch || !codeMatch[1]) {
-        throw new Error(`Could not extract family code from: ${familyCodeText}`);
+        throw new Error(
+          `Could not extract family code from: ${familyCodeText}`,
+        );
       }
       familyCode = codeMatch[1];
     } catch (error) {
@@ -82,20 +89,26 @@ test.describe('Family Joining', () => {
 
     try {
       // Navigate to register page
-      await newPage.goto('/auth/register');
+      await newPage.goto("/auth/register");
 
       const newUserData = {
         name: `Hero ${timestamp}`,
         email: `hero-${timestamp}@example.com`,
-        password: 'testpass123',
-        familyCode: familyCode // Use the extracted family code from the first user
+        password: "testpass123",
+        familyCode: familyCode, // Use the extracted family code from the first user
       };
 
       // Fill out registration form
       await newPage.fill('input[placeholder="Sir Galahad"]', newUserData.name);
-      await newPage.fill('input[placeholder="hero@example.com"]', newUserData.email);
+      await newPage.fill(
+        'input[placeholder="hero@example.com"]',
+        newUserData.email,
+      );
       await newPage.fill('input[placeholder="••••••••"]', newUserData.password);
-      await newPage.fill('input[placeholder="BraveKnights123"]', newUserData.familyCode);
+      await newPage.fill(
+        'input[placeholder="BraveKnights123"]',
+        newUserData.familyCode,
+      );
 
       await newPage.click('button[type="submit"]');
 
@@ -103,27 +116,31 @@ test.describe('Family Joining', () => {
       await newPage.waitForURL(/.*\/character\/create/, { timeout: 15000 });
 
       // Verify we're on character creation page using a more specific selector
-      await expect(newPage.getByRole('heading', { name: 'Create Your Hero' }).first()).toBeVisible({ timeout: 10000 });
+      await expect(
+        newPage.getByRole("heading", { name: "Create Your Hero" }).first(),
+      ).toBeVisible({ timeout: 10000 });
 
       // Verify character name is pre-filled from registration
-      const nameInput = newPage.locator('input#characterName');
+      const nameInput = newPage.locator("input#characterName");
       await expect(nameInput).toHaveValue(newUserData.name);
-
     } finally {
       await newContext.close();
     }
   });
 
-  test('character name pre-fills from family join and is editable', async ({ page, browser }) => {
+  test("character name pre-fills from family join and is editable", async ({
+    page,
+    browser,
+  }) => {
     // Step 1: Create a family and get the family code
-    await page.goto('/auth/create-family');
+    await page.goto("/auth/create-family");
 
     const timestamp = Date.now();
     const familyData = {
       name: `Test Family ${timestamp}`,
       userName: `Guild Master ${timestamp}`,
       email: `gm-${timestamp}@example.com`,
-      password: 'testpass123'
+      password: "testpass123",
     };
 
     // Fill out family creation form
@@ -135,15 +152,15 @@ test.describe('Family Joining', () => {
     await page.click('button[type="submit"]');
 
     // After family creation, handle character creation for Guild Master
-    await page.waitForURL(/.*\/(dashboard|character\/create)/, { timeout: 30000 });
-    await page.waitForTimeout(2000);
+    await page.waitForURL(/.*\/(dashboard|character\/create)/, {
+      timeout: 30000,
+    });
 
-    if (page.url().includes('/character/create')) {
-      await page.waitForTimeout(1000);
-      await page.fill('input#characterName', familyData.userName);
-      await page.waitForTimeout(500);
+    if (page.url().includes("/character/create")) {
+      await page.fill("input#characterName", familyData.userName);
+
       await page.click('[data-testid="class-knight"]');
-      await page.waitForTimeout(500);
+
       const submitButton = page.locator('button:text("Begin Your Quest")');
       await expect(submitButton).toBeEnabled({ timeout: 5000 });
       await submitButton.click();
@@ -151,9 +168,12 @@ test.describe('Family Joining', () => {
     }
 
     // Wait for dashboard and get family code
-    await expect(page.getByText('Quest Dashboard')).toBeVisible({ timeout: 10000 });
-    const familyCodeElement = await page.locator('text=/Guild:.*\\([A-Z0-9]{6}\\)/')
-      .or(page.locator('text=/\\([A-Z0-9]{6}\\)/'))
+    await expect(page.getByText("Quest Dashboard")).toBeVisible({
+      timeout: 10000,
+    });
+    const familyCodeElement = await page
+      .locator("text=/Guild:.*\\([A-Z0-9]{6}\\)/")
+      .or(page.locator("text=/\\([A-Z0-9]{6}\\)/"))
       .first();
 
     const familyCodeText = await familyCodeElement.textContent();
@@ -168,33 +188,41 @@ test.describe('Family Joining', () => {
     const newPage = await newContext.newPage();
 
     try {
-      await newPage.goto('/auth/register');
+      await newPage.goto("/auth/register");
 
       const newUserData = {
         name: `Hero ${timestamp}`,
         email: `hero-${timestamp}@example.com`,
-        password: 'testpass123',
-        familyCode: familyCode
+        password: "testpass123",
+        familyCode: familyCode,
       };
 
       // Fill out registration form
       await newPage.fill('input[placeholder="Sir Galahad"]', newUserData.name);
-      await newPage.fill('input[placeholder="hero@example.com"]', newUserData.email);
+      await newPage.fill(
+        'input[placeholder="hero@example.com"]',
+        newUserData.email,
+      );
       await newPage.fill('input[placeholder="••••••••"]', newUserData.password);
-      await newPage.fill('input[placeholder="BraveKnights123"]', newUserData.familyCode);
+      await newPage.fill(
+        'input[placeholder="BraveKnights123"]',
+        newUserData.familyCode,
+      );
 
       await newPage.click('button[type="submit"]');
 
       // Wait for character creation page
       await newPage.waitForURL(/.*\/character\/create/, { timeout: 15000 });
-      await expect(newPage.getByRole('heading', { name: 'Create Your Hero' }).first()).toBeVisible({ timeout: 10000 });
+      await expect(
+        newPage.getByRole("heading", { name: "Create Your Hero" }).first(),
+      ).toBeVisible({ timeout: 10000 });
 
       // Verify character name is pre-filled from registration
-      const nameInput = newPage.locator('input#characterName');
+      const nameInput = newPage.locator("input#characterName");
       await expect(nameInput).toHaveValue(newUserData.name);
 
       // Edit the pre-filled name
-      const editedName = 'Edited Hero Name';
+      const editedName = "Edited Hero Name";
       await nameInput.fill(editedName);
       await expect(nameInput).toHaveValue(editedName);
 
@@ -204,33 +232,40 @@ test.describe('Family Joining', () => {
 
       // Verify character was created with edited name
       await newPage.waitForURL(/.*\/dashboard/, { timeout: 20000 });
-      await expect(newPage.getByText(`Welcome back, ${editedName}!`)).toBeVisible();
-
+      await expect(
+        newPage.getByText(`Welcome back, ${editedName}!`),
+      ).toBeVisible();
     } finally {
       await newContext.close();
     }
   });
 
-  test('registration fails with invalid family code', async ({ page }) => {
-    await page.goto('/auth/register');
+  test("registration fails with invalid family code", async ({ page }) => {
+    await page.goto("/auth/register");
 
     const timestamp = Date.now();
     const userData = {
       name: `Test User ${timestamp}`,
       email: `test-${timestamp}@example.com`,
-      password: 'testpass123',
-      familyCode: 'INVALID'
+      password: "testpass123",
+      familyCode: "INVALID",
     };
 
     // Fill out registration form with invalid family code
     await page.fill('input[placeholder="Sir Galahad"]', userData.name);
     await page.fill('input[placeholder="hero@example.com"]', userData.email);
     await page.fill('input[placeholder="••••••••"]', userData.password);
-    await page.fill('input[placeholder="BraveKnights123"]', userData.familyCode);
+    await page.fill(
+      'input[placeholder="BraveKnights123"]',
+      userData.familyCode,
+    );
 
     await page.click('button[type="submit"]');
 
     // Should show error message about invalid family code
-    await expect(page.getByText('Invalid family code')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Invalid family code")).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
+

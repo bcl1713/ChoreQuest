@@ -8,9 +8,9 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 // Mock framer-motion BEFORE importing component
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 
 // Mock realtime context
@@ -44,8 +44,8 @@ jest.mock("@/lib/activity-service", () => {
     ActivityService: jest.fn().mockImplementation(() => ({
       getRecentActivity: mockFn,
     })),
-    ActivityEvent: {} as any,
-    ActivityEventType: {} as any,
+    ActivityEvent: {} as Record<string, unknown>,
+    ActivityEventType: {} as Record<string, unknown>,
   };
 });
 
@@ -120,8 +120,8 @@ describe("ActivityFeed", () => {
     mockOnCharacterUpdate.mockClear().mockReturnValue(jest.fn());
 
     // Reset window.location.href for navigation tests
-    if ((window as any).location) {
-      (window as any).location.href = "";
+    if ((window as Window & typeof globalThis).location) {
+      (window as Window & typeof globalThis).location.href = "";
     }
   });
 

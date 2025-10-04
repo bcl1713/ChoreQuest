@@ -7,6 +7,8 @@ import StatisticsPanel from '@/components/statistics-panel';
 import ActivityFeed from '@/components/activity-feed';
 import GuildMasterManager from '@/components/guild-master-manager';
 import FamilySettings from '@/components/family-settings';
+import { QuestTemplateManager } from '@/components/quest-template-manager';
+import RewardManager from '@/components/reward-manager';
 
 type TabName = 'overview' | 'quest-templates' | 'rewards' | 'guild-masters' | 'family-settings';
 
@@ -47,13 +49,14 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="admin-dashboard">
       <TabGroup selectedIndex={selectedIndex} onChange={handleTabChange}>
         {/* Tab Navigation */}
         <TabList className="flex space-x-1 bg-dark-800 p-1 rounded-lg mb-6 overflow-x-auto">
           {tabs.map((tab) => (
             <Tab
               key={tab.name}
+              data-testid={`tab-${tab.name}`}
               className={({ selected }) =>
                 `flex-1 min-w-[120px] py-3 px-4 rounded-lg font-medium transition-colors text-sm sm:text-base whitespace-nowrap ${
                   selected
@@ -80,18 +83,12 @@ export function AdminDashboard() {
 
           {/* Quest Templates Tab */}
           <TabPanel>
-            <div className="fantasy-card p-6">
-              <h2 className="text-2xl font-fantasy text-gold-400 mb-4">Quest Templates</h2>
-              <p className="text-gray-400">Quest template management coming soon...</p>
-            </div>
+            <QuestTemplateManager />
           </TabPanel>
 
           {/* Rewards Tab */}
           <TabPanel>
-            <div className="fantasy-card p-6">
-              <h2 className="text-2xl font-fantasy text-gold-400 mb-4">Rewards</h2>
-              <p className="text-gray-400">Reward management coming soon...</p>
-            </div>
+            <RewardManager />
           </TabPanel>
 
           {/* Guild Masters Tab */}

@@ -23,7 +23,7 @@ describe("ActivityService", () => {
   const mockFamilyMembers = [
     {
       id: "user-1",
-      display_name: "Alice",
+      name: "Alice",
       characters: {
         name: "Alice the Knight",
         level: 5,
@@ -32,7 +32,7 @@ describe("ActivityService", () => {
     },
     {
       id: "user-2",
-      display_name: "Bob",
+      name: "Bob",
       characters: {
         name: "Bob the Mage",
         level: 3,

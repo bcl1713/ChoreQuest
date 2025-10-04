@@ -25,7 +25,7 @@ describe("StatisticsService", () => {
   const mockFamilyMembers = [
     {
       id: "user-1",
-      display_name: "Alice",
+      name: "Alice",
       characters: {
         name: "Alice the Knight",
         level: 5,
@@ -35,7 +35,7 @@ describe("StatisticsService", () => {
     },
     {
       id: "user-2",
-      display_name: "Bob",
+      name: "Bob",
       characters: {
         name: "Bob the Mage",
         level: 3,
@@ -45,7 +45,7 @@ describe("StatisticsService", () => {
     },
     {
       id: "user-3",
-      display_name: "Carol",
+      name: "Carol",
       characters: {
         name: "Carol the Rogue",
         level: 4,
@@ -408,7 +408,7 @@ describe("StatisticsService", () => {
       const membersWithNoQuests = [
         {
           id: "user-4",
-          display_name: "Dave",
+          name: "Dave",
           characters: {
             name: "Dave the Healer",
             level: 1,

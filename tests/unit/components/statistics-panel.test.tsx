@@ -8,8 +8,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 // Mock framer-motion BEFORE importing component
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    tr: ({ children, ...props }: any) => <tr {...props}>{children}</tr>,
+    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
+    tr: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <tr {...props}>{children}</tr>,
   },
 }));
 
@@ -37,9 +37,6 @@ jest.mock("@/lib/auth-context", () => ({
   }),
 }));
 
-// Create mock function for getFamilyStatistics that will be set in beforeEach
-const mockGetFamilyStatistics = jest.fn();
-
 // Mock StatisticsService BEFORE importing component
 jest.mock("@/lib/statistics-service", () => {
   // Create the mock function inside the factory
@@ -48,7 +45,7 @@ jest.mock("@/lib/statistics-service", () => {
     StatisticsService: jest.fn().mockImplementation(() => ({
       getFamilyStatistics: mockFn,
     })),
-    FamilyStatistics: {} as any, // Type export
+    FamilyStatistics: {} as Record<string, unknown>, // Type export
   };
 });
 
@@ -148,7 +145,7 @@ describe("StatisticsPanel", () => {
     render(<StatisticsPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText("📊 Quest Statistics")).toBeInTheDocument();
+      expect(screen.getByText("📊 Family Statistics")).toBeInTheDocument();
       expect(screen.getByText("💰 Family Totals")).toBeInTheDocument();
       expect(screen.getByText("🏆 Character Progress")).toBeInTheDocument();
     });

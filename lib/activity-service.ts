@@ -50,7 +50,7 @@ export class ActivityService {
       .from("user_profiles")
       .select(`
         id,
-        display_name,
+        name,
         characters (
           name,
           level,
@@ -73,7 +73,7 @@ export class ActivityService {
           member.id,
           {
             characterName: character?.name || "Unknown",
-            displayName: member.display_name || "Unknown",
+            displayName: member.name || "Unknown",
             characterCreatedAt: character?.created_at,
           },
         ];
@@ -82,12 +82,12 @@ export class ActivityService {
 
     const events: ActivityEvent[] = [];
 
-    // Fetch recent quest completions
+    // Fetch recent quest completions (APPROVED status means quest was completed and approved)
     const { data: completedQuests, error: questsError } = await supabase
       .from("quest_instances")
       .select("id, title, assigned_to_id, completed_at, status")
       .eq("family_id", familyId)
-      .eq("status", "COMPLETED")
+      .eq("status", "APPROVED")
       .order("completed_at", { ascending: false })
       .limit(limit);
 
@@ -119,7 +119,7 @@ export class ActivityService {
       .from("quest_instances")
       .select("id, title, assigned_to_id, updated_at, status")
       .eq("family_id", familyId)
-      .eq("status", "SUBMITTED")
+      .eq("status", "COMPLETED")
       .order("updated_at", { ascending: false })
       .limit(limit);
 
@@ -221,7 +221,7 @@ export class ActivityService {
           type: "CHARACTER_CREATED",
           timestamp: character.created_at,
           characterName: character.name || "Unknown",
-          displayName: member.display_name || "Unknown",
+          displayName: member.name || "Unknown",
           userId: member.id,
         });
       }

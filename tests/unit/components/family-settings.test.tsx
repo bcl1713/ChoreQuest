@@ -8,13 +8,13 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 // Mock framer-motion BEFORE importing component
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, onClick, ...props }: any) => (
+    div: ({ children, onClick, ...props }: React.PropsWithChildren<{ onClick?: () => void } & Record<string, unknown>>) => (
       <div onClick={onClick} {...props}>
         {children}
       </div>
     ),
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 
 // Mock lucide-react icons

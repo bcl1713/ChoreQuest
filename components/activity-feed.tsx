@@ -159,7 +159,7 @@ export default function ActivityFeed() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
         </div>
@@ -180,12 +180,13 @@ export default function ActivityFeed() {
 
   if (error) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
           <button
             onClick={handleRefresh}
             className="text-sm text-gray-400 hover:text-white transition-colors"
+            data-testid="activity-feed-refresh-button"
           >
             🔄 Retry
           </button>
@@ -198,7 +199,7 @@ export default function ActivityFeed() {
   }
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
@@ -206,6 +207,7 @@ export default function ActivityFeed() {
           onClick={handleRefresh}
           disabled={refreshing}
           className="text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+          data-testid="activity-feed-refresh-button"
         >
           {refreshing ? "⟳ Refreshing..." : "🔄 Refresh"}
         </button>

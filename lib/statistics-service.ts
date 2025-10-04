@@ -66,7 +66,7 @@ export class StatisticsService {
       .from("user_profiles")
       .select(`
         id,
-        display_name,
+        name,
         characters (
           name,
           level,
@@ -85,7 +85,7 @@ export class StatisticsService {
       .from("quest_instances")
       .select("id, status, assigned_to_id, completed_at, approved_at")
       .eq("family_id", familyId)
-      .eq("status", "COMPLETED");
+      .eq("status", "APPROVED");
 
     if (questsError) {
       throw new Error(`Failed to fetch completed quests: ${questsError.message}`);
@@ -96,7 +96,7 @@ export class StatisticsService {
       .from("quest_instances")
       .select("id, status, assigned_to_id")
       .eq("family_id", familyId)
-      .in("status", ["IN_PROGRESS", "SUBMITTED", "COMPLETED"]);
+      .in("status", ["IN_PROGRESS", "COMPLETED", "APPROVED"]);
 
     if (allQuestsError) {
       throw new Error(`Failed to fetch all quests: ${allQuestsError.message}`);
@@ -107,7 +107,7 @@ export class StatisticsService {
       .from("quest_instances")
       .select("id")
       .eq("family_id", familyId)
-      .eq("status", "SUBMITTED");
+      .eq("status", "COMPLETED");
 
     if (pendingQuestsError) {
       throw new Error(`Failed to fetch pending quests: ${pendingQuestsError.message}`);
@@ -194,7 +194,7 @@ export class StatisticsService {
       return {
         userId,
         characterName: character?.name || "Unknown",
-        displayName: member.display_name || "Unknown",
+        displayName: member.name || "Unknown",
         level: character?.level || 1,
         xp: character?.xp || 0,
         gold: character?.gold || 0,

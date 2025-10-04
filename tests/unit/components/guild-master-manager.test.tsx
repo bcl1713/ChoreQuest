@@ -9,9 +9,9 @@ import { supabase } from "@/lib/supabase";
 // Mock framer-motion BEFORE importing component
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
   },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 
 // Mock realtime context
@@ -54,7 +54,6 @@ jest.mock("@/lib/supabase", () => ({
 
 // NOW import the component (after all mocks are set up)
 import GuildMasterManager from "@/components/guild-master-manager";
-import { useAuth } from "@/lib/auth-context";
 
 describe("GuildMasterManager", () => {
   const mockMembers = [

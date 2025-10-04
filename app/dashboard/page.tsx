@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
@@ -13,8 +13,28 @@ import RewardManager from '@/components/reward-manager';
 import { FamilyManagement } from '@/components/family-management';
 import { QuestTemplate } from '@/lib/types/database';
 import { supabase } from '@/lib/supabase';
+import { useSearchParams } from 'next/navigation';
 
-export default function Dashboard() {
+// Component to handle search params (must be wrapped in Suspense)
+function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'unauthorized') {
+      onAuthError('You are not authorized to access the admin dashboard. Only Guild Masters have access.');
+      // Clear error after 5 seconds
+      setTimeout(() => onAuthError(null), 5000);
+      // Clean up URL
+      router.replace('/dashboard', { scroll: false });
+    }
+  }, [searchParams, router, onAuthError]);
+
+  return null;
+}
+
+function DashboardContent() {
   const router = useRouter();
   const { user, profile, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
@@ -24,6 +44,7 @@ export default function Dashboard() {
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const dashboardLoadQuestsRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -183,9 +204,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
-      {/* Header */}
-      <header className="border-b border-dark-600 bg-dark-800/50 backdrop-blur-sm">
+    <>
+      <Suspense fallback={null}>
+        <AuthErrorHandler onAuthError={setAuthError} />
+      </Suspense>
+      <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
+        {/* Header */}
+        <header className="border-b border-dark-600 bg-dark-800/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           {/* Mobile-first header layout */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -218,7 +243,7 @@ export default function Dashboard() {
                     <button
                       onClick={() => router.push('/admin')}
                       className="bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
-                      data-testid="admin-button"
+                      data-testid="admin-dashboard-button"
                     >
                       <span className="hidden sm:inline">⚙️ Admin</span>
                       <span className="sm:hidden">⚙️</span>
@@ -247,6 +272,13 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
+        {/* Authorization Error Banner */}
+        {authError && (
+          <div className="mb-6 bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
+            <p className="font-medium">🚫 {authError}</p>
+          </div>
+        )}
+
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4" data-testid="welcome-message">
             Welcome back, {character.name}!
@@ -377,5 +409,21 @@ export default function Dashboard() {
         />
       </main>
     </div>
+    </>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading your realm...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

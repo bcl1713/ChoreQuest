@@ -132,7 +132,7 @@ export default function FamilySettings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="family-settings">
       {/* Notifications */}
       <AnimatePresence>
         {notification && (

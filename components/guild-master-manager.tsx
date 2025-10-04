@@ -86,8 +86,8 @@ export default function GuildMasterManager() {
   }, [onFamilyMemberUpdate, loadMembers]);
 
   // Handle promote/demote confirmation
-  const handleConfirmAction = (type: "promote" | "demote", userId: string) => {
-    setConfirmAction({ type, userId, userName: "" });
+  const handleConfirmAction = (type: "promote" | "demote", userId: string, userName: string) => {
+    setConfirmAction({ type, userId, userName });
     setShowConfirmModal(true);
   };
 
@@ -172,10 +172,11 @@ export default function GuildMasterManager() {
   }
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="guild-master-manager">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-white mb-2">👑 Guild Master Management</h3>
+        <p className="text-sm text-gray-400">Family Members</p>
         <p className="text-sm text-gray-400">
           Manage administrative roles for your family. Guild Masters can create quests, approve rewards, and promote other members.
         </p>
@@ -196,6 +197,7 @@ export default function GuildMasterManager() {
             return (
               <motion.div
                 key={member.id}
+                data-testid={`member-row-${member.id}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -252,7 +254,8 @@ export default function GuildMasterManager() {
                     </span>
                   ) : isGuildMaster ? (
                     <button
-                      onClick={() => handleConfirmAction("demote", member.id)}
+                      data-testid="demote-button"
+                      onClick={() => handleConfirmAction("demote", member.id, member.name)}
                       disabled={actionLoading === member.id || isLastGM}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isLastGM
@@ -265,7 +268,8 @@ export default function GuildMasterManager() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleConfirmAction("promote", member.id)}
+                      data-testid="promote-button"
+                      onClick={() => handleConfirmAction("promote", member.id, member.name)}
                       disabled={actionLoading === member.id}
                       className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30"
                     >
@@ -283,6 +287,7 @@ export default function GuildMasterManager() {
       {showConfirmModal && confirmAction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
+            data-testid={confirmAction.type === "promote" ? "promote-confirm-modal" : "demote-confirm-modal"}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full"
@@ -305,6 +310,7 @@ export default function GuildMasterManager() {
             </p>
             <div className="flex gap-3">
               <button
+                data-testid="cancel-confirm-button"
                 onClick={() => {
                   setShowConfirmModal(false);
                   setConfirmAction(null);
@@ -314,6 +320,7 @@ export default function GuildMasterManager() {
                 Cancel
               </button>
               <button
+                data-testid={confirmAction.type === "promote" ? "confirm-promote-button" : "confirm-demote-button"}
                 onClick={executeAction}
                 className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
                   confirmAction.type === "promote"

@@ -42,6 +42,18 @@ jest.mock("@/components/family-settings", () => {
   };
 });
 
+jest.mock("@/components/quest-template-manager", () => ({
+  QuestTemplateManager: function QuestTemplateManager() {
+    return <div data-testid="quest-template-manager">Quest Template Manager</div>;
+  },
+}));
+
+jest.mock("@/components/reward-manager", () => {
+  return function RewardManager() {
+    return <div data-testid="reward-manager">Reward Manager</div>;
+  };
+});
+
 // NOW import the component (after all mocks are set up)
 import { AdminDashboard } from "@/components/admin-dashboard";
 
@@ -270,29 +282,27 @@ describe("AdminDashboard", () => {
       expect(screen.getByText("Activity Feed")).toBeInTheDocument();
     });
 
-    it("should render Quest Templates placeholder when selected", async () => {
+    it("should render Quest Templates when selected", async () => {
       render(<AdminDashboard />);
 
       const questTab = screen.getByRole("tab", { name: /📜 Quest Templates/ });
       fireEvent.click(questTab);
 
       await waitFor(() => {
-        expect(screen.getByText("Quest Templates")).toBeInTheDocument();
-        expect(
-          screen.getByText("Quest template management coming soon...")
-        ).toBeInTheDocument();
+        expect(screen.getByTestId("quest-template-manager")).toBeInTheDocument();
+        expect(screen.getByText("Quest Template Manager")).toBeInTheDocument();
       });
     });
 
-    it("should render Rewards placeholder when selected", async () => {
+    it("should render Rewards when selected", async () => {
       render(<AdminDashboard />);
 
       const rewardsTab = screen.getByRole("tab", { name: /🏆 Rewards/ });
       fireEvent.click(rewardsTab);
 
       await waitFor(() => {
-        expect(screen.getByText("Rewards")).toBeInTheDocument();
-        expect(screen.getByText("Reward management coming soon...")).toBeInTheDocument();
+        expect(screen.getByTestId("reward-manager")).toBeInTheDocument();
+        expect(screen.getByText("Reward Manager")).toBeInTheDocument();
       });
     });
 
