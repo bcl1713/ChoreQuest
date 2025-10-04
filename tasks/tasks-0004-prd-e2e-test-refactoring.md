@@ -140,37 +140,23 @@
     - [x] 2.8.3 Update `giveCharacterGoldViaQuest` to use new quest helpers (reduced from 47 lines to 25 lines)
     - [x] 2.8.4 Move `clearBrowserState` to auth-helpers if not already there (already in auth-helpers, removed duplicate)
     - [x] 2.8.5 Update imports to reference new helper modules (imported clearBrowserState and quest helpers)
-  - [ ] 2.9 Commit helper library: "feat: create comprehensive E2E test helper library"
+  - [x] 2.9 Commit helper library: "feat: create comprehensive E2E test helper library" (9 files, +2405/-124 lines)
 
-- [ ] 3.0 Investigate and Fix Parallel Safety Issues
-  - [ ] 3.1 Initial investigation
-    - [ ] 3.1.1 Run 10 tests with `workers: 2` and document failures
-    - [ ] 3.1.2 Categorize failure types (timeouts, assertion failures, race conditions)
-    - [ ] 3.1.3 Identify common failure patterns across tests
-    - [ ] NOTE: Phase 1 testing found 96/97 pass with workers: 4. Failure in admin-activity-feed traced to helper function - input visibility timing issue. Since helpers are shared, this affects potential scope of many tests.
-  - [ ] 3.2 Check database connection pool
-    - [ ] 3.2.1 Review Supabase local config for connection limits
-    - [ ] 3.2.2 Increase connection pool size if needed
-    - [ ] 3.2.3 Test with workers: 2 after pool changes
-  - [ ] 3.3 Check realtime subscription cleanup
-    - [ ] 3.3.1 Review test afterEach hooks for subscription cleanup
-    - [ ] 3.3.2 Add explicit cleanup for realtime subscriptions if missing
-    - [ ] 3.3.3 Test with workers: 2 after cleanup changes
-  - [ ] 3.4 Add missing waits for async operations
-    - [ ] 3.4.1 Add `await page.waitForLoadState('networkidle')` after auth operations
-    - [ ] 3.4.2 Add explicit waits for Supabase database writes to complete
-    - [ ] 3.4.3 Increase timeouts for operations under load (e.g., 10s → 15s)
-    - [ ] 3.4.4 Test with workers: 2 after wait changes
-  - [ ] 3.5 Fix race conditions in setupUserWithCharacter
-    - [ ] 3.5.1 Review helper for timing assumptions
-    - [ ] 3.5.2 Add explicit waits between signup and character creation
-    - [ ] 3.5.3 Ensure unique family names prevent conflicts
-    - [ ] 3.5.4 Test with workers: 2 after race condition fixes
-  - [ ] 3.6 Verify all tests pass with workers: 2
-    - [ ] 3.6.1 Run full suite with workers: 2
-    - [ ] 3.6.2 Document any remaining failures in PARALLEL_SAFETY.md
-    - [ ] 3.6.3 If needed, mark specific tests as serial-only with test.describe.configure
-  - [ ] 3.7 Commit parallel safety fixes: "fix: resolve parallel execution issues for workers: 2"
+- [x] 3.0 Investigate and Fix Parallel Safety Issues
+  - [x] 3.1 Initial investigation
+    - [x] 3.1.1 Run full suite with `workers: 2` and document failures (88/97 passing, 9 failures in 7.6 min)
+    - [x] 3.1.2 Categorize failure types (1x login timing, 8x quest creation timing - all in shared helpers)
+    - [x] 3.1.3 Identify common failure patterns (race conditions in loginUser and createCustomQuest helpers)
+    - [x] NOTE: Confirmed user's observation - failures in shared helpers affect multiple tests
+  - [x] 3.2-3.5 Database, realtime, and race condition investigation (SKIPPED - root cause found in helpers)
+    - [x] All issues traced to two helper functions with insufficient waits
+    - [x] Fixed loginUser: Added element attached/visible waits and networkidle before click
+    - [x] Fixed createCustomQuest: Added skipVisibilityCheck parameter for context flexibility
+    - [x] Fixed giveCharacterGoldViaQuest: Added tab transition waits and increased timeouts
+  - [x] 3.6 Verify all tests pass with workers: 2
+    - [x] 3.6.1 Run full suite with workers: 2 (97/97 passed in 8.5 min - 100% pass rate!)
+    - [x] 3.6.2 PARALLEL_SAFETY.md not needed - all tests pass without serial-only configuration
+  - [x] 3.7 Commit parallel safety fixes: "fix: resolve parallel test safety issues in helper functions"
 
 - [ ] 4.0 Refactor Tests to Use Helper Functions
   - [ ] 4.1 Refactor admin tests (5 files, ~32 tests)
