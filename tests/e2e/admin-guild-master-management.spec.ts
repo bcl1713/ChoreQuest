@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { setupUserWithCharacter } from "./helpers/setup-helpers";
+import { setupUserWithCharacter, loginUser } from "./helpers/setup-helpers";
+import { navigateToAdmin, navigateToAdminTab, navigateToDashboard } from "./helpers/navigation-helpers";
+import { logout, getFamilyCode, joinExistingFamily } from "./helpers/auth-helpers";
 
 /**
  * E2E Tests for Guild Master Management (Promote/Demote Workflow)
@@ -17,34 +19,19 @@ test.describe("Guild Master Management - Promote/Demote", () => {
       characterClass: "KNIGHT",
     });
 
-    // Get family code
-    const familyCodeElement = await page
-      .locator("text=/Guild:.*\\([A-Z0-9]{6}\\)/")
-      .first();
-    const familyCodeText = await familyCodeElement.textContent();
-    const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
-    const familyCode = codeMatch![1];
-
-    // Logout
-    await page.click("text=Logout");
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
+    // Get family code and logout
+    const familyCode = await getFamilyCode(page);
+    await logout(page);
 
     // Register as Hero user
     const timestamp = Date.now();
-    await page.goto("http://localhost:3000/auth/register");
-    await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("textbox", { name: "Email Address" })
-      .fill(`hero-promote-${timestamp}@test.com`);
-    await page.getByRole("textbox", { name: "Password" }).fill("password123");
-    await page
-      .getByRole("textbox", { name: "Hero Name" })
-      .fill("Hero To Promote");
-    await page.getByRole("textbox", { name: "Guild Code" }).fill(familyCode);
-    await page.getByRole("button", { name: /Join Guild/i }).click();
+    await joinExistingFamily(page, familyCode, {
+      name: "Hero To Promote",
+      email: `hero-promote-${timestamp}@test.com`,
+      password: "password123",
+    });
 
     // Create character for Hero
-    await expect(page).toHaveURL(/.*\/character\/create/, { timeout: 15000 });
     await page.fill("input#characterName", "Hero Character");
     await page.click('[data-testid="class-mage"]');
     await page.click('button:text("Begin Your Quest")');
@@ -54,20 +41,12 @@ test.describe("Guild Master Management - Promote/Demote", () => {
     await expect(page.getByTestId("admin-dashboard-button")).not.toBeVisible();
 
     // Logout and login as Guild Master
-    await page.click("text=Logout");
-    await page.goto("http://localhost:3000/auth/login");
-    await page.fill('input[name="email"]', gmUser.email);
-    await page.fill('input[name="password"]', gmUser.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
+    await logout(page);
+    await loginUser(page, gmUser.email, gmUser.password);
 
-    // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
-
-    // Navigate to Guild Masters tab
-    await page.getByRole("tab", { name: /Guild Masters/i }).click();
-    await expect(page.getByTestId("guild-master-manager")).toBeVisible();
+    // Navigate to admin dashboard and Guild Masters tab
+    await navigateToAdmin(page);
+    await navigateToAdminTab(page, "Guild Masters");
 
     // Find the Hero user in the family members list
     const heroRow = page.locator('[data-testid*="member-row"]').filter({
@@ -98,27 +77,18 @@ test.describe("Guild Master Management - Promote/Demote", () => {
     // Verify promote button is now demote button
     await expect(heroRow.getByTestId("demote-button")).toBeVisible();
 
-    // Navigate back to dashboard to logout
-    await page.click("text=Back to Dashboard");
-    await expect(page).toHaveURL(/.*\/dashboard/);
+    // Navigate back to dashboard and logout
+    await navigateToDashboard(page);
 
-    // Logout and login as the promoted user
-    await page.click("text=Logout");
-    await page.goto("http://localhost:3000/auth/login");
-    await page.fill(
-      'input[name="email"]',
-      `hero-promote-${timestamp}@test.com`,
-    );
-    await page.fill('input[name="password"]', "password123");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
+    // Login as the promoted user
+    await logout(page);
+    await loginUser(page, `hero-promote-${timestamp}@test.com`, "password123");
 
     // Verify promoted user can now see admin dashboard button
     await expect(page.getByTestId("admin-dashboard-button")).toBeVisible();
 
     // Verify they can access admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
     await expect(page.getByTestId("admin-dashboard")).toBeVisible();
   });
 
@@ -132,12 +102,7 @@ test.describe("Guild Master Management - Promote/Demote", () => {
     });
 
     // Get family code
-    const familyCodeElement = await page
-      .locator("text=/Guild:.*\\([A-Z0-9]{6}\\)/")
-      .first();
-    const familyCodeText = await familyCodeElement.textContent();
-    const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
-    const familyCode = codeMatch![1];
+    const familyCode = await getFamilyCode(page);
 
     // Create second Guild Master
     const context2 = await browser.newContext();
@@ -168,8 +133,8 @@ test.describe("Guild Master Management - Promote/Demote", () => {
       await expect(page2).toHaveURL(/.*\/dashboard/, { timeout: 15000 });
 
       // Promote second user to Guild Master (using first GM)
-      await page.click('[data-testid="admin-dashboard-button"]');
-      await page.getByRole("tab", { name: /Guild Masters/i }).click();
+      await navigateToAdmin(page);
+      await navigateToAdminTab(page, "Guild Masters");
 
       const gm2Row = page.locator('[data-testid*="member-row"]').filter({
         hasText: "Guild Master Two",
@@ -364,7 +329,7 @@ test.describe("Guild Master Management - Promote/Demote", () => {
     const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
     const familyCode = codeMatch![1];
 
-    await page.click("text=Logout");
+    await logout(page);
 
     const timestamp = Date.now();
     await page.goto("http://localhost:3000/auth/register");
@@ -384,12 +349,8 @@ test.describe("Guild Master Management - Promote/Demote", () => {
     await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 15000 });
 
     // Login as Guild Master
-    await page.click("text=Logout");
-    await page.goto("http://localhost:3000/auth/login");
-    await page.fill('input[name="email"]', gmUser.email);
-    await page.fill('input[name="password"]', gmUser.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
+    await logout(page);
+    await loginUser(page, gmUser.email, gmUser.password);
 
     // Navigate to Guild Masters tab
     await page.click('[data-testid="admin-dashboard-button"]');

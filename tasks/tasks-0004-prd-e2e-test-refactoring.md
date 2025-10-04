@@ -159,14 +159,14 @@
   - [x] 3.7 Commit parallel safety fixes: "fix: resolve parallel test safety issues in helper functions"
 
 - [ ] 4.0 Refactor Tests to Use Helper Functions
-  - [ ] 4.1 Refactor admin tests (5 files, ~32 tests)
-    - [ ] 4.1.1 Update admin-activity-feed.spec.ts to use helpers
-    - [ ] 4.1.2 Update admin-dashboard-access.spec.ts to use helpers
-    - [ ] 4.1.3 Update admin-dashboard-tabs.spec.ts to use helpers
-    - [ ] 4.1.4 Update admin-guild-master-management.spec.ts to use helpers
-    - [ ] 4.1.5 Update admin-statistics.spec.ts to use helpers
-    - [ ] 4.1.6 Run admin tests to verify all pass
-    - [ ] 4.1.7 Measure LOC reduction for admin tests
+  - [x] 4.1 Refactor admin tests (5 files, 30 tests) - COMPLETED
+    - [x] 4.1.1 Update admin-activity-feed.spec.ts to use helpers (333→292 lines, -41, -12.3%)
+    - [x] 4.1.2 Update admin-dashboard-access.spec.ts to use helpers (110→98 lines, -12, -10.9%)
+    - [x] 4.1.3 Update admin-dashboard-tabs.spec.ts to use helpers (196→166 lines, -30, -15.3%)
+    - [x] 4.1.4 Update admin-guild-master-management.spec.ts to use helpers (420→380 lines, -40, -9.5%)
+    - [x] 4.1.5 Update admin-statistics.spec.ts to use helpers (241→205 lines, -36, -14.9%)
+    - [x] 4.1.6 Run admin tests to verify all pass (30/30 passing in 4.7 min)
+    - [x] 4.1.7 Measure LOC reduction for admin tests (1,300→1,141 lines, -159, -12.2%)
   - [ ] 4.2 Refactor quest tests (6 files, ~19 tests)
     - [ ] 4.2.1 Update quest-system.spec.ts to use helpers
     - [ ] 4.2.2 Update quest-pickup-management.spec.ts to use helpers

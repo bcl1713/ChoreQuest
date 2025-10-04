@@ -2,7 +2,10 @@ import { test, expect } from "@playwright/test";
 import {
   setupUserWithCharacter,
   giveCharacterGoldViaQuest,
+  loginUser,
 } from "./helpers/setup-helpers";
+import { navigateToAdmin, navigateToDashboard } from "./helpers/navigation-helpers";
+import { createCustomQuest } from "./helpers/quest-helpers";
 
 /**
  * E2E Tests for Admin Dashboard Statistics Display
@@ -19,8 +22,7 @@ test.describe("Admin Dashboard Statistics", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify statistics panel is visible
     await expect(page.getByTestId("statistics-panel")).toBeVisible();
@@ -45,45 +47,28 @@ test.describe("Admin Dashboard Statistics", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Navigate to main dashboard to create and complete a quest
-    await page.click("text=Back to Dashboard");
-    await expect(page).toHaveURL(/.*\/dashboard/);
+    await navigateToDashboard(page);
 
-    // Create a test quest
+    // Create and complete a test quest
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
-    await page.fill(
-      'input[placeholder="Enter quest title..."]',
-      `Test Quest ${timestamp}`,
-    );
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Test quest for statistics",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "10");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "50");
-    await page.click('button[type="submit"]');
+    await createCustomQuest(page, {
+      title: `Test Quest ${timestamp}`,
+      description: "Test quest for statistics",
+      goldReward: 10,
+      xpReward: 50,
+    });
 
     // Complete the quest workflow: pickup -> start -> complete -> approve
     await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
     await page.locator('[data-testid="start-quest-button"]').first().click();
-
     await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-    // Wait for quest completion to be processed
-    await expect(page.locator('[data-testid="approve-quest-button"]').first()).toBeVisible({ timeout: 5000 });
-
     await page.locator('[data-testid="approve-quest-button"]').first().click();
 
     // Navigate back to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify quest completion count increased (check the specific stat card)
     const statsPanel = page.getByTestId("statistics-panel");
@@ -104,8 +89,7 @@ test.describe("Admin Dashboard Statistics", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify character statistics are displayed
     const statsPanel = page.getByTestId("statistics-panel");
@@ -129,8 +113,7 @@ test.describe("Admin Dashboard Statistics", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify pending approvals shows 0 initially
     const statsPanel = page.getByTestId("statistics-panel");
@@ -138,36 +121,25 @@ test.describe("Admin Dashboard Statistics", () => {
     await expect(statsPanel).toContainText("0 quests");
 
     // Create and complete a quest (needs approval)
-    await page.click("text=Back to Dashboard");
+    await navigateToDashboard(page);
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
-    await page.fill(
-      'input[placeholder="Enter quest title..."]',
-      `Pending Quest ${timestamp}`,
-    );
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest needs approval",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "5");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "25");
-    await page.click('button[type="submit"]');
+    await createCustomQuest(page, {
+      title: `Pending Quest ${timestamp}`,
+      description: "Quest needs approval",
+      goldReward: 5,
+      xpReward: 25,
+    });
 
     // Complete quest without approving
     await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
     await page.locator('[data-testid="start-quest-button"]').first().click();
-
     await page.locator('[data-testid="complete-quest-button"]').first().click();
 
     // Wait for quest completion to be processed
     await page.waitForLoadState('networkidle');
 
     // Navigate back to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify pending approvals count increased to 1
     await expect(statsPanel).toContainText("1 quests", { timeout: 5000 });
@@ -189,16 +161,10 @@ test.describe("Admin Dashboard Statistics", () => {
       });
 
       // Navigate to admin dashboard in first window
-      await page1.click('[data-testid="admin-dashboard-button"]');
-      await expect(page1).toHaveURL(/.*\/admin/);
+      await navigateToAdmin(page1);
 
       // Login with same user in second context
-      await page2.goto("/");
-      await page2.click('[data-testid="login-link"]');
-      await page2.fill('input[name="email"]', user.email);
-      await page2.fill('input[name="password"]', user.password);
-      await page2.click('button[type="submit"]');
-      await page2.waitForURL(/.*\/dashboard/, { timeout: 15000 });
+      await loginUser(page2, user.email, user.password);
 
       // Complete a quest in second window (EASY difficulty = 1.15x multiplier)
       await giveCharacterGoldViaQuest(page2, 20); // 20 * 1.15 = 23 gold
@@ -222,16 +188,14 @@ test.describe("Admin Dashboard Statistics", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Complete a quest to become the most active member
-    await page.click("text=Back to Dashboard");
+    await navigateToDashboard(page);
     await giveCharacterGoldViaQuest(page, 15);
 
     // Navigate back to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify most active member is displayed
     const statsPanel = page.getByTestId("statistics-panel");

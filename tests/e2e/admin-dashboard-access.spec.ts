@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { setupUserWithCharacter } from './helpers/setup-helpers';
+import { navigateToAdmin } from './helpers/navigation-helpers';
+import { logout, getFamilyCode, joinExistingFamily } from './helpers/auth-helpers';
 
 /**
  * E2E Tests for Admin Dashboard Access Control
@@ -19,11 +21,8 @@ test.describe('Admin Dashboard Access Control', () => {
     // Verify Admin button is visible for Guild Master
     await expect(page.getByTestId('admin-dashboard-button')).toBeVisible();
 
-    // Click admin button
-    await page.click('[data-testid="admin-dashboard-button"]');
-
-    // Should navigate to admin dashboard
-    await expect(page).toHaveURL(/.*\/admin/);
+    // Navigate to admin dashboard
+    await navigateToAdmin(page);
 
     // Verify admin dashboard loads
     await expect(page.getByTestId('admin-dashboard')).toBeVisible();
@@ -40,28 +39,19 @@ test.describe('Admin Dashboard Access Control', () => {
     // Create family as Guild Master
     await setupUserWithCharacter(page, 'gm-for-hero', { characterClass: 'MAGE' });
 
-    // Get family code
-    const familyCodeElement = await page.locator('text=/Guild:.*\\([A-Z0-9]{6}\\)/').first();
-    const familyCodeText = await familyCodeElement.textContent();
-    const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
-    const familyCode = codeMatch![1];
-
-    // Logout
-    await page.click('text=Logout');
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
+    // Get family code and logout
+    const familyCode = await getFamilyCode(page);
+    await logout(page);
 
     // Register as Hero (child) user
     const timestamp = Date.now();
-    await page.goto('http://localhost:3000/auth/register');
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(`hero-access-${timestamp}@test.com`);
-    await page.getByRole('textbox', { name: 'Password' }).fill('password123');
-    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero User');
-    await page.getByRole('textbox', { name: 'Guild Code' }).fill(familyCode);
-    await page.getByRole('button', { name: /Join Guild/i }).click();
+    await joinExistingFamily(page, familyCode, {
+      name: 'Hero User',
+      email: `hero-access-${timestamp}@test.com`,
+      password: 'password123',
+    });
 
     // Create character for Hero
-    await expect(page).toHaveURL(/.*\/character\/create/, { timeout: 15000 });
     await page.fill('input#characterName', 'Hero Character');
     await page.click('[data-testid="class-rogue"]');
     await page.click('button:text("Begin Your Quest")');
@@ -100,8 +90,7 @@ test.describe('Admin Dashboard Access Control', () => {
     await expect(adminButton).toContainText(/Admin|Settings|⚙️|🛡️/i);
 
     // Logout
-    await page.click('text=Logout');
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
+    await logout(page);
 
     // Login page shouldn't show admin button
     await expect(page.getByTestId('admin-dashboard-button')).not.toBeVisible();

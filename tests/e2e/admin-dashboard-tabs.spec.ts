@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setupUserWithCharacter } from './helpers/setup-helpers';
+import { navigateToAdmin, navigateToAdminTab, navigateToDashboard } from './helpers/navigation-helpers';
 
 /**
  * E2E Tests for Admin Dashboard Tab Navigation
@@ -14,8 +15,7 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await setupUserWithCharacter(page, 'tab-nav', { characterClass: 'KNIGHT' });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify Overview tab is active by default
     const overviewTab = page.getByRole('tab', { name: /Overview/i });
@@ -24,28 +24,19 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await expect(page.getByTestId('activity-feed')).toBeVisible();
 
     // Navigate to Quest Templates tab
-    await page.getByRole('tab', { name: /Quest Templates/i }).click();
-    await expect(page.getByTestId('quest-template-manager')).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Quest Templates/i })).toHaveAttribute('aria-selected', 'true');
+    await navigateToAdminTab(page, 'Quest Templates');
 
     // Navigate to Rewards tab
-    await page.getByRole('tab', { name: /Rewards/i }).click();
-    await expect(page.getByTestId('reward-manager')).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Rewards/i })).toHaveAttribute('aria-selected', 'true');
+    await navigateToAdminTab(page, 'Rewards');
 
     // Navigate to Guild Masters tab
-    await page.getByRole('tab', { name: /Guild Masters/i }).click();
-    await expect(page.getByTestId('guild-master-manager')).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Guild Masters/i })).toHaveAttribute('aria-selected', 'true');
+    await navigateToAdminTab(page, 'Guild Masters');
 
     // Navigate to Family Settings tab
-    await page.getByRole('tab', { name: /Family Settings/i }).click();
-    await expect(page.getByTestId('family-settings')).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Family Settings/i })).toHaveAttribute('aria-selected', 'true');
+    await navigateToAdminTab(page, 'Family Settings');
 
     // Navigate back to Overview
-    await page.getByRole('tab', { name: /Overview/i }).click();
-    await expect(page.getByTestId('statistics-panel')).toBeVisible();
+    await navigateToAdminTab(page, 'Overview');
   });
 
   test('persists active tab in URL query params', async ({ page }) => {
@@ -53,36 +44,23 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await setupUserWithCharacter(page, 'tab-url', { characterClass: 'MAGE' });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Click Rewards tab
-    await page.getByRole('tab', { name: /Rewards/i }).click();
+    await navigateToAdminTab(page, 'Rewards');
 
     // Verify URL contains tab query param
     await expect(page).toHaveURL(/.*\/admin\?tab=rewards/i);
 
-    // Wait for page to be fully loaded
-    await page.waitForLoadState('networkidle');
-
-    // Wait for admin dashboard to be ready
-    await expect(page.getByTestId('admin-dashboard')).toBeVisible();
-
-    // Verify Rewards tab is still active after reload
-    await expect(page.getByRole('tab', { name: /Rewards/i })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByTestId('reward-manager')).toBeVisible();
-
     // Click Guild Masters tab
-    await page.getByRole('tab', { name: /Guild Masters/i }).click();
+    await navigateToAdminTab(page, 'Guild Masters');
     await expect(page).toHaveURL(/.*\/admin\?tab=guild-masters/i);
 
     // Navigate away and back
-    await page.click('text=Back to Dashboard');
-    await expect(page).toHaveURL(/.*\/dashboard/);
+    await navigateToDashboard(page);
 
-    // Click admin button again
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    // Navigate to admin again
+    await navigateToAdmin(page);
 
     // Should return to Overview tab (default) when navigating back without query param
     await expect(page.getByRole('tab', { name: /Overview/i })).toHaveAttribute('aria-selected', 'true');
@@ -93,8 +71,7 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await setupUserWithCharacter(page, 'tab-direct', { characterClass: 'RANGER' });
 
     // First navigate to admin via button (establishes auth state)
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Wait for page to be fully loaded before URL navigation
     await page.waitForLoadState('networkidle');
@@ -129,8 +106,7 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await setupUserWithCharacter(page, 'tab-mobile', { characterClass: 'HEALER' });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify tabs are visible (on mobile they show only icons, not full labels)
     const tabs = page.getByRole('tablist');
@@ -160,8 +136,7 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await setupUserWithCharacter(page, 'tab-content', { characterClass: 'ROGUE' });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Overview tab - verify statistics and activity feed
     await expect(page.getByTestId('statistics-panel')).toBeVisible();
@@ -170,24 +145,20 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await expect(page.getByText(/Recent Activity/i)).toBeVisible();
 
     // Quest Templates tab - verify template manager
-    await page.getByRole('tab', { name: /Quest Templates/i }).click();
-    await expect(page.getByTestId('quest-template-manager')).toBeVisible();
+    await navigateToAdminTab(page, 'Quest Templates');
     await expect(page.getByTestId('create-template-button')).toBeVisible();
     await expect(page.getByTestId('template-list')).toBeVisible();
 
     // Rewards tab - verify reward manager
-    await page.getByRole('tab', { name: /Rewards/i }).click();
-    await expect(page.getByTestId('reward-manager')).toBeVisible();
+    await navigateToAdminTab(page, 'Rewards');
     await expect(page.getByTestId('create-reward-button')).toBeVisible();
 
     // Guild Masters tab - verify role management
-    await page.getByRole('tab', { name: /Guild Masters/i }).click();
-    await expect(page.getByTestId('guild-master-manager')).toBeVisible();
+    await navigateToAdminTab(page, 'Guild Masters');
     await expect(page.getByText(/Family Members/i)).toBeVisible();
 
     // Family Settings tab - verify family settings
-    await page.getByRole('tab', { name: /Family Settings/i }).click();
-    await expect(page.getByTestId('family-settings')).toBeVisible();
+    await navigateToAdminTab(page, 'Family Settings');
     await expect(page.getByText(/Family Name/i)).toBeVisible();
     // Check for invite code label specifically to avoid strict mode violation
     await expect(page.locator('label').filter({ hasText: /Invite Code/i }).first()).toBeVisible();

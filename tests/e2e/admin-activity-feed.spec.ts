@@ -4,6 +4,9 @@ import {
   giveCharacterGoldViaQuest,
   loginUser,
 } from "./helpers/setup-helpers";
+import { navigateToAdmin, navigateToDashboard, navigateToHeroTab, navigateToAdminTab } from "./helpers/navigation-helpers";
+import { createCustomQuest } from "./helpers/quest-helpers";
+import { createReward, redeemReward } from "./helpers/reward-helpers";
 
 /**
  * E2E Tests for Admin Dashboard Activity Feed
@@ -20,8 +23,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify activity feed is visible on Overview tab
     await expect(page.getByTestId("activity-feed")).toBeVisible();
@@ -39,44 +41,31 @@ test.describe("Admin Dashboard Activity Feed", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Navigate to main dashboard and complete a quest
-    await page.click("text=Back to Dashboard");
+    await navigateToDashboard(page);
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
     const questTitle = `Activity Quest ${timestamp}`;
-    await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest for activity feed",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "10");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "50");
-    await page.click('button[type="submit"]');
 
-    // Complete quest workflow
+    await createCustomQuest(page, {
+      title: questTitle,
+      description: "Quest for activity feed",
+      goldReward: 10,
+      xpReward: 50,
+    });
+
+    // Complete quest workflow (use first quest since we just created it)
     await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
     await page.locator('[data-testid="start-quest-button"]').first().click();
-
     await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-    // Wait for quest completion to be processed
-    await expect(page.locator('[data-testid="approve-quest-button"]').first()).toBeVisible({ timeout: 5000 });
-
     await page.locator('[data-testid="approve-quest-button"]').first().click();
 
     // Navigate back to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Wait for activity feed to load and refresh
     const activityFeed = page.getByTestId("activity-feed");
-
     await page.getByTestId("activity-feed-refresh-button").click();
 
     // Verify quest completion appears in activity feed
@@ -94,32 +83,25 @@ test.describe("Admin Dashboard Activity Feed", () => {
 
     // Navigate to main dashboard and complete a quest without approving
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
     const questTitle = `Pending Quest ${timestamp}`;
-    await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest needs approval",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "5");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "25");
-    await page.click('button[type="submit"]');
 
-    // Complete quest without approving
+    await createCustomQuest(page, {
+      title: questTitle,
+      description: "Quest needs approval",
+      goldReward: 5,
+      xpReward: 25,
+    });
+
+    // Complete quest without approving (use first quest since we just created it)
     await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
     await page.locator('[data-testid="start-quest-button"]').first().click();
-
     await page.locator('[data-testid="complete-quest-button"]').first().click();
 
     // Wait for quest completion to be processed
     await page.waitForLoadState('networkidle');
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify pending approval appears in activity feed (submitted events)
     const activityFeed = page.getByTestId("activity-feed");
@@ -136,7 +118,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     await expect(page).toHaveURL(/.*\/dashboard/);
 
     // Navigate back to admin to verify event persistence
-    await page.click('[data-testid="admin-dashboard-button"]');
+    await navigateToAdmin(page);
     await expect(activityFeed).toContainText(/submitted.*for approval/i);
   });
 
@@ -149,37 +131,28 @@ test.describe("Admin Dashboard Activity Feed", () => {
     });
 
     // First, create a reward
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await page.getByRole("tab", { name: /Rewards/i }).click();
+    await navigateToAdmin(page);
+    await navigateToAdminTab(page, "Rewards");
 
     const timestamp = Date.now();
     const rewardName = `Activity Reward ${timestamp}`;
-    await page.click('[data-testid="create-reward-button"]');
-    await page.fill('[data-testid="reward-name-input"]', rewardName);
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Reward for activity feed test",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "EXPERIENCE");
-    await page.fill('[data-testid="reward-cost-input"]', "10");
-    await page.click('[data-testid="save-reward-button"]');
+    await createReward(page, {
+      name: rewardName,
+      description: "Reward for activity feed test",
+      type: "EXPERIENCE",
+      cost: 10,
+    });
 
     // Give character gold
-    await page.click("text=Back to Dashboard");
+    await navigateToDashboard(page);
     await giveCharacterGoldViaQuest(page, 50);
 
     // Redeem the reward
-    await page.click('[data-testid="tab-rewards"]'); // Use testid for rewards tab
-
-    // Find and click the reward - use simpler selector
-    await page.getByText(rewardName).click();
-
-    // Click redeem button (should be visible in reward details/card)
-    await page.getByRole("button", { name: /redeem/i }).click();
+    await navigateToHeroTab(page, "Reward Store");
+    await redeemReward(page, rewardName);
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify reward redemption appears in activity feed
     const activityFeed = page.getByTestId("activity-feed");
@@ -197,8 +170,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     await giveCharacterGoldViaQuest(page, 10);
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify activity feed shows relative timestamps
     const activityFeed = page.getByTestId("activity-feed");
@@ -220,8 +192,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
       });
 
       // Navigate to admin dashboard
-      await page.click('[data-testid="admin-dashboard-button"]');
-      await expect(page).toHaveURL(/.*\/admin/);
+      await navigateToAdmin(page);
 
       // Open second tab in same context and login
       const page2 = await context.newPage();
@@ -249,8 +220,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify refresh button exists
     const refreshButton = page.getByTestId("activity-feed-refresh-button");
@@ -270,8 +240,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     });
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify activity feed exists
     const activityFeed = page.getByTestId("activity-feed");
@@ -293,35 +262,25 @@ test.describe("Admin Dashboard Activity Feed", () => {
     });
 
     // Complete multiple quests to trigger level-up
-    await page.click("text=Quests & Adventures");
+    await navigateToHeroTab(page, "Quests & Adventures");
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
+    const questTitle = `Levelup Quest ${timestamp}`;
 
-    await page.fill(
-      'input[placeholder="Enter quest title..."]',
-      `Levelup Quest ${timestamp}`,
-    );
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest for level up",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "5");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "100");
-    await page.click('button[type="submit"]');
+    await createCustomQuest(page, {
+      title: questTitle,
+      description: "Quest for level up",
+      goldReward: 5,
+      xpReward: 100,
+    });
 
-    // Complete and approve quest
+    // Complete and approve quest (use first quest since we just created it)
     await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
     await page.locator('[data-testid="start-quest-button"]').first().click();
-
     await page.locator('[data-testid="complete-quest-button"]').first().click();
-
     await page.locator('[data-testid="approve-quest-button"]').first().click();
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(page);
 
     // Verify level-up event appears in activity feed
     const activityFeed = page.getByTestId("activity-feed");
