@@ -307,10 +307,13 @@ Realtime tests create two full browser contexts
 
 ### Total Projected Improvement
 ```
-Current:  20+ minutes (baseline measurement in progress)
-Target:   5-8 minutes with 4-6 workers
-Stretch:  3-5 minutes with 8 workers + optimizations
+Current:  10.5 minutes (baseline established)
+Target:   5-6 minutes with 2 workers (50% reduction)
+Better:   2.5-3 minutes with 4 workers (75% reduction)
+Stretch:  1.75-2 minutes with 6 workers (83% reduction)
 ```
+
+**Note:** Actual baseline is better than expected 20+ min estimate, suggesting prior optimizations were effective.
 
 ## Recommendations for Refactoring
 
@@ -371,13 +374,12 @@ Potential fixes:
 | **Total Test Files** | 20 | 11-13 (consolidation) |
 | **Total Lines of Code** | 4,854 | 2,400-2,900 |
 | **Test Count** | 97 | 97 (maintain coverage) |
-| **Runtime** | 20+ min* | 5-8 minutes |
-| **Workers** | 1 | 4-6 |
+| **Pass Rate** | 95/97 (97.9%) | 97/97 (100%) |
+| **Runtime** | 10.5 minutes | 2-3 minutes |
+| **Workers** | 1 | 4-6 (after parallel fixes) |
 | **Anti-patterns** | 7 | 0 |
 | **Helper Functions** | 4 | 20+ |
-| **Code Duplication** | High | Low |
-
-*Exact baseline being measured currently
+| **Code Duplication** | High (~60%) | Low (~20%) |
 
 ## Next Steps
 
@@ -390,4 +392,6 @@ Potential fixes:
 ---
 
 **Audit completed by:** Claude Code
-**Test execution status:** Running baseline measurements (Test 23/97 in progress)
+**Baseline established:** 2025-10-03
+**Test execution:** Complete (95/97 passing, 10.5 minutes)
+**Ready for refactoring:** YES ✅
