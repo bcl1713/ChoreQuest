@@ -1,39 +1,8 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { setupUserWithCharacter } from "./helpers/setup-helpers";
-
-/**
- * Helper to get family code from the dashboard page
- * The family code is displayed as "Guild: Family Name (CODE)"
- */
-async function getFamilyCode(page: Page): Promise<string> {
-  // Navigate to dashboard if not already there
-  const currentUrl = page.url();
-  if (!currentUrl.includes("/dashboard")) {
-    await page.goto("/dashboard");
-    await page.waitForURL(/.*dashboard/);
-  }
-
-  // Get the family code from the dashboard - it's displayed as "Guild: Family Name (CODE)"
-  const familyCodeElement = await page
-    .locator("text=/Guild:.*\\([A-Z0-9]{6}\\)/")
-    .first();
-
-  if (!(await familyCodeElement.isVisible())) {
-    throw new Error("Family code not found on dashboard");
-  }
-
-  const familyCodeText = await familyCodeElement.textContent();
-  if (!familyCodeText) {
-    throw new Error("Could not read family code text");
-  }
-
-  const codeMatch = familyCodeText.match(/\(([A-Z0-9]{6})\)/);
-  if (!codeMatch) {
-    throw new Error(`Could not extract family code from: ${familyCodeText}`);
-  }
-
-  return codeMatch[1];
-}
+import { getFamilyCode, logout } from "./helpers/auth-helpers";
+import { navigateToTab, openQuestCreationModal } from "./helpers/navigation-helpers";
+import { expectOnDashboard } from "./helpers/assertions";
 
 test.describe("Quest Template Management", () => {
   test("Guild Master creates a new quest template", async ({ page }) => {
@@ -43,10 +12,10 @@ test.describe("Quest Template Management", () => {
     });
 
     // Should already be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Navigate to Quest Templates tab
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await expect(page.getByTestId("quest-template-manager")).toBeVisible();
 
     // Verify default templates are loaded (from migration)
@@ -108,10 +77,10 @@ test.describe("Quest Template Management", () => {
     });
 
     // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await expect(page.getByTestId("quest-template-manager")).toBeVisible();
 
     // Wait for templates to load
@@ -182,10 +151,10 @@ test.describe("Quest Template Management", () => {
     });
 
     // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await expect(page.getByTestId("quest-template-manager")).toBeVisible();
 
     // Wait for templates
@@ -257,10 +226,10 @@ test.describe("Quest Template Management", () => {
     });
 
     // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await expect(page.getByTestId("quest-template-manager")).toBeVisible();
 
     // Create a new template to delete
@@ -315,10 +284,10 @@ test.describe("Quest Template Management", () => {
     });
 
     // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Navigate to Quest Templates and create a custom template
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await page.click('[data-testid="create-template-button"]');
     await page.fill(
       '[data-testid="template-title-input"]',
@@ -334,10 +303,10 @@ test.describe("Quest Template Management", () => {
     await expect(page.getByText("Unique Test Template")).toBeVisible();
 
     // Navigate back to Quests & Adventures
-    await page.click("text=Quests & Adventures");
+    await page.getByTestId("tab-quests").click();
 
     // Click create quest button
-    await page.click('[data-testid="create-quest-button"]');
+    await openQuestCreationModal(page);
 
     // Switch to "From Template" tab
     await page.click("text=From Template");
@@ -369,7 +338,7 @@ test.describe("Quest Template Management", () => {
     await setupUserWithCharacter(page, "template-gm", {
       characterClass: "KNIGHT",
     });
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Verify Guild Master can see Quest Templates tab
     await expect(page.getByText("Quest Templates")).toBeVisible();
@@ -378,9 +347,7 @@ test.describe("Quest Template Management", () => {
     const familyCode = await getFamilyCode(page);
 
     // Logout
-    await page.click("text=Logout");
-    // After logout, we're redirected to login page
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
+    await logout(page);
 
     // Register as a Hero (child) user
     const timestamp = Date.now();

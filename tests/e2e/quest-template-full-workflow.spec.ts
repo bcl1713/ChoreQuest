@@ -1,5 +1,17 @@
 import { test, expect } from "@playwright/test";
 import { setupUserWithCharacter } from "./helpers/setup-helpers";
+import {
+  navigateToTab,
+  openQuestCreationModal,
+  closeModal,
+} from "./helpers/navigation-helpers";
+import {
+  pickupQuest,
+  startQuest,
+  completeQuest,
+  approveQuest,
+} from "./helpers/quest-helpers";
+import { expectOnDashboard } from "./helpers/assertions";
 
 /**
  * Quest Template Full Workflow Integration Test
@@ -26,10 +38,10 @@ test.describe("Quest Template Full Workflow Integration", () => {
     await setupUserWithCharacter(page, "workflow-test", {
       characterClass: "MAGE",
     });
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(page);
 
     // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await expect(page.getByTestId("quest-template-manager")).toBeVisible();
 
     // Verify default templates from migration exist
@@ -84,9 +96,8 @@ test.describe("Quest Template Full Workflow Integration", () => {
     // ============================================================
     // STEP 3: Create quest instance from custom template
     // ============================================================
-    await page.click("text=Quests & Adventures");
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator("text=Create New Quest")).toBeVisible();
+    await page.getByTestId("tab-quests").click();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -127,33 +138,14 @@ test.describe("Quest Template Full Workflow Integration", () => {
       .filter({ hasText: "Epic Cleaning Quest" });
     await expect(questCard).toBeVisible();
 
-    // Pick up the quest (GM can pick up their own quests)
-    await questCard.locator('[data-testid="pick-up-quest-button"]').click();
-    // Wait for realtime update
-
-    // Verify quest moved to "Your Active Quests" section
-    // After pickup, status should be PENDING, so we need to start it
-    const activeQuestCard = page
-      .locator(".fantasy-card")
-      .filter({ hasText: "Epic Cleaning Quest" });
-    await expect(activeQuestCard).toBeVisible();
+    // Pick up and complete the quest using helpers
+    await pickupQuest(page, "Epic Cleaning Quest");
 
     // ============================================================
     // STEP 5: Guild Master starts and completes the quest
     // ============================================================
-    // Start the quest (PENDING -> IN_PROGRESS)
-    const startButton = activeQuestCard.locator(
-      '[data-testid="start-quest-button"]',
-    );
-    await expect(startButton).toBeVisible();
-    await startButton.click();
-
-    // Complete the quest (IN_PROGRESS -> COMPLETED)
-    const completeButton = activeQuestCard.locator(
-      '[data-testid="complete-quest-button"]',
-    );
-    await expect(completeButton).toBeVisible();
-    await completeButton.click();
+    await startQuest(page, "Epic Cleaning Quest");
+    await completeQuest(page, "Epic Cleaning Quest");
 
     // ============================================================
     // STEP 6: Guild Master approves quest and rewards are applied
@@ -169,12 +161,7 @@ test.describe("Quest Template Full Workflow Integration", () => {
     const currentGold = parseInt(currentGoldText?.match(/\d+/)?.[0] || "0");
 
     // Approve the quest
-    const approveButton = activeQuestCard.locator(
-      '[data-testid="approve-quest-button"]',
-    );
-    await expect(approveButton).toBeVisible();
-    await approveButton.click();
-    // Wait for database update and realtime sync
+    await approveQuest(page, "Epic Cleaning Quest");
 
     // ============================================================
     // STEP 7: Verify class bonuses applied correctly
@@ -206,7 +193,7 @@ test.describe("Quest Template Full Workflow Integration", () => {
     // STEP 8: Delete template and verify existing quest still works
     // ============================================================
     // Navigate back to Quest Templates
-    await page.click("text=Quest Templates");
+    await page.getByTestId("tab-templates").click();
     await expect(page.getByTestId("quest-template-manager")).toBeVisible();
 
     // Find the custom template
@@ -231,10 +218,10 @@ test.describe("Quest Template Full Workflow Integration", () => {
     await expect(page.getByText("Epic Cleaning Quest")).not.toBeVisible();
 
     // Navigate back to quests and verify we can still create new quests
-    await page.click("text=Quests & Adventures");
+    await page.getByTestId("tab-quests").click();
 
     // Create another quest from a different (default) template to verify system still works
-    await page.click('[data-testid="create-quest-button"]');
+    await openQuestCreationModal(page);
     await page.click('[data-testid="template-mode-button"]');
 
     // Select first available template (should be a default template)
@@ -250,7 +237,7 @@ test.describe("Quest Template Full Workflow Integration", () => {
     await expect(
       page.locator('[data-testid="template-preview"]'),
     ).toBeVisible();
-    await page.click('[data-testid="cancel-quest-button"]');
+    await closeModal(page, "quest");
 
     // Verify character stats persisted (rewards from deleted template quest are permanent)
     await expect(page.locator('[data-testid="character-xp"]')).toContainText(
@@ -272,10 +259,10 @@ test.describe("Quest Template Full Workflow Integration", () => {
     await setupUserWithCharacter(family1Page, "family1-isolation", {
       characterClass: "KNIGHT",
     });
-    await expect(family1Page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(family1Page);
 
     // Navigate to templates and create custom template for family 1
-    await family1Page.click("text=Quest Templates");
+    await family1Page.getByTestId("tab-templates").click();
     await family1Page.click('[data-testid="create-template-button"]');
     await family1Page.fill(
       '[data-testid="template-title-input"]',
@@ -296,10 +283,10 @@ test.describe("Quest Template Full Workflow Integration", () => {
     await setupUserWithCharacter(family2Page, "family2-isolation", {
       characterClass: "RANGER",
     });
-    await expect(family2Page).toHaveURL(/.*dashboard/);
+    await expectOnDashboard(family2Page);
 
     // Navigate to templates for family 2
-    await family2Page.click("text=Quest Templates");
+    await family2Page.getByTestId("tab-templates").click();
     await expect(
       family2Page.getByTestId("quest-template-manager"),
     ).toBeVisible();

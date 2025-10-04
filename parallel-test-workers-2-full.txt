@@ -1,0 +1,425 @@
+
+Running 97 tests using 2 workers
+
+[1A[2K[1/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:16:7 › Admin Dashboard Activity Feed › displays activity feed on overview tab
+[1A[2K[2/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:12:7 › Admin Dashboard Access Control › Guild Master can access admin dashboard
+[1A[2K[3/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:35:7 › Admin Dashboard Activity Feed › shows quest completion events in activity feed
+[1A[2K[4/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:39:7 › Admin Dashboard Access Control › Hero cannot access admin dashboard
+[1A[2K[5/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:87:7 › Admin Dashboard Activity Feed › shows pending approval events with quick action buttons
+[1A[2K[6/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:83:7 › Admin Dashboard Access Control › Unauthenticated user cannot access admin dashboard
+[1A[2K[7/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:91:7 › Admin Dashboard Access Control › Admin button visible only for Guild Masters in header
+[1A[2K[8/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:12:7 › Admin Dashboard Tab Navigation › navigates between all tabs successfully
+[1A[2K[9/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:143:7 › Admin Dashboard Activity Feed › displays reward redemption events in activity feed
+[1A[2K[10/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:51:7 › Admin Dashboard Tab Navigation › persists active tab in URL query params
+[1A[2K[11/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:190:7 › Admin Dashboard Activity Feed › shows relative timestamps for events
+[1A[2K[12/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:91:7 › Admin Dashboard Tab Navigation › direct navigation to specific tab via URL
+[1A[2K[13/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:211:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events
+[1A[2K[14/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:124:7 › Admin Dashboard Tab Navigation › tab navigation is mobile responsive
+[1A[2K[15/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:158:7 › Admin Dashboard Tab Navigation › each tab renders correct content and components
+[1A[2KInternal error: step id not found: fixture@50
+
+[1A[2KInternal error: step id not found: fixture@50
+
+[1A[2K  1) [chromium] › tests/e2e/admin-activity-feed.spec.ts:211:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events 
+
+    TimeoutError: page.click: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="login-link"]')[22m
+    [2m    - locator resolved to <a href="/auth/login" data-testid="login-link" class="text-primary-400 hover:text-primary-300">Already have an account? Login here</a>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m    - element is visible, enabled and stable[22m
+    [2m    - scrolling into view if needed[22m
+    [2m    - done scrolling[22m
+    [2m    - element is not visible[22m
+    [2m  - retrying click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers/setup-helpers.ts:172
+
+      170 |     state: "visible",
+      171 |   });
+    > 172 |   await page.click('[data-testid="login-link"]');
+          |              ^
+      173 |   await expect(page).toHaveURL(/.*\/auth\/login/);
+      174 |
+      175 |   await page.fill('input[name="email"]', email);
+        at loginUser (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:172:14)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/admin-activity-feed.spec.ts:228:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-activity-feed-Admin--69ea4--auto-scrolls-to-new-events-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-activity-feed-Admin--69ea4--auto-scrolls-to-new-events-chromium/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[16/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:12:7 › Guild Master Management - Promote/Demote › Guild Master can promote a Hero to Guild Master role
+[1A[2K[17/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:245:7 › Admin Dashboard Activity Feed › activity feed has manual refresh button
+[1A[2K[18/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:266:7 › Admin Dashboard Activity Feed › activity feed limits to last 50 events
+[1A[2K[19/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:289:7 › Admin Dashboard Activity Feed › displays level-up events in activity feed
+[1A[2K[20/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:125:7 › Guild Master Management - Promote/Demote › Guild Master can demote another Guild Master to Hero role
+[1A[2K[21/97] [chromium] › tests/e2e/admin-statistics.spec.ts:15:7 › Admin Dashboard Statistics › displays initial family statistics correctly
+[1A[2K[22/97] [chromium] › tests/e2e/admin-statistics.spec.ts:41:7 › Admin Dashboard Statistics › updates quest completion statistics in real-time
+[1A[2K[23/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:211:7 › Guild Master Management - Promote/Demote › cannot demote the last Guild Master (safeguard)
+[1A[2K[24/97] [chromium] › tests/e2e/admin-statistics.spec.ts:100:7 › Admin Dashboard Statistics › displays character progress and levels
+[1A[2K[25/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:252:7 › Guild Master Management - Promote/Demote › displays Guild Master count and family members list
+[1A[2K[26/97] [chromium] › tests/e2e/admin-statistics.spec.ts:125:7 › Admin Dashboard Statistics › shows pending approvals count
+[1A[2K[27/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:276:7 › Guild Master Management - Promote/Demote › promotes and demotes update in real-time across sessions
+[1A[2K[28/97] [chromium] › tests/e2e/admin-statistics.spec.ts:176:7 › Admin Dashboard Statistics › statistics update when viewed in second browser window
+[1A[2K[29/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:351:7 › Guild Master Management - Promote/Demote › shows appropriate UI for Heroes vs Guild Masters in member list
+[1A[2K[30/97] [chromium] › tests/e2e/admin-statistics.spec.ts:218:7 › Admin Dashboard Statistics › displays most active family member correctly
+[1A[2K[31/97] [chromium] › tests/e2e/character-creation.spec.ts:13:7 › Character Creation › complete character creation flow
+[1A[2K[32/97] [chromium] › tests/e2e/family-joining.spec.ts:4:7 › Family Joining › new user can join existing family with valid family code
+[1A[2K[33/97] [chromium] › tests/e2e/character-creation.spec.ts:28:7 › Character Creation › existing user redirects to dashboard
+[1A[2K[34/97] [chromium] › tests/e2e/family-joining.spec.ts:131:7 › Family Joining › character name pre-fills from family join and is editable
+[1A[2K[35/97] [chromium] › tests/e2e/character-creation.spec.ts:44:7 › Character Creation › character creation form validation
+[1A[2K[36/97] [chromium] › tests/e2e/character-creation.spec.ts:66:7 › Character Creation › character name pre-fills from family creation and is editable
+[1A[2K[37/97] [chromium] › tests/e2e/family-joining.spec.ts:243:7 › Family Joining › registration fails with invalid family code
+[1A[2K[38/97] [chromium] › tests/e2e/family-management.spec.ts:5:7 › Family Management › Guild Master promotes Hero to Guild Master successfully
+[1A[2K[39/97] [chromium] › tests/e2e/character-creation.spec.ts:90:7 › Character Creation › class bonus information displays correctly
+[1A[2K[40/97] [chromium] › tests/e2e/character-creation.spec.ts:122:7 › Character Creation › class selection is scrollable on mobile viewport
+[1A[2K[41/97] [chromium] › tests/e2e/family-management.spec.ts:72:7 › Family Management › Guild Master demotes another GM to Hero successfully
+[1A[2K[42/97] [chromium] › tests/e2e/hero-reward-display.spec.ts:9:7 › Hero Reward Display After GM Approval › Hero receives XP and gold rewards when GM approves quest (separate users)
+[1A[2K[43/97] [chromium] › tests/e2e/family-management.spec.ts:137:7 › Family Management › GM cannot see demote button for themselves
+[1A[2K[44/97] [chromium] › tests/e2e/hero-reward-display.spec.ts:185:7 › Hero Reward Display After GM Approval › multiple Heroes receive correct individual rewards
+[1A[2K[45/97] [chromium] › tests/e2e/family-management.spec.ts:163:7 › Family Management › Non-GM cannot access Family Management tab
+[1A[2K[46/97] [chromium] › tests/e2e/family-management.spec.ts:203:7 › Family Management › Role badges display correctly throughout app
+[1A[2K[47/97] [chromium] › tests/e2e/quest-completion-rewards.spec.ts:12:7 › Quest Completion Rewards › quest creation with rewards
+[1A[2K[48/97] [chromium] › tests/e2e/quest-completion-rewards.spec.ts:44:7 › Quest Completion Rewards › different difficulty multipliers
+[1A[2K[49/97] [chromium] › tests/e2e/quest-pickup-management.spec.ts:12:7 › Quest Pickup and Management › Guild Master can pick up available quests
+[1A[2K[50/97] [chromium] › tests/e2e/quest-pickup-management.spec.ts:55:7 › Quest Pickup and Management › quest permissions and state management
+[1A[2K[51/97] [chromium] › tests/e2e/quest-completion-rewards.spec.ts:66:7 › Quest Completion Rewards › character levels up with sufficient XP
+[1A[2K[52/97] [chromium] › tests/e2e/quest-pickup-management.spec.ts:93:7 › Quest Pickup and Management › quest workflow state transitions
+[1A[2K[53/97] [chromium] › tests/e2e/quest-completion-rewards.spec.ts:85:7 › Quest Completion Rewards › class-specific bonuses apply
+[1A[2K[54/97] [chromium] › tests/e2e/quest-system.spec.ts:9:7 › Quest System › Guild Master can create custom quests
+[1A[2K[55/97] [chromium] › tests/e2e/quest-completion-rewards.spec.ts:103:7 › Quest Completion Rewards › multi-reward quest updates all stats
+[1A[2K[56/97] [chromium] › tests/e2e/quest-system.spec.ts:44:7 › Quest System › quest dashboard displays correctly
+[1A[2K[57/97] [chromium] › tests/e2e/quest-system.spec.ts:54:7 › Quest System › quest creation modal validation
+[1A[2K[58/97] [chromium] › tests/e2e/quest-template-creation.spec.ts:13:7 › Quest Template Creation E2E › should create quest from template with default options
+[1A[2K[59/97] [chromium] › tests/e2e/quest-system.spec.ts:80:7 › Quest System › quest creation modal can be cancelled
+[1A[2K[60/97] [chromium] › tests/e2e/quest-template-creation.spec.ts:53:7 › Quest Template Creation E2E › should create quest from template with assignment
+[1A[2K[61/97] [chromium] › tests/e2e/quest-template-full-workflow.spec.ts:18:7 › Quest Template Full Workflow Integration › complete quest template lifecycle with class bonuses and deletion safety
+[1A[2K[62/97] [chromium] › tests/e2e/quest-template-creation.spec.ts:85:7 › Quest Template Creation E2E › should create quest from template with due date
+[1A[2K[63/97] [chromium] › tests/e2e/quest-template-creation.spec.ts:115:7 › Quest Template Creation E2E › should show template preview when selected
+[1A[2K[64/97] [chromium] › tests/e2e/quest-template-full-workflow.spec.ts:264:7 › Quest Template Full Workflow Integration › family isolation - templates are family-scoped
+[1A[2K[65/97] [chromium] › tests/e2e/quest-template-creation.spec.ts:140:7 › Quest Template Creation E2E › should preserve template fields in created quest
+[1A[2K[66/97] [chromium] › tests/e2e/quest-template-creation.spec.ts:176:7 › Quest Template Creation E2E › should handle multiple template selections
+[1A[2K[67/97] [chromium] › tests/e2e/quest-template-management.spec.ts:39:7 › Quest Template Management › Guild Master creates a new quest template
+[1A[2K[68/97] [chromium] › tests/e2e/quest-template-realtime.spec.ts:39:7 › Quest Template Realtime Updates › creating a template in one tab updates the other tab
+[1A[2K[69/97] [chromium] › tests/e2e/quest-template-management.spec.ts:104:7 › Quest Template Management › Guild Master edits an existing quest template
+[1A[2K[70/97] [chromium] › tests/e2e/quest-template-management.spec.ts:176:7 › Quest Template Management › Guild Master deactivates and reactivates a quest template
+[1A[2K[71/97] [chromium] › tests/e2e/quest-template-realtime.spec.ts:71:7 › Quest Template Realtime Updates › updating a template in one tab updates the other tab
+[1A[2K[72/97] [chromium] › tests/e2e/quest-template-management.spec.ts:253:7 › Quest Template Management › Guild Master deletes a quest template
+[1A[2K[73/97] [chromium] › tests/e2e/quest-template-realtime.spec.ts:119:7 › Quest Template Realtime Updates › toggling template status in one tab updates the other tab
+[1A[2K[74/97] [chromium] › tests/e2e/quest-template-management.spec.ts:311:7 › Quest Template Management › Active templates appear in quest creation modal
+[1A[2K[75/97] [chromium] › tests/e2e/quest-template-management.spec.ts:367:7 › Quest Template Management › Hero users cannot access Quest Templates tab
+[1A[2K[76/97] [chromium] › tests/e2e/quest-template-realtime.spec.ts:159:7 › Quest Template Realtime Updates › deleting a template in one tab removes it from the other tab
+[1A[2K[77/97] [chromium] › tests/e2e/reward-management.spec.ts:5:7 › Reward Management › Guild Master creates a new reward
+[1A[2K[78/97] [chromium] › tests/e2e/reward-management.spec.ts:46:7 › Reward Management › Guild Master edits an existing reward
+[1A[2K[79/97] [chromium] › tests/e2e/quest-template-realtime.spec.ts:191:7 › Quest Template Realtime Updates › multiple rapid updates sync correctly across tabs
+[1A[2K[80/97] [chromium] › tests/e2e/reward-management.spec.ts:95:7 › Reward Management › Guild Master deactivates and reactivates a reward
+[1A[2K[81/97] [chromium] › tests/e2e/reward-realtime.spec.ts:41:7 › Reward Realtime Updates › Reward creation appears in real-time across browser windows
+[1A[2K[82/97] [chromium] › tests/e2e/reward-management.spec.ts:132:7 › Reward Management › Guild Master deletes a reward
+[1A[2K[83/97] [chromium] › tests/e2e/reward-management.spec.ts:167:7 › Reward Management › Validates reward form inputs
+[1A[2K[84/97] [chromium] › tests/e2e/reward-realtime.spec.ts:66:7 › Reward Realtime Updates › Reward updates appear in real-time
+[1A[2K[85/97] [chromium] › tests/e2e/reward-redemption-approval.spec.ts:12:7 › Reward Redemption Approval Workflow › GM sees pending redemptions section in RewardManager
+[1A[2K[86/97] [chromium] › tests/e2e/reward-realtime.spec.ts:103:7 › Reward Realtime Updates › Reward deletion appears in real-time
+[1A[2K  2) [chromium] › tests/e2e/reward-redemption-approval.spec.ts:12:7 › Reward Redemption Approval Workflow › GM sees pending redemptions section in RewardManager 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576943311').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576943311').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-redemption-approval.spec.ts:39:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-redemption-approval-6702b-ns-section-in-RewardManager-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-redemption-approval-6702b-ns-section-in-RewardManager-chromium/error-context.md
+
+
+[1A[2K[87/97] [chromium] › tests/e2e/reward-redemption-approval.spec.ts:61:7 › Reward Redemption Approval Workflow › GM can approve redemption
+[1A[2K[88/97] [chromium] › tests/e2e/reward-store.spec.ts:13:7 › Reward Store › should display reward store with available rewards
+[1A[2K[89/97] [chromium] › tests/e2e/reward-store.spec.ts:38:7 › Reward Store › should show empty state when no rewards exist
+[1A[2K  3) [chromium] › tests/e2e/reward-redemption-approval.spec.ts:61:7 › Reward Redemption Approval Workflow › GM can approve redemption 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576955493').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576955493').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-redemption-approval.spec.ts:78:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-redemption-approval-55102-w-GM-can-approve-redemption-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-redemption-approval-55102-w-GM-can-approve-redemption-chromium/error-context.md
+
+
+[1A[2K[90/97] [chromium] › tests/e2e/reward-redemption-approval.spec.ts:102:7 › Reward Redemption Approval Workflow › GM can deny redemption and gold is refunded
+[1A[2K[91/97] [chromium] › tests/e2e/reward-store.spec.ts:59:7 › Reward Store › should display user gold balance correctly
+[1A[2K[92/97] [chromium] › tests/e2e/reward-store.spec.ts:77:7 › Reward Store › should show correct tab navigation
+[1A[2K  4) [chromium] › tests/e2e/reward-redemption-approval.spec.ts:102:7 › Reward Redemption Approval Workflow › GM can deny redemption and gold is refunded 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576967432').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576967432').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-redemption-approval.spec.ts:116:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-redemption-approval-4d6b5-mption-and-gold-is-refunded-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-redemption-approval-4d6b5-mption-and-gold-is-refunded-chromium/error-context.md
+
+
+[1A[2K[93/97] [chromium] › tests/e2e/reward-store.spec.ts:101:7 › Reward Store › should display redemption history with denormalized reward data
+[1A[2K[94/97] [chromium] › tests/e2e/reward-redemption-approval.spec.ts:164:7 › Reward Redemption Approval Workflow › GM can fulfill approved redemption
+[1A[2K  5) [chromium] › tests/e2e/reward-store.spec.ts:101:7 › Reward Store › should display redemption history with denormalized reward data 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576978678').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576978678').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-store.spec.ts:128:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-store-Reward-Store--654de-th-denormalized-reward-data-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-store-Reward-Store--654de-th-denormalized-reward-data-chromium/error-context.md
+
+
+[1A[2K[95/97] [chromium] › tests/e2e/reward-store.spec.ts:161:7 › Reward Store › should persist redemption history even after reward is deleted
+[1A[2K  6) [chromium] › tests/e2e/reward-redemption-approval.spec.ts:164:7 › Reward Redemption Approval Workflow › GM can fulfill approved redemption 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576979540').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576979540').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-redemption-approval.spec.ts:181:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-redemption-approval-a41ac-fulfill-approved-redemption-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-redemption-approval-a41ac-fulfill-approved-redemption-chromium/error-context.md
+
+
+[1A[2K[96/97] [chromium] › tests/e2e/reward-redemption-approval.spec.ts:202:7 › Reward Redemption Approval Workflow › Realtime updates when redemption status changes
+[1A[2K  7) [chromium] › tests/e2e/reward-store.spec.ts:161:7 › Reward Store › should persist redemption history even after reward is deleted 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576990192').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576990192').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-store.spec.ts:185:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-store-Reward-Store--476c7-ven-after-reward-is-deleted-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-store-Reward-Store--476c7-ven-after-reward-is-deleted-chromium/error-context.md
+
+
+[1A[2K  8) [chromium] › tests/e2e/reward-redemption-approval.spec.ts:202:7 › Reward Redemption Approval Workflow › Realtime updates when redemption status changes 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759576991189').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759576991189').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-redemption-approval.spec.ts:227:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-redemption-approval-6db9d-n-redemption-status-changes-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-redemption-approval-6db9d-n-redemption-status-changes-chromium/error-context.md
+
+
+[1A[2K[97/97] [chromium] › tests/e2e/reward-redemption-approval.spec.ts:260:7 › Reward Redemption Approval Workflow › Hero sees status change in redemption history
+[1A[2K  9) [chromium] › tests/e2e/reward-redemption-approval.spec.ts:260:7 › Reward Redemption Approval Workflow › Hero sees status change in redemption history 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m()[22m failed
+
+    Locator:  getByText('Test Gold Award 1759577003293').first()
+    Expected: visible
+    Received: <element(s) not found>
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Test Gold Award 1759577003293').first()[22m
+
+
+       at helpers/quest-helpers.ts:95
+
+      93 |
+      94 |   // Verify quest appears in the list
+    > 95 |   await expect(page.getByText(title).first()).toBeVisible();
+         |                                               ^
+      96 | }
+      97 |
+      98 | /**
+        at createCustomQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/quest-helpers.ts:95:47)
+        at giveCharacterGoldViaQuest (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:337:3)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/reward-redemption-approval.spec.ts:277:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/reward-redemption-approval-64649-hange-in-redemption-history-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/reward-redemption-approval-64649-hange-in-redemption-history-chromium/error-context.md
+
+
+[1A[2K  9 failed
+    [chromium] › tests/e2e/admin-activity-feed.spec.ts:211:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events 
+    [chromium] › tests/e2e/reward-redemption-approval.spec.ts:12:7 › Reward Redemption Approval Workflow › GM sees pending redemptions section in RewardManager 
+    [chromium] › tests/e2e/reward-redemption-approval.spec.ts:61:7 › Reward Redemption Approval Workflow › GM can approve redemption 
+    [chromium] › tests/e2e/reward-redemption-approval.spec.ts:102:7 › Reward Redemption Approval Workflow › GM can deny redemption and gold is refunded 
+    [chromium] › tests/e2e/reward-redemption-approval.spec.ts:164:7 › Reward Redemption Approval Workflow › GM can fulfill approved redemption 
+    [chromium] › tests/e2e/reward-redemption-approval.spec.ts:202:7 › Reward Redemption Approval Workflow › Realtime updates when redemption status changes 
+    [chromium] › tests/e2e/reward-redemption-approval.spec.ts:260:7 › Reward Redemption Approval Workflow › Hero sees status change in redemption history 
+    [chromium] › tests/e2e/reward-store.spec.ts:101:7 › Reward Store › should display redemption history with denormalized reward data 
+    [chromium] › tests/e2e/reward-store.spec.ts:161:7 › Reward Store › should persist redemption history even after reward is deleted 
+  88 passed (7.6m)

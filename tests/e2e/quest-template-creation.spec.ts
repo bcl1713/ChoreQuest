@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { setupUserWithCharacter } from "./helpers/setup-helpers";
+import { openQuestCreationModal, closeModal } from "./helpers/navigation-helpers";
+import { expectOnDashboard } from "./helpers/assertions";
 
 test.describe("Quest Template Creation E2E", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,15 +9,12 @@ test.describe("Quest Template Creation E2E", () => {
     await setupUserWithCharacter(page, "template-test");
 
     // Should now be on dashboard - verify
-    await expect(page).toHaveURL(/.*\/dashboard/);
+    await expectOnDashboard(page);
   });
 
   test("should create quest from template with default options", async ({ page }) => {
     // Open quest creation modal
-    await page.click('[data-testid="create-quest-button"]');
-
-    // Wait for modal to appear
-    await expect(page.locator('text=Create New Quest')).toBeVisible();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -52,8 +51,7 @@ test.describe("Quest Template Creation E2E", () => {
 
   test("should create quest from template with assignment", async ({ page }) => {
     // Open quest creation modal
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator('text=Create New Quest')).toBeVisible();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -84,8 +82,7 @@ test.describe("Quest Template Creation E2E", () => {
 
   test("should create quest from template with due date", async ({ page }) => {
     // Open quest creation modal
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator('text=Create New Quest')).toBeVisible();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -114,8 +111,7 @@ test.describe("Quest Template Creation E2E", () => {
 
   test("should show template preview when selected", async ({ page }) => {
     // Open quest creation modal
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator('text=Create New Quest')).toBeVisible();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -139,8 +135,7 @@ test.describe("Quest Template Creation E2E", () => {
 
   test("should preserve template fields in created quest", async ({ page }) => {
     // Open quest creation modal
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator('text=Create New Quest')).toBeVisible();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -175,8 +170,7 @@ test.describe("Quest Template Creation E2E", () => {
 
   test("should handle multiple template selections", async ({ page }) => {
     // Open quest creation modal
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator('text=Create New Quest')).toBeVisible();
+    await openQuestCreationModal(page);
 
     // Switch to template mode
     await page.click('[data-testid="template-mode-button"]');
@@ -201,7 +195,6 @@ test.describe("Quest Template Creation E2E", () => {
     }
 
     // Cancel the modal
-    await page.click('[data-testid="cancel-quest-button"]');
-    await expect(page.locator('text=Create New Quest')).not.toBeVisible();
+    await closeModal(page, "quest");
   });
 });
