@@ -68,14 +68,14 @@
   - [x] 0.4 Create BASELINE-METRICS.md with success criteria
   - [x] 0.5 Commit baseline documentation
 
-- [ ] 1.0 Fix Test Code Bugs and Anti-Patterns (Quick Wins)
+- [x] 1.0 Fix Test Code Bugs and Anti-Patterns (Quick Wins)
   - [x] 1.1 Fix admin-activity-feed.spec.ts:211 - Add missing `activityFeed` variable declaration
   - [x] 1.2 Fix admin-statistics.spec.ts:41 - Add missing `statsPanel` variable declaration
   - [x] 1.3 Run tests to verify both bugs fixed (should be 97/97 passing)
   - [x] 1.4 Search for all 7 anti-pattern instances (waitForTimeout/page.reload)
   - [x] 1.5 Replace each anti-pattern with proper wait mechanism
   - [x] 1.6 Run full test suite to verify 97/97 passing with zero anti-patterns
-  - [ ] 1.7 Commit fixes: "fix: resolve test code bugs and eliminate anti-patterns"
+  - [x] 1.7 Commit fixes: "fix: resolve test code bugs and eliminate anti-patterns"
 
 - [ ] 2.0 Create Comprehensive Helper Library
   - [ ] 2.1 Create auth-helpers.ts module
@@ -141,6 +141,7 @@
     - [ ] 3.1.1 Run 10 tests with `workers: 2` and document failures
     - [ ] 3.1.2 Categorize failure types (timeouts, assertion failures, race conditions)
     - [ ] 3.1.3 Identify common failure patterns across tests
+    - [ ] NOTE: Phase 1 testing found 96/97 pass with workers: 4. Only admin-activity-feed shows flakiness (input visibility timing issue)
   - [ ] 3.2 Check database connection pool
     - [ ] 3.2.1 Review Supabase local config for connection limits
     - [ ] 3.2.2 Increase connection pool size if needed
