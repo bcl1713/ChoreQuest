@@ -69,12 +69,12 @@
   - [x] 0.5 Commit baseline documentation
 
 - [ ] 1.0 Fix Test Code Bugs and Anti-Patterns (Quick Wins)
-  - [ ] 1.1 Fix admin-activity-feed.spec.ts:211 - Add missing `activityFeed` variable declaration
-  - [ ] 1.2 Fix admin-statistics.spec.ts:41 - Add missing `statsPanel` variable declaration
-  - [ ] 1.3 Run tests to verify both bugs fixed (should be 97/97 passing)
-  - [ ] 1.4 Search for all 7 anti-pattern instances (waitForTimeout/page.reload)
-  - [ ] 1.5 Replace each anti-pattern with proper wait mechanism
-  - [ ] 1.6 Run full test suite to verify 97/97 passing with zero anti-patterns
+  - [x] 1.1 Fix admin-activity-feed.spec.ts:211 - Add missing `activityFeed` variable declaration
+  - [x] 1.2 Fix admin-statistics.spec.ts:41 - Add missing `statsPanel` variable declaration
+  - [x] 1.3 Run tests to verify both bugs fixed (should be 97/97 passing)
+  - [x] 1.4 Search for all 7 anti-pattern instances (waitForTimeout/page.reload)
+  - [x] 1.5 Replace each anti-pattern with proper wait mechanism
+  - [x] 1.6 Run full test suite to verify 97/97 passing with zero anti-patterns
   - [ ] 1.7 Commit fixes: "fix: resolve test code bugs and eliminate anti-patterns"
 
 - [ ] 2.0 Create Comprehensive Helper Library

@@ -195,8 +195,8 @@ test.describe("Reward Store", () => {
     await page.locator('button:has-text("Delete")').first().click();
     await page.locator('button:has-text("Delete")').nth(1).click(); // Confirm deletion in modal
 
-    // Reload page to ensure data persistence
-    await page.reload();
+    // Wait for deletion to be processed
+    await page.waitForLoadState('networkidle');
 
     // Navigate to Reward Store
     await page.click('button:has-text("🏪 Reward Store")');

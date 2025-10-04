@@ -62,10 +62,10 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     // Verify URL contains tab query param
     await expect(page).toHaveURL(/.*\/admin\?tab=rewards/i);
 
-    // Reload page
-    await page.reload();
+    // Wait for page to be fully loaded
+    await page.waitForLoadState('networkidle');
 
-    // Wait for admin dashboard to be ready after reload
+    // Wait for admin dashboard to be ready
     await expect(page.getByTestId('admin-dashboard')).toBeVisible();
 
     // Verify Rewards tab is still active after reload
@@ -96,8 +96,8 @@ test.describe('Admin Dashboard Tab Navigation', () => {
     await page.click('[data-testid="admin-dashboard-button"]');
     await expect(page).toHaveURL(/.*\/admin/);
 
-    // Small delay to ensure auth state is fully settled before URL navigation
-    await page.waitForTimeout(500);
+    // Wait for page to be fully loaded before URL navigation
+    await page.waitForLoadState('networkidle');
 
     // Now test URL parameter changes to navigate to specific tabs
     await page.goto('/admin?tab=guild-masters');

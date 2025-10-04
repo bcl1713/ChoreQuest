@@ -76,8 +76,8 @@ test.describe("Admin Dashboard Statistics", () => {
 
     await page.locator('[data-testid="complete-quest-button"]').first().click();
 
-    // Refresh to see completed status (realtime workaround)
-    await page.reload();
+    // Wait for quest completion to be processed
+    await expect(page.locator('[data-testid="approve-quest-button"]').first()).toBeVisible({ timeout: 5000 });
 
     await page.locator('[data-testid="approve-quest-button"]').first().click();
 
@@ -86,6 +86,7 @@ test.describe("Admin Dashboard Statistics", () => {
     await expect(page).toHaveURL(/.*\/admin/);
 
     // Verify quest completion count increased (check the specific stat card)
+    const statsPanel = page.getByTestId("statistics-panel");
     await expect(statsPanel).toContainText("Quests This Week", {
       timeout: 5000,
     });
@@ -161,8 +162,8 @@ test.describe("Admin Dashboard Statistics", () => {
 
     await page.locator('[data-testid="complete-quest-button"]').first().click();
 
-    // Refresh to see completed status
-    await page.reload();
+    // Wait for quest completion to be processed
+    await page.waitForLoadState('networkidle');
 
     // Navigate back to admin dashboard
     await page.click('[data-testid="admin-dashboard-button"]');

@@ -65,8 +65,8 @@ test.describe("Admin Dashboard Activity Feed", () => {
 
     await page.locator('[data-testid="complete-quest-button"]').first().click();
 
-    // Refresh and approve
-    await page.reload();
+    // Wait for quest completion to be processed
+    await expect(page.locator('[data-testid="approve-quest-button"]').first()).toBeVisible({ timeout: 5000 });
 
     await page.locator('[data-testid="approve-quest-button"]').first().click();
 
@@ -114,8 +114,8 @@ test.describe("Admin Dashboard Activity Feed", () => {
 
     await page.locator('[data-testid="complete-quest-button"]').first().click();
 
-    // Refresh to see completed status
-    await page.reload();
+    // Wait for quest completion to be processed
+    await page.waitForLoadState('networkidle');
 
     // Navigate to admin dashboard
     await page.click('[data-testid="admin-dashboard-button"]');
@@ -231,6 +231,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
       await giveCharacterGoldViaQuest(page2, 20);
 
       // Wait for event to appear in first tab
+      const activityFeed = page.getByTestId("activity-feed");
 
       // Verify new event is visible (feed should have auto-scrolled or event is visible)
       await expect(activityFeed).toContainText(/completed/i, { timeout: 5000 });
