@@ -13,6 +13,7 @@ export interface QuestData {
   difficulty?: "EASY" | "MEDIUM" | "HARD";
   xpReward?: number;
   goldReward?: number;
+  skipVisibilityCheck?: boolean; // Skip the final visibility check
 }
 
 export interface QuestTemplateData {
@@ -59,6 +60,7 @@ export async function createCustomQuest(
     difficulty = "EASY",
     xpReward = 10,
     goldReward = 5,
+    skipVisibilityCheck = false,
   } = questData;
 
   // Open quest creation modal
@@ -91,8 +93,14 @@ export async function createCustomQuest(
   // Verify modal closes
   await expect(page.locator("text=Create New Quest")).not.toBeVisible();
 
-  // Verify quest appears in the list
-  await expect(page.getByText(title).first()).toBeVisible();
+  // Wait for navigation/updates to complete after quest creation
+  await page.waitForLoadState("networkidle");
+
+  // Verify quest appears in the list (with generous timeout for parallel runs)
+  // Skip this check if the caller will verify visibility in a different context
+  if (!skipVisibilityCheck) {
+    await expect(page.getByText(title).first()).toBeVisible({ timeout: 10000 });
+  }
 }
 
 /**

@@ -165,10 +165,12 @@ export async function loginUser(
     return;
   }
 
-  // Navigate to login page - wait for element to be stable
+  // Navigate to login page - wait for element to be stable and attached
   await page.waitForSelector('[data-testid="login-link"]', {
-    state: "visible",
+    state: "attached",
   });
+  await page.locator('[data-testid="login-link"]').waitFor({ state: "visible" });
+  await page.waitForLoadState("networkidle");
   await page.click('[data-testid="login-link"]');
   await expect(page).toHaveURL(/.*\/auth\/login/);
 
@@ -334,19 +336,26 @@ export async function giveCharacterGoldViaQuest(
   const questTitle = `Test Gold Award ${timestamp}`;
 
   // Create a quest with specified gold reward (using EASY difficulty for 1.0x multiplier)
+  // Skip visibility check here since we'll verify after switching to Quests tab
   await createCustomQuest(page, {
     title: questTitle,
     description: "Automated test quest for gold award",
     difficulty: "EASY",
     xpReward: 1,
     goldReward: goldAmount,
+    skipVisibilityCheck: true,
   });
 
   // Switch to Quests tab to see the created quest
   await page.click('button:has-text("⚔️ Quests & Adventures")');
 
-  // Wait for quest to appear
-  await expect(page.getByText(questTitle).first()).toBeVisible();
+  // Wait for tab transition to complete
+  await page.waitForLoadState("networkidle");
+
+  // Wait for quest to appear (generous timeout for parallel runs)
+  await expect(page.getByText(questTitle).first()).toBeVisible({
+    timeout: 10000,
+  });
 
   // Complete the quest workflow: pickup -> start -> complete -> approve
   await pickupQuest(page);
