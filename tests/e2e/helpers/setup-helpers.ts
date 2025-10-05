@@ -171,7 +171,7 @@ export async function loginUser(
   });
   await page.locator('[data-testid="login-link"]').waitFor({ state: "visible" });
   await page.waitForLoadState("networkidle");
-  await page.click('[data-testid="login-link"]');
+  await page.locator('[data-testid="login-link"]').click();
   await expect(page).toHaveURL(/.*\/auth\/login/);
 
   await page.fill('input[name="email"]', email);

@@ -251,7 +251,7 @@ export async function pickupQuest(
     // Find the quest by heading within Available Quests section
     const questHeading = availableSection.getByRole('heading', { name: questName, exact: true });
     // Get the parent container and find the pickup button
-    const questContainer = questHeading.locator('../..');
+    const questContainer = questHeading.locator('../../..');
     await questContainer.locator('button:has-text("Pick Up")').click();
   } else {
     await page.locator('button:has-text("Pick Up")').first().click();
@@ -279,17 +279,18 @@ export async function startQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    const questCard = page
-      .locator('[data-testid^="quest-card-"]')
-      .filter({ hasText: questName });
-    await questCard.locator('button:has-text("Start Quest")').click();
+    // Find quest by heading in My Quests section
+    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
+    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
+    const questContainer = questHeading.locator('../../..');
+    await questContainer.locator('button:has-text("Start")').click();
   } else {
-    await page.locator('button:has-text("Start Quest")').first().click();
+    await page.locator('button:has-text("Start")').first().click();
   }
 
   // Wait for button to change to "Complete Quest"
   await expect(
-    page.locator('button:has-text("Complete Quest")').first(),
+    page.locator('button:has-text("Complete")').first(),
   ).toBeVisible();
 }
 
@@ -309,15 +310,13 @@ export async function completeQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    const questCard = page
-      .locator('[data-testid^="quest-card-"]')
-      .filter({ hasText: questName });
-    await questCard.locator('button:has-text("Complete Quest")').click();
+    // Find quest by heading in My Quests section
+    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
+    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
+    const questContainer = questHeading.locator('../../..');
+    await questContainer.locator('button:has-text("Complete")').click();
   } else {
-    await page
-      .locator('button:has-text("Complete Quest")')
-      .first()
-      .click();
+    await page.locator('button:has-text("Complete")').first().click();
   }
 
   // Wait for button to change to "Approve Quest"
@@ -342,10 +341,11 @@ export async function approveQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    const questCard = page
-      .locator('[data-testid^="quest-card-"]')
-      .filter({ hasText: questName });
-    await questCard.locator('button:has-text("Approve")').click();
+    // Find quest by heading in My Quests section
+    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
+    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
+    const questContainer = questHeading.locator('../../..');
+    await questContainer.locator('button:has-text("Approve")').click();
   } else {
     await page.locator('button:has-text("Approve")').first().click();
   }
@@ -370,10 +370,11 @@ export async function denyQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    const questCard = page
-      .locator('[data-testid^="quest-card-"]')
-      .filter({ hasText: questName });
-    await questCard.locator('button:has-text("Deny")').click();
+    // Find quest by heading in My Quests section
+    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
+    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
+    const questContainer = questHeading.locator('../../..');
+    await questContainer.locator('button:has-text("Deny")').click();
   } else {
     await page.locator('button:has-text("Deny")').first().click();
   }
