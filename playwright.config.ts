@@ -1,11 +1,15 @@
+import * as dotenv from "dotenv";
+import path from "path";
 import { defineConfig, devices } from "@playwright/test";
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: 2,
   reporter: [["line"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",

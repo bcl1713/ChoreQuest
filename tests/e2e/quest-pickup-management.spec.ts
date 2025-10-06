@@ -1,8 +1,4 @@
-import { test, expect } from "@playwright/test";
-import {
-  setupUserWithCharacter,
-  commonBeforeEach,
-} from "./helpers/setup-helpers";
+import { test, expect } from "./helpers/family-fixture";
 import {
   createCustomQuest,
   pickupQuest,
@@ -10,16 +6,26 @@ import {
   completeQuest,
   approveQuest,
 } from "./helpers/quest-helpers";
+import { commonBeforeEach } from "./helpers/setup-helpers";
 
 test.describe("Quest Pickup and Management", () => {
   test.beforeEach(async ({ page }) => {
     await commonBeforeEach(page);
   });
 
-  test("Guild Master can pick up available quests", async ({ page }) => {
-    await setupUserWithCharacter(page, "PickupGM");
+  test("Guild Master can pick up available quests", async ({
+    page,
+    workerFamily,
+  }) => {
+    const { gmId } = workerFamily;
 
-    // Create unassigned quest
+    // Log in as the Guild Master
+    await page.goto(`/login`);
+    await page.fill('input[name="email"]', `${gmId}@example.com`);
+    await page.fill('input[name="password"]', "password");
+    await page.click('button[type="submit"]');
+
+    // Create an unassigned quest
     await createCustomQuest(page, {
       title: "Clean the Kitchen",
       description: "Deep clean kitchen counters and dishes",
@@ -40,10 +46,19 @@ test.describe("Quest Pickup and Management", () => {
     await expect(myQuestsSection.getByText("Clean the Kitchen")).toBeVisible();
   });
 
-  test("quest permissions and state management", async ({ page }) => {
-    await setupUserWithCharacter(page, "PermissionTester");
+  test("Quest permissions and state management", async ({
+    page,
+    workerFamily,
+  }) => {
+    const { gmId } = workerFamily;
 
-    // Create quest
+    // Log in as GM
+    await page.goto(`/login`);
+    await page.fill('input[name="email"]', `${gmId}@example.com`);
+    await page.fill('input[name="password"]', "password");
+    await page.click('button[type="submit"]');
+
+    // Create a quest
     await createCustomQuest(page, {
       title: "Test Permission Quest",
       description: "Testing quest permissions",
@@ -58,21 +73,23 @@ test.describe("Quest Pickup and Management", () => {
 
     // Complete the quest
     await completeQuest(page, "Test Permission Quest");
-
-    // Verify quest shows as completed
     await expect(page.getByText("COMPLETED")).toBeVisible();
 
-    // Approve as Guild Master
+    // Approve quest as GM
     await approveQuest(page, "Test Permission Quest");
-
-    // Verify quest shows as approved
     await expect(page.getByText("APPROVED")).toBeVisible();
   });
 
-  test("quest workflow state transitions", async ({ page }) => {
-    await setupUserWithCharacter(page, "WorkflowTester");
+  test("Quest workflow state transitions", async ({ page, workerFamily }) => {
+    const { gmId } = workerFamily;
     const timestamp = Date.now();
     const questTitle = `Workflow Test Quest ${timestamp}`;
+
+    // Log in as GM
+    await page.goto(`/login`);
+    await page.fill('input[name="email"]', `${gmId}@example.com`);
+    await page.fill('input[name="password"]', "password");
+    await page.click('button[type="submit"]');
 
     // Create quest
     await createCustomQuest(page, {
@@ -81,28 +98,23 @@ test.describe("Quest Pickup and Management", () => {
       xpReward: 40,
     });
 
-    // Verify quest was created
     await expect(page.getByText(questTitle).first()).toBeVisible();
 
-    // Check if quest is in Available Quests section
     const availableQuestExists = await page
       .locator("text=📋 Available Quests")
       .isVisible()
       .catch(() => false);
 
     if (availableQuestExists) {
-      // Pick up quest if it's in Available Quests
       await pickupQuest(page, questTitle);
     }
 
-    // Find the quest in My Quests
     const myQuestsQuest = page
       .locator("text=🗡️ My Quests")
       .locator("..")
       .getByText(questTitle);
     await expect(myQuestsQuest).toBeVisible();
 
-    // Complete quest workflow
     await startQuest(page, questTitle);
     await completeQuest(page, questTitle);
     await expect(page.getByText("COMPLETED")).toBeVisible();
@@ -111,4 +123,3 @@ test.describe("Quest Pickup and Management", () => {
     await expect(page.getByText("APPROVED")).toBeVisible();
   });
 });
-

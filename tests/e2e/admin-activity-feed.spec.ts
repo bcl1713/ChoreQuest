@@ -196,6 +196,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
 
       // Open second tab in same context and login
       const page2 = await context.newPage();
+      await page2.goto("http://localhost:3000");
       await loginUser(page2, user.email, user.password);
 
       // Complete a quest in second tab

@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { Locator, Page, expect } from "@playwright/test";
 
 /**
  * Custom Assertion Helpers for E2E Tests
@@ -134,7 +134,9 @@ export async function expectQuestStatus(
     await expect(questCard).toContainText(indicator);
   } else {
     // Button-based check
-    await expect(questCard.locator(`[data-testid="${indicator}"]`)).toBeVisible();
+    await expect(
+      questCard.locator(`[data-testid="${indicator}"]`),
+    ).toBeVisible();
   }
 }
 
@@ -288,7 +290,7 @@ export async function expectQuestInList(
   questName: string,
   listTestId?: string,
 ): Promise<void> {
-  let container = page;
+  let container: Page | Locator = page;
   if (listTestId) {
     container = page.getByTestId(listTestId);
   }
@@ -314,9 +316,7 @@ export async function expectTemplateExists(
   page: Page,
   templateName: string,
 ): Promise<void> {
-  await expect(
-    page.getByRole("heading", { name: templateName }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: templateName })).toBeVisible();
 }
 
 /**

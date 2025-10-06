@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-ChoreQuest is a fantasy RPG-themed family chore management system that transforms household tasks into epic adventures.
+ChoreQuest is a fantasy RPG-themed family chore management system that
+transforms household tasks into epic adventures.
 
 ## Phase 1: Core Foundation (MVP) - COMPLETED
 
@@ -16,219 +17,17 @@ ChoreQuest is a fantasy RPG-themed family chore management system that transform
 - [x] Docker development environment
 - [x] Mobile-responsive UI with Tailwind CSS
 
-## Supabase Migration - COMPLETED 2025-09-27
-
-- [x] Supabase CLI installed and local environment configured
-- [x] Database schema migrated to Supabase with RLS policies
-- [x] Supabase Auth implemented, replaced custom JWT system
-- [x] All components migrated from Prisma to Supabase client
-- [x] Realtime subscriptions implemented with family-scoped channels
-- [x] Unit tests updated with Supabase mocks (26/26 passing)
-- [x] E2E tests migrated to Supabase patterns (all passing)
-- [x] Critical bugs fixed: RealtimeProvider infinite loop, WebSocket authentication, quest pickup RLS
-- [x] Family joining functionality fixed with proper JWT anon key
-- [x] Type system migrated from Prisma to native Supabase types
-- [x] Obsolete code removed: Prisma, JWT middleware, custom auth (2,300+ lines removed)
-- [x] Production deployment updated for Supabase
-
-### Remaining Validation Tasks
-
-- [x] Verify RLS policies prevent cross-family data access
-- [x] Test edge cases for family data isolation
-- [x] Validate user authentication and authorization flows
-- [x] Test realtime performance under load
-- [x] Validate database query performance with RLS
-- [x] Measure application startup and authentication speed
-
-### Production Deployment
-
-- [ ] Create Supabase production project
-- [ ] Configure production environment variables
-- [ ] Set up production database schema and RLS policies
-- [ ] Deploy new Supabase-native application version
-- [ ] Monitor application performance and error rates
-
 ## ChoreQuest 0.2.0 Release Plan
 
 ### Core Features for 0.2.0
 
 #### Multi-Guild Master System - COMPLETED 2025-10-02
 
-- [x] Update API role checks to support multiple Guild Masters per family
-- [x] Create user promotion endpoint
-- [x] Create user demotion endpoint with last-GM safeguards
-- [x] Update quest-templates API for multiple Guild Masters
-- [x] Update quest-instances APIs for multiple Guild Masters
-- [x] Create Guild Master management UI
-- [x] Add safeguard logic preventing demotion of last Guild Master
-
 #### Quest Template Management System - COMPLETED 2025-10-01
-
-- [x] Database migrations for quest_templates table with default templates
-- [x] Backend quest template service with full CRUD operations
-- [x] Quest creation from templates with field copying and overrides
-- [x] QuestTemplateManager component with create, edit, delete, activate/deactivate
-- [x] Template management UI integrated in dashboard
-- [x] Realtime subscription for template updates
-- [x] E2E tests for template management and realtime updates (42/42 passing)
-- [x] Quality gates passing (build, lint, unit 41/41, E2E 42/42)
-
-#### Reward Management System - IN PROGRESS 2025-10-02
-
-##### Phase 1: Branch Setup - COMPLETED
-- [x] Create feature branch feature/reward-management-system
-- [x] Update TASKS.md with detailed subtasks
-
-##### Phase 2: Database & Realtime Setup - COMPLETED
-- [x] Create migration to add rewards to realtime publication
-- [x] Create migration to set rewards REPLICA IDENTITY FULL
-- [x] Verify RLS policies support CRUD operations
-- [x] Test migrations
-
-##### Phase 3: Reward Service Layer (TDD) - COMPLETED
-- [x] Write unit tests for RewardService (getRewardsForFamily, createReward, updateReward, deleteReward, activateReward)
-- [x] Implement RewardService class to pass tests (11/11 tests passing)
-- [x] Refactor and improve code quality
-
-##### Phase 4: Reward Manager Component (TDD) - COMPLETED
-- [x] Write E2E tests for reward CRUD operations
-- [x] Write E2E tests for realtime updates (INSERT, UPDATE, DELETE)
-- [x] Add onRewardUpdate to realtime context
-- [x] Create RewardManager component with list view
-- [x] Add create modal with form validation
-- [x] Add edit modal functionality
-- [x] Add activate/deactivate toggle
-- [x] Add delete with confirmation
-- [x] Implement realtime subscription for live updates
-
-##### Phase 5: Dashboard Integration - COMPLETED
-- [x] Add RewardManager to Guild Master dashboard
-- [x] Add navigation/tab for reward management
-- [x] Import and integrate component into dashboard
-
-##### Phase 6: Redemption History Validation
-- [ ] Write tests for delete validation with redemption history
-- [ ] Implement redemption history check before delete
-- [ ] Show warning if reward has redemptions
-- [ ] Allow soft delete, prevent hard delete if redemptions exist
-
-##### Phase 7: Quality Assurance - COMPLETED
-- [x] Run npm run build (zero errors - PASSED)
-- [x] Run npm run lint (zero warnings - PASSED)
-- [x] Run npm run test (52/52 unit tests passing - PASSED)
-- [x] Fix TypeScript errors (RealtimeEventType, ESLint warnings)
-
-##### Phase 8: E2E and Manual Testing - IN PROGRESS
-- [x] Run npx playwright test (50 E2E tests, 48-50 passing depending on flaky timing)
-- [x] Fix reward-management delete test (updated to expect soft delete with opacity-50)
-- [x] Fix reward-realtime tests (refactored to use same-user/two-tabs pattern like templates)
-- [x] All reward-specific tests passing (19/19: management 5/5, realtime 3/3, store 4/4, others 7/7)
-- [x] Manual testing: Test reward CRUD operations (FOUND BUGS - see Phase 8.5)
-- [ ] Manual testing: Test realtime updates across browser windows
-- [ ] Manual testing: Test on mobile viewport
-
-##### Phase 8.5: Critical Bug Fixes from Manual Testing - IN PROGRESS
-
-**Bug 1: Delete vs Deactivate buttons do the same thing - COMPLETED** ✅
-Following template blueprint pattern for consistency:
-- [x] Create migration to remove FK constraint on reward_redemptions.reward_id
-- [x] Create migration to add reward_name, reward_description, reward_type to redemptions
-- [x] Test migrations with reset
-- [x] Update reward redemption creation to copy reward details (like quest from template)
-- [x] Update RewardService unit tests for new behaviors
-- [x] Change deleteReward() to hard DELETE (safe after FK removal)
-- [x] Fix handleToggleActive to use updateReward() for is_active toggle
-- [x] Update getRewardsForFamily() to return ALL rewards (active + inactive)
-- [x] Remove activateReward() method (use updateReward instead)
-- [x] Update E2E tests to expect new behaviors
-- [x] Run quality gates (build ✓, lint ✓, unit 50/50 ✓)
-- [x] Run E2E tests (reward-management 5/5 ✓, reward-realtime 3/3 ✓, reward-store 4/4 ✓)
-- [x] Manual testing of toggle and delete - PASSED ✅
-- [x] Committed (4 commits: migrations + implementation + tasks + E2E test fix)
-
-**RESULT**: Toggle and Delete buttons now work correctly with distinct behaviors!
-
-**Bug 2: No GM approval/denial UI for reward redemptions - COMPLETED** ✅
-- [x] Add getRedemptionsForFamily() to RewardService
-- [x] Add updateRedemptionStatus() to RewardService
-- [x] Add refundGold() helper method
-- [x] Write 11 unit tests for new service methods (60/60 passing)
-- [x] Add pending redemptions section to RewardManager
-- [x] Add approve/deny buttons for each pending redemption
-- [x] Add fulfilled button for approved redemptions
-- [x] Show redemption history with status (pending/approved/denied/fulfilled)
-- [x] Add realtime updates for redemption status changes
-- [x] Create 6 E2E tests for approval workflow (all passing)
-- [x] Run quality gates (build ✓, lint ✓, unit 60/60 ✓, E2E 6/6 ✓)
-- [x] Committed 3 commits (service layer, UI, E2E test fixes)
-
-**RESULT**: Guild Masters can now approve, deny, and fulfill reward redemptions with full UI!
-
-**Bug 3: Reward redemptions broken after migration changes - COMPLETED**
-Error: "Failed to load redemptions: {}" in reward-store.tsx:87
-Root cause: Query tried to JOIN rewards table after FK was removed
-Solution: Use denormalized columns (reward_name, reward_description, reward_type) directly
-- [x] Investigate query error - FK removed, JOIN failed
-- [x] Fix redemption loading query to use denormalized columns
-- [x] Fix realtime query to use denormalized columns
-- [x] Update TypeScript types for denormalized fields
-- [x] Fix UI to display reward_name, reward_type, cost from redemptions table
-- [x] Run quality gates (build, lint, unit tests all passing)
-- [x] Core functionality verified - redemptions load with denormalized data
-- [x] Commit 6112850: Core bug fix committed
-- [x] Fix E2E tests - replaced page.evaluate with giveCharacterGoldViaQuest helper
-- [x] Created helper that uses quest workflow to award gold naturally
-- [x] Updated tests to use correct button text and selectors
-- [x] All 6 reward-store E2E tests passing
-
-##### Phase 9: Documentation - COMPLETED
-- [x] Create serena memory: reward_management_system_implementation
-- [x] Document reward data structure and RLS policies
-- [x] Document service methods and UI components
-- [x] Document realtime subscription and integration
-
-##### Phase 10: Merge & Deployment - IN PROGRESS
-- [x] Run quality gate checks (build ✓, lint ✓, unit test 60/60 ✓)
-- [x] Run E2E tests (all reward tests passing: 19/19)
-- [x] Push feature branch to origin
-- [x] Manual testing session - FOUND CRITICAL BUGS (see Phase 8.5)
-- [x] Fixed all critical bugs (Bugs 1, 2, 3 all completed)
-- [x] Re-run quality gates after fixes (all passing)
-- [x] Complete manual testing after fixes - PASSED ✅
-- [x] Create PR to main after all issues resolved
-- [x] Merge PR with squash
-- [x] Delete feature branch
-
-## Implementation Summary
-
-**Completed**: Reward Management System with full CRUD operations
-- 2 database migrations (realtime publication, replica identity)
-- RewardService with 5 methods, 11 unit tests passing
-- RewardManager component with modals and realtime subscriptions
-- 8 E2E tests (5 CRUD operations, 3 realtime scenarios)
-- Dashboard integration with Guild Master-only tab
-- All quality gates passing (build ✓, lint ✓, test 52/52 ✓)
-- Complete serena memory documentation
 
 #### Real-time Updates System - COMPLETED 2025-09-27
 
-- [x] Realtime context created with Supabase Realtime
-- [x] Family-scoped realtime channels implemented
-- [x] QuestDashboard updated for live quest status updates
-- [x] RewardStore updated for live reward redemption updates
-- [x] Character stats updated for live XP/gold/level updates
-- [x] Connection management with automatic reconnection
-- [x] Event filtering for family-scoped delivery
-
 #### Enhanced Character Creation - COMPLETED 2025-10-02
-
-- [x] Character class configuration system with accurate bonus values
-- [x] Character name pre-fill flow (eliminates duplicate entry)
-- [x] Class bonus information display with accurate percentages
-- [x] Mobile-responsive UI with horizontal swipe cards
-- [x] Desktop grid layout for class selection
-- [x] All E2E tests updated and passing
-- [x] Serena memory documentation created
 
 #### Extended Demo Families
 
@@ -239,17 +38,6 @@ Solution: Use denormalized columns (reward_name, reward_description, reward_type
 - [ ] Document family differences
 
 #### Admin Management Interface - COMPLETED 2025-10-03
-
-- [x] Create /app/admin page for dedicated admin interface
-- [x] Add quest template management section
-- [x] Add reward management section
-- [x] Add Guild Master management section
-- [x] Add family statistics panel
-- [x] Add real-time activity monitor
-- [x] Add admin navigation
-- [x] All E2E tests passing (97/97 total, including 32 admin dashboard tests)
-- [x] All unit tests passing (259/259 total)
-- [x] Lint passing (0 errors, 7 warnings for unused test variables)
 
 ## Phase 2: Game Enhancement
 
@@ -421,113 +209,8 @@ Solution: Use denormalized columns (reward_name, reward_description, reward_type
 - [ ] CDN integration
 - [ ] Performance monitoring
 
-## Testing & Quality Assurance
-
-### Testing Infrastructure - COMPLETED
-
-- [x] Jest unit testing framework
-- [x] Playwright E2E testing
-- [x] Database testing
-- [x] Test coverage reporting
-- [x] TDD workflow
-
-### Ongoing Testing Tasks
-
-- [ ] Comprehensive React component test suite
-- [ ] Full API endpoint coverage
-- [ ] Real-time feature testing
-- [ ] Mobile responsive testing
-- [ ] Performance testing
-- [ ] Accessibility testing (WCAG compliance)
-- [ ] Security testing
-- [ ] Browser compatibility testing
-
 ## Deployment & Infrastructure
 
 ### Development Infrastructure - COMPLETED
 
-- [x] Docker development setup
-- [x] Database migrations with Supabase
-- [x] Environment configuration
-- [x] Development scripts
-
 ### Docker Production Deployment - COMPLETED 2025-09-25
-
-- [x] Production Dockerfile with multi-stage build
-- [x] Container entrypoint with automatic migration and seeding
-- [x] Production compose file for Portainer deployment
-- [x] Health check API endpoint
-- [x] Environment configuration for production
-- [x] Next.js standalone output configuration
-- [x] Comprehensive deployment documentation
-- [x] GitHub release v0.1.0
-
-### Future Infrastructure Tasks
-
-- [ ] NGINX reverse proxy for load balancing and SSL termination
-- [ ] SSL certificate management with Let's Encrypt
-- [ ] Database backup strategy with automated daily backups
-- [ ] Health monitoring and application performance tracking
-- [ ] Centralized error logging and alerting
-- [ ] CI/CD deployment pipeline
-- [ ] Environment management (development, staging, production)
-
-## Quest Template Implementation - CURRENT WORK
-
-### Completed Phases 1-7 (2025-09-30 to 2025-10-01)
-
-- [x] Database migrations with default templates and trigger functions
-- [x] Backend template service with full CRUD operations
-- [x] Quest creation from templates with field copying
-- [x] QuestTemplateManager component with realtime subscriptions
-- [x] Template management UI in dashboard
-- [x] Integration testing (42/42 E2E tests passing)
-- [x] Quality assurance (build, lint, unit 41/41, E2E 42/42 all passing)
-
-### Phase 8: Manual Testing
-
-- [x] Create family, verify default templates loaded
-- [x] Create custom template with all fields
-- [x] Edit template, verify changes persist
-- [x] Deactivate template, verify it hides from quest creation
-- [x] Create quest from template
-- [x] Complete quest, verify class bonuses work
-- [x] Test on mobile viewport
-- [x] Test with different character classes
-
-### Phase 8.5: Bug Fixes from Manual Testing
-
-- [x] Fix invalid refresh token console error on home page before login
-- [x] Fix template reactivation not appearing in quest creation dropdown without refresh
-- [x] Fix template deletion failing with empty error object (deleteError: {})
-
-### Phase 8.6: Architecture Improvement - Template Independence
-
-- [x] Remove foreign key constraint from quest_instances.template_id
-- [x] Simplify template deletion logic (no FK checks needed)
-- [x] Update quest template service comments for clarity
-- [x] Templates are now true blueprints - quests remain independent after creation
-- [x] All E2E tests passing (19/19 quest template tests verified)
-
-### Phase 9: Documentation & Memory - COMPLETED 2025-10-01
-
-- [x] Create serena memory: quest_template_system_implementation
-- [x] Document template data structure in memory
-- [x] Document RLS policies for templates in memory
-- [x] Document default template system in memory
-- [x] Update TASKS.md to mark all completed tasks
-- [x] Commit Phase 9
-
-### Phase 10: Merge & Cleanup - COMPLETED 2025-10-02
-
-- [x] Run all quality gates one final time
-- [x] Merge feature/quest-template-implementation to feature/supabase-native-migration
-- [x] Delete feature/quest-template-implementation branch
-- [x] Verify parent branch tests still pass
-
-### Final Step: PR to Main - COMPLETED 2025-10-02
-
-- [x] Verify all sub-branches merged to feature/supabase-native-migration
-- [x] Run final quality gate checks
-- [x] Create PR from feature/supabase-native-migration to main
-- [x] Review and merge PR
