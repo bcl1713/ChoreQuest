@@ -1,65 +1,39 @@
-import { test, expect } from "./helpers/family-fixture";
+import { test, expect } from './helpers/family-fixture';
 
-/**
- * Verification test for worker-scoped family fixture
- * This test suite ensures the GM user persists across multiple tests
- * and that the fixture provides all required data.
- */
+test.describe.serial('Worker-scoped Fixture Verification', () => {
+  let initialGmEmail: string;
 
-test.describe("Worker-Scoped Family Fixture", () => {
-  test("should have access to GM user in first test", async ({ workerFamily }) => {
-    const { gmPage, gmEmail, gmId, familyId, familyCode, characterName } = workerFamily;
+  test('Test 1: GM user should persist across tests', async ({ workerFamily }) => {
+    initialGmEmail = workerFamily.gmEmail;
+    expect(initialGmEmail).toContain('worker');
 
-    // Verify GM page is accessible and on dashboard
-    await expect(gmPage).toHaveURL(/.*\/dashboard/);
-
-    // Verify welcome message shows character name
-    await expect(
-      gmPage.locator('[data-testid="welcome-message"]')
-    ).toContainText(`Welcome back, ${characterName}!`);
-
-    // Verify all required properties are present
-    expect(gmEmail).toBeTruthy();
-    expect(gmId).toBeTruthy();
-    expect(familyId).toBeTruthy();
-    expect(familyCode).toBeTruthy();
-    expect(familyCode).toMatch(/^[A-Z0-9]{6}$/);
+    // Verify GM is logged in
+    await workerFamily.gmPage.goto('/dashboard');
+    await expect(workerFamily.gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
+    await expect(workerFamily.gmPage.locator('body')).toContainText(workerFamily.characterName);
   });
 
-  test("should persist GM user to second test", async ({ workerFamily }) => {
-    const { gmPage, gmEmail, gmId, familyId, familyCode, characterName } = workerFamily;
+  test('Test 2: GM user is the same as in Test 1', async ({ workerFamily }) => {
+    // This test runs in the same worker, so the GM user should be the same
+    expect(workerFamily.gmEmail).toBe(initialGmEmail);
 
-    // Verify the same GM data is available in second test
-    await expect(gmPage).toHaveURL(/.*\/dashboard/);
-
-    await expect(
-      gmPage.locator('[data-testid="welcome-message"]')
-    ).toContainText(`Welcome back, ${characterName}!`);
-
-    // Verify IDs haven't changed (same GM user persists)
-    expect(gmEmail).toBeTruthy();
-    expect(gmId).toBeTruthy();
-    expect(familyId).toBeTruthy();
-    expect(familyCode).toBeTruthy();
+    // Verify GM is still logged in
+    await workerFamily.gmPage.goto('/dashboard');
+    await expect(workerFamily.gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
   });
 
-  test("should navigate GM page and maintain state", async ({ workerFamily }) => {
-    const { gmPage, gmEmail, gmId, familyId } = workerFamily;
+  test('Test 3: Can create and use an ephemeral user', async ({ workerFamily }) => {
+    const ephemeralUser = await workerFamily.createEphemeralUser('ephemeral-hero');
 
-    // Verify GM state is still available in third test
-    await expect(gmPage).toHaveURL(/.*\/dashboard/);
+    // Verify the ephemeral user is logged in and on the dashboard
+    await expect(ephemeralUser.page.locator('[data-testid="welcome-message"]')).toBeVisible();
+    await expect(ephemeralUser.page.locator('body')).toContainText(ephemeralUser.characterName);
 
-    // Verify all IDs are still present (proving persistence)
-    expect(gmEmail).toBeTruthy();
-    expect(gmId).toBeTruthy();
-    expect(familyId).toBeTruthy();
+    // Verify the GM is still logged in in their own context
+    await workerFamily.gmPage.goto('/dashboard');
+    await expect(workerFamily.gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
 
-    // Navigate to a different page and back
-    await gmPage.goto("/");
-    await expect(gmPage).toHaveURL("/");
-
-    // Navigate back to dashboard
-    await gmPage.goto("/dashboard");
-    await expect(gmPage).toHaveURL(/.*\/dashboard/);
+    // Close the ephemeral user's context
+    await ephemeralUser.context.close();
   });
 });

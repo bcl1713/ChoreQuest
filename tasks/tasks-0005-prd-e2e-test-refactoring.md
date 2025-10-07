@@ -57,11 +57,11 @@
   - [x] 1.7 Test the refactored fixture with a simple test to verify GM user persists across multiple tests
 
 - [ ] 2.0 Implement Worker Teardown and Cleanup System
-  - [ ] 2.1 Add worker teardown hook in `family-fixture.ts` using `workerInfo` lifecycle
-  - [ ] 2.2 Implement database-based cleanup for GM user (use `SUPABASE_SERVICE_ROLE_KEY` for admin operations)
-  - [ ] 2.3 Ensure cleanup handles cascading deletes (families, characters, profiles, quests, rewards)
-  - [ ] 2.4 Add error handling and logging for cleanup failures (log but don't fail the test suite)
-  - [ ] 2.5 Track all ephemeral users created during worker lifetime for cleanup
+  - [x] 2.1 Add worker teardown hook in `family-fixture.ts` using `workerInfo` lifecycle
+  - [x] 2.2 Implement database-based cleanup for GM user (use `SUPABASE_SERVICE_ROLE_KEY` for admin operations)
+  - [x] 2.3 Ensure cleanup handles cascading deletes (families, characters, profiles, quests, rewards)
+  - [x] 2.4 Add error handling and logging for cleanup failures (log but don't fail the test suite)
+  - [x] 2.5 Track all ephemeral users created during worker lifetime for cleanup
   - [ ] 2.6 Verify cleanup works by checking database state after test run (manual verification)
 
 - [ ] 3.0 Create Helper Functions for Multi-User Test Scenarios
