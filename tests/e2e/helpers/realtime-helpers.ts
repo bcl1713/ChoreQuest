@@ -128,7 +128,9 @@ export async function waitForNewListItem(
   itemText: string,
   timeout: number = 5000,
 ): Promise<void> {
-  await expect(page.getByText(itemText)).toBeVisible({ timeout });
+  await expect(page.getByText(itemText, { exact: true })).toBeVisible({
+    timeout,
+  });
 }
 
 /**
@@ -155,7 +157,9 @@ export async function waitForListItemRemoved(
   itemText: string,
   timeout: number = 5000,
 ): Promise<void> {
-  await expect(page.getByText(itemText)).not.toBeVisible({ timeout });
+  await expect(page.getByText(itemText, { exact: true })).not.toBeVisible({
+    timeout,
+  });
 }
 
 /**
@@ -187,11 +191,15 @@ export async function waitForTextChange(
 ): Promise<void> {
   if (oldText) {
     // Wait for old text to disappear
-    await expect(page.getByText(oldText)).not.toBeVisible({ timeout });
+    await expect(
+      page.getByText(oldText, { exact: true }),
+    ).not.toBeVisible({ timeout });
   }
 
   // Wait for new text to appear
-  await expect(page.getByText(newText)).toBeVisible({ timeout });
+  await expect(page.getByText(newText, { exact: true })).toBeVisible({
+    timeout,
+  });
 }
 
 /**
