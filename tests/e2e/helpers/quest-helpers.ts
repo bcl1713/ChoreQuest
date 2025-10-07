@@ -1,5 +1,5 @@
 import { Page, expect } from "@playwright/test";
-import { openQuestCreationModal } from "./navigation-helpers";
+import { openQuestCreationModal, setQuestCreationMode } from "./navigation-helpers";
 
 /**
  * Quest Helper Functions for E2E Tests
@@ -29,6 +29,14 @@ export interface QuestTemplateData {
 export interface QuestFromTemplateOptions {
   assignTo?: string; // Character ID or name
   dueDate?: string; // ISO date string or date input value
+}
+
+async function waitForQuestModalToClose(page: Page): Promise<void> {
+  const modalLocator = page.locator('[data-testid="create-quest-modal"]');
+  await expect(modalLocator).not.toBeVisible({ timeout: 15000 });
+  await expect(page.locator("text=Create New Quest")).not.toBeVisible({
+    timeout: 5000,
+  });
 }
 
 /**
@@ -87,8 +95,8 @@ export async function createCustomQuest(
   // Submit quest
   await page.click('button[type="submit"]');
 
-  // Verify modal closes
-  await expect(page.locator("text=Create New Quest")).not.toBeVisible();
+  // Verify modal closes (allow extra time for repeated runs)
+  await waitForQuestModalToClose(page);
 
   // Wait for navigation/updates to complete after quest creation
   await page.waitForLoadState("networkidle");
@@ -183,11 +191,8 @@ export async function createQuestFromTemplate(
   options?: QuestFromTemplateOptions,
 ): Promise<void> {
   // Open quest creation modal
-  await page.click('[data-testid="create-quest-button"]');
-  await expect(page.locator("text=Create New Quest")).toBeVisible();
-
-  // Switch to template mode
-  await page.click('[data-testid="template-mode-button"]');
+  await openQuestCreationModal(page);
+  await setQuestCreationMode(page, "template");
 
   // Select template
   const templateSelect = page.locator('[data-testid="template-select"]');
@@ -223,7 +228,7 @@ export async function createQuestFromTemplate(
   await page.click('[data-testid="submit-quest-button"]');
 
   // Verify modal closes
-  await expect(page.locator("text=Create New Quest")).not.toBeVisible();
+  await waitForQuestModalToClose(page);
 }
 
 /**

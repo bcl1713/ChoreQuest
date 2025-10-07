@@ -270,9 +270,8 @@ export async function deleteReward(
   await rewardCard.locator('[data-testid="delete-reward-button"]').click();
 
   // Confirm deletion in modal (if there's a confirmation)
-  // Look for a confirmation delete button
-  const confirmButton = page.locator('button:has-text("Delete")').nth(1);
-  if (await confirmButton.isVisible({ timeout: 1000 })) {
+  const confirmButton = page.getByTestId("confirm-delete-button");
+  if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
     await confirmButton.click();
   }
 

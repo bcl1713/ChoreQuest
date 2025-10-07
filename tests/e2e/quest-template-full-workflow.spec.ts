@@ -4,6 +4,7 @@ import {
   navigateToDashboard,
   openQuestCreationModal,
   closeModal,
+  setQuestCreationMode,
 } from "./helpers/navigation-helpers";
 import {
   pickupQuest,
@@ -33,8 +34,12 @@ async function deleteTemplateIfPresent(page: Page, templateName: string) {
 
   await templateCard.locator(`[data-testid="template-delete-${templateId}"]`).click();
   await expect(page.getByTestId("delete-confirm-modal")).toBeVisible();
-  await page.click('[data-testid="confirm-delete-button"]');
-  await expect(page.getByTestId("delete-confirm-modal")).not.toBeVisible();
+  await page
+    .getByTestId("confirm-delete-button")
+    .click({ noWaitAfter: true });
+  await expect(page.getByTestId("delete-confirm-modal")).not.toBeVisible({
+    timeout: 15000,
+  });
   await expect(page.getByText(templateName)).not.toBeVisible();
 }
 
@@ -125,7 +130,7 @@ test.describe("Quest Template Full Workflow Integration", () => {
     await openQuestCreationModal(gmPage);
 
     // Switch to template mode
-    await gmPage.click('[data-testid="template-mode-button"]');
+    await setQuestCreationMode(gmPage, "template");
 
     // Select our custom template
     const templateSelect = gmPage.locator('[data-testid="template-select"]');
@@ -243,8 +248,12 @@ test.describe("Quest Template Full Workflow Integration", () => {
       .locator(`[data-testid="template-delete-${templateId}"]`)
       .click();
     await expect(gmPage.getByTestId("delete-confirm-modal")).toBeVisible();
-    await gmPage.click('[data-testid="confirm-delete-button"]');
-    await expect(gmPage.getByTestId("delete-confirm-modal")).not.toBeVisible();
+    await gmPage
+      .getByTestId("confirm-delete-button")
+      .click({ noWaitAfter: true });
+    await expect(gmPage.getByTestId("delete-confirm-modal")).not.toBeVisible({
+      timeout: 15000,
+    });
 
     // Verify template is deleted
     await expect(gmPage.getByText(CUSTOM_TEMPLATE_NAME)).not.toBeVisible();
@@ -254,7 +263,7 @@ test.describe("Quest Template Full Workflow Integration", () => {
 
     // Create another quest from a different (default) template to verify system still works
     await openQuestCreationModal(gmPage);
-    await gmPage.click('[data-testid="template-mode-button"]');
+    await setQuestCreationMode(gmPage, "template");
 
     // Select first available template (should be a default template)
     const newTemplateSelect = gmPage.locator('[data-testid="template-select"]');

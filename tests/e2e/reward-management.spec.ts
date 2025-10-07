@@ -1,139 +1,141 @@
-import { test, expect } from '@playwright/test';
-import { setupUserWithCharacter } from './helpers/setup-helpers';
-import { createReward, editReward, toggleRewardActive, deleteReward } from './helpers/reward-helpers';
-import { navigateToHeroTab } from './helpers/navigation-helpers';
+import { test, expect } from "./helpers/family-fixture";
+import {
+  createReward,
+  editReward,
+  toggleRewardActive,
+  deleteReward,
+} from "./helpers/reward-helpers";
+import { navigateToDashboard, navigateToHeroTab } from "./helpers/navigation-helpers";
+
+function uniqueRewardName(prefix: string): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `${prefix} ${timestamp}-${random}`;
+}
 
 test.describe('Reward Management', () => {
-  test('Guild Master creates a new reward', async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, 'reward-test', { characterClass: 'KNIGHT' });
+  test.beforeEach(async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await expect(gmPage.getByTestId("reward-manager")).toBeVisible({
+      timeout: 15000,
+    });
+  });
 
-    // Navigate to Reward Management tab
-    await navigateToHeroTab(page, 'Reward Management');
+  test('Guild Master creates a new reward', async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Extra Screen Time");
 
-    // Create reward using helper
-    await createReward(page, {
-      name: 'Extra Screen Time',
+    await createReward(gmPage, {
+      name: rewardName,
       description: '30 minutes of extra screen time',
       type: 'SCREEN_TIME',
       cost: 100,
     });
 
     // Verify the reward appears with correct details
-    const rewardCard = page.locator('[data-testid^="reward-card-"]').filter({
-      hasText: 'Extra Screen Time',
+    const rewardCard = gmPage.locator('[data-testid^="reward-card-"]').filter({
+      hasText: rewardName,
     });
     await expect(rewardCard.getByText('30 minutes of extra screen time')).toBeVisible();
     await expect(rewardCard.getByText('100 gold')).toBeVisible();
   });
 
-  test('Guild Master edits an existing reward', async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, 'reward-edit', { characterClass: 'MAGE' });
+  test('Guild Master edits an existing reward', async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const originalName = uniqueRewardName("Movie Night");
+    const updatedName = `${originalName} Updated`;
 
-    // Navigate to Reward Management
-    await navigateToHeroTab(page, 'Reward Management');
-
-    // Create a reward first
-    await createReward(page, {
-      name: 'Movie Night',
+    await createReward(gmPage, {
+      name: originalName,
       description: 'Watch a movie with the family',
       type: 'EXPERIENCE',
       cost: 200,
     });
 
     // Edit the reward using helper
-    await editReward(page, 'Movie Night', {
-      name: 'Family Movie Night',
+    await editReward(gmPage, originalName, {
+      name: updatedName,
       cost: 150,
     });
 
     // Verify updated reward appears with new details
-    const updatedRewardCard = page.locator('[data-testid^="reward-card-"]').filter({
-      hasText: 'Family Movie Night',
+    const updatedRewardCard = gmPage.locator('[data-testid^="reward-card-"]').filter({
+      hasText: updatedName,
     });
     await expect(updatedRewardCard).toBeVisible();
     await expect(updatedRewardCard.getByText('150 gold')).toBeVisible();
   });
 
-  test('Guild Master deactivates and reactivates a reward', async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, 'reward-toggle', { characterClass: 'ROGUE' });
+  test('Guild Master deactivates and reactivates a reward', async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Pizza Party");
 
-    // Navigate to Reward Management
-    await navigateToHeroTab(page, 'Reward Management');
-
-    // Create a reward
-    await createReward(page, {
-      name: 'Pizza Party',
+    await createReward(gmPage, {
+      name: rewardName,
       description: 'Order pizza for dinner',
       type: 'PURCHASE',
       cost: 300,
     });
 
     // Find the reward card
-    const rewardCard = page.locator('[data-testid^="reward-card-"]').filter({
-      hasText: 'Pizza Party',
+    const rewardCard = gmPage.locator('[data-testid^="reward-card-"]').filter({
+      hasText: rewardName,
     });
 
     // Deactivate the reward
-    await toggleRewardActive(page, 'Pizza Party');
+    await toggleRewardActive(gmPage, rewardName);
     await expect(rewardCard.locator('text=Inactive')).toBeVisible();
 
     // Reactivate the reward
-    await toggleRewardActive(page, 'Pizza Party');
+    await toggleRewardActive(gmPage, rewardName);
     await expect(rewardCard.locator('text=Inactive')).not.toBeVisible();
   });
 
-  test('Guild Master deletes a reward', async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, 'reward-delete', { characterClass: 'HEALER' });
-
-    // Navigate to Reward Management
-    await navigateToHeroTab(page, 'Reward Management');
+  test('Guild Master deletes a reward', async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Temporary Reward");
 
     // Create a reward
-    await createReward(page, {
-      name: 'Temporary Reward',
+    await createReward(gmPage, {
+      name: rewardName,
       description: 'This will be deleted',
       type: 'PRIVILEGE',
       cost: 50,
     });
 
     // Delete the reward using helper
-    await deleteReward(page, 'Temporary Reward');
+    await deleteReward(gmPage, rewardName);
   });
 
-  test('Validates reward form inputs', async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, 'reward-validation', { characterClass: 'KNIGHT' });
-
-    // Navigate to Reward Management
-    await navigateToHeroTab(page, 'Reward Management');
+  test('Validates reward form inputs', async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Test Reward");
 
     // Open create reward modal
-    await page.click('[data-testid="create-reward-button"]');
-    await expect(page.getByTestId('create-reward-modal')).toBeVisible();
+    await gmPage.click('[data-testid="create-reward-button"]');
+    await expect(gmPage.getByTestId('create-reward-modal')).toBeVisible();
 
     // Try to save without filling required fields
-    await page.click('[data-testid="save-reward-button"]');
-    await expect(page.getByTestId('create-reward-modal')).toBeVisible();
+    await gmPage.click('[data-testid="save-reward-button"]');
+    await expect(gmPage.getByTestId('create-reward-modal')).toBeVisible();
 
     // Fill in name but leave other required fields empty
-    await page.fill('[data-testid="reward-name-input"]', 'Test Reward');
-    await page.click('[data-testid="save-reward-button"]');
-    await expect(page.getByTestId('create-reward-modal')).toBeVisible();
+    await gmPage.fill('[data-testid="reward-name-input"]', rewardName);
+    await gmPage.click('[data-testid="save-reward-button"]');
+    await expect(gmPage.getByTestId('create-reward-modal')).toBeVisible();
 
     // Complete the form properly
-    await page.fill('[data-testid="reward-description-input"]', 'Test description');
-    await page.selectOption('[data-testid="reward-type-select"]', 'SCREEN_TIME');
-    await page.fill('[data-testid="reward-cost-input"]', '100');
-    await page.click('[data-testid="save-reward-button"]');
+    await gmPage.fill('[data-testid="reward-description-input"]', 'Test description');
+    await gmPage.selectOption('[data-testid="reward-type-select"]', 'SCREEN_TIME');
+    await gmPage.fill('[data-testid="reward-cost-input"]', '100');
+    await gmPage.click('[data-testid="save-reward-button"]');
 
     // Modal should close and reward should appear
-    await expect(page.getByTestId('create-reward-modal')).not.toBeVisible();
-    const rewardCard = page.locator('[data-testid^="reward-card-"]').filter({
-      hasText: 'Test Reward',
+    await expect(gmPage.getByTestId('create-reward-modal')).not.toBeVisible();
+    const rewardCard = gmPage.locator('[data-testid^="reward-card-"]').filter({
+      hasText: rewardName,
     });
     await expect(rewardCard).toBeVisible();
   });

@@ -19,6 +19,8 @@ export type HeroTab =
   | "Reward Store"
   | "Reward Management";
 
+export type QuestCreationMode = "template" | "adhoc";
+
 /**
  * Navigates to the Admin Dashboard from any page
  *
@@ -221,6 +223,34 @@ export async function closeModal(
 
   // Verify modal is closed
   await expect(page.getByTestId(modalTestId)).not.toBeVisible();
+}
+
+/**
+ * Sets the quest creation modal mode (template vs custom) and waits for the
+ * corresponding content to appear.
+ */
+export async function setQuestCreationMode(
+  page: Page,
+  mode: QuestCreationMode,
+): Promise<void> {
+  const templateButton = page.getByTestId("template-mode-button");
+  const adhocButton = page.getByTestId("adhoc-mode-button");
+  const targetButton = mode === "template" ? templateButton : adhocButton;
+  const expectedActiveClass = "bg-gold-600";
+  const modeIndicator =
+    mode === "template"
+      ? page.locator('[data-testid="template-select"]')
+      : page.locator('input[placeholder="Enter quest title..."]');
+
+  await expect(targetButton).toBeVisible({ timeout: 15000 });
+
+  await expect(async () => {
+    await targetButton.click();
+    const className = (await targetButton.getAttribute("class")) ?? "";
+    expect(className.includes(expectedActiveClass)).toBeTruthy();
+    const isVisible = await modeIndicator.isVisible();
+    expect(isVisible).toBeTruthy();
+  }).toPass({ timeout: 15000 });
 }
 
 /**
