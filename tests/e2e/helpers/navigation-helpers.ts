@@ -124,7 +124,29 @@ export async function navigateToHeroTab(
  * ```
  */
 export async function navigateToDashboard(page: Page): Promise<void> {
-  await page.click("text=Back to Dashboard");
+  const welcomeMessage = page.locator('[data-testid="welcome-message"]');
+  if (await welcomeMessage.isVisible()) {
+    return;
+  }
+
+  await page.goto("/");
+  const enterRealmButton = page.locator('text="🏰 Enter Your Realm"');
+  if (await enterRealmButton.isVisible()) {
+    await enterRealmButton.click();
+    await expect(page).toHaveURL(/.*\/dashboard/);
+    await expect(page.getByText("Quest Dashboard")).toBeVisible();
+    return;
+  }
+
+  const backButton = page.locator("text=Back to Dashboard");
+  if (await backButton.isVisible()) {
+    await backButton.click();
+    await expect(page).toHaveURL(/.*\/dashboard/);
+    await expect(page.getByText("Quest Dashboard")).toBeVisible();
+    return;
+  }
+
+  await page.goto("/dashboard");
   await expect(page).toHaveURL(/.*\/dashboard/);
   await expect(page.getByText("Quest Dashboard")).toBeVisible();
 }

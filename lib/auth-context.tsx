@@ -146,6 +146,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isCreatingFamily]);
 
+  // Subscribe to profile updates so role changes propagate in real time
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const channel = supabase
+      .channel(`user-profile-updates-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        async (payload) => {
+          console.log('AuthContext: Detected profile update via realtime', payload);
+          await loadUserData(user.id);
+        },
+      )
+      .subscribe((status) => {
+        console.log('AuthContext: Profile subscription status', status);
+        return status;
+      });
+
+    return () => {
+      console.log('AuthContext: Unsubscribing from profile updates');
+      channel.unsubscribe();
+    };
+  }, [user?.id]);
+
   const clearError = () => setError(null);
 
   const login = async (credentials: { email: string; password: string }) => {

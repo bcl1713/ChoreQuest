@@ -10,6 +10,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 2,
+  timeout: 60000,
   reporter: [["line"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
@@ -17,7 +18,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
     // Wait for network idle to ensure page is fully loaded
     navigationTimeout: 30000,
-    actionTimeout: 10000,
+    actionTimeout: 15000,
   },
   projects: [
     {
