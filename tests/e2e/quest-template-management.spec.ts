@@ -13,6 +13,16 @@ function uniqueName(prefix: string): string {
 
 async function ensureTemplatesTab(page: Page): Promise<void> {
   await navigateToDashboard(page);
+  const questModal = page.locator("text=Create New Quest");
+  if (await questModal.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const cancelButton = page.locator('[data-testid="cancel-quest-button"]');
+    if (await cancelButton.isVisible({ timeout: 500 }).catch(() => false)) {
+      await cancelButton.click();
+    } else {
+      await page.keyboard.press("Escape");
+    }
+    await expect(questModal).not.toBeVisible({ timeout: 5000 });
+  }
   await page.getByTestId("tab-templates").click();
   await expect(page.getByTestId("quest-template-manager")).toBeVisible();
   await expect(page.getByTestId("template-list")).toBeVisible();
