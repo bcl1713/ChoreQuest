@@ -134,7 +134,9 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   if (await enterRealmButton.isVisible()) {
     await enterRealmButton.click();
     await expect(page).toHaveURL(/.*\/dashboard/);
-    await expect(page.getByText("Quest Dashboard")).toBeVisible();
+    await expect(page.getByTestId("welcome-message")).toBeVisible({
+      timeout: 15000,
+    });
     return;
   }
 
@@ -142,13 +144,17 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   if (await backButton.isVisible()) {
     await backButton.click();
     await expect(page).toHaveURL(/.*\/dashboard/);
-    await expect(page.getByText("Quest Dashboard")).toBeVisible();
+    await expect(page.getByTestId("welcome-message")).toBeVisible({
+      timeout: 15000,
+    });
     return;
   }
 
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/.*\/dashboard/);
-  await expect(page.getByText("Quest Dashboard")).toBeVisible();
+  await expect(page.getByTestId("welcome-message")).toBeVisible({
+    timeout: 15000,
+  });
 }
 
 /**

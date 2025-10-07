@@ -78,8 +78,8 @@
   - [x] 4.2 Migrate `admin-activity-feed.spec.ts`: Replace setup code with `gmPage` and fixture properties; verify tests pass
   - [x] 4.3 Migrate `admin-dashboard-access.spec.ts`: Use worker-scoped GM fixture; verify tests pass
   - [x] 4.4 Migrate `admin-dashboard-tabs.spec.ts`: Use worker-scoped GM fixture; verify tests pass
-  - [ ] 4.5 Migrate `admin-guild-master-management.spec.ts`: Use fixture and `createEphemeralUser` for multi-user tests; verify tests pass
-  - [ ] 4.6 Migrate `admin-statistics.spec.ts`: Use worker-scoped GM fixture; verify tests pass
+  - [x] 4.5 Migrate `admin-guild-master-management.spec.ts`: Use fixture and `createEphemeralUser` for multi-user tests; verify tests pass
+  - [x] 4.6 Migrate `admin-statistics.spec.ts`: Use worker-scoped GM fixture; verify tests pass
   - [ ] 4.7 Remove old setup code (createClient imports, manual login flows) from all migrated Phase 1 files
   - [ ] 4.8 User runs full Phase 1 suite with 2 workers to verify parallel execution works
 
