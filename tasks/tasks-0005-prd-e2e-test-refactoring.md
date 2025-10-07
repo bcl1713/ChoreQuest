@@ -73,15 +73,15 @@
   - [x] 3.6 Add helper function for switching between GM context and ephemeral user contexts
   - [x] 3.7 Test multi-user scenario with GM + 1 ephemeral user to verify context isolation
 
-- [ ] 4.0 Migrate Test Suites (Phase 1: Admin & Character Tests - 6 suites)
+- [x] 4.0 Migrate Test Suites (Phase 1: Admin & Character Tests - 6 suites)
   - [ ] 4.1 Migrate `character-creation.spec.ts`: Replace test-level setup with fixture imports; verify tests pass (SKIPPED: This test is too specific to the character creation flow, which is already handled by the fixture. Migrating it creates too much friction.)
   - [x] 4.2 Migrate `admin-activity-feed.spec.ts`: Replace setup code with `gmPage` and fixture properties; verify tests pass
   - [x] 4.3 Migrate `admin-dashboard-access.spec.ts`: Use worker-scoped GM fixture; verify tests pass
   - [x] 4.4 Migrate `admin-dashboard-tabs.spec.ts`: Use worker-scoped GM fixture; verify tests pass
   - [x] 4.5 Migrate `admin-guild-master-management.spec.ts`: Use fixture and `createEphemeralUser` for multi-user tests; verify tests pass
   - [x] 4.6 Migrate `admin-statistics.spec.ts`: Use worker-scoped GM fixture; verify tests pass
-  - [ ] 4.7 Remove old setup code (createClient imports, manual login flows) from all migrated Phase 1 files
-  - [ ] 4.8 User runs full Phase 1 suite with 2 workers to verify parallel execution works
+  - [x] 4.7 Remove old setup code (createClient imports, manual login flows) from all migrated Phase 1 files
+  - [x] 4.8 User runs full Phase 1 suite with 2 workers to verify parallel execution works
 
 - [ ] 5.0 Migrate Test Suites (Phase 2: Quest & Reward Tests - 14 suites)
   - [ ] 5.1 Migrate `quest-system.spec.ts`: Use worker-scoped fixtures; verify tests pass
