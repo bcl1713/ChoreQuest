@@ -282,6 +282,16 @@ export async function navigateToAdminTabViaURL(
  * ```
  */
 export async function openQuestCreationModal(page: Page): Promise<void> {
+  const questModal = page.locator("text=Create New Quest");
+  if (await questModal.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const cancelButton = page.locator('[data-testid="cancel-quest-button"]');
+    if (await cancelButton.isVisible({ timeout: 500 }).catch(() => false)) {
+      await cancelButton.click();
+    } else {
+      await page.keyboard.press("Escape");
+    }
+    await expect(questModal).not.toBeVisible();
+  }
   await page.click('[data-testid="create-quest-button"]');
   await expect(page.locator("text=Create New Quest")).toBeVisible();
 }
