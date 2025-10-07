@@ -112,11 +112,11 @@ export async function expectQuestStatus(
   questName: string,
   status: QuestStatus,
 ): Promise<void> {
-  const questCard = page
-    .locator('[data-testid^="quest-card-"]')
-    .filter({ hasText: questName });
-
-  await expect(questCard).toBeVisible();
+  const questHeading = page
+    .getByRole("heading", { name: questName, exact: true })
+    .first();
+  await expect(questHeading).toBeVisible({ timeout: 10000 });
+  const questCard = questHeading.locator("../../..");
 
   // Check for status-specific indicators
   const statusIndicators: Record<QuestStatus, string> = {
@@ -130,8 +130,7 @@ export async function expectQuestStatus(
   const indicator = statusIndicators[status];
 
   if (status === "APPROVED") {
-    // Text-based check
-    await expect(questCard).toContainText(indicator);
+    await expect(questCard.getByText("APPROVED", { exact: true })).toBeVisible();
   } else {
     // Button-based check
     await expect(

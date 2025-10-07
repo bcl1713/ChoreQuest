@@ -7,6 +7,7 @@ import {
   approveQuest,
 } from "./helpers/quest-helpers";
 import { navigateToDashboard } from "./helpers/navigation-helpers";
+import { expectQuestStatus } from "./helpers/assertions";
 
 function uniqueQuestName(prefix: string): string {
   const timestamp = Date.now();
@@ -71,7 +72,7 @@ test.describe("Quest Pickup and Management", () => {
 
     // Approve quest as GM
     await approveQuest(gmPage, questTitle);
-    await expect(gmPage.getByText("APPROVED")).toBeVisible();
+    await expectQuestStatus(gmPage, questTitle, "APPROVED");
   });
 
   test("Quest workflow state transitions", async ({ workerFamily }) => {
@@ -109,6 +110,6 @@ test.describe("Quest Pickup and Management", () => {
     await expect(gmPage.getByText("COMPLETED")).toBeVisible();
 
     await approveQuest(gmPage, questTitle);
-    await expect(gmPage.getByText("APPROVED")).toBeVisible();
+    await expectQuestStatus(gmPage, questTitle, "APPROVED");
   });
 });

@@ -39,8 +39,13 @@ export interface WorkerFamily {
   familyCode: string;
   characterName: string;
   gmContext: BrowserContext;
-  createEphemeralUser: (userName: string) => Promise<EphemeralUser>;
-  createFamilyMember: (options?: CreateFamilyMemberOptions) => Promise<EphemeralUser>;
+  createEphemeralUser: (
+    userName: string,
+    options?: CreateFamilyMemberOptions,
+  ) => Promise<EphemeralUser>;
+  createFamilyMember: (
+    options?: CreateFamilyMemberOptions,
+  ) => Promise<EphemeralUser>;
 }
 
 export interface StoragePaths {
@@ -99,11 +104,16 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
       const createdFamilyIds = [authData.familyId];
       const createdContexts = [gmContext];
 
-      const createEphemeralUser = async (userName: string): Promise<EphemeralUser> => {
+      const createEphemeralUser = async (
+        userName: string,
+        options: CreateFamilyMemberOptions = {},
+      ): Promise<EphemeralUser> => {
         const context = await browser.newContext();
         createdContexts.push(context);
         const page = await context.newPage();
-        const user = await setupUserWithCharacter(page, userName);
+        const user = await setupUserWithCharacter(page, userName, {
+          characterClass: options.characterClass,
+        });
 
         await page.waitForSelector('[data-testid="welcome-message"]', { state: 'visible', timeout: 15000 });
 

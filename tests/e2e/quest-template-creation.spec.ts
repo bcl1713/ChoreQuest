@@ -4,27 +4,25 @@ import { openQuestCreationModal, navigateToDashboard } from "./helpers/navigatio
 import { expectOnDashboard } from "./helpers/assertions";
 
 async function loadTemplateOptions(page: Page) {
-  await page.waitForFunction(() => {
-    const select = document.querySelector(
-      '[data-testid="template-select"]',
-    ) as HTMLSelectElement | null;
-    if (!select) return false;
-    return Array.from(select.options).some((option) => !!option.value);
-  }, { timeout: 15000 });
+  const templateSelect = page.locator('[data-testid="template-select"]');
+  await templateSelect.waitFor({ state: "attached", timeout: 15000 });
+  await expect(templateSelect).toBeVisible({ timeout: 15000 });
 
-  return page.evaluate(() => {
-    const select = document.querySelector(
-      '[data-testid="template-select"]',
-    ) as HTMLSelectElement | null;
-    if (!select) return [];
+  let options: { value: string; text: string }[] = [];
 
-    return Array.from(select.options)
-      .filter((option) => !!option.value)
-      .map((option) => ({
-        value: option.value,
-        text: option.textContent ?? "",
-      }));
-  });
+  await expect(async () => {
+    options = await templateSelect.evaluate((select) =>
+      Array.from(select.options)
+        .filter((option) => option.value)
+        .map((option) => ({
+          value: option.value,
+          text: option.textContent ?? "",
+        })),
+    );
+    expect(options.length).toBeGreaterThan(0);
+  }).toPass({ timeout: 20000 });
+
+  return options;
 }
 
 async function cancelQuestModal(page: Page) {

@@ -1,4 +1,5 @@
 import { Page, expect } from "@playwright/test";
+import { openQuestCreationModal } from "./navigation-helpers";
 
 /**
  * Quest Helper Functions for E2E Tests
@@ -63,29 +64,25 @@ export async function createCustomQuest(
     skipVisibilityCheck = false,
   } = questData;
 
-  // Open quest creation modal
-  await page.click('[data-testid="create-quest-button"]');
-  await expect(page.locator("text=Create New Quest")).toBeVisible();
+  // Open quest creation modal (handles any existing modal state)
+  await openQuestCreationModal(page);
 
   // Switch to Custom Quest mode
-  await page.locator('.fixed button:has-text("Custom Quest")').click();
+  const customQuestButton = page.getByTestId("adhoc-mode-button");
+  await customQuestButton.waitFor({ state: "visible" });
+  await customQuestButton.click();
 
   // Fill quest details
   await page.fill('input[placeholder="Enter quest title..."]', title);
   await page.fill('textarea[placeholder="Describe the quest..."]', description);
 
-  // Set difficulty (need to select the right select element - it's the second one)
-  await page.locator("select").nth(1).selectOption(difficulty);
+  // Set difficulty using explicit test id selector
+  await page.getByTestId("quest-difficulty-select").selectOption(difficulty);
 
   // Set rewards
-  await page.fill(
-    'input[type="number"]:near(:text("Gold Reward"))',
-    goldReward.toString(),
-  );
-  await page.fill(
-    'input[type="number"]:near(:text("XP Reward"))',
-    xpReward.toString(),
-  );
+  const numberInputs = page.locator('input[type="number"]');
+  await numberInputs.first().fill(xpReward.toString());
+  await numberInputs.nth(1).fill(goldReward.toString());
 
   // Submit quest
   await page.click('button[type="submit"]');
@@ -319,10 +316,7 @@ export async function completeQuest(
     await page.locator('button:has-text("Complete")').first().click();
   }
 
-  // Wait for button to change to "Approve Quest"
-  await expect(
-    page.locator('button:has-text("Approve")').first(),
-  ).toBeVisible({ timeout: 5000 });
+  await page.waitForLoadState("networkidle");
 }
 
 /**
@@ -341,10 +335,11 @@ export async function approveQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    // Find quest by heading in My Quests section
-    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
-    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
-    const questContainer = questHeading.locator('../../..');
+    const questHeading = page
+      .getByRole("heading", { name: questName, exact: true })
+      .first();
+    await expect(questHeading).toBeVisible({ timeout: 10000 });
+    const questContainer = questHeading.locator("../../..");
     await questContainer.locator('button:has-text("Approve")').click();
   } else {
     await page.locator('button:has-text("Approve")').first().click();
