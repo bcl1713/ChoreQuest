@@ -6,28 +6,25 @@ import {
   completeQuest,
   approveQuest,
 } from "./helpers/quest-helpers";
-import { commonBeforeEach } from "./helpers/setup-helpers";
+import { navigateToDashboard } from "./helpers/navigation-helpers";
+
+function uniqueQuestName(prefix: string): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `${prefix} ${timestamp}-${random}`;
+}
 
 test.describe("Quest Pickup and Management", () => {
-  test.beforeEach(async ({ page }) => {
-    await commonBeforeEach(page);
-  });
-
   test("Guild Master can pick up available quests", async ({
-    page,
     workerFamily,
   }) => {
-    const { gmId } = workerFamily;
-
-    // Log in as the Guild Master
-    await page.goto(`/login`);
-    await page.fill('input[name="email"]', `${gmId}@example.com`);
-    await page.fill('input[name="password"]', "password");
-    await page.click('button[type="submit"]');
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    const questTitle = uniqueQuestName("Clean the Kitchen");
 
     // Create an unassigned quest
-    await createCustomQuest(page, {
-      title: "Clean the Kitchen",
+    await createCustomQuest(gmPage, {
+      title: questTitle,
       description: "Deep clean kitchen counters and dishes",
       difficulty: "MEDIUM",
       goldReward: 25,
@@ -35,91 +32,83 @@ test.describe("Quest Pickup and Management", () => {
     });
 
     // Verify quest appears in Available Quests
-    await expect(page.getByText("📋 Available Quests")).toBeVisible();
+    await expect(gmPage.getByText("📋 Available Quests")).toBeVisible();
 
     // Pick up the quest
-    await pickupQuest(page, "Clean the Kitchen");
+    await pickupQuest(gmPage, questTitle);
 
     // Verify quest moved to My Quests
-    await expect(page.getByText("🗡️ My Quests")).toBeVisible();
-    const myQuestsSection = page.locator("text=🗡️ My Quests").locator("..");
-    await expect(myQuestsSection.getByText("Clean the Kitchen")).toBeVisible();
+    await expect(gmPage.getByText("🗡️ My Quests")).toBeVisible();
+    const myQuestsSection = gmPage
+      .locator("text=🗡️ My Quests")
+      .locator("..");
+    await expect(myQuestsSection.getByText(questTitle)).toBeVisible();
   });
 
   test("Quest permissions and state management", async ({
-    page,
     workerFamily,
   }) => {
-    const { gmId } = workerFamily;
-
-    // Log in as GM
-    await page.goto(`/login`);
-    await page.fill('input[name="email"]', `${gmId}@example.com`);
-    await page.fill('input[name="password"]', "password");
-    await page.click('button[type="submit"]');
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    const questTitle = uniqueQuestName("Test Permission Quest");
 
     // Create a quest
-    await createCustomQuest(page, {
-      title: "Test Permission Quest",
+    await createCustomQuest(gmPage, {
+      title: questTitle,
       description: "Testing quest permissions",
       xpReward: 30,
     });
 
     // Pick up quest
-    await pickupQuest(page, "Test Permission Quest");
+    await pickupQuest(gmPage, questTitle);
 
     // Start the quest
-    await startQuest(page, "Test Permission Quest");
+    await startQuest(gmPage, questTitle);
 
     // Complete the quest
-    await completeQuest(page, "Test Permission Quest");
-    await expect(page.getByText("COMPLETED")).toBeVisible();
+    await completeQuest(gmPage, questTitle);
+    await expect(gmPage.getByText("COMPLETED")).toBeVisible();
 
     // Approve quest as GM
-    await approveQuest(page, "Test Permission Quest");
-    await expect(page.getByText("APPROVED")).toBeVisible();
+    await approveQuest(gmPage, questTitle);
+    await expect(gmPage.getByText("APPROVED")).toBeVisible();
   });
 
-  test("Quest workflow state transitions", async ({ page, workerFamily }) => {
-    const { gmId } = workerFamily;
+  test("Quest workflow state transitions", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
     const timestamp = Date.now();
     const questTitle = `Workflow Test Quest ${timestamp}`;
 
-    // Log in as GM
-    await page.goto(`/login`);
-    await page.fill('input[name="email"]', `${gmId}@example.com`);
-    await page.fill('input[name="password"]', "password");
-    await page.click('button[type="submit"]');
-
     // Create quest
-    await createCustomQuest(page, {
+    await createCustomQuest(gmPage, {
       title: questTitle,
       description: "Testing quest state transitions",
       xpReward: 40,
     });
 
-    await expect(page.getByText(questTitle).first()).toBeVisible();
+    await expect(gmPage.getByText(questTitle).first()).toBeVisible();
 
-    const availableQuestExists = await page
+    const availableQuestExists = await gmPage
       .locator("text=📋 Available Quests")
       .isVisible()
       .catch(() => false);
 
     if (availableQuestExists) {
-      await pickupQuest(page, questTitle);
+      await pickupQuest(gmPage, questTitle);
     }
 
-    const myQuestsQuest = page
+    const myQuestsQuest = gmPage
       .locator("text=🗡️ My Quests")
       .locator("..")
       .getByText(questTitle);
     await expect(myQuestsQuest).toBeVisible();
 
-    await startQuest(page, questTitle);
-    await completeQuest(page, questTitle);
-    await expect(page.getByText("COMPLETED")).toBeVisible();
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await expect(gmPage.getByText("COMPLETED")).toBeVisible();
 
-    await approveQuest(page, questTitle);
-    await expect(page.getByText("APPROVED")).toBeVisible();
+    await approveQuest(gmPage, questTitle);
+    await expect(gmPage.getByText("APPROVED")).toBeVisible();
   });
 });

@@ -89,7 +89,7 @@
   - [x] 5.3 Migrate `quest-template-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [x] 5.4 Migrate `quest-template-full-workflow.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [x] 5.5 Migrate `quest-template-realtime.spec.ts`: Use worker-scoped fixtures and multi-user helpers if needed; verify tests pass
-  - [ ] 5.6 Migrate `quest-pickup-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
+  - [x] 5.6 Migrate `quest-pickup-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [ ] 5.7 Migrate `quest-completion-rewards.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [ ] 5.8 Migrate `reward-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [ ] 5.9 Migrate `reward-store.spec.ts`: Use worker-scoped fixtures; verify tests pass
