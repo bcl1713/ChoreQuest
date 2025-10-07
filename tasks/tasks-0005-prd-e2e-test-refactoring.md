@@ -56,7 +56,7 @@
   - [x] 1.6 Define fixture interface to expose `gmPage`, `gmEmail`, `gmPassword`, `gmId`, `familyId`, `familyCode`, `characterId`, and `createEphemeralUser` helper
   - [x] 1.7 Test the refactored fixture with a simple test to verify GM user persists across multiple tests
 
-- [ ] 2.0 Implement Worker Teardown and Cleanup System
+- [x] 2.0 Implement Worker Teardown and Cleanup System
   - [x] 2.1 Add worker teardown hook in `family-fixture.ts` using `workerInfo` lifecycle
   - [x] 2.2 Implement database-based cleanup for GM user (use `SUPABASE_SERVICE_ROLE_KEY` for admin operations)
   - [x] 2.3 Ensure cleanup handles cascading deletes (families, characters, profiles, quests, rewards)
@@ -64,14 +64,14 @@
   - [x] 2.5 Track all ephemeral users created during worker lifetime for cleanup
   - [ ] 2.6 Verify cleanup works by checking database state after test run (manual verification)
 
-- [ ] 3.0 Create Helper Functions for Multi-User Test Scenarios
-  - [ ] 3.1 Refactor `createEphemeralUser.ts` to create users via UI signup flow instead of `supabase.auth.signUp()`
-  - [ ] 3.2 Use existing `setupUserWithCharacter()` pattern from `setup-helpers.ts` for consistent UI-based creation
-  - [ ] 3.3 Create new browser context for each ephemeral user (isolated session state)
-  - [ ] 3.4 Return ephemeral user data including `page`, `email`, `password`, `userId`, `characterId`
-  - [ ] 3.5 Register ephemeral users with fixture system for cleanup tracking
-  - [ ] 3.6 Add helper function for switching between GM context and ephemeral user contexts
-  - [ ] 3.7 Test multi-user scenario with GM + 1 ephemeral user to verify context isolation
+- [x] 3.0 Create Helper Functions for Multi-User Test Scenarios
+  - [x] 3.1 Refactor `createEphemeralUser.ts` to create users via UI signup flow instead of `supabase.auth.signUp()`
+  - [x] 3.2 Use existing `setupUserWithCharacter()` pattern from `setup-helpers.ts` for consistent UI-based creation
+  - [x] 3.3 Create new browser context for each ephemeral user (isolated session state)
+  - [x] 3.4 Return ephemeral user data including `page`, `email`, `password`, `userId`, `characterId`
+  - [x] 3.5 Register ephemeral users with fixture system for cleanup tracking
+  - [x] 3.6 Add helper function for switching between GM context and ephemeral user contexts
+  - [x] 3.7 Test multi-user scenario with GM + 1 ephemeral user to verify context isolation
 
 - [ ] 4.0 Migrate Test Suites (Phase 1: Admin & Character Tests - 6 suites)
   - [ ] 4.1 Migrate `character-creation.spec.ts`: Replace test-level setup with fixture imports; verify tests pass
