@@ -25,7 +25,7 @@
 - `tests/e2e/quest-system.spec.ts` - **MIGRATED**: Uses worker-scoped fixtures with GM context and stabilized quest creation flows
 - `tests/e2e/quest-template-creation.spec.ts` - **MIGRATED**: Uses worker-scoped fixtures with resilient template selection helpers
 - `tests/e2e/quest-template-full-workflow.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
-- `tests/e2e/quest-template-management.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
+- `tests/e2e/quest-template-management.spec.ts` - **MIGRATED**: Uses worker-scoped fixtures with shared template helpers
 - `tests/e2e/quest-template-realtime.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/reward-management.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/reward-realtime.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
@@ -86,7 +86,7 @@
 - [ ] 5.0 Migrate Test Suites (Phase 2: Quest & Reward Tests - 14 suites)
   - [x] 5.1 Migrate `quest-system.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [x] 5.2 Migrate `quest-template-creation.spec.ts`: Use worker-scoped fixtures; verify tests pass
-  - [ ] 5.3 Migrate `quest-template-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
+  - [x] 5.3 Migrate `quest-template-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [ ] 5.4 Migrate `quest-template-full-workflow.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [ ] 5.5 Migrate `quest-template-realtime.spec.ts`: Use worker-scoped fixtures and multi-user helpers if needed; verify tests pass
   - [ ] 5.6 Migrate `quest-pickup-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
