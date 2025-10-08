@@ -291,16 +291,27 @@ export default function QuestDashboard({
           updateData.completed_at = new Date().toISOString();
         }
 
+        // Optimistically update local state immediately for instant UI feedback
+        setQuestInstances(currentQuests =>
+          currentQuests.map(quest =>
+            quest.id === questId
+              ? { ...quest, ...updateData }
+              : quest
+          )
+        );
+
         const { error } = await supabase
           .from('quest_instances')
           .update(updateData)
           .eq('id', questId);
 
         if (error) {
+          // Revert optimistic update on error
+          await loadQuests();
           throw error;
         }
 
-        // Quest updates will be handled automatically by realtime subscriptions
+        // Quest updates will also be handled by realtime subscriptions (for other users)
       }
     } catch (err) {
       const errorMsg =
@@ -314,6 +325,15 @@ export default function QuestDashboard({
   const handlePickupQuest = async (questId: string) => {
     if (!user) return;
 
+    // Optimistically update local state immediately for instant UI feedback
+    setQuestInstances(currentQuests =>
+      currentQuests.map(quest =>
+        quest.id === questId
+          ? { ...quest, assigned_to_id: user.id, status: 'PENDING' as const }
+          : quest
+      )
+    );
+
     try {
       const { error } = await supabase
         .from('quest_instances')
@@ -325,10 +345,12 @@ export default function QuestDashboard({
         .select();
 
       if (error) {
+        // Revert optimistic update on error
+        await loadQuests();
         throw error;
       }
 
-      // Quest updates will be handled automatically by realtime subscriptions
+      // Quest updates will also be handled by realtime subscriptions (for other users)
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to pick up quest";
@@ -342,6 +364,21 @@ export default function QuestDashboard({
   const handleAssignQuest = async (questId: string, assigneeId: string) => {
     if (!assigneeId) return;
 
+    // Optimistically update local state immediately for instant UI feedback
+    setQuestInstances(currentQuests =>
+      currentQuests.map(quest =>
+        quest.id === questId
+          ? { ...quest, assigned_to_id: assigneeId, status: 'PENDING' as const }
+          : quest
+      )
+    );
+
+    // Clear the dropdown selection immediately
+    setSelectedAssignee((prev) => ({
+      ...prev,
+      [questId]: "",
+    }));
+
     try {
       const { error } = await supabase
         .from('quest_instances')
@@ -352,15 +389,12 @@ export default function QuestDashboard({
         .eq('id', questId);
 
       if (error) {
+        // Revert optimistic update on error
+        await loadQuests();
         throw error;
       }
 
-      // Clear the dropdown selection
-      setSelectedAssignee((prev) => ({
-        ...prev,
-        [questId]: "",
-      }));
-      // Quest updates will be handled automatically by realtime subscriptions
+      // Quest updates will also be handled by realtime subscriptions (for other users)
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to assign quest";
