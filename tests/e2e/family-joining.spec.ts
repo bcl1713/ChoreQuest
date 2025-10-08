@@ -1,16 +1,14 @@
-import { test, expect } from "@playwright/test";
-import { setupUserWithCharacter } from "./helpers/setup-helpers";
-import { getFamilyCode, joinExistingFamily } from "./helpers/auth-helpers";
+import { test, expect } from "./helpers/family-fixture";
+import { joinExistingFamily } from "./helpers/auth-helpers";
 
 test.describe("Family Joining", () => {
   test("new user can join existing family with valid family code", async ({
-    page,
+    workerFamily,
     browser,
   }) => {
-    // Step 1: Create a family and get the family code
+    // Step 1: Get the existing family code from the worker fixture
     const timestamp = Date.now();
-    await setupUserWithCharacter(page, `gm-${timestamp}`);
-    const familyCode = await getFamilyCode(page);
+    const { familyCode } = workerFamily;
 
     // Step 2: Join family in a new browser context
     const newContext = await browser.newContext();
@@ -34,13 +32,12 @@ test.describe("Family Joining", () => {
   });
 
   test("character name pre-fills from family join and is editable", async ({
-    page,
+    workerFamily,
     browser,
   }) => {
-    // Step 1: Create a family and get the family code
+    // Step 1: Get the existing family code from the worker fixture
     const timestamp = Date.now();
-    await setupUserWithCharacter(page, `gm-${timestamp}`);
-    const familyCode = await getFamilyCode(page);
+    const { familyCode } = workerFamily;
 
     // Step 2: Join family in a new browser context
     const newContext = await browser.newContext();
