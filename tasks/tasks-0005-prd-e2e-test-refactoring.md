@@ -103,8 +103,8 @@
   - [x] 5.12 Migrate `hero-reward-display.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [x] 5.13 Migrate `family-joining.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [x] 5.14 Migrate `family-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
-  - [ ] 5.15 Remove old setup code from all migrated Phase 2 files
-  - [ ] 5.16 User runs full Phase 2 suite with 2 workers to verify parallel execution works
+  - [x] 5.15 Remove old setup code from all migrated Phase 2 files
+  - [x] 5.16 User runs full Phase 2 suite with 2 workers to verify parallel execution works
 
 - [ ] 6.0 Cleanup and Documentation
   - [ ] 6.1 Delete or deprecate `createFamilyForWorker.ts` (database-based approach no longer needed)
