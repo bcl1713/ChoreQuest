@@ -114,4 +114,42 @@
   - [x] 6.5 Add inline comments to `family-fixture.ts` explaining worker-scoped fixture pattern for future developers
   - [ ] 6.6 User runs complete test suite with 2 workers: `npx playwright test --reporter=line`
   - [ ] 6.7 Verify all 20 test suites pass consistently with parallel execution
-  - [ ] 6.8 Document any discovered issues or edge cases in PRD or separate notes file
+  - [x] 6.8 Document any discovered issues or edge cases in PRD or separate notes file
+
+## Issues Discovered & Fixed
+
+### Quest State Transition Race Condition (Fixed in commit 6545695)
+
+**Problem:**
+- The quest workflow relied entirely on Supabase realtime subscriptions for UI updates
+- After database updates (pickup, start, complete, approve), the UI would not update until the realtime event fired
+- This created race conditions causing intermittent test failures
+- Tests would timeout waiting for buttons (e.g., "start-quest-button") that hadn't rendered yet
+- The issue was NOT caused by the test refactoring, but was exposed by parallel test execution
+
+**Root Cause:**
+1. User clicks "Pick Up Quest" button
+2. `handlePickupQuest()` updates database (assigned_to_id, status='PENDING')
+3. Database update completes successfully
+4. Component waits for realtime subscription to receive postgres_changes event
+5. Realtime listener fires and updates local state
+6. Component re-renders, moving quest from "Available" to "My Quests"
+7. "Start Quest" button finally appears
+
+Steps 4-7 could take anywhere from milliseconds to several seconds under load, causing flaky tests.
+
+**Solution:**
+- Added optimistic UI updates to `handlePickupQuest()`, `handleStatusUpdate()`, and `handleAssignQuest()`
+- Local state now updates immediately when user actions are triggered
+- UI provides instant feedback without waiting for realtime sync
+- Realtime subscriptions still work for multi-user scenarios (other users see updates)
+- Error handling reverts optimistic updates if database operations fail
+
+**Impact:**
+- Eliminates race condition between DB update and realtime synchronization
+- Improves perceived performance (users see instant feedback)
+- Fixes test flakiness in `admin-activity-feed.spec.ts` and related tests
+- Maintains data consistency with proper error rollback
+
+**Files Changed:**
+- `components/quest-dashboard.tsx` - Added optimistic updates to all quest state mutation functions
