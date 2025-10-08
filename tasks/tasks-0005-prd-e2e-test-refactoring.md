@@ -19,7 +19,7 @@
 - `tests/e2e/character-creation.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/family-joining.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/family-management.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
-- `tests/e2e/hero-reward-display.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
+- `tests/e2e/hero-reward-display.spec.ts` - **MIGRATED**: Uses worker-family fixtures and quest helpers for multi-hero reward validation
 - `tests/e2e/quest-completion-rewards.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/quest-pickup-management.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/quest-system.spec.ts` - **MIGRATED**: Uses worker-scoped fixtures with GM context and stabilized quest creation flows
@@ -100,7 +100,7 @@
   - [x] 5.9 Migrate `reward-store.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [x] 5.10 Migrate `reward-redemption-approval.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [x] 5.11 Migrate `reward-realtime.spec.ts`: Use fixtures and multi-user helpers if needed; verify tests pass
-  - [ ] 5.12 Migrate `hero-reward-display.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
+  - [x] 5.12 Migrate `hero-reward-display.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [ ] 5.13 Migrate `family-joining.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [ ] 5.14 Migrate `family-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [ ] 5.15 Remove old setup code from all migrated Phase 2 files
