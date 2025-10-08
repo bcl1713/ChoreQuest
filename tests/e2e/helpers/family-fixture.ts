@@ -7,6 +7,29 @@ import { createClient } from "@supabase/supabase-js";
  * Worker-scoped fixture that provides a persistent GM user and family
  * for all tests within a worker. This reduces setup overhead and improves
  * test performance by creating the GM user only once per worker.
+ *
+ * HOW IT WORKS:
+ * - When a Playwright worker starts, it creates ONE GM user with a new family
+ * - This GM user and family persist across ALL tests in that worker
+ * - Each test gets access to the same gmPage, gmEmail, familyCode, etc.
+ * - Tests can create additional ephemeral users via createEphemeralUser() or createFamilyMember()
+ * - When the worker finishes, cleanup automatically removes all created users and data
+ *
+ * WHY WORKER-SCOPED:
+ * - Much faster than creating a new family for every test
+ * - Tests still run in parallel safely (each worker has its own isolated family)
+ * - More realistic: users persist across multiple operations just like in production
+ * - Reduces database load and test flakiness from repeated setup/teardown
+ *
+ * USAGE:
+ * Import test and expect from this file instead of @playwright/test:
+ *   import { test, expect } from './helpers/family-fixture';
+ *
+ * Access the fixture in your test:
+ *   test('my test', async ({ workerFamily }) => {
+ *     const { gmPage, familyCode, createFamilyMember } = workerFamily;
+ *     // Your test code here
+ *   });
  */
 
 export interface EphemeralUser {
@@ -29,20 +52,35 @@ export interface CreateFamilyMemberOptions {
   characterClass?: CharacterClass;
 }
 
+/**
+ * The WorkerFamily fixture provides access to a persistent Guild Master user and helper functions.
+ * This interface defines what's available to your tests via the workerFamily fixture.
+ */
 export interface WorkerFamily {
+  /** The persistent Guild Master's page (logged in and ready to use) */
   gmPage: Page;
+  /** The GM user's email address */
   gmEmail: string;
+  /** The GM user's password */
   gmPassword: string;
+  /** The GM user's database ID */
   gmId: string;
+  /** The GM user's character ID */
   gmCharacterId: string;
+  /** The family/guild ID created by the GM */
   familyId: string;
+  /** The 6-character family code for joining this family */
   familyCode: string;
+  /** The GM character's name */
   characterName: string;
+  /** The GM's browser context (for advanced use cases) */
   gmContext: BrowserContext;
+  /** Create a new ephemeral user in their own family (not part of GM's family) */
   createEphemeralUser: (
     userName: string,
     options?: CreateFamilyMemberOptions,
   ) => Promise<EphemeralUser>;
+  /** Create a new family member who joins the GM's family */
   createFamilyMember: (
     options?: CreateFamilyMemberOptions,
   ) => Promise<EphemeralUser>;
@@ -52,23 +90,35 @@ export interface StoragePaths {
   outputDir: string;
 }
 
+/**
+ * Extended test object with worker-scoped fixture.
+ * This is exported as 'test' so you import it instead of @playwright/test.
+ *
+ * The fixture setup runs ONCE per worker (not per test), and the teardown
+ * runs ONCE when the worker finishes all its tests.
+ */
 export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
   workerFamily: [
     async ({ browser }, use, workerInfo) => {
+      // SETUP PHASE: Create the persistent GM user and family for this worker
       const gmContext = await browser.newContext();
       const gmPage = await gmContext.newPage();
 
+      // Create unique GM user for this worker (worker0, worker1, etc.)
       const timestamp = Date.now();
       const workerIndex = workerInfo.workerIndex;
       const gmUser = await setupUserWithCharacter(gmPage, `worker${workerIndex}-gm-${timestamp}`);
 
       await gmPage.waitForSelector('[data-testid="welcome-message"]', { state: 'visible', timeout: 15000 });
 
+      // Use Supabase admin client to fetch user IDs after UI-based creation
+      // This is necessary because the UI signup flow doesn't return user IDs
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
 
+      // Look up the user by email to get their auth user ID
       const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
       if (usersError) throw new Error(`Failed to list users: ${usersError.message}`);
 
@@ -100,10 +150,15 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
       const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
       const familyCode = codeMatch?.[1] || "";
 
+      // Track all created resources for cleanup during teardown
       const createdUserIds = [authData.userId];
       const createdFamilyIds = [authData.familyId];
       const createdContexts = [gmContext];
 
+      /**
+       * Helper function: Create an ephemeral user in their OWN family (not GM's family).
+       * Use this when you need an independent user for testing cross-family scenarios.
+       */
       const createEphemeralUser = async (
         userName: string,
         options: CreateFamilyMemberOptions = {},
@@ -157,6 +212,10 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
         };
       };
 
+      /**
+       * Helper function: Create a family member who JOINS the GM's family.
+       * Use this for testing multi-user scenarios within the same family.
+       */
       const createFamilyMember = async (
         options: CreateFamilyMemberOptions = {},
       ): Promise<EphemeralUser> => {
@@ -232,6 +291,8 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
         };
       };
 
+      // YIELD PHASE: Provide the fixture to all tests in this worker
+      // All tests will share this same GM user and can create additional users as needed
       await use({
         gmPage,
         gmEmail: gmUser.email,
@@ -246,10 +307,13 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
         createFamilyMember,
       });
 
+      // TEARDOWN PHASE: Cleanup all resources created during this worker's lifetime
+      // Close all browser contexts first
       for (const context of createdContexts) {
         await context.close();
       }
 
+      // Delete all users from the database (cascading deletes handle families, characters, etc.)
       console.log(`[Worker ${workerIndex}] Starting cleanup...`);
       try {
         for (const userId of createdUserIds) {

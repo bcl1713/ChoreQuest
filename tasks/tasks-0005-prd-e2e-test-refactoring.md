@@ -107,11 +107,11 @@
   - [x] 5.16 User runs full Phase 2 suite with 2 workers to verify parallel execution works
 
 - [ ] 6.0 Cleanup and Documentation
-  - [ ] 6.1 Delete or deprecate `createFamilyForWorker.ts` (database-based approach no longer needed)
-  - [ ] 6.2 Remove all remaining `createClient` imports from `@supabase/supabase-js` in test files
-  - [ ] 6.3 Remove all references to `SUPABASE_SERVICE_ROLE_KEY` in test files (except in cleanup code)
-  - [ ] 6.4 Update `CLAUDE.md` if test execution patterns have changed (document fixture usage)
-  - [ ] 6.5 Add inline comments to `family-fixture.ts` explaining worker-scoped fixture pattern for future developers
+  - [x] 6.1 Delete or deprecate `createFamilyForWorker.ts` (database-based approach no longer needed)
+  - [x] 6.2 Remove all remaining `createClient` imports from `@supabase/supabase-js` in test files
+  - [x] 6.3 Remove all references to `SUPABASE_SERVICE_ROLE_KEY` in test files (except in cleanup code)
+  - [x] 6.4 Update `CLAUDE.md` if test execution patterns have changed (document fixture usage)
+  - [x] 6.5 Add inline comments to `family-fixture.ts` explaining worker-scoped fixture pattern for future developers
   - [ ] 6.6 User runs complete test suite with 2 workers: `npx playwright test --reporter=line`
   - [ ] 6.7 Verify all 20 test suites pass consistently with parallel execution
   - [ ] 6.8 Document any discovered issues or edge cases in PRD or separate notes file
