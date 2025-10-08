@@ -113,10 +113,12 @@ export default function QuestCreateModal({
       return;
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
+    let questCreated = false;
+
+    try {
       if (dueDate && !validateDueDate(dueDate)) {
         setError("Due date must be in the future");
         return;
@@ -128,14 +130,13 @@ export default function QuestCreateModal({
           return;
         }
 
-        // Create quest from template using quest template service
         await questTemplateService.createQuestFromTemplate(
           selectedTemplateId,
           user.id,
           {
             assignedToId: assignedToId || undefined,
             dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-          }
+          },
         );
       } else {
         if (!title.trim() || !description.trim()) {
@@ -143,15 +144,14 @@ export default function QuestCreateModal({
           return;
         }
 
-        // Create ad-hoc quest instance directly
         const questData = {
           title: title.trim(),
           description: description.trim(),
           xp_reward: xpReward,
           gold_reward: goldReward,
-          difficulty: difficulty,
-          category: category,
-          status: 'PENDING',
+          difficulty,
+          category,
+          status: "PENDING",
           family_id: profile.family_id,
           created_by_id: user.id,
           assigned_to_id: assignedToId || null,
@@ -159,7 +159,7 @@ export default function QuestCreateModal({
         };
 
         const { error: insertError } = await supabase
-          .from('quest_instances')
+          .from("quest_instances")
           .insert(questData);
 
         if (insertError) {
@@ -167,13 +167,24 @@ export default function QuestCreateModal({
         }
       }
 
-      resetForm();
-      onQuestCreated();
-      onClose();
+      questCreated = true;
+      handleClose();
+
+      void Promise.resolve(onQuestCreated()).catch((callbackError) => {
+        console.error(
+          "QuestCreateModal: failed to refresh quest data after creation",
+          callbackError,
+        );
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create quest");
     } finally {
       setLoading(false);
+      if (!questCreated && !isOpen) {
+        // If the modal was closed externally while we were processing,
+        // ensure form state is reset.
+        resetForm();
+      }
     }
   };
 

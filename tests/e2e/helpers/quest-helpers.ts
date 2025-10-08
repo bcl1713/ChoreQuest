@@ -248,21 +248,34 @@ export async function pickupQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    // Find the Available Quests section
-    const availableSection = page.locator('text=📋 Available Quests').locator('..');
-    // Find the quest by heading within Available Quests section
-    const questHeading = availableSection.getByRole('heading', { name: questName, exact: true });
-    // Get the parent container and find the pickup button
-    const questContainer = questHeading.locator('../../..');
-    await questContainer.locator('button:has-text("Pick Up")').click();
+    const availableSection = page
+      .locator('text=📋 Available Quests')
+      .locator("..");
+    const questHeading = availableSection.getByRole("heading", {
+      name: questName,
+      exact: true,
+    });
+    const questContainer = questHeading.locator("../../..");
+    await questContainer.getByTestId("pick-up-quest-button").click();
   } else {
-    await page.locator('button:has-text("Pick Up")').first().click();
+    await page.getByTestId("pick-up-quest-button").first().click();
   }
 
-  // Wait for button to change to "Start Quest"
-  await expect(
-    page.locator('button:has-text("Start")').first(),
-  ).toBeVisible();
+  if (questName) {
+    const questHeading = page.getByRole("heading", {
+      name: questName,
+      exact: true,
+    });
+    await expect(questHeading).toBeVisible({ timeout: 15000 });
+    const questContainer = questHeading.locator("../../..");
+    await expect(
+      questContainer.getByTestId("start-quest-button"),
+    ).toBeVisible({ timeout: 15000 });
+  } else {
+    await expect(page.getByTestId("start-quest-button").first()).toBeVisible({
+      timeout: 15000,
+    });
+  }
 }
 
 /**
@@ -281,19 +294,31 @@ export async function startQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    // Find quest by heading in My Quests section
-    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
-    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
-    const questContainer = questHeading.locator('../../..');
-    await questContainer.locator('button:has-text("Start")').click();
+    const myQuestsSection = page.locator("text=🗡️ My Quests").locator("..");
+    const questHeading = myQuestsSection.getByRole("heading", {
+      name: questName,
+      exact: true,
+    });
+    const questContainer = questHeading.locator("../../..");
+    await questContainer.getByTestId("start-quest-button").click();
   } else {
-    await page.locator('button:has-text("Start")').first().click();
+    await page.getByTestId("start-quest-button").first().click();
   }
 
-  // Wait for button to change to "Complete Quest"
-  await expect(
-    page.locator('button:has-text("Complete")').first(),
-  ).toBeVisible();
+  if (questName) {
+    const questHeading = page.getByRole("heading", {
+      name: questName,
+      exact: true,
+    });
+    const questContainer = questHeading.locator("../../..");
+    await expect(
+      questContainer.getByTestId("complete-quest-button"),
+    ).toBeVisible({ timeout: 15000 });
+  } else {
+    await expect(
+      page.getByTestId("complete-quest-button").first(),
+    ).toBeVisible({ timeout: 15000 });
+  }
 }
 
 /**
@@ -312,13 +337,15 @@ export async function completeQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
-    // Find quest by heading in My Quests section
-    const myQuestsSection = page.locator('text=🗡️ My Quests').locator('..');
-    const questHeading = myQuestsSection.getByRole('heading', { name: questName, exact: true });
-    const questContainer = questHeading.locator('../../..');
-    await questContainer.locator('button:has-text("Complete")').click();
+    const myQuestsSection = page.locator("text=🗡️ My Quests").locator("..");
+    const questHeading = myQuestsSection.getByRole("heading", {
+      name: questName,
+      exact: true,
+    });
+    const questContainer = questHeading.locator("../../..");
+    await questContainer.getByTestId("complete-quest-button").click();
   } else {
-    await page.locator('button:has-text("Complete")').first().click();
+    await page.getByTestId("complete-quest-button").first().click();
   }
 
   await page.waitForLoadState("networkidle");
@@ -345,9 +372,9 @@ export async function approveQuest(
       .first();
     await expect(questHeading).toBeVisible({ timeout: 10000 });
     const questContainer = questHeading.locator("../../..");
-    await questContainer.locator('button:has-text("Approve")').click();
+    await questContainer.getByTestId("approve-quest-button").click();
   } else {
-    await page.locator('button:has-text("Approve")').first().click();
+    await page.getByTestId("approve-quest-button").first().click();
   }
 
   // Wait for the approval to process
@@ -408,8 +435,8 @@ export async function createAndCompleteQuest(
   questData: QuestData,
 ): Promise<void> {
   await createCustomQuest(page, questData);
-  await pickupQuest(page);
-  await startQuest(page);
-  await completeQuest(page);
-  await approveQuest(page);
+  await pickupQuest(page, questData.title);
+  await startQuest(page, questData.title);
+  await completeQuest(page, questData.title);
+  await approveQuest(page, questData.title);
 }

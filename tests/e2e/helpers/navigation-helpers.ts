@@ -236,21 +236,33 @@ export async function setQuestCreationMode(
   const templateButton = page.getByTestId("template-mode-button");
   const adhocButton = page.getByTestId("adhoc-mode-button");
   const targetButton = mode === "template" ? templateButton : adhocButton;
-  const expectedActiveClass = "bg-gold-600";
   const modeIndicator =
     mode === "template"
       ? page.locator('[data-testid="template-select"]')
       : page.locator('input[placeholder="Enter quest title..."]');
 
-  await expect(targetButton).toBeVisible({ timeout: 15000 });
+  const templatePlaceholder = page.locator(
+    'select[data-testid="template-select"] option[value=""]',
+  );
 
-  await expect(async () => {
-    await targetButton.click();
-    const className = (await targetButton.getAttribute("class")) ?? "";
-    expect(className.includes(expectedActiveClass)).toBeTruthy();
-    const isVisible = await modeIndicator.isVisible();
-    expect(isVisible).toBeTruthy();
-  }).toPass({ timeout: 15000 });
+  await expect(targetButton).toBeVisible({ timeout: 15000 });
+  await targetButton.click();
+
+  // Wait for the button to reflect active state
+  await expect(targetButton).toHaveAttribute(
+    "class",
+    /bg-gold-600/,
+    { timeout: 15000 },
+  );
+
+  if (mode === "template") {
+    // Wait for placeholder option to be present which confirms select rendered
+    await expect(templatePlaceholder).toBeAttached({ timeout: 15000 });
+  }
+
+  // Wait for the relevant form controls to appear
+  await modeIndicator.waitFor({ state: "attached", timeout: 15000 });
+  await expect(modeIndicator).toBeVisible({ timeout: 15000 });
 }
 
 /**

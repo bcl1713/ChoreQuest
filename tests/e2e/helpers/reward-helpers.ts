@@ -1,4 +1,6 @@
 import { Page, expect } from "@playwright/test";
+import { navigateToDashboard } from "./navigation-helpers";
+import { giveCharacterGoldViaQuest } from "./setup-helpers";
 
 /**
  * Reward Helper Functions for E2E Tests
@@ -12,6 +14,38 @@ export interface RewardData {
   description: string;
   type?: "SCREEN_TIME" | "EXPERIENCE" | "PURCHASE" | "PRIVILEGE";
   cost: number;
+}
+
+async function readCharacterGold(page: Page): Promise<number> {
+  const text =
+    (await page.locator('[data-testid="character-gold"]').textContent()) || "";
+  const numeric = text.replace(/\D/g, "");
+  return parseInt(numeric || "0", 10);
+}
+
+export async function ensureGoldBalance(
+  page: Page,
+  minimumGold: number,
+): Promise<void> {
+  await navigateToDashboard(page);
+  let currentGold = await readCharacterGold(page);
+
+  for (let attempt = 0; currentGold < minimumGold && attempt < 3; attempt += 1) {
+    const shortfall = minimumGold - currentGold;
+    const targetAward = Math.max(50, Math.ceil(shortfall * 1.5) + 50);
+    await giveCharacterGoldViaQuest(page, targetAward);
+    await navigateToDashboard(page);
+    currentGold = await readCharacterGold(page);
+  }
+
+  if (currentGold >= minimumGold) {
+    return;
+  }
+
+  await expect(async () => {
+    currentGold = await readCharacterGold(page);
+    expect(currentGold).toBeGreaterThanOrEqual(minimumGold);
+  }).toPass({ timeout: 15000 });
 }
 
 /**
@@ -133,6 +167,10 @@ export async function approveRewardRedemption(
   await expect(
     page.locator('[data-testid="pending-redemption-item"]'),
   ).toHaveCount(0);
+
+  await expect(
+    page.locator('h3:has-text("Approved - Awaiting Fulfillment")'),
+  ).toBeVisible({ timeout: 15000 });
 }
 
 /**
@@ -194,18 +232,40 @@ export async function markRedemptionFulfilled(
   rewardName?: string,
 ): Promise<void> {
   if (rewardName) {
-    const approvedItem = page
+    const approvedItemLocator = page
       .locator('[data-testid="approved-redemption-item"]')
       .filter({ hasText: rewardName });
-    await approvedItem
-      .locator('[data-testid="fulfill-redemption-button"]')
-      .click();
+
+    const approvedItem = approvedItemLocator.first();
+    await expect(approvedItem).toBeVisible({ timeout: 15000 });
+
+    const fulfillButton = approvedItem.locator(
+      '[data-testid="fulfill-redemption-button"]',
+    );
+    await expect(fulfillButton).toBeVisible({ timeout: 15000 });
+    await fulfillButton.click();
   } else {
-    await page.click('[data-testid="fulfill-redemption-button"]');
+    const fulfillButton = page
+      .locator('[data-testid="fulfill-redemption-button"]')
+      .first();
+    await expect(fulfillButton).toBeVisible({ timeout: 15000 });
+    await fulfillButton.click();
   }
 
   // Wait for fulfillment to process
   await page.waitForLoadState("networkidle");
+
+  if (rewardName) {
+    await expect(
+      page
+        .locator('[data-testid="approved-redemption-item"]')
+        .filter({ hasText: rewardName }),
+    ).toHaveCount(0, { timeout: 15000 });
+  } else {
+    await expect(
+      page.locator('[data-testid="approved-redemption-item"]'),
+    ).toHaveCount(0, { timeout: 15000 });
+  }
 
   // Verify it appears in redemption history
   await expect(
@@ -272,7 +332,12 @@ export async function deleteReward(
   // Confirm deletion in modal (if there's a confirmation)
   const confirmButton = page.getByTestId("confirm-delete-button");
   if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await confirmButton.click();
+    await confirmButton.evaluate((button) => (button as HTMLButtonElement).click());
+  }
+
+  const deleteDialog = page.getByTestId("delete-confirmation-dialog");
+  if (await deleteDialog.count()) {
+    await expect(deleteDialog).not.toBeVisible({ timeout: 15000 });
   }
 
   // Wait for deletion to process

@@ -30,7 +30,12 @@
 - `tests/e2e/reward-management.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/reward-realtime.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
 - `tests/e2e/reward-redemption-approval.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
-- `tests/e2e/reward-store.spec.ts` - **MIGRATE**: Switch to worker-scoped fixtures
+- `tests/e2e/reward-store.spec.ts` - **MIGRATED**: Uses worker-scoped fixtures, resilient gold-balancing helper, and stable reward cleanup
+- `tests/e2e/helpers/reward-helpers.ts` - **MODIFIED**: Deletes rewards via UI with deterministic modal handling
+- `tests/e2e/helpers/navigation-helpers.ts` - **MODIFIED**: Hardened quest creation mode switching for template tests
+- `components/reward-manager.tsx` - **MODIFIED**: Keeps reward delete dialog stable and creates rewards active for tests
+- `components/quest-create-modal.tsx` - **MODIFIED**: Closes quest modal immediately after successful creation
+- `components/quest-template-manager.tsx` - **MODIFIED**: Stabilized template delete confirmation state
 
 ### Supporting Files
 - `playwright.config.ts` - **REFERENCE**: Already configured with `workers: 2` and `fullyParallel: true`
@@ -92,8 +97,8 @@
 - [x] 5.6 Migrate `quest-pickup-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
 - [x] 5.7 Migrate `quest-completion-rewards.spec.ts`: Use worker-scoped fixtures; verify tests pass
 - [x] 5.8 Migrate `reward-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
-  - [ ] 5.9 Migrate `reward-store.spec.ts`: Use worker-scoped fixtures; verify tests pass
-  - [ ] 5.10 Migrate `reward-redemption-approval.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
+  - [x] 5.9 Migrate `reward-store.spec.ts`: Use worker-scoped fixtures; verify tests pass
+  - [x] 5.10 Migrate `reward-redemption-approval.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [ ] 5.11 Migrate `reward-realtime.spec.ts`: Use fixtures and multi-user helpers if needed; verify tests pass
   - [ ] 5.12 Migrate `hero-reward-display.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [ ] 5.13 Migrate `family-joining.spec.ts`: Use fixtures and multi-user helpers; verify tests pass

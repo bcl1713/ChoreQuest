@@ -293,9 +293,9 @@ test.describe("Quest Template Management", () => {
     // Verify confirmation modal appears
     await expect(gmPage.getByTestId("delete-confirm-modal")).toBeVisible();
     await expect(gmPage.getByText("Confirm Delete")).toBeVisible();
-    await expect(
-      gmPage.getByText("Are you sure you want to delete this template?"),
-    ).toBeVisible();
+    await expect(gmPage.getByTestId("delete-confirm-modal")).toContainText(
+      `Are you sure you want to delete ${templateName}?`,
+    );
 
     // Confirm deletion
     await gmPage.click('[data-testid="confirm-delete-button"]');
