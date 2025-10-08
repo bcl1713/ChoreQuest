@@ -36,6 +36,7 @@
 - `components/reward-manager.tsx` - **MODIFIED**: Keeps reward delete dialog stable and creates rewards active for tests
 - `components/quest-create-modal.tsx` - **MODIFIED**: Closes quest modal immediately after successful creation
 - `components/quest-template-manager.tsx` - **MODIFIED**: Stabilized template delete confirmation state
+- `components/quest-dashboard.tsx` - **MODIFIED**: Added optimistic UI updates to eliminate race conditions with realtime subscriptions
 
 ### Supporting Files
 - `playwright.config.ts` - **REFERENCE**: Already configured with `workers: 2` and `fullyParallel: true`
