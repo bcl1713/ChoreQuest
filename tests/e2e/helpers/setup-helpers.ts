@@ -94,7 +94,7 @@ export async function setupUserWithCharacter(
 
   if (!options.skipCharacterCreation) {
     // Complete character creation - wait longer for Supabase auth
-    await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
+    await page.waitForURL(/.*\/character\/create/, { timeout: 25000 });
     await page.fill("input#characterName", user.characterName);
     await page.click(`[data-testid="class-${characterClass.toLowerCase()}"]`);
 
@@ -363,4 +363,3 @@ export async function giveCharacterGoldViaQuest(
   await completeQuest(page);
   await approveQuest(page);
 }
-

@@ -104,7 +104,7 @@ export async function createCustomQuest(
   // Verify quest appears in the list (with generous timeout for parallel runs)
   // Skip this check if the caller will verify visibility in a different context
   if (!skipVisibilityCheck) {
-    await expect(page.getByText(title).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(title).first()).toBeVisible({ timeout: 20000 });
   }
 }
 

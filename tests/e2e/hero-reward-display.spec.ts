@@ -72,6 +72,7 @@ test.describe("Hero Reward Display After GM Approval", () => {
       difficulty: "MEDIUM",
       goldReward: 100,
       xpReward: 200,
+      skipVisibilityCheck: true,
     });
 
     await heroPage.reload({ waitUntil: "networkidle" });
@@ -80,6 +81,7 @@ test.describe("Hero Reward Display After GM Approval", () => {
     await completeQuest(heroPage, questTitle);
 
     await navigateToDashboard(gmPage);
+    await gmPage.reload({ waitUntil: "networkidle" });
     await approveQuest(gmPage, questTitle);
 
     await heroPage.reload({ waitUntil: "networkidle" });
@@ -115,6 +117,7 @@ test.describe("Hero Reward Display After GM Approval", () => {
       difficulty: "HARD",
       goldReward: 80,
       xpReward: 150,
+      skipVisibilityCheck: true,
     });
 
     await createCustomQuest(gmPage, {
@@ -123,6 +126,7 @@ test.describe("Hero Reward Display After GM Approval", () => {
       difficulty: "EASY",
       goldReward: 50,
       xpReward: 100,
+      skipVisibilityCheck: true,
     });
 
     await heroOne.page.reload({ waitUntil: "networkidle" });
@@ -136,6 +140,7 @@ test.describe("Hero Reward Display After GM Approval", () => {
     await completeQuest(heroTwo.page, heroTwoQuestTitle);
 
     await navigateToDashboard(gmPage);
+    await gmPage.reload({ waitUntil: "networkidle" });
     await approveQuest(gmPage, heroOneQuestTitle);
     await approveQuest(gmPage, heroTwoQuestTitle);
 
