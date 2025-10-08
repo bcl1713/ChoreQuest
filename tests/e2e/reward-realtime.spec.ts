@@ -14,33 +14,71 @@ async function resetRewardManagement(gmPage: Page): Promise<void> {
   await navigateToDashboard(gmPage);
   await navigateToHeroTab(gmPage, "Reward Management");
 
+  // Clear pending redemptions
   const pendingRedemptions = gmPage.locator(
     '[data-testid="pending-redemption-item"]',
   );
-  while (await pendingRedemptions.count()) {
-    await pendingRedemptions
+  let pendingCount = await pendingRedemptions.count();
+  while (pendingCount > 0) {
+    const denyButton = pendingRedemptions
       .first()
-      .locator('[data-testid="deny-redemption-button"]')
-      .click();
-    await gmPage.waitForLoadState("networkidle");
+      .locator('[data-testid="deny-redemption-button"]');
+
+    // Check if button is visible before clicking
+    if (await denyButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await denyButton.click();
+      await gmPage.waitForLoadState("networkidle");
+    }
+
+    // Re-check count to avoid infinite loop
+    const newCount = await pendingRedemptions.count();
+    if (newCount === pendingCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    pendingCount = newCount;
   }
 
+  // Clear approved redemptions
   const approvedRedemptions = gmPage.locator(
     '[data-testid="approved-redemption-item"]',
   );
-  while (await approvedRedemptions.count()) {
-    await approvedRedemptions
+  let approvedCount = await approvedRedemptions.count();
+  while (approvedCount > 0) {
+    const fulfillButton = approvedRedemptions
       .first()
-      .locator('[data-testid="fulfill-redemption-button"]')
-      .click();
-    await gmPage.waitForLoadState("networkidle");
+      .locator('[data-testid="fulfill-redemption-button"]');
+
+    // Check if button is visible before clicking
+    if (await fulfillButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await fulfillButton.click();
+      await gmPage.waitForLoadState("networkidle");
+    }
+
+    // Re-check count to avoid infinite loop
+    const newCount = await approvedRedemptions.count();
+    if (newCount === approvedCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    approvedCount = newCount;
   }
 
+  // Delete all rewards
   const rewardCards = gmPage.locator('[data-testid^="reward-card-"]');
-  while (await rewardCards.count()) {
+  let rewardCount = await rewardCards.count();
+  while (rewardCount > 0) {
     const name = (await rewardCards.first().locator("h3").textContent())?.trim();
     if (!name) break;
     await deleteReward(gmPage, name);
+
+    // Re-check count to avoid infinite loop
+    const newCount = await rewardCards.count();
+    if (newCount === rewardCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    rewardCount = newCount;
   }
 
   await navigateToHeroTab(gmPage, "Quests & Adventures");

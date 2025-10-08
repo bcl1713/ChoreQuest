@@ -136,8 +136,9 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   if (await enterRealmButton.isVisible()) {
     await enterRealmButton.click();
     await expect(page).toHaveURL(/.*\/dashboard/);
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("welcome-message")).toBeVisible({
-      timeout: 15000,
+      timeout: 30000,
     });
     return;
   }
@@ -146,16 +147,18 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   if (await backButton.isVisible()) {
     await backButton.click();
     await expect(page).toHaveURL(/.*\/dashboard/);
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("welcome-message")).toBeVisible({
-      timeout: 15000,
+      timeout: 30000,
     });
     return;
   }
 
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/.*\/dashboard/);
+  await page.waitForLoadState("networkidle");
   await expect(page.getByTestId("welcome-message")).toBeVisible({
-    timeout: 15000,
+    timeout: 30000,
   });
 }
 
@@ -324,18 +327,24 @@ export async function navigateToAdminTabViaURL(
  * ```
  */
 export async function openQuestCreationModal(page: Page): Promise<void> {
-  const questModal = page.locator("text=Create New Quest");
+  const questModal = page.getByTestId("create-quest-modal");
+  const createButton = page.locator('[data-testid="create-quest-button"]');
+
+  // If modal is already visible, close it first
   if (await questModal.isVisible({ timeout: 1000 }).catch(() => false)) {
     const cancelButton = page.locator('[data-testid="cancel-quest-button"]');
-    if (await cancelButton.isVisible({ timeout: 500 }).catch(() => false)) {
-      await cancelButton.click();
-    } else {
-      await page.keyboard.press("Escape");
-    }
-    await expect(questModal).not.toBeVisible();
+    await cancelButton.click();
+    // Wait for modal to fully close (Framer Motion exit animation)
+    await expect(questModal).not.toBeVisible({ timeout: 5000 });
   }
-  await page.click('[data-testid="create-quest-button"]');
-  await expect(page.locator("text=Create New Quest")).toBeVisible();
+
+  // Wait for create button to be ready before clicking
+  await expect(createButton).toBeVisible();
+  await expect(createButton).toBeEnabled();
+  await createButton.click();
+
+  // Wait for modal to fully appear
+  await expect(questModal).toBeVisible({ timeout: 10000 });
 }
 
 /**

@@ -40,15 +40,11 @@ test.describe("Quest Pickup and Management", () => {
 
     // Verify quest moved to My Quests
     await expect(gmPage.getByText("🗡️ My Quests")).toBeVisible();
-    const myQuestsSection = gmPage
-      .locator("text=🗡️ My Quests")
-      .locator("..");
+    const myQuestsSection = gmPage.locator("text=🗡️ My Quests").locator("..");
     await expect(myQuestsSection.getByText(questTitle)).toBeVisible();
   });
 
-  test("Quest permissions and state management", async ({
-    workerFamily,
-  }) => {
+  test("Quest permissions and state management", async ({ workerFamily }) => {
     const { gmPage } = workerFamily;
     await navigateToDashboard(gmPage);
     const questTitle = uniqueQuestName("Test Permission Quest");
@@ -68,7 +64,7 @@ test.describe("Quest Pickup and Management", () => {
 
     // Complete the quest
     await completeQuest(gmPage, questTitle);
-    await expect(gmPage.getByText("COMPLETED")).toBeVisible();
+    await expectQuestStatus(gmPage, questTitle, "COMPLETED");
 
     // Approve quest as GM
     await approveQuest(gmPage, questTitle);
@@ -107,7 +103,7 @@ test.describe("Quest Pickup and Management", () => {
 
     await startQuest(gmPage, questTitle);
     await completeQuest(gmPage, questTitle);
-    await expect(gmPage.getByText("COMPLETED")).toBeVisible();
+    await expectQuestStatus(gmPage, questTitle, "COMPLETED");
 
     await approveQuest(gmPage, questTitle);
     await expectQuestStatus(gmPage, questTitle, "APPROVED");

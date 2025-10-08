@@ -204,6 +204,7 @@ export default function QuestCreateModal({
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
           onClick={(e) => e.target === e.currentTarget && handleClose()}
+          data-testid="create-quest-modal"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}

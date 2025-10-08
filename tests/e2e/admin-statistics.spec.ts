@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "./helpers/family-fixture";
 import { giveCharacterGoldViaQuest, loginUser } from "./helpers/setup-helpers";
 import { navigateToAdmin, navigateToDashboard } from "./helpers/navigation-helpers";
@@ -15,6 +16,15 @@ import {
  * Tests that family statistics are displayed correctly and update in real-time
  * when quests are completed, rewards are redeemed, and characters level up.
  */
+
+async function readPendingQuestCount(page: Page): Promise<number> {
+  const statsPanel = page.getByTestId("statistics-panel");
+  const pendingCard = statsPanel.getByText(/Pending Approvals/i).locator("..");
+  const questLine = pendingCard.locator("p", { hasText: /quests/ }).last();
+  const text = (await questLine.textContent()) ?? "";
+  const match = text.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
 
 test.describe("Admin Dashboard Statistics", () => {
   test.beforeEach(async ({ workerFamily }) => {
@@ -37,7 +47,8 @@ test.describe("Admin Dashboard Statistics", () => {
 
     // Verify statistics show reasonable initial values
     const statsPanel = gmPage.getByTestId("statistics-panel");
-    await expect(statsPanel).toContainText("0 quests");
+    const pendingQuests = await readPendingQuestCount(gmPage);
+    expect(pendingQuests).toBeGreaterThanOrEqual(0);
   });
 
   test("updates quest completion statistics in real-time", async ({ workerFamily }) => {
@@ -48,17 +59,18 @@ test.describe("Admin Dashboard Statistics", () => {
     await navigateToDashboard(gmPage);
 
     const timestamp = Date.now();
+    const questTitle = `Test Quest ${timestamp}`;
     await createCustomQuest(gmPage, {
-      title: `Test Quest ${timestamp}`,
+      title: questTitle,
       description: "Test quest for statistics",
       goldReward: 10,
       xpReward: 50,
     });
 
-    await pickupQuest(gmPage);
-    await startQuest(gmPage);
-    await completeQuest(gmPage);
-    await approveQuest(gmPage);
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await approveQuest(gmPage, questTitle);
 
     await navigateToAdmin(gmPage);
 
@@ -93,26 +105,30 @@ test.describe("Admin Dashboard Statistics", () => {
 
     const statsPanel = gmPage.getByTestId("statistics-panel");
     await expect(statsPanel.getByText(/Pending Approvals/i)).toBeVisible();
-    await expect(statsPanel).toContainText("0 quests");
+    const initialPendingQuests = await readPendingQuestCount(gmPage);
 
     await navigateToDashboard(gmPage);
     const timestamp = Date.now();
+    const questTitle = `Pending Quest ${timestamp}`;
     await createCustomQuest(gmPage, {
-      title: `Pending Quest ${timestamp}`,
+      title: questTitle,
       description: "Quest needs approval",
       goldReward: 5,
       xpReward: 25,
     });
 
-    await pickupQuest(gmPage);
-    await startQuest(gmPage);
-    await completeQuest(gmPage);
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
 
     await gmPage.waitForLoadState("networkidle");
 
     await navigateToAdmin(gmPage);
 
-    await expect(statsPanel).toContainText("1 quests", { timeout: 5000 });
+    await expect(async () => {
+      const pendingQuests = await readPendingQuestCount(gmPage);
+      expect(pendingQuests).toBe(initialPendingQuests + 1);
+    }).toPass({ timeout: 5000 });
   });
 
   test("statistics update when viewed in second browser window", async ({

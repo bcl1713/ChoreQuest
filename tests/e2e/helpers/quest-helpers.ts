@@ -1,5 +1,9 @@
 import { Page, expect } from "@playwright/test";
-import { openQuestCreationModal, setQuestCreationMode } from "./navigation-helpers";
+import {
+  openQuestCreationModal,
+  setQuestCreationMode,
+  navigateToDashboard,
+} from "./navigation-helpers";
 
 /**
  * Quest Helper Functions for E2E Tests
@@ -247,6 +251,7 @@ export async function pickupQuest(
   page: Page,
   questName?: string,
 ): Promise<void> {
+  await navigateToDashboard(page);
   if (questName) {
     const availableSection = page
       .locator('text=📋 Available Quests')
@@ -268,13 +273,22 @@ export async function pickupQuest(
     });
     await expect(questHeading).toBeVisible({ timeout: 15000 });
     const questContainer = questHeading.locator("../../..");
-    await expect(
-      questContainer.getByTestId("start-quest-button"),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(async () => {
+      const startButtons = questContainer.getByTestId("start-quest-button");
+      const count = await startButtons.count();
+      expect(count).toBeGreaterThan(0);
+      const firstButton = startButtons.first();
+      const visible = await firstButton.isVisible();
+      expect(visible).toBe(true);
+    }).toPass({ timeout: 15000 });
   } else {
-    await expect(page.getByTestId("start-quest-button").first()).toBeVisible({
-      timeout: 15000,
-    });
+    await expect(async () => {
+      const startButtons = page.getByTestId("start-quest-button");
+      const count = await startButtons.count();
+      expect(count).toBeGreaterThan(0);
+      const visible = await startButtons.first().isVisible();
+      expect(visible).toBe(true);
+    }).toPass({ timeout: 15000 });
   }
 }
 

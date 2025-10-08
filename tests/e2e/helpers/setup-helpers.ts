@@ -64,58 +64,81 @@ export async function setupUserWithCharacter(
   prefix: string,
   options: SetupOptions = {},
 ): Promise<TestUser> {
-  const user =
-    options.email && options.password
-      ? {
-          email: options.email,
-          password: options.password,
-          userName: options.userName || `${prefix} User`,
-          familyName: `${prefix} Family`,
-          characterName: `${prefix} Character`,
-        }
-      : createTestUser(prefix);
   const characterClass = options.characterClass || "KNIGHT";
+  const maxAttempts = options.email ? 1 : 3;
+  let lastError: unknown;
 
-  // Clear browser state
-  await clearBrowserState(page);
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const attemptSuffix = attempt === 0 ? "" : `-retry${attempt}`;
+    const user =
+      attempt === 0 && options.email && options.password
+        ? {
+            email: options.email,
+            password: options.password,
+            userName: options.userName || `${prefix} User`,
+            familyName: `${prefix} Family`,
+            characterName: `${prefix} Character`,
+          }
+        : createTestUser(`${prefix}${attemptSuffix}`);
 
-  // Navigate to home and start family creation
-  await page.goto("/");
-  await page.click('[data-testid="create-family-button"]');
-  await expect(page).toHaveURL(/.*\/auth\/create-family/);
-
-  // Fill family creation form
-  await page.fill('input[name="name"]', user.familyName);
-  await page.fill('input[name="email"]', user.email);
-  await page.fill('input[name="password"]', user.password);
-  await page.fill('input[name="userName"]', user.userName);
-
-  await page.click('button[type="submit"]');
-
-  if (!options.skipCharacterCreation) {
-    // Complete character creation - wait longer for Supabase auth
-    await page.waitForURL(/.*\/character\/create/, { timeout: 25000 });
-    await page.fill("input#characterName", user.characterName);
-    await page.click(`[data-testid="class-${characterClass.toLowerCase()}"]`);
-
-    // Add a small delay before clicking the submit button to ensure state is ready
-
-    await page.click('button:text("Begin Your Quest")');
-
-    // Wait for either dashboard or any error states - be more flexible
     try {
-      await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
-      await expect(
-        page.locator('[data-testid="welcome-message"]'),
-      ).toContainText(`Welcome back, ${user.characterName}!`, {
-        timeout: 10000,
-      });
+      await clearBrowserState(page);
+      await page.goto("/");
+      await page.click('[data-testid="create-family-button"]');
+      await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+      await page.fill('input[name="name"]', user.familyName);
+      await page.fill('input[name="email"]', user.email);
+      await page.fill('input[name="password"]', user.password);
+      await page.fill('input[name="userName"]', user.userName);
+
+      await page.click('button[type="submit"]');
+
+      const navigatedToCharacterCreate = await page
+        .waitForURL(/.*\/character\/create/, { timeout: 20000 })
+        .then(() => true)
+        .catch(() => false);
+
+      if (!navigatedToCharacterCreate) {
+        lastError = await captureFamilyCreationError(page);
+        continue;
+      }
+
+      if (!options.skipCharacterCreation) {
+        await page.fill("input#characterName", user.characterName);
+        await page.click(`[data-testid="class-${characterClass.toLowerCase()}"]`);
+        await page.click('button:text("Begin Your Quest")');
+
+        await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
+        await expect(
+          page.locator('[data-testid="welcome-message"]'),
+        ).toContainText(`Welcome back, ${user.characterName}!`, {
+          timeout: 10000,
+        });
+      }
+
+      return user;
     } catch (error) {
-      throw error;
+      lastError = error;
     }
   }
 
-  return user;
+  if (lastError instanceof Error) {
+    throw lastError;
+  }
+
+  throw new Error("Failed to create family and character after multiple attempts");
+}
+
+async function captureFamilyCreationError(page: Page): Promise<Error> {
+  const errorLocator = page.locator('text=/User creation failed/i');
+  if (await errorLocator.isVisible().catch(() => false)) {
+    const message = (await errorLocator.textContent())?.trim();
+    if (message) {
+      return new Error(message);
+    }
+  }
+  return new Error("Family creation did not progress to character setup");
 }
 
 /**

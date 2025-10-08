@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './auth-context';
 import { useRealtime } from './realtime-context';
 import { supabase } from './supabase';
@@ -25,19 +25,31 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
+  const hasLoadedRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+
+  const updateHasLoaded = useCallback((value: boolean) => {
+    hasLoadedRef.current = value;
+    setHasLoaded(value);
+  }, []);
 
   const fetchCharacter = useCallback(async () => {
     if (!user) {
       setCharacter(null);
       setIsLoading(false);
       // Don't set hasLoaded=true here - we haven't actually tried to fetch
+      updateHasLoaded(false);
+      isInitialLoadRef.current = true;
       return;
     }
 
     console.log('CharacterContext: Fetching character for user:', user.id);
-    setIsLoading(true);
+    const shouldShowSpinner = isInitialLoadRef.current || !hasLoadedRef.current;
+    if (shouldShowSpinner) {
+      setIsLoading(true);
+      updateHasLoaded(false);
+    }
     setError(null);
-    setHasLoaded(false);
 
     try {
       const { data, error } = await supabase
@@ -64,10 +76,13 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setError(message);
       console.error('Character fetch error:', err);
     } finally {
-      setIsLoading(false);
-      setHasLoaded(true); // Mark as loaded regardless of success/failure
+      updateHasLoaded(true); // Mark as loaded regardless of success/failure
+      if (shouldShowSpinner) {
+        setIsLoading(false);
+      }
+      isInitialLoadRef.current = false;
     }
-  }, [user]);
+  }, [user, updateHasLoaded]);
 
   useEffect(() => {
     fetchCharacter();

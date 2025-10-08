@@ -1,7 +1,12 @@
 import type { Page } from "@playwright/test";
 import { test, expect } from "./helpers/family-fixture";
+import { navigateToDashboard } from "./helpers/navigation-helpers";
 
 async function openFamilyManagementTab(page: Page): Promise<void> {
+  await navigateToDashboard(page);
+  await expect(page.getByTestId("tab-family")).toBeVisible({
+    timeout: 15000,
+  });
   await page.getByTestId("tab-family").click();
   await expect(
     page.getByRole("heading", { name: "Family Management" }),

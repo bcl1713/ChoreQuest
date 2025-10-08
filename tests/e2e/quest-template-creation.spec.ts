@@ -4,6 +4,7 @@ import {
   openQuestCreationModal,
   navigateToDashboard,
   setQuestCreationMode,
+  closeModal,
 } from "./helpers/navigation-helpers";
 import { expectOnDashboard } from "./helpers/assertions";
 
@@ -27,32 +28,6 @@ async function loadTemplateOptions(page: Page) {
   }).toPass({ timeout: 20000 });
 
   return options;
-}
-
-async function cancelQuestModal(page: Page) {
-  const cancelButton = page.locator('[data-testid="cancel-quest-button"]');
-  if (await cancelButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await cancelButton.click();
-  }
-  await expect(page.locator("text=Create New Quest")).not.toBeVisible();
-}
-
-async function expectQuestModalClosed(page: Page) {
-  const modalLocator = page.locator('[data-testid="create-quest-modal"]');
-
-  // First wait for the modal container to disappear; this handles cases where
-  // the heading remains mounted briefly while the modal is closing.
-  await expect(modalLocator).not.toBeVisible({
-    timeout: 15000,
-  });
-
-  // Then verify the heading is gone as well, but do not fail if it lingers
-  // momentarily after the container is hidden.
-  await expect(
-    page.locator("text=Create New Quest"),
-  ).not.toBeVisible({
-    timeout: 5000,
-  });
 }
 
 async function selectTemplateByValue(page: Page, value: string) {
@@ -100,7 +75,7 @@ test.describe("Quest Template Creation E2E", () => {
     await gmPage.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
-    await expectQuestModalClosed(gmPage);
+    await expect(gmPage.getByTestId("create-quest-modal")).not.toBeVisible();
 
     // Verify quest appears in the quest list
     // The quest title should match the template title
@@ -135,7 +110,7 @@ test.describe("Quest Template Creation E2E", () => {
     await gmPage.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
-    await expectQuestModalClosed(gmPage);
+    await expect(gmPage.getByTestId("create-quest-modal")).not.toBeVisible();
 
     // Verify quest was created (it should appear in the quest list)
     await expect(gmPage.locator('.fantasy-card').first()).toBeVisible();
@@ -166,7 +141,7 @@ test.describe("Quest Template Creation E2E", () => {
     await gmPage.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
-    await expectQuestModalClosed(gmPage);
+    await expect(gmPage.getByTestId("create-quest-modal")).not.toBeVisible();
 
     // Verify quest was created
     await expect(gmPage.locator('.fantasy-card').first()).toBeVisible();
@@ -199,7 +174,7 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(preview.locator('text=/.*XP/')).toBeVisible();
     await expect(preview.locator('text=/💰.*/')).toBeVisible();
 
-    await cancelQuestModal(gmPage);
+    await closeModal(gmPage, "create-quest-modal");
   });
 
   test("should preserve template fields in created quest", async ({ workerFamily }) => {
@@ -231,7 +206,7 @@ test.describe("Quest Template Creation E2E", () => {
     await gmPage.click('[data-testid="submit-quest-button"]');
 
     // Verify modal closes
-    await expect(gmPage.locator('text=Create New Quest')).not.toBeVisible();
+    await expect(gmPage.getByTestId("create-quest-modal")).not.toBeVisible();
 
     // Verify the created quest has the template title
     await expect(gmPage.locator(`text=${templateTitle}`).first()).toBeVisible();
@@ -243,7 +218,7 @@ test.describe("Quest Template Creation E2E", () => {
     await openQuestCreationModal(gmPage);
 
     // Switch to template mode
-    await gmPage.click('[data-testid="template-mode-button"]');
+    await setQuestCreationMode(gmPage, "template");
 
     const templateSelect = gmPage.locator('[data-testid="template-select"]');
     const templateOptions = await loadTemplateOptions(gmPage);
@@ -259,6 +234,6 @@ test.describe("Quest Template Creation E2E", () => {
     }
 
     // Cancel the modal
-    await cancelQuestModal(gmPage);
+    await closeModal(gmPage, "create-quest-modal");
   });
 });

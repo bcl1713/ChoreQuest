@@ -57,13 +57,14 @@ test.describe("Admin Dashboard Activity Feed", () => {
       description: "Quest for activity feed",
       goldReward: 10,
       xpReward: 50,
+      skipVisibilityCheck: true,
     });
 
-    // Complete quest workflow (use first quest since we just created it)
-    await pickupQuest(gmPage);
-    await startQuest(gmPage);
-    await completeQuest(gmPage);
-    await approveQuest(gmPage);
+    // Complete quest workflow for the specific quest we just created
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await approveQuest(gmPage, questTitle);
 
     // Navigate back to admin dashboard
     await navigateToAdmin(gmPage);
@@ -82,17 +83,20 @@ test.describe("Admin Dashboard Activity Feed", () => {
     const timestamp = Date.now();
     const questTitle = `Pending Quest ${timestamp}`;
 
+    await navigateToDashboard(gmPage);
+
     await createCustomQuest(gmPage, {
       title: questTitle,
       description: "Quest needs approval",
       goldReward: 5,
       xpReward: 25,
+      skipVisibilityCheck: true,
     });
 
-    // Complete quest without approving (use first quest since we just created it)
-    await pickupQuest(gmPage);
-    await startQuest(gmPage);
-    await completeQuest(gmPage);
+    // Complete quest without approving for the specific quest we just created
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
 
     // Wait for quest completion to be processed
     await gmPage.waitForLoadState('networkidle');
@@ -240,11 +244,11 @@ test.describe("Admin Dashboard Activity Feed", () => {
       xpReward: 100,
     });
 
-    // Complete and approve quest (use first quest since we just created it)
-    await pickupQuest(gmPage);
-    await startQuest(gmPage);
-    await completeQuest(gmPage);
-    await approveQuest(gmPage);
+    // Complete and approve the specific quest we just created
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await approveQuest(gmPage, questTitle);
 
     // Navigate to admin dashboard
     await navigateToAdmin(gmPage);

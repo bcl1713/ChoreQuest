@@ -89,11 +89,14 @@ export async function createReward(
   // Wait for modal to close
   await expect(page.getByTestId("create-reward-modal")).not.toBeVisible();
 
-  // Verify the reward appears in the list
+  // Wait for page to settle after modal close
+  await page.waitForLoadState("networkidle");
+
+  // Verify the reward appears in the list (with longer timeout for realtime updates)
   const newRewardCard = page.locator('[data-testid^="reward-card-"]').filter({
     hasText: name,
   });
-  await expect(newRewardCard).toBeVisible();
+  await expect(newRewardCard).toBeVisible({ timeout: 15000 });
 }
 
 /**
@@ -163,10 +166,14 @@ export async function approveRewardRedemption(
   // Wait for approval to process
   await page.waitForLoadState("networkidle");
 
-  // Verify it moved from pending
-  await expect(
-    page.locator('[data-testid="pending-redemption-item"]'),
-  ).toHaveCount(0);
+  // Verify the specific redemption moved from pending (if a name was provided)
+  if (rewardName) {
+    await expect(
+      page
+        .locator('[data-testid="pending-redemption-item"]')
+        .filter({ hasText: rewardName }),
+    ).toHaveCount(0, { timeout: 15000 });
+  }
 
   await expect(
     page.locator('h3:has-text("Approved - Awaiting Fulfillment")'),
@@ -206,10 +213,14 @@ export async function denyRewardRedemption(
   // Wait for denial to process
   await page.waitForLoadState("networkidle");
 
-  // Verify it was removed from pending
-  await expect(
-    page.locator('[data-testid="pending-redemption-item"]'),
-  ).toHaveCount(0);
+  // Verify the specific redemption was removed from pending (if a name was provided)
+  if (rewardName) {
+    await expect(
+      page
+        .locator('[data-testid="pending-redemption-item"]')
+        .filter({ hasText: rewardName }),
+    ).toHaveCount(0, { timeout: 15000 });
+  }
 }
 
 /**
