@@ -133,49 +133,10 @@ export async function navigateToDashboard(page: Page): Promise<void> {
     return;
   }
 
-  // Try direct navigation to dashboard first (most reliable)
-  try {
-    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(/.*\/dashboard/);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("welcome-message")).toBeVisible({
-      timeout: 30000,
-    });
-    return;
-  } catch (error) {
-    // If direct navigation fails, try alternative paths
-    console.log("Direct navigation failed, trying alternative paths...");
-  }
-
-  // Alternative: Check for landing page
-  await page.goto("/");
-  const enterRealmButton = page.locator('text="🏰 Enter Your Realm"');
-  if (await enterRealmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await enterRealmButton.click();
-    await expect(page).toHaveURL(/.*\/dashboard/);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("welcome-message")).toBeVisible({
-      timeout: 30000,
-    });
-    return;
-  }
-
-  // Alternative: Check for back button (from admin)
-  const backButton = page.locator("text=Back to Dashboard");
-  if (await backButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await backButton.click();
-    await expect(page).toHaveURL(/.*\/dashboard/);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("welcome-message")).toBeVisible({
-      timeout: 30000,
-    });
-    return;
-  }
-
-  // Last resort: Force reload dashboard
-  await page.goto("/dashboard", { waitUntil: "load" });
-  await page.reload({ waitUntil: "networkidle" });
+  // Try direct navigation to dashboard (most reliable)
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/.*\/dashboard/);
+  await page.waitForLoadState("networkidle");
   await expect(page.getByTestId("welcome-message")).toBeVisible({
     timeout: 30000,
   });
