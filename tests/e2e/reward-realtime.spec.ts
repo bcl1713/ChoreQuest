@@ -1,10 +1,50 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
+import type { Page, BrowserContext } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
 import {
   setupTwoContextTest,
   cleanupTwoContextTest,
   waitForNewListItem,
   waitForListItemRemoved,
-} from './helpers/realtime-helpers';
+} from "./helpers/realtime-helpers";
+import type { ExistingUserOptions } from "./helpers/realtime-helpers";
+import { navigateToDashboard, navigateToHeroTab } from "./helpers/navigation-helpers";
+import { deleteReward } from "./helpers/reward-helpers";
+
+async function resetRewardManagement(gmPage: Page): Promise<void> {
+  await navigateToDashboard(gmPage);
+  await navigateToHeroTab(gmPage, "Reward Management");
+
+  const pendingRedemptions = gmPage.locator(
+    '[data-testid="pending-redemption-item"]',
+  );
+  while (await pendingRedemptions.count()) {
+    await pendingRedemptions
+      .first()
+      .locator('[data-testid="deny-redemption-button"]')
+      .click();
+    await gmPage.waitForLoadState("networkidle");
+  }
+
+  const approvedRedemptions = gmPage.locator(
+    '[data-testid="approved-redemption-item"]',
+  );
+  while (await approvedRedemptions.count()) {
+    await approvedRedemptions
+      .first()
+      .locator('[data-testid="fulfill-redemption-button"]')
+      .click();
+    await gmPage.waitForLoadState("networkidle");
+  }
+
+  const rewardCards = gmPage.locator('[data-testid^="reward-card-"]');
+  while (await rewardCards.count()) {
+    const name = (await rewardCards.first().locator("h3").textContent())?.trim();
+    if (!name) break;
+    await deleteReward(gmPage, name);
+  }
+
+  await navigateToHeroTab(gmPage, "Quests & Adventures");
+}
 
 test.describe('Reward Realtime Updates', () => {
   let context1: BrowserContext;
@@ -12,24 +52,33 @@ test.describe('Reward Realtime Updates', () => {
   let page1: Page;
   let page2: Page;
 
-  test.beforeEach(async ({ browser }) => {
-    // Setup two-context test for realtime updates
-    const setup = await setupTwoContextTest(browser, 'guildmaster-rewards');
+  test.beforeEach(async ({ browser, workerFamily }) => {
+    const { gmPage, gmEmail, gmPassword } = workerFamily;
+
+    await resetRewardManagement(gmPage);
+
+    const gmCredentials: ExistingUserOptions = {
+      email: gmEmail,
+      password: gmPassword,
+    };
+
+    const setup = await setupTwoContextTest(browser, gmCredentials);
     context1 = setup.context1;
     context2 = setup.context2;
     page1 = setup.page1;
     page2 = setup.page2;
 
-    // Navigate both pages to Reward Management
-    await page1.goto('http://localhost:3000/dashboard');
-    await page1.waitForLoadState('networkidle');
-    await page1.click('text=Reward Management');
-    await page1.waitForSelector('[data-testid="reward-manager"]');
+    await navigateToDashboard(page1);
+    await navigateToHeroTab(page1, "Reward Management");
+    await expect(page1.getByTestId("reward-manager")).toBeVisible({
+      timeout: 15000,
+    });
 
-    await page2.goto('http://localhost:3000/dashboard');
-    await page2.waitForLoadState('networkidle');
-    await page2.click('text=Reward Management');
-    await page2.waitForSelector('[data-testid="reward-manager"]');
+    await navigateToDashboard(page2);
+    await navigateToHeroTab(page2, "Reward Management");
+    await expect(page2.getByTestId("reward-manager")).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test.afterEach(async () => {
@@ -54,6 +103,10 @@ test.describe('Reward Realtime Updates', () => {
 
     // Page 2: Wait for realtime update
     await waitForNewListItem(page2, 'Realtime Reward');
+
+    // Cleanup
+    await deleteReward(page1, 'Realtime Reward');
+    await waitForListItemRemoved(page2, 'Realtime Reward');
   });
 
   test('Reward updates appear in real-time', async () => {
@@ -85,6 +138,10 @@ test.describe('Reward Realtime Updates', () => {
       hasText: 'Updated Reward Name',
     });
     await expect(updatedCard2.getByText('200 gold')).toBeVisible();
+
+    // Cleanup
+    await deleteReward(page1, 'Updated Reward Name');
+    await waitForListItemRemoved(page2, 'Updated Reward Name');
   });
 
   test('Reward deletion appears in real-time', async () => {

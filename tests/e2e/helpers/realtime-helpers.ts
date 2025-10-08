@@ -16,6 +16,11 @@ export interface TwoContextTestSetup {
   testUser: { email: string; password: string };
 }
 
+export interface ExistingUserOptions {
+  email: string;
+  password: string;
+}
+
 /**
  * Sets up a two-context test scenario for realtime testing
  *
@@ -24,7 +29,8 @@ export interface TwoContextTestSetup {
  * two tabs/windows for the same user to test realtime synchronization.
  *
  * @param browser - Playwright browser instance from test fixture
- * @param prefix - Prefix for user creation (e.g., "guildmaster")
+ * @param options - Either a prefix string for creating a new user via UI or
+ *                  credentials for an existing user that should be logged in
  * @returns Object containing both contexts, pages, and test user credentials
  *
  * @example
@@ -47,7 +53,7 @@ export interface TwoContextTestSetup {
  */
 export async function setupTwoContextTest(
   browser: Browser,
-  prefix: string = "realtime",
+  options: ExistingUserOptions | string = "realtime",
 ): Promise<TwoContextTestSetup> {
   // Create two browser contexts to simulate two users/tabs
   const context1 = await browser.newContext();
@@ -55,18 +61,25 @@ export async function setupTwoContextTest(
   const page1 = await context1.newPage();
   const page2 = await context2.newPage();
 
-  // Setup family and login as user in first context
-  const testUser = await setupUserWithCharacter(page1, prefix);
+  let credentials: ExistingUserOptions;
+
+  if (typeof options === "string") {
+    const user = await setupUserWithCharacter(page1, options);
+    credentials = { email: user.email, password: user.password };
+  } else {
+    credentials = options;
+    await loginUser(page1, credentials.email, credentials.password);
+  }
 
   // Login as the same user in second context
-  await loginUser(page2, testUser.email, testUser.password);
+  await loginUser(page2, credentials.email, credentials.password);
 
   return {
     context1,
     context2,
     page1,
     page2,
-    testUser,
+    testUser: credentials,
   };
 }
 

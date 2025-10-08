@@ -99,7 +99,7 @@
 - [x] 5.8 Migrate `reward-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [x] 5.9 Migrate `reward-store.spec.ts`: Use worker-scoped fixtures; verify tests pass
   - [x] 5.10 Migrate `reward-redemption-approval.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
-  - [ ] 5.11 Migrate `reward-realtime.spec.ts`: Use fixtures and multi-user helpers if needed; verify tests pass
+  - [x] 5.11 Migrate `reward-realtime.spec.ts`: Use fixtures and multi-user helpers if needed; verify tests pass
   - [ ] 5.12 Migrate `hero-reward-display.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [ ] 5.13 Migrate `family-joining.spec.ts`: Use fixtures and multi-user helpers; verify tests pass
   - [ ] 5.14 Migrate `family-management.spec.ts`: Use worker-scoped fixtures; verify tests pass
