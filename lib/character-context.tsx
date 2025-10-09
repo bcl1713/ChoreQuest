@@ -27,6 +27,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
   const hasLoadedRef = useRef(false);
   const isInitialLoadRef = useRef(true);
+  const isFetchingRef = useRef(false); // Prevent concurrent fetches
 
   const updateHasLoaded = useCallback((value: boolean) => {
     hasLoadedRef.current = value;
@@ -40,10 +41,18 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       // Don't set hasLoaded=true here - we haven't actually tried to fetch
       updateHasLoaded(false);
       isInitialLoadRef.current = true;
+      isFetchingRef.current = false;
+      return;
+    }
+
+    // Prevent concurrent fetches - if already fetching, skip this request
+    if (isFetchingRef.current) {
+      console.log('CharacterContext: Already fetching, skipping duplicate request');
       return;
     }
 
     console.log('CharacterContext: Fetching character for user:', user.id);
+    isFetchingRef.current = true;
 
     // Set loading state to true whenever we fetch
     // This ensures UI shows proper loading feedback
@@ -51,11 +60,18 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      const { data, error } = await supabase
+      // Add timeout to prevent infinite hanging
+      const fetchPromise = supabase
         .from('characters')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Character fetch timeout after 10s')), 10000)
+      );
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -78,6 +94,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       updateHasLoaded(true); // Mark as loaded regardless of success/failure
       setIsLoading(false);
       isInitialLoadRef.current = false;
+      isFetchingRef.current = false; // Allow future fetches
     }
   }, [user, updateHasLoaded]);
 
