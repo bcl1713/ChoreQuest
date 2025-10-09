@@ -117,6 +117,8 @@ test.describe("Admin Dashboard Activity Feed", () => {
     // Click Review button - should navigate to dashboard with highlight
     await reviewButton.click();
     await expect(gmPage).toHaveURL(/.*\/dashboard/);
+    await gmPage.waitForLoadState('networkidle');
+    await expect(gmPage.getByTestId('admin-dashboard-button')).toBeVisible({ timeout: 10000 });
 
     // Navigate back to admin to verify event persistence
     await navigateToAdmin(gmPage);
