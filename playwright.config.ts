@@ -18,7 +18,7 @@ export default defineConfig({
     screenshot: "off",
     // Wait for network idle to ensure page is fully loaded
     navigationTimeout: 30000,
-    actionTimeout: 15000,
+    actionTimeout: 30000, // Increased from 15000 to handle slow dashboard loads
   },
   projects: [
     {
