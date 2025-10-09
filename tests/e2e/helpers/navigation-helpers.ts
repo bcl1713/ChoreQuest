@@ -138,39 +138,18 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   await expect(page).toHaveURL(/.*\/dashboard/);
   await page.waitForLoadState("networkidle");
 
-  // Wait for dashboard to fully load
-  // The dashboard might show a loading spinner OR might render with character data immediately
-  // We need to handle both cases
-  try {
-    // First, wait for EITHER the loading spinner to appear OR the welcome message to appear
-    // This handles the case where the page renders immediately vs shows loading first
-    await page.waitForFunction(
-      () => {
-        const loadingSpinner = document.querySelector('.animate-spin');
-        const welcome = document.querySelector('[data-testid="welcome-message"]');
-        // Return true if we see either the loading spinner OR the welcome message
-        return !!loadingSpinner || !!welcome;
-      },
-      { timeout: 10000 }
-    );
-
-    // Now wait for the welcome message specifically
-    // If there was a loading spinner, it should disappear and be replaced with content
-    await page.waitForFunction(
-      () => {
-        const welcome = document.querySelector('[data-testid="welcome-message"]');
-        return !!welcome;
-      },
-      { timeout: 30000 }
-    );
-  } catch (error) {
-    // If we timeout, log the page state for debugging
-    console.error('navigateToDashboard: Timed out waiting for dashboard to load');
-    console.error('Current URL:', page.url());
-    const bodyText = await page.locator('body').textContent().catch(() => 'Could not get body text');
-    console.error('Body text preview:', bodyText?.slice(0, 500));
-    throw error;
-  }
+  // Wait for loading to complete
+  // After the app fix, character context always sets isLoading=true during fetch,
+  // so the dashboard will always show a loading spinner before rendering content
+  await page.waitForFunction(
+    () => {
+      const loadingSpinner = document.querySelector('.animate-spin');
+      const welcome = document.querySelector('[data-testid="welcome-message"]');
+      // Wait until spinner is gone and welcome message appears
+      return !loadingSpinner && !!welcome;
+    },
+    { timeout: 30000 }
+  );
 
   // Verify welcome message is visible
   await expect(page.getByTestId("welcome-message")).toBeVisible({

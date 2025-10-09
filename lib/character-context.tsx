@@ -44,11 +44,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log('CharacterContext: Fetching character for user:', user.id);
-    const shouldShowSpinner = isInitialLoadRef.current || !hasLoadedRef.current;
-    if (shouldShowSpinner) {
-      setIsLoading(true);
-      updateHasLoaded(false);
-    }
+
+    // Always set loading state when fetching to ensure UI shows loading indicator
+    setIsLoading(true);
     setError(null);
 
     try {
@@ -77,9 +75,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       console.error('Character fetch error:', err);
     } finally {
       updateHasLoaded(true); // Mark as loaded regardless of success/failure
-      if (shouldShowSpinner) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
       isInitialLoadRef.current = false;
     }
   }, [user, updateHasLoaded]);
