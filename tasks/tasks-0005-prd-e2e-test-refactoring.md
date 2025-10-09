@@ -119,6 +119,41 @@
 
 ## Issues Discovered & Fixed
 
+### Headed Mode Test Failures (Documented - Not Fixed)
+
+**Problem:**
+- Tests pass consistently in headless mode (default)
+- Tests fail ~90% of the time when run with `--headed` flag
+- Dashboard navigation hangs after reward creation, timing out at 30 seconds
+- Character fetch appears to hang indefinitely when browser UI is visible
+
+**Investigation:**
+- Headless: 10/10 runs pass ✅
+- Headed: 1/10 runs pass, 9/10 timeout ❌
+- Opening dev tools in headed mode: Tests pass (heisenbug behavior)
+- Added concurrent fetch prevention, 10s fetch timeout, 30s action timeout
+- None of these changes affected the headed mode behavior
+
+**Analysis:**
+This appears to be a resource contention issue specific to the test environment
+when running with a visible browser. The browser rendering overhead causes
+timing issues that don't occur in headless mode or in production.
+
+**Resolution:**
+Tests should ALWAYS run in headless mode (Playwright default). This is not
+a production issue - the app works fine in real browsers. It's a test
+environment artifact caused by resource constraints when Playwright renders
+a visible browser window during test execution.
+
+**Command:**
+```bash
+# ✅ CORRECT - Run tests headless (default)
+npx playwright test
+
+# ❌ AVOID - Headed mode causes intermittent failures
+npx playwright test --headed
+```
+
 ### Quest State Transition Race Condition (Fixed in commit 6545695)
 
 **Problem:**

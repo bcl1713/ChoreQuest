@@ -46,17 +46,14 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log('CharacterContext: Fetching character for user:', user.id);
-    console.log('CharacterContext: isFetchingRef.current =', isFetchingRef.current);
 
     // Prevent concurrent fetches - if already fetching, skip this request
     if (isFetchingRef.current) {
-      console.warn('CharacterContext: Already fetching! Waiting for current fetch to complete...');
-      // Don't change loading state - let the in-progress fetch handle it
+      console.log('CharacterContext: Already fetching, skipping duplicate request');
       return;
     }
 
     isFetchingRef.current = true;
-    console.log('CharacterContext: Starting fetch, set isFetchingRef = true');
 
     // Set loading state to true whenever we fetch
     // This ensures UI shows proper loading feedback
@@ -95,12 +92,10 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setError(message);
       console.error('Character fetch error:', err);
     } finally {
-      console.log('CharacterContext: Fetch complete, cleaning up...');
       updateHasLoaded(true); // Mark as loaded regardless of success/failure
       setIsLoading(false);
       isInitialLoadRef.current = false;
       isFetchingRef.current = false; // Allow future fetches
-      console.log('CharacterContext: Set isFetchingRef = false, isLoading = false');
     }
   }, [user, updateHasLoaded]);
 
