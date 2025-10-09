@@ -133,12 +133,26 @@ export async function navigateToDashboard(page: Page): Promise<void> {
     return;
   }
 
-  // Try direct navigation to dashboard (most reliable)
+  // Navigate to dashboard
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/.*\/dashboard/);
   await page.waitForLoadState("networkidle");
+
+  // Wait for either loading spinner to disappear OR welcome message to appear
+  // This handles the case where the page is still loading character data
+  await page.waitForFunction(
+    () => {
+      const loadingSpinner = document.querySelector('.animate-spin');
+      const welcome = document.querySelector('[data-testid="welcome-message"]');
+      // Wait until either: no spinner and welcome message exists, OR just welcome message
+      return (!loadingSpinner && welcome) || welcome;
+    },
+    { timeout: 30000 }
+  );
+
+  // Now verify welcome message is visible
   await expect(page.getByTestId("welcome-message")).toBeVisible({
-    timeout: 30000,
+    timeout: 5000,
   });
 }
 
