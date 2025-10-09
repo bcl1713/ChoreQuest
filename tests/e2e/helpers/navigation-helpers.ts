@@ -138,19 +138,41 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   await expect(page).toHaveURL(/.*\/dashboard/);
   await page.waitForLoadState("networkidle");
 
-  // Wait for either loading spinner to disappear OR welcome message to appear
-  // This handles the case where the page is still loading character data
-  await page.waitForFunction(
-    () => {
-      const loadingSpinner = document.querySelector('.animate-spin');
-      const welcome = document.querySelector('[data-testid="welcome-message"]');
-      // Wait until either: no spinner and welcome message exists, OR just welcome message
-      return (!loadingSpinner && welcome) || welcome;
-    },
-    { timeout: 30000 }
-  );
+  // Wait for dashboard to fully load
+  // The dashboard might show a loading spinner OR might render with character data immediately
+  // We need to handle both cases
+  try {
+    // First, wait for EITHER the loading spinner to appear OR the welcome message to appear
+    // This handles the case where the page renders immediately vs shows loading first
+    await page.waitForFunction(
+      () => {
+        const loadingSpinner = document.querySelector('.animate-spin');
+        const welcome = document.querySelector('[data-testid="welcome-message"]');
+        // Return true if we see either the loading spinner OR the welcome message
+        return !!loadingSpinner || !!welcome;
+      },
+      { timeout: 10000 }
+    );
 
-  // Now verify welcome message is visible
+    // Now wait for the welcome message specifically
+    // If there was a loading spinner, it should disappear and be replaced with content
+    await page.waitForFunction(
+      () => {
+        const welcome = document.querySelector('[data-testid="welcome-message"]');
+        return !!welcome;
+      },
+      { timeout: 30000 }
+    );
+  } catch (error) {
+    // If we timeout, log the page state for debugging
+    console.error('navigateToDashboard: Timed out waiting for dashboard to load');
+    console.error('Current URL:', page.url());
+    const bodyText = await page.locator('body').textContent().catch(() => 'Could not get body text');
+    console.error('Body text preview:', bodyText?.slice(0, 500));
+    throw error;
+  }
+
+  // Verify welcome message is visible
   await expect(page.getByTestId("welcome-message")).toBeVisible({
     timeout: 5000,
   });

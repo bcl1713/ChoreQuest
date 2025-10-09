@@ -83,7 +83,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     const timestamp = Date.now();
     const questTitle = `Pending Quest ${timestamp}`;
 
-    await navigateToDashboard(gmPage);
+    // beforeEach already navigates to dashboard, no need to do it again
 
     await createCustomQuest(gmPage, {
       title: questTitle,
