@@ -45,7 +45,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
     console.log('CharacterContext: Fetching character for user:', user.id);
 
-    // Always set loading state when fetching to ensure UI shows loading indicator
+    // Set loading state to true whenever we fetch
+    // This ensures UI shows proper loading feedback
     setIsLoading(true);
     setError(null);
 
