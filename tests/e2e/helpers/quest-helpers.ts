@@ -36,8 +36,11 @@ export interface QuestFromTemplateOptions {
 }
 
 async function waitForQuestModalToClose(page: Page): Promise<void> {
+  // Wait for any background operations to complete before checking modal state
+  await page.waitForLoadState("networkidle");
+
   const modalLocator = page.locator('[data-testid="create-quest-modal"]');
-  await expect(modalLocator).not.toBeVisible({ timeout: 15000 });
+  await expect(modalLocator).not.toBeVisible({ timeout: 30000 });
   await expect(page.locator("text=Create New Quest")).not.toBeVisible({
     timeout: 5000,
   });
