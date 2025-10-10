@@ -49,14 +49,14 @@ Based on PRD: `0008-prd-visual-ui-enhancements.md`
 
 ## Tasks
 
-- [ ] 1.0 Setup Animation Infrastructure & Foundation
+- [x] 1.0 Setup Animation Infrastructure & Foundation
   - [x] 1.1 Create `hooks/useReducedMotion.ts` hook that detects `prefers-reduced-motion` media query and returns boolean
-  - [ ] 1.2 Write unit tests for `hooks/useReducedMotion.test.ts` covering enabled/disabled states and media query changes
-  - [ ] 1.3 Create `lib/animations/constants.ts` with timing constants (quick: 200ms, medium: 400ms, celebration: 1000ms), easing functions, and particle limits
-  - [ ] 1.4 Create `lib/animations/variants.ts` with Framer Motion variants for: fadeIn, slideIn, scaleIn, stagger, and celebration animations
-  - [ ] 1.5 Write unit tests for `lib/animations/variants.test.ts` to validate variant structure and reduced motion behavior
-  - [ ] 1.6 Update `app/globals.css` to add new utility classes: `.fantasy-button-primary`, `.fantasy-button-secondary`, `.glow-effect`, `.pulse-animation`
-  - [ ] 1.7 Run `npm run build` and `npm run lint` to ensure no errors
+  - [x] 1.2 Write unit tests for `hooks/useReducedMotion.test.ts` covering enabled/disabled states and media query changes
+  - [x] 1.3 Create `lib/animations/constants.ts` with timing constants (quick: 200ms, medium: 400ms, celebration: 1000ms), easing functions, and particle limits
+  - [x] 1.4 Create `lib/animations/variants.ts` with Framer Motion variants for: fadeIn, slideIn, scaleIn, stagger, and celebration animations
+  - [x] 1.5 Write unit tests for `lib/animations/variants.test.ts` to validate variant structure and reduced motion behavior
+  - [x] 1.6 Update `app/globals.css` to add new utility classes: `.fantasy-button-primary`, `.fantasy-button-secondary`, `.glow-effect`, `.pulse-animation`
+  - [x] 1.7 Run `npm run build` and `npm run lint` to ensure no errors
 
 - [ ] 2.0 Implement Core UI Components with Fantasy Theme
   - [ ] 2.1 Create `components/ui/FantasyButton.tsx` with variants (primary, secondary, danger), sizes, loading state, and hover animations
