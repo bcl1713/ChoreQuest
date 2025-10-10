@@ -47,15 +47,15 @@ Based on PRD: `0007-prd-browser-visibility-reconnection-fix.md`
   - [x] 2.7 Update `prevFamilyIdRef.current` when family_id changes
   - [x] 2.8 Test that realtime events (quest updates, character updates) still fire correctly after changes
 
-- [ ] 3.0 Fix Character Context Fetch Guard and Timeout
-  - [ ] 3.1 Reduce character fetch timeout from 10 seconds to 5 seconds (line ~86)
-  - [ ] 3.2 Reduce safety valve timeout from 15 seconds to 5 seconds (line ~55)
-  - [ ] 3.3 Add visibility change event listener in CharacterProvider to detect when tab becomes visible
-  - [ ] 3.4 When tab becomes visible, force clear `isFetchingRef.current` if it's been set for more than 2 seconds
-  - [ ] 3.5 Add more detailed error logging including timestamp, user ID, and fetch duration
-  - [ ] 3.6 Add retry logic: on fetch failure, wait 1 second and retry once before showing error
-  - [ ] 3.7 Add console log when fetch guard blocks a fetch attempt (include reason and elapsed time)
-  - [ ] 3.8 Test character loading works correctly after tab visibility changes
+- [x] 3.0 Fix Character Context Fetch Guard and Timeout
+  - [x] 3.1 Reduce character fetch timeout from 10 seconds to 5 seconds (line ~86)
+  - [x] 3.2 Reduce safety valve timeout from 15 seconds to 5 seconds (line ~55)
+  - [x] 3.3 Add visibility change event listener in CharacterProvider to detect when tab becomes visible
+  - [x] 3.4 When tab becomes visible, force clear `isFetchingRef.current` if it's been set for more than 2 seconds
+  - [x] 3.5 Add more detailed error logging including timestamp, user ID, and fetch duration
+  - [x] 3.6 Add retry logic: on fetch failure, wait 1 second and retry once before showing error
+  - [x] 3.7 Add console log when fetch guard blocks a fetch attempt (include reason and elapsed time)
+  - [x] 3.8 Test character loading works correctly after tab visibility changes
 
 - [ ] 4.0 Add Browser Visibility API Integration
   - [ ] 4.1 Create a new custom hook `useVisibilityChange` in `lib/hooks/useVisibilityChange.ts`
