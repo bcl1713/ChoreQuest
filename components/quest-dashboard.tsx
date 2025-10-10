@@ -295,7 +295,7 @@ export default function QuestDashboard({
         setQuestInstances(currentQuests =>
           currentQuests.map(quest =>
             quest.id === questId
-              ? { ...quest, ...updateData }
+              ? { ...quest, ...updateData } as QuestInstance
               : quest
           )
         );

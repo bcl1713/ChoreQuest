@@ -36,14 +36,31 @@ export interface QuestFromTemplateOptions {
 }
 
 async function waitForQuestModalToClose(page: Page): Promise<void> {
-  // Wait for any background operations to complete before checking modal state
-  await page.waitForLoadState("networkidle");
-
   const modalLocator = page.locator('[data-testid="create-quest-modal"]');
-  // Increased timeout for high-concurrency scenarios (parallel test runs)
-  await expect(modalLocator).not.toBeVisible({ timeout: 60000 });
-  await expect(page.locator("text=Create New Quest")).not.toBeVisible({
-    timeout: 10000,
+
+  // Wait for the modal to actually close (DOM element removed by AnimatePresence)
+  // Under high load, quest creation can take longer
+  await expect(async () => {
+    // Check if modal is gone (success case)
+    const modalCount = await modalLocator.count();
+    if (modalCount === 0) {
+      return; // Success - modal closed
+    }
+
+    // Check if there's an error message in the modal (failure case)
+    const errorMessage = await page.locator('[data-testid="create-quest-modal"] .bg-red-600').count();
+    if (errorMessage > 0) {
+      const errorText = await page.locator('[data-testid="create-quest-modal"] .bg-red-600').textContent();
+      throw new Error(`Quest creation failed: ${errorText}`);
+    }
+
+    // Modal still visible and no error - keep waiting
+    throw new Error('Modal still visible');
+  }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
+
+  // Final confirmation - wait for network to stabilize
+  await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {
+    // Ignore networkidle timeout - the modal closing is what matters
   });
 }
 
@@ -214,8 +231,8 @@ export async function createQuestFromTemplate(
       .getAttribute("value");
     await templateSelect.selectOption(firstTemplateValue!);
   } else {
-    // Find template by name
-    await templateSelect.selectOption({ label: new RegExp(templateName, "i") });
+    // Find template by name - use label selector with string
+    await templateSelect.selectOption({ label: templateName });
   }
 
   // Verify template preview appears
@@ -224,7 +241,7 @@ export async function createQuestFromTemplate(
   // Optionally assign to a character
   if (options?.assignTo) {
     const assignSelect = page.locator("select#assign-to");
-    await assignSelect.selectOption({ label: new RegExp(options.assignTo, "i") });
+    await assignSelect.selectOption({ label: options.assignTo });
   }
 
   // Optionally set due date

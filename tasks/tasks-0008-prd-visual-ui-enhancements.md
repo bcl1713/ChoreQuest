@@ -4,20 +4,21 @@ Based on PRD: `0008-prd-visual-ui-enhancements.md`
 
 ## Relevant Files
 
-### New Files to Create
-- `hooks/useReducedMotion.ts` - Custom hook to detect and respect user's motion preferences
-- `hooks/useReducedMotion.test.ts` - Unit tests for useReducedMotion hook
-- `lib/animations/constants.ts` - Animation timing constants and easing functions
-- `lib/animations/variants.ts` - Framer Motion animation variant definitions
-- `lib/animations/variants.test.ts` - Unit tests for animation variants
-- `components/ui/FantasyButton.tsx` - Reusable fantasy-themed button component
-- `components/ui/FantasyButton.test.tsx` - Unit tests for FantasyButton
-- `components/ui/FantasyCard.tsx` - Reusable fantasy-themed card component
-- `components/ui/FantasyCard.test.tsx` - Unit tests for FantasyCard
-- `components/ui/LoadingSpinner.tsx` - Fantasy-themed loading spinner component
-- `components/ui/LoadingSpinner.test.tsx` - Unit tests for LoadingSpinner
-- `components/icons/FantasyIcon.tsx` - Wrapper component for Lucide icons with fantasy styling
-- `components/icons/FantasyIcon.test.tsx` - Unit tests for FantasyIcon
+### New Files Created/To Create
+- `hooks/useReducedMotion.ts` - ✅ Custom hook to detect and respect user's motion preferences
+- `hooks/useReducedMotion.test.ts` - ✅ Unit tests for useReducedMotion hook
+- `lib/animations/constants.ts` - ✅ Animation timing constants and easing functions
+- `lib/animations/variants.ts` - ✅ Framer Motion animation variant definitions
+- `lib/animations/variants.test.ts` - ✅ Unit tests for animation variants
+- `lib/utils.ts` - ✅ Utility functions (cn for className merging)
+- `components/ui/FantasyButton.tsx` - ✅ Reusable fantasy-themed button component
+- `components/ui/FantasyButton.test.tsx` - ✅ Unit tests for FantasyButton
+- `components/ui/FantasyCard.tsx` - ✅ Reusable fantasy-themed card component
+- `components/ui/FantasyCard.test.tsx` - ✅ Unit tests for FantasyCard
+- `components/ui/LoadingSpinner.tsx` - ✅ Fantasy-themed loading spinner component
+- `components/ui/LoadingSpinner.test.tsx` - ✅ Unit tests for LoadingSpinner
+- `components/icons/FantasyIcon.tsx` - ✅ Wrapper component for Lucide icons with fantasy styling
+- `components/icons/FantasyIcon.test.tsx` - ✅ Unit tests for FantasyIcon
 - `components/animations/QuestCompleteOverlay.tsx` - Quest completion celebration overlay
 - `components/animations/QuestCompleteOverlay.test.tsx` - Unit tests for QuestCompleteOverlay
 - `components/animations/LevelUpModal.tsx` - Level up celebration modal
@@ -58,16 +59,16 @@ Based on PRD: `0008-prd-visual-ui-enhancements.md`
   - [x] 1.6 Update `app/globals.css` to add new utility classes: `.fantasy-button-primary`, `.fantasy-button-secondary`, `.glow-effect`, `.pulse-animation`
   - [x] 1.7 Run `npm run build` and `npm run lint` to ensure no errors
 
-- [ ] 2.0 Implement Core UI Components with Fantasy Theme
-  - [ ] 2.1 Create `components/ui/FantasyButton.tsx` with variants (primary, secondary, danger), sizes, loading state, and hover animations
-  - [ ] 2.2 Write unit tests for `components/ui/FantasyButton.test.tsx` covering all variants, disabled state, loading state, and click handlers
-  - [ ] 2.3 Create `components/ui/FantasyCard.tsx` with gradient backgrounds, borders, optional glow effect, and hover animations
-  - [ ] 2.4 Write unit tests for `components/ui/FantasyCard.test.tsx` covering rendering, className merging, and children rendering
-  - [ ] 2.5 Create `components/ui/LoadingSpinner.tsx` with spinning sword/shield animation and reduced motion fallback (pulse)
-  - [ ] 2.6 Write unit tests for `components/ui/LoadingSpinner.test.tsx` covering size variants and accessibility attributes
-  - [ ] 2.7 Create `components/icons/FantasyIcon.tsx` wrapper for Lucide icons with consistent sizing, coloring by type (gold, xp, gem), and optional glow
-  - [ ] 2.8 Write unit tests for `components/icons/FantasyIcon.test.tsx` covering icon types, colors, sizes, and ARIA labels
-  - [ ] 2.9 Run all unit tests: `npm run test` and verify all pass
+- [x] 2.0 Implement Core UI Components with Fantasy Theme
+  - [x] 2.1 Create `components/ui/FantasyButton.tsx` with variants (primary, secondary, danger), sizes, loading state, and hover animations
+  - [x] 2.2 Write unit tests for `components/ui/FantasyButton.test.tsx` covering all variants, disabled state, loading state, and click handlers
+  - [x] 2.3 Create `components/ui/FantasyCard.tsx` with gradient backgrounds, borders, optional glow effect, and hover animations
+  - [x] 2.4 Write unit tests for `components/ui/FantasyCard.test.tsx` covering rendering, className merging, and children rendering
+  - [x] 2.5 Create `components/ui/LoadingSpinner.tsx` with spinning sword/shield animation and reduced motion fallback (pulse)
+  - [x] 2.6 Write unit tests for `components/ui/LoadingSpinner.test.tsx` covering size variants and accessibility attributes
+  - [x] 2.7 Create `components/icons/FantasyIcon.tsx` wrapper for Lucide icons with consistent sizing, coloring by type (gold, xp, gem), and optional glow
+  - [x] 2.8 Write unit tests for `components/icons/FantasyIcon.test.tsx` covering icon types, colors, sizes, and ARIA labels
+  - [x] 2.9 Run all unit tests: `npm run test` and verify all pass
 
 - [ ] 3.0 Build Celebration & Feedback Animation Components
   - [ ] 3.1 Create `components/animations/ParticleEffect.tsx` with configurable particle count, colors, duration, and animation paths (float up + fade)
