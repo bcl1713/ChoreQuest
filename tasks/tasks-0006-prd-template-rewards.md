@@ -5,7 +5,7 @@ Based on PRD: `0006-prd-template-rewards.md`
 ## Relevant Files
 
 - `supabase/migrations/20251002000005_create_default_reward_templates.sql` - Migration file with 15 template rewards and auto-copy trigger function
-- `tests/integration/reward-template-service.integration.test.ts` - Integration test for template reward copying mechanism
+- `tests/integration/reward-template-service.integration.test.ts` - Integration tests verifying template copying, independence, and edge cases
 - `tests/e2e/reward-template-auto-copy.spec.ts` - E2E test verifying templates copy to new families
 - `tests/e2e/reward-template-customization.spec.ts` - E2E test verifying Guild Masters can edit copied rewards
 
@@ -39,17 +39,17 @@ Based on PRD: `0006-prd-template-rewards.md`
   - [x] 2.9 Make migration idempotent using INSERT ... ON CONFLICT DO NOTHING or conditional logic
   - [x] 2.10 Verify migration syntax is valid PostgreSQL/Supabase SQL
 
-- [ ] 3.0 Write Integration Tests for Template Copying
-  - [ ] 3.1 Create test file `tests/integration/reward-template-service.integration.test.ts`
-  - [ ] 3.2 Write test: "should copy all template rewards when a new family is created"
-  - [ ] 3.3 Test setup: Insert template rewards with family_id = NULL into test database
-  - [ ] 3.4 Test action: Create a new family via Supabase client
-  - [ ] 3.5 Test assertion: Query rewards table for new family_id and verify count matches template count
-  - [ ] 3.6 Test assertion: Verify copied rewards have correct name, description, type, cost, and is_active values
-  - [ ] 3.7 Test assertion: Verify copied rewards have unique UUIDs (not the template UUIDs)
-  - [ ] 3.8 Write test: "should not copy rewards if no templates exist"
-  - [ ] 3.9 Write test: "copied rewards should be independent from global templates"
-  - [ ] 3.10 Add cleanup logic to remove test families and rewards after each test
+- [x] 3.0 Write Integration Tests for Template Copying
+  - [x] 3.1 Create test file `tests/integration/reward-template-service.integration.test.ts`
+  - [x] 3.2 Write test: "should copy all template rewards when a new family is created"
+  - [x] 3.3 Test setup: Insert template rewards with family_id = NULL into test database
+  - [x] 3.4 Test action: Create a new family via Supabase client
+  - [x] 3.5 Test assertion: Query rewards table for new family_id and verify count matches template count
+  - [x] 3.6 Test assertion: Verify copied rewards have correct name, description, type, cost, and is_active values
+  - [x] 3.7 Test assertion: Verify copied rewards have unique UUIDs (not the template UUIDs)
+  - [x] 3.8 Write test: "should not copy rewards if no templates exist"
+  - [x] 3.9 Write test: "copied rewards should be independent from global templates"
+  - [x] 3.10 Add cleanup logic to remove test families and rewards after each test
 
 - [ ] 4.0 Write E2E Tests for Template Rewards
   - [ ] 4.1 Create test file `tests/e2e/reward-template-auto-copy.spec.ts`
