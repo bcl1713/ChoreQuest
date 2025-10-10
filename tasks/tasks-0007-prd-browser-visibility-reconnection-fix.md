@@ -37,15 +37,15 @@ Based on PRD: `0007-prd-browser-visibility-reconnection-fix.md`
   - [x] 1.7 Test that login, logout, and signup flows still work correctly
   - [x] 1.8 Verify in console logs that `loadUserData` is only called once on tab visibility restoration
 
-- [ ] 2.0 Optimize Realtime Context Dependencies
-  - [ ] 2.1 Change the realtime effect dependency array from `[user, session, profile?.family_id]` to `[user?.id, session?.access_token, profile?.family_id]` (line ~310)
-  - [ ] 2.2 Add `prevFamilyIdRef` to track the previous family ID
-  - [ ] 2.3 Add comparison logic at the start of the effect to compare current family_id with `prevFamilyIdRef.current`
-  - [ ] 2.4 Skip channel cleanup and recreation if family_id hasn't actually changed
-  - [ ] 2.5 Add console logging for "Skipping realtime reconnection - family unchanged" when reconnection is skipped
-  - [ ] 2.6 Add timestamp logging for all realtime connection lifecycle events (setup, subscribed, closed, error)
-  - [ ] 2.7 Update `prevFamilyIdRef.current` when family_id changes
-  - [ ] 2.8 Test that realtime events (quest updates, character updates) still fire correctly after changes
+- [x] 2.0 Optimize Realtime Context Dependencies
+  - [x] 2.1 Change the realtime effect dependency array from `[user, session, profile?.family_id]` to `[user?.id, session?.access_token, profile?.family_id]` (line ~310)
+  - [x] 2.2 Add `prevFamilyIdRef` to track the previous family ID
+  - [x] 2.3 Add comparison logic at the start of the effect to compare current family_id with `prevFamilyIdRef.current`
+  - [x] 2.4 Skip channel cleanup and recreation if family_id hasn't actually changed
+  - [x] 2.5 Add console logging for "Skipping realtime reconnection - family unchanged" when reconnection is skipped
+  - [x] 2.6 Add timestamp logging for all realtime connection lifecycle events (setup, subscribed, closed, error)
+  - [x] 2.7 Update `prevFamilyIdRef.current` when family_id changes
+  - [x] 2.8 Test that realtime events (quest updates, character updates) still fire correctly after changes
 
 - [ ] 3.0 Fix Character Context Fetch Guard and Timeout
   - [ ] 3.1 Reduce character fetch timeout from 10 seconds to 5 seconds (line ~86)
