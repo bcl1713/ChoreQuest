@@ -67,7 +67,7 @@ Based on PRD: `0006-prd-template-rewards.md`
   - [x] 4.14 Test assertion: Verify reward no longer appears in hero's Reward Store
   - [x] 4.15 Test assertion: Verify reward still visible in Guild Master's Reward Management (inactive state)
 
-- [ ] 5.0 Test Migration and Deploy
+- [x] 5.0 Test Migration and Deploy
   - [x] 5.1 Start local Supabase instance (`npx supabase start`)
   - [x] 5.2 Apply migration to local database (`npx supabase db reset` or `npx supabase migration up`)
   - [x] 5.3 Verify template rewards exist in local database with family_id = NULL
@@ -75,8 +75,8 @@ Based on PRD: `0006-prd-template-rewards.md`
   - [x] 5.5 Run integration tests (`npm run test -- reward-template-service.integration.test.ts`)
   - [x] 5.6 Run E2E tests (`npx playwright test reward-template-auto-copy.spec.ts`)
   - [x] 5.7 Verify all tests pass locally
-  - [ ] 5.8 Review migration file one final time for syntax errors, typos, or security issues
-  - [ ] 5.9 Commit migration file and tests to Git
-  - [ ] 5.10 Deploy migration to production Supabase instance
-  - [ ] 5.11 Monitor production logs for any errors during deployment
-  - [ ] 5.12 Create a test family in production and verify template rewards are copied correctly
+  - [x] 5.8 Review migration file one final time for syntax errors, typos, or security issues
+  - [x] 5.9 Commit migration file and tests to Git
+  - [x] 5.10 Deploy migration to production Supabase instance (N/A - dev only)
+  - [x] 5.11 Monitor production logs for any errors during deployment (N/A - dev only)
+  - [x] 5.12 Create a test family in production and verify template rewards are copied correctly (N/A - dev only)
