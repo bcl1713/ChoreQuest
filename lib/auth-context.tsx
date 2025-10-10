@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserProfile, Family } from '@/lib/types/database';
@@ -34,9 +34,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
   const [characterName, setCharacterName] = useState<string>('');
 
+  // Refs to prevent duplicate loadUserData calls
+  const prevUserIdRef = useRef<string | null>(null);
+  const isLoadingUserDataRef = useRef(false);
+
   // Load user profile and family data
   const loadUserData = async (userId: string) => {
-    console.log('AuthContext: loadUserData called for userId:', userId);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] AuthContext: loadUserData called for userId:`, userId);
+
+    // Skip if already loading for the same user
+    if (isLoadingUserDataRef.current) {
+      console.log(`[${timestamp}] AuthContext: loadUserData skipped - already loading for user:`, userId);
+      return;
+    }
+
+    // Skip if data already loaded for this user
+    if (prevUserIdRef.current === userId) {
+      console.log(`[${timestamp}] AuthContext: loadUserData skipped - data already loaded for user:`, userId);
+      return;
+    }
+
+    isLoadingUserDataRef.current = true;
+    console.log(`[${timestamp}] AuthContext: Starting data load for user:`, userId);
     try {
       // Get user profile
       console.log('AuthContext: Fetching user profile...');
@@ -69,8 +89,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('AuthContext: Family data loaded:', familyData);
       setFamily(familyData);
+
+      // Update refs after successful load
+      prevUserIdRef.current = userId;
+      const successTimestamp = new Date().toISOString();
+      console.log(`[${successTimestamp}] AuthContext: Data load completed successfully for user:`, userId);
     } catch (err) {
       console.error('AuthContext: Error loading user data:', err);
+    } finally {
+      isLoadingUserDataRef.current = false;
     }
   };
 
@@ -132,6 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setProfile(null);
           setFamily(null);
+          // Reset refs when user logs out
+          prevUserIdRef.current = null;
+          isLoadingUserDataRef.current = false;
         }
 
         if (event === 'SIGNED_OUT') {

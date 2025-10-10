@@ -71,6 +71,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   
   // Use ref to store current channel without causing re-renders
   const currentChannelRef = useRef<RealtimeChannel | null>(null);
+  // Track previous family ID to prevent unnecessary reconnections
+  const prevFamilyIdRef = useRef<string | null>(null);
 
   // Event listener management using refs to avoid dependency issues
   const questListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
@@ -82,8 +84,18 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
   // Setup realtime connection when user and family are available
   useEffect(() => {
+    const timestamp = new Date().toISOString();
+
+    // Skip reconnection if family_id hasn't changed
+    if (profile?.family_id && prevFamilyIdRef.current === profile.family_id && currentChannelRef.current) {
+      console.log(`[${timestamp}] RealtimeContext: Skipping realtime reconnection - family unchanged:`, profile.family_id);
+      return;
+    }
+
     // Clean up any existing connection first
     if (currentChannelRef.current) {
+      const cleanupTimestamp = new Date().toISOString();
+      console.log(`[${cleanupTimestamp}] RealtimeContext: Cleaning up realtime connection`);
       supabase.removeChannel(currentChannelRef.current);
       currentChannelRef.current = null;
       setIsConnected(false);
@@ -91,6 +103,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
     if (!user || !session || !profile?.family_id) {
       setConnectionError('Authentication required for realtime connection');
+      prevFamilyIdRef.current = null;
       return;
     }
 
@@ -103,9 +116,13 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     const familyId = profile.family_id;
     const channelName = `family_${familyId}`;
 
-    console.log('Setting up realtime connection for family:', familyId);
-    console.log('User ID:', user.id);
-    console.log('Session access token exists:', !!session.access_token);
+    const setupTimestamp = new Date().toISOString();
+    console.log(`[${setupTimestamp}] RealtimeContext: Setting up realtime connection for family:`, familyId);
+    console.log(`[${setupTimestamp}] RealtimeContext: User ID:`, user.id);
+    console.log(`[${setupTimestamp}] RealtimeContext: Session access token exists:`, !!session.access_token);
+
+    // Update prevFamilyIdRef when family changes
+    prevFamilyIdRef.current = familyId;
 
     // Clear any previous error
     setConnectionError(null);
@@ -264,33 +281,34 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
         }
       )
       .subscribe(async (status) => {
-        console.log('Realtime subscription status:', status);
+        const statusTimestamp = new Date().toISOString();
+        console.log(`[${statusTimestamp}] RealtimeContext: Subscription status:`, status);
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
           setConnectionError(null);
-          console.log('Successfully connected to realtime for family:', familyId);
+          console.log(`[${statusTimestamp}] RealtimeContext: Successfully connected to realtime for family:`, familyId);
         } else if (status === 'CHANNEL_ERROR') {
           setIsConnected(false);
           if (isLocalDevelopment) {
             setConnectionError('Realtime authentication failed in local development');
-            console.warn('Realtime connection failed - this may be due to authentication requirements');
+            console.warn(`[${statusTimestamp}] RealtimeContext: Connection failed - may be due to authentication requirements`);
           } else {
             setConnectionError('Failed to connect to realtime updates');
-            console.error('Realtime connection error for family:', familyId);
+            console.error(`[${statusTimestamp}] RealtimeContext: Connection error for family:`, familyId);
           }
         } else if (status === 'TIMED_OUT') {
           setIsConnected(false);
           if (isLocalDevelopment) {
             setConnectionError('Realtime connection timed out - check authentication');
-            console.warn('Realtime connection timed out - may be authentication related');
+            console.warn(`[${statusTimestamp}] RealtimeContext: Connection timed out - may be authentication related`);
           } else {
             setConnectionError('Realtime connection timed out');
-            console.error('Realtime connection timed out for family:', familyId);
+            console.error(`[${statusTimestamp}] RealtimeContext: Connection timed out for family:`, familyId);
           }
         } else if (status === 'CLOSED') {
           setIsConnected(false);
           setConnectionError(null);
-          console.log('Realtime connection closed for family:', familyId);
+          console.log(`[${statusTimestamp}] RealtimeContext: Connection closed for family:`, familyId);
         }
       });
 
@@ -299,7 +317,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
 
     // Cleanup function
     return () => {
-      console.log('Cleaning up realtime connection for family:', familyId);
+      const cleanupTimestamp = new Date().toISOString();
+      console.log(`[${cleanupTimestamp}] RealtimeContext: Cleaning up realtime connection for family:`, familyId);
       if (currentChannelRef.current) {
         supabase.removeChannel(currentChannelRef.current);
         currentChannelRef.current = null;
@@ -307,7 +326,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       setIsConnected(false);
       setConnectionError(null);
     };
-  }, [user, session, profile?.family_id]);
+  }, [user?.id, session?.access_token, profile?.family_id]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
