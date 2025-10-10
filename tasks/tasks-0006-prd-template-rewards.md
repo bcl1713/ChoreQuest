@@ -5,9 +5,9 @@ Based on PRD: `0006-prd-template-rewards.md`
 ## Relevant Files
 
 - `supabase/migrations/20251002000005_create_default_reward_templates.sql` - Migration file with 15 template rewards and auto-copy trigger function
-- `tests/integration/reward-template-service.integration.test.ts` - Integration tests verifying template copying, independence, and edge cases
-- `tests/e2e/reward-template-auto-copy.spec.ts` - E2E test verifying templates copy to new families
-- `tests/e2e/reward-template-customization.spec.ts` - E2E test verifying Guild Masters can edit copied rewards
+- `tests/integration/reward-template-service.integration.test.ts` - Integration tests verifying template copying, independence, and edge cases (3 tests, all passing)
+- `tests/e2e/reward-template-auto-copy.spec.ts` - E2E tests verifying templates copy to new families (5 tests covering visibility, categories, costs, descriptions)
+- `tests/e2e/reward-template-customization.spec.ts` - E2E tests verifying Guild Masters can edit/toggle/customize copied rewards (6 tests covering all CRUD operations)
 
 ### Notes
 
@@ -51,22 +51,22 @@ Based on PRD: `0006-prd-template-rewards.md`
   - [x] 3.9 Write test: "copied rewards should be independent from global templates"
   - [x] 3.10 Add cleanup logic to remove test families and rewards after each test
 
-- [ ] 4.0 Write E2E Tests for Template Rewards
-  - [ ] 4.1 Create test file `tests/e2e/reward-template-auto-copy.spec.ts`
-  - [ ] 4.2 Write test: "new family should automatically receive template rewards"
-  - [ ] 4.3 Test flow: Create new family through signup flow
-  - [ ] 4.4 Test flow: Navigate to Reward Store as Guild Master
-  - [ ] 4.5 Test assertion: Verify at least 10 rewards are visible in the store
-  - [ ] 4.6 Test assertion: Verify rewards span multiple categories (check for different reward type icons)
-  - [ ] 4.7 Create test file `tests/e2e/reward-template-customization.spec.ts`
-  - [ ] 4.8 Write test: "Guild Master can edit template rewards"
-  - [ ] 4.9 Test flow: Navigate to Reward Management as Guild Master
-  - [ ] 4.10 Test flow: Edit a template reward (change name, description, or cost)
-  - [ ] 4.11 Test assertion: Verify changes are saved and visible
-  - [ ] 4.12 Write test: "Guild Master can deactivate template rewards"
-  - [ ] 4.13 Test flow: Toggle a reward to inactive
-  - [ ] 4.14 Test assertion: Verify reward no longer appears in hero's Reward Store
-  - [ ] 4.15 Test assertion: Verify reward still visible in Guild Master's Reward Management (inactive state)
+- [x] 4.0 Write E2E Tests for Template Rewards
+  - [x] 4.1 Create test file `tests/e2e/reward-template-auto-copy.spec.ts`
+  - [x] 4.2 Write test: "new family should automatically receive template rewards"
+  - [x] 4.3 Test flow: Create new family through signup flow
+  - [x] 4.4 Test flow: Navigate to Reward Store as Guild Master
+  - [x] 4.5 Test assertion: Verify at least 10 rewards are visible in the store
+  - [x] 4.6 Test assertion: Verify rewards span multiple categories (check for different reward type icons)
+  - [x] 4.7 Create test file `tests/e2e/reward-template-customization.spec.ts`
+  - [x] 4.8 Write test: "Guild Master can edit template rewards"
+  - [x] 4.9 Test flow: Navigate to Reward Management as Guild Master
+  - [x] 4.10 Test flow: Edit a template reward (change name, description, or cost)
+  - [x] 4.11 Test assertion: Verify changes are saved and visible
+  - [x] 4.12 Write test: "Guild Master can deactivate template rewards"
+  - [x] 4.13 Test flow: Toggle a reward to inactive
+  - [x] 4.14 Test assertion: Verify reward no longer appears in hero's Reward Store
+  - [x] 4.15 Test assertion: Verify reward still visible in Guild Master's Reward Management (inactive state)
 
 - [ ] 5.0 Test Migration and Deploy
   - [ ] 5.1 Start local Supabase instance (`npx supabase start`)
