@@ -1,224 +1,160 @@
-import { test, expect } from '@playwright/test';
-import { setupUserWithCharacter } from './helpers/setup-helpers';
+import type { Page } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
+import { navigateToDashboard } from "./helpers/navigation-helpers";
 
-test.describe('Family Management', () => {
-  test('Guild Master promotes Hero to Guild Master successfully', async ({ page }) => {
-    // Create first user (Guild Master)
-    const gmEmail = `gm-promote-${Date.now()}@test.com`;
-    await setupUserWithCharacter(page, 'promote-test', {
-      characterClass: 'KNIGHT',
-      email: gmEmail,
-      password: 'testpass123',
+async function openFamilyManagementTab(page: Page): Promise<void> {
+  await navigateToDashboard(page);
+  await expect(page.getByTestId("tab-family")).toBeVisible({
+    timeout: 15000,
+  });
+  await page.getByTestId("tab-family").click();
+  await expect(
+    page.getByRole("heading", { name: "Family Management" }),
+  ).toBeVisible({ timeout: 15000 });
+}
+
+test.describe("Family Management", () => {
+  test("Guild Master promotes Hero to Guild Master successfully", async ({
+    workerFamily,
+  }) => {
+    const { gmPage, createFamilyMember } = workerFamily;
+
+    const heroMember = await createFamilyMember({
+      displayName: "Hero User",
+      characterClass: "MAGE",
+      characterName: "Hero Character",
     });
 
-    // Get family code from dashboard
-    const familyCodeText = await page.locator('text=/Guild:.*\\((.+)\\)/').textContent();
-    const familyCode = familyCodeText?.match(/\(([^)]+)\)/)?.[1] || '';
+    await gmPage.reload({ waitUntil: "networkidle" });
+    await openFamilyManagementTab(gmPage);
 
-    // Logout
-    await page.click('text=Logout');
+    const heroRow = gmPage.locator("tr").filter({ hasText: heroMember.email });
+    await expect(heroRow).toBeVisible({ timeout: 20000 });
+    const heroRoleCell = heroRow.locator("td").nth(2);
+    await expect(heroRoleCell).toContainText("Young Hero");
 
-    // Create second user (Hero) and join same family
-    const heroEmail = `hero-${Date.now()}@test.com`;
-    await page.goto('/auth/register');
-    await page.fill('[data-testid="input-name"]', 'Hero User');
-    await page.fill('[data-testid="input-email"]', heroEmail);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.fill('[data-testid="input-familyCode"]', familyCode);
-    await page.click('button[type="submit"]');
+    await heroRow.getByRole("button", { name: /Promote to GM/i }).click();
 
-    // Create character for Hero
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero Character');
-    await page.click('[data-testid="class-mage"]');
-    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expect(
+      gmPage.getByRole("heading", { name: "Promote to Guild Master" }),
+    ).toBeVisible();
+    await expect(
+      gmPage.getByText(/Are you sure you want to promote/),
+    ).toBeVisible();
+    await gmPage.getByRole("button", { name: /Confirm Promotion/i }).click();
 
-    // Logout Hero
-    await page.click('text=Logout');
-
-    // Login as GM
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="input-email"]', gmEmail);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Navigate to Family Management tab
-    await page.click('[data-testid="tab-family"]');
-    await expect(page.getByText('Family Management')).toBeVisible();
-
-    // Verify Hero User is in the list with Young Hero role (default for new family members)
-    const heroRow = page.locator('tr').filter({ hasText: 'Hero User' });
-    await expect(heroRow).toBeVisible();
-    await expect(heroRow.getByText('Young Hero')).toBeVisible();
-
-    // Click Promote button (Young Heroes can now be promoted to GM)
-    await heroRow.getByRole('button', { name: /Promote to GM/i }).click();
-
-    // Confirm promotion in modal
-    await expect(page.getByText('Promote to Guild Master')).toBeVisible();
-    await expect(page.getByText(/Are you sure you want to promote/)).toBeVisible();
-    await page.getByRole('button', { name: /Confirm Promotion/i }).click();
-
-    // Verify Hero User now has Guild Master role
-    await expect(heroRow.getByText('Guild Master')).toBeVisible();
-    await expect(heroRow.getByText('👑')).toBeVisible();
-
-    // Verify Promote button is gone (no longer a Hero)
-    await expect(heroRow.getByRole('button', { name: /Promote to GM/i })).not.toBeVisible();
+    await expect(heroRoleCell).toContainText("Guild Master", {
+      timeout: 15000,
+    });
+    await expect(heroRoleCell).toContainText("👑");
+    await expect(
+      heroRow.getByRole("button", { name: /Promote to GM/i }),
+    ).toHaveCount(0, { timeout: 15000 });
   });
 
-  test('Guild Master demotes another GM to Hero successfully', async ({ page }) => {
-    // Create first GM
-    const gm1Email = `gm1-demote-${Date.now()}@test.com`;
-    await setupUserWithCharacter(page, 'demote-test', {
-      characterClass: 'KNIGHT',
-      email: gm1Email,
-      password: 'testpass123',
+  test("Guild Master demotes another GM to Hero successfully", async ({
+    workerFamily,
+  }) => {
+    const { gmPage, createFamilyMember } = workerFamily;
+
+    const secondGmCandidate = await createFamilyMember({
+      displayName: "Second GM",
+      characterClass: "RANGER",
+      characterName: "Second Character",
     });
 
-    const familyCodeText = await page.locator('text=/Guild:.*\\((.+)\\)/').textContent();
-    const familyCode = familyCodeText?.match(/\(([^)]+)\)/)?.[1] || '';
+    await gmPage.reload({ waitUntil: "networkidle" });
+    await openFamilyManagementTab(gmPage);
 
-    // Logout
-    await page.click('text=Logout');
+    const secondUserRow = gmPage
+      .locator("tr")
+      .filter({ hasText: secondGmCandidate.email });
+    await expect(secondUserRow).toBeVisible({ timeout: 20000 });
+    const secondUserRoleCell = secondUserRow.locator("td").nth(2);
 
-    // Create second user and join
-    const gm2Email = `gm2-${Date.now()}@test.com`;
-    await page.goto('/auth/register');
-    await page.fill('[data-testid="input-name"]', 'Second GM');
-    await page.fill('[data-testid="input-email"]', gm2Email);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.fill('[data-testid="input-familyCode"]', familyCode);
-    await page.click('button[type="submit"]');
+    await secondUserRow
+      .getByRole("button", { name: /Promote to GM/i })
+      .click();
+    await gmPage
+      .getByRole("button", { name: /Confirm Promotion/i })
+      .click();
 
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Second Character');
-    await page.click('[data-testid="class-ranger"]');
-    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
-    await expect(page).toHaveURL(/.*dashboard/);
-    await page.click('text=Logout');
+    await expect(secondUserRoleCell).toContainText("Guild Master", {
+      timeout: 15000,
+    });
+    await expect(secondUserRoleCell).toContainText("👑");
 
-    // Login as first GM
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="input-email"]', gm1Email);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/.*dashboard/);
+    await secondUserRow
+      .getByRole("button", { name: /Demote to Hero/i })
+      .click();
+    await expect(
+      gmPage.getByRole("heading", { name: "Demote to Hero" }),
+    ).toBeVisible();
+    await expect(
+      gmPage.getByText(/Are you sure you want to demote/),
+    ).toBeVisible();
+    await gmPage.getByRole("button", { name: /Confirm Demotion/i }).click();
 
-    // Navigate to Family Management and promote second user
-    await page.click('[data-testid="tab-family"]');
-    const secondUserRow = page.locator('tr').filter({ hasText: 'Second GM' });
-    await secondUserRow.getByRole('button', { name: /Promote to GM/i }).click();
-    await page.getByRole('button', { name: /Confirm Promotion/i }).click();
-
-    // Wait for promotion to complete
-    await expect(secondUserRow.getByText('Guild Master')).toBeVisible();
-
-    // Now demote the second GM back to Hero
-    await secondUserRow.getByRole('button', { name: /Demote to Hero/i }).click();
-
-    // Confirm demotion in modal
-    await expect(page.getByRole('heading', { name: 'Demote to Hero' })).toBeVisible();
-    await expect(page.getByText(/Are you sure you want to demote/)).toBeVisible();
-    await page.getByRole('button', { name: /Confirm Demotion/i }).click();
-
-    // Verify Second GM is now Hero
-    await expect(secondUserRow.getByText('Hero')).toBeVisible();
-    await expect(secondUserRow.getByText('🛡️')).toBeVisible();
-
-    // Verify Demote button is gone, Promote button is back
-    await expect(secondUserRow.getByRole('button', { name: /Demote to Hero/i })).not.toBeVisible();
-    await expect(secondUserRow.getByRole('button', { name: /Promote to GM/i })).toBeVisible();
+    await expect(secondUserRoleCell).toContainText("Hero", {
+      timeout: 15000,
+    });
+    await expect(secondUserRoleCell).toContainText("🛡️");
+    await expect(
+      secondUserRow.getByRole("button", { name: /Demote to Hero/i }),
+    ).toHaveCount(0, { timeout: 15000 });
+    await expect(
+      secondUserRow.getByRole("button", { name: /Promote to GM/i }),
+    ).toBeVisible();
   });
 
+  test("GM cannot see demote button for themselves", async ({
+    workerFamily,
+  }) => {
+    const { gmPage, gmEmail } = workerFamily;
 
-  test('GM cannot see demote button for themselves', async ({ page }) => {
-    // Create GM
-    const gmEmail = `gm-self-${Date.now()}@test.com`;
-    await setupUserWithCharacter(page, 'self-demote-test', {
-      characterClass: 'KNIGHT',
-      email: gmEmail,
-      password: 'testpass123',
-    });
+    await gmPage.reload({ waitUntil: "networkidle" });
+    await openFamilyManagementTab(gmPage);
 
-    // Navigate to Family Management
-    await page.click('[data-testid="tab-family"]');
-    await expect(page.getByRole('heading', { name: 'Family Management' })).toBeVisible();
+    const ownRow = gmPage.locator("tr").filter({ hasText: gmEmail });
+    await expect(ownRow).toBeVisible({ timeout: 20000 });
+    await expect(ownRow.getByText("Guild Master")).toBeVisible();
 
-    // Find own row (should have email in it)
-    const ownRow = page.locator('tr').filter({ hasText: gmEmail });
-    await expect(ownRow).toBeVisible();
-    await expect(ownRow.getByText('Guild Master')).toBeVisible();
-
-    // Verify NO demote button exists for self
-    await expect(ownRow.getByRole('button', { name: /Demote/i })).not.toBeVisible();
-
-    // Should see a dash in the actions cell
-    const actionsCell = ownRow.locator('td').last();
-    await expect(actionsCell).toContainText('-');
+    await expect(
+      ownRow.getByRole("button", { name: /Demote/i }),
+    ).toHaveCount(0);
+    await expect(ownRow.locator("td").last()).toContainText("-");
   });
 
-  test('Non-GM cannot access Family Management tab', async ({ page }) => {
-    // Create GM and get family code
-    const gmEmail = `gm-access-${Date.now()}@test.com`;
-    await setupUserWithCharacter(page, 'access-test', {
-      characterClass: 'KNIGHT',
-      email: gmEmail,
-      password: 'testpass123',
+  test("Non-GM cannot access Family Management tab", async ({
+    workerFamily,
+  }) => {
+    const heroUser = await workerFamily.createFamilyMember({
+      displayName: "Hero User",
+      characterClass: "MAGE",
+      characterName: "Hero Character",
     });
 
-    const familyCodeText = await page.locator('text=/Guild:.*\\((.+)\\)/').textContent();
-    const familyCode = familyCodeText?.match(/\(([^)]+)\)/)?.[1] || '';
+    const heroPage = heroUser.page;
 
-    // Logout
-    await page.click('text=Logout');
-
-    // Create Hero user
-    const heroEmail = `hero-access-${Date.now()}@test.com`;
-    await page.goto('/auth/register');
-    await page.fill('[data-testid="input-name"]', 'Hero User');
-    await page.fill('[data-testid="input-email"]', heroEmail);
-    await page.fill('[data-testid="input-password"]', 'testpass123');
-    await page.fill('[data-testid="input-familyCode"]', familyCode);
-    await page.click('button[type="submit"]');
-
-    await expect(page).toHaveURL(/.*character\/create/);
-    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero Character');
-    await page.click('[data-testid="class-mage"]');
-    await page.getByRole('button', { name: /Begin Your Quest/i }).click();
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Verify Family Management tab does NOT exist
-    await expect(page.getByTestId('tab-family')).not.toBeVisible();
-
-    // Verify Hero only sees Quests and Rewards tabs
-    await expect(page.getByTestId('tab-quests')).toBeVisible();
-    await expect(page.getByTestId('tab-rewards')).toBeVisible();
-    await expect(page.getByTestId('tab-templates')).not.toBeVisible();
-    await expect(page.getByTestId('tab-family')).not.toBeVisible();
+    await expect(heroPage.getByTestId("tab-family")).not.toBeVisible();
+    await expect(heroPage.getByTestId("tab-quests")).toBeVisible();
+    await expect(heroPage.getByTestId("tab-rewards")).toBeVisible();
+    await expect(heroPage.getByTestId("tab-templates")).not.toBeVisible();
   });
 
-  test('Role badges display correctly throughout app', async ({ page }) => {
-    // Create GM
-    const gmEmail = `gm-badges-${Date.now()}@test.com`;
-    await setupUserWithCharacter(page, 'badge-test', {
-      characterClass: 'KNIGHT',
-      email: gmEmail,
-      password: 'testpass123',
-      userName: 'Guild Master User',
-    });
+  test("Role badges display correctly throughout app", async ({
+    workerFamily,
+  }) => {
+    const { gmPage, gmEmail } = workerFamily;
 
-    // Verify GM badge in header
-    await expect(page.getByText('👑 Guild Master')).toBeVisible();
+    await expect(gmPage.getByText("👑 Guild Master")).toBeVisible();
 
-    // Navigate to Family Management
-    await page.click('[data-testid="tab-family"]');
+    await openFamilyManagementTab(gmPage);
 
-    // Verify badge in family list
-    const gmRow = page.locator('tr').filter({ hasText: 'Guild Master User' });
-    // Check for role badge with crown emoji and text (no space between emoji and text)
-    await expect(gmRow.locator('td').nth(2)).toContainText('👑Guild Master');
+    const gmRow = gmPage.locator("tr").filter({ hasText: gmEmail });
+    await expect(gmRow).toBeVisible({ timeout: 20000 });
+    const gmRoleCell = gmRow.locator("td").nth(2);
+    await expect(gmRoleCell).toContainText("Guild Master");
+    await expect(gmRoleCell).toContainText("👑");
   });
 });

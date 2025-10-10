@@ -14,6 +14,7 @@
 /coverage
 /playwright-report
 /test-results
+/tests/e2d/.auth/
 # test screenshots and debug files
 *.png
 test-*.png

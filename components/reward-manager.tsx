@@ -33,7 +33,9 @@ export default function RewardManager() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Reward | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -131,6 +133,7 @@ export default function RewardManager() {
 
   const handleDelete = (reward: Reward) => {
     setSelectedReward(reward);
+    setDeleteTarget(reward);
     setShowDeleteConfirm(true);
   };
 
@@ -157,6 +160,7 @@ export default function RewardManager() {
         type: formData.type,
         cost: parseInt(formData.cost),
         family_id: profile.family_id,
+        is_active: true,
       });
 
       setShowCreateModal(false);
@@ -189,15 +193,22 @@ export default function RewardManager() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedReward) return;
+    if (!deleteTarget || deleteLoading) return;
+
+    setDeleteLoading(true);
 
     try {
-      await rewardService.deleteReward(selectedReward.id);
-      setShowDeleteConfirm(false);
-      setSelectedReward(null);
+      await rewardService.deleteReward(deleteTarget.id);
+      requestAnimationFrame(() => {
+        setShowDeleteConfirm(false);
+        setSelectedReward(null);
+        setDeleteTarget(null);
+      });
     } catch (err) {
       console.error("Failed to delete reward:", err);
       setError("Failed to delete reward");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -315,6 +326,7 @@ export default function RewardManager() {
             {approvedRedemptions.map((redemption) => (
               <div
                 key={redemption.id}
+                data-testid="approved-redemption-item"
                 className="bg-white border rounded-lg p-3 flex items-center justify-between"
               >
                 <div className="flex-1">
@@ -649,7 +661,7 @@ export default function RewardManager() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
+      {showDeleteConfirm && deleteTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div
             className="bg-white rounded-lg p-6 max-w-md w-full"
@@ -657,25 +669,30 @@ export default function RewardManager() {
           >
             <h3 className="text-xl font-bold mb-4">Delete Reward?</h3>
             <p className="mb-6">
-              Are you sure you want to delete &ldquo;{selectedReward?.name}&rdquo;? This action
+              Are you sure you want to delete &ldquo;{deleteTarget.name}&rdquo;? This action
               will deactivate the reward.
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => {
+                  if (deleteLoading) return;
                   setShowDeleteConfirm(false);
                   setSelectedReward(null);
+                  setDeleteTarget(null);
+                  setDeleteLoading(false);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                className={`flex-1 px-4 py-2 rounded-lg ${deleteLoading ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-gray-200 hover:bg-gray-300"}`}
+                disabled={deleteLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
+                disabled={deleteLoading}
                 data-testid="confirm-delete-button"
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${deleteLoading ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
               >
-                Delete
+                {deleteLoading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

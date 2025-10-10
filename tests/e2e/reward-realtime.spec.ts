@@ -1,41 +1,126 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
-import { setupUserWithCharacter, loginUser } from './helpers/setup-helpers';
+import type { Page, BrowserContext } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
+import {
+  setupTwoContextTest,
+  cleanupTwoContextTest,
+  waitForNewListItem,
+  waitForListItemRemoved,
+} from "./helpers/realtime-helpers";
+import type { ExistingUserOptions } from "./helpers/realtime-helpers";
+import { navigateToDashboard, navigateToHeroTab } from "./helpers/navigation-helpers";
+import { deleteReward } from "./helpers/reward-helpers";
+
+async function resetRewardManagement(gmPage: Page): Promise<void> {
+  await navigateToDashboard(gmPage);
+  await navigateToHeroTab(gmPage, "Reward Management");
+
+  // Clear pending redemptions
+  const pendingRedemptions = gmPage.locator(
+    '[data-testid="pending-redemption-item"]',
+  );
+  let pendingCount = await pendingRedemptions.count();
+  while (pendingCount > 0) {
+    const denyButton = pendingRedemptions
+      .first()
+      .locator('[data-testid="deny-redemption-button"]');
+
+    // Check if button is visible before clicking
+    if (await denyButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await denyButton.click();
+      await gmPage.waitForLoadState("networkidle");
+    }
+
+    // Re-check count to avoid infinite loop
+    const newCount = await pendingRedemptions.count();
+    if (newCount === pendingCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    pendingCount = newCount;
+  }
+
+  // Clear approved redemptions
+  const approvedRedemptions = gmPage.locator(
+    '[data-testid="approved-redemption-item"]',
+  );
+  let approvedCount = await approvedRedemptions.count();
+  while (approvedCount > 0) {
+    const fulfillButton = approvedRedemptions
+      .first()
+      .locator('[data-testid="fulfill-redemption-button"]');
+
+    // Check if button is visible before clicking
+    if (await fulfillButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await fulfillButton.click();
+      await gmPage.waitForLoadState("networkidle");
+    }
+
+    // Re-check count to avoid infinite loop
+    const newCount = await approvedRedemptions.count();
+    if (newCount === approvedCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    approvedCount = newCount;
+  }
+
+  // Delete all rewards
+  const rewardCards = gmPage.locator('[data-testid^="reward-card-"]');
+  let rewardCount = await rewardCards.count();
+  while (rewardCount > 0) {
+    const name = (await rewardCards.first().locator("h3").textContent())?.trim();
+    if (!name) break;
+    await deleteReward(gmPage, name);
+
+    // Re-check count to avoid infinite loop
+    const newCount = await rewardCards.count();
+    if (newCount === rewardCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    rewardCount = newCount;
+  }
+
+  await navigateToHeroTab(gmPage, "Quests & Adventures");
+}
 
 test.describe('Reward Realtime Updates', () => {
   let context1: BrowserContext;
   let context2: BrowserContext;
   let page1: Page;
   let page2: Page;
-  let testUser: { email: string; password: string };
 
-  test.beforeEach(async ({ browser }) => {
-    // Create two browser contexts to simulate two tabs
-    context1 = await browser.newContext();
-    context2 = await browser.newContext();
-    page1 = await context1.newPage();
-    page2 = await context2.newPage();
+  test.beforeEach(async ({ browser, workerFamily }) => {
+    const { gmPage, gmEmail, gmPassword } = workerFamily;
 
-    // Setup family and login as Guild Master in first context
-    testUser = await setupUserWithCharacter(page1, 'guildmaster-rewards');
+    await resetRewardManagement(gmPage);
 
-    // Login as the same Guild Master in second context
-    await loginUser(page2, testUser.email, testUser.password);
+    const gmCredentials: ExistingUserOptions = {
+      email: gmEmail,
+      password: gmPassword,
+    };
 
-    // Navigate both pages to Reward Management
-    await page1.goto('http://localhost:3000/dashboard');
-    await page1.waitForLoadState('networkidle');
-    await page1.click('text=Reward Management');
-    await page1.waitForSelector('[data-testid="reward-manager"]');
+    const setup = await setupTwoContextTest(browser, gmCredentials);
+    context1 = setup.context1;
+    context2 = setup.context2;
+    page1 = setup.page1;
+    page2 = setup.page2;
 
-    await page2.goto('http://localhost:3000/dashboard');
-    await page2.waitForLoadState('networkidle');
-    await page2.click('text=Reward Management');
-    await page2.waitForSelector('[data-testid="reward-manager"]');
+    await navigateToDashboard(page1);
+    await navigateToHeroTab(page1, "Reward Management");
+    await expect(page1.getByTestId("reward-manager")).toBeVisible({
+      timeout: 15000,
+    });
+
+    await navigateToDashboard(page2);
+    await navigateToHeroTab(page2, "Reward Management");
+    await expect(page2.getByTestId("reward-manager")).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test.afterEach(async () => {
-    await context1.close();
-    await context2.close();
+    await cleanupTwoContextTest(context1, context2);
   });
 
   test('Reward creation appears in real-time across browser windows', async () => {
@@ -46,8 +131,6 @@ test.describe('Reward Realtime Updates', () => {
     await page1.selectOption('[data-testid="reward-type-select"]', 'EXPERIENCE');
     await page1.fill('[data-testid="reward-cost-input"]', '150');
     await page1.click('[data-testid="save-reward-button"]');
-
-    // Wait for modal to close on page 1
     await expect(page1.getByTestId('create-reward-modal')).not.toBeVisible();
 
     // Verify reward appears in page1
@@ -56,11 +139,12 @@ test.describe('Reward Realtime Updates', () => {
     });
     await expect(rewardCard1).toBeVisible();
 
-    // Page 2: Verify reward appears automatically via realtime subscription
-    const rewardCard2 = page2.locator('[data-testid^="reward-card-"]').filter({
-      hasText: 'Realtime Reward',
-    });
-    await expect(rewardCard2).toBeVisible({ timeout: 5000 });
+    // Page 2: Wait for realtime update
+    await waitForNewListItem(page2, 'Realtime Reward');
+
+    // Cleanup
+    await deleteReward(page1, 'Realtime Reward');
+    await waitForListItemRemoved(page2, 'Realtime Reward');
   });
 
   test('Reward updates appear in real-time', async () => {
@@ -71,14 +155,10 @@ test.describe('Reward Realtime Updates', () => {
     await page1.selectOption('[data-testid="reward-type-select"]', 'PRIVILEGE');
     await page1.fill('[data-testid="reward-cost-input"]', '100');
     await page1.click('[data-testid="save-reward-button"]');
-
-    // Wait for reward to appear on both pages
     await expect(
       page1.locator('[data-testid^="reward-card-"]').filter({ hasText: 'Update Test' })
     ).toBeVisible();
-    await expect(
-      page2.locator('[data-testid^="reward-card-"]').filter({ hasText: 'Update Test' })
-    ).toBeVisible({ timeout: 5000 });
+    await waitForNewListItem(page2, 'Update Test');
 
     // Page 1: Edit the reward
     const rewardCard1 = page1.locator('[data-testid^="reward-card-"]').filter({
@@ -88,16 +168,18 @@ test.describe('Reward Realtime Updates', () => {
     await page1.fill('[data-testid="reward-name-input"]', 'Updated Reward Name');
     await page1.fill('[data-testid="reward-cost-input"]', '200');
     await page1.click('[data-testid="save-reward-button"]');
-
-    // Wait for modal to close on page 1
     await expect(page1.getByTestId('edit-reward-modal')).not.toBeVisible();
 
-    // Page 2: Verify update appears automatically
+    // Page 2: Wait for realtime update
+    await waitForNewListItem(page2, 'Updated Reward Name');
     const updatedCard2 = page2.locator('[data-testid^="reward-card-"]').filter({
       hasText: 'Updated Reward Name',
     });
-    await expect(updatedCard2).toBeVisible({ timeout: 5000 });
     await expect(updatedCard2.getByText('200 gold')).toBeVisible();
+
+    // Cleanup
+    await deleteReward(page1, 'Updated Reward Name');
+    await waitForListItemRemoved(page2, 'Updated Reward Name');
   });
 
   test('Reward deletion appears in real-time', async () => {
@@ -108,14 +190,10 @@ test.describe('Reward Realtime Updates', () => {
     await page1.selectOption('[data-testid="reward-type-select"]', 'PURCHASE');
     await page1.fill('[data-testid="reward-cost-input"]', '50');
     await page1.click('[data-testid="save-reward-button"]');
-
-    // Wait for reward to appear on both pages
     await expect(
       page1.locator('[data-testid^="reward-card-"]').filter({ hasText: 'Delete Test' })
     ).toBeVisible();
-    await expect(
-      page2.locator('[data-testid^="reward-card-"]').filter({ hasText: 'Delete Test' })
-    ).toBeVisible({ timeout: 5000 });
+    await waitForNewListItem(page2, 'Delete Test');
 
     // Page 1: Delete the reward
     const rewardCard1 = page1.locator('[data-testid^="reward-card-"]').filter({
@@ -123,14 +201,9 @@ test.describe('Reward Realtime Updates', () => {
     });
     await rewardCard1.locator('[data-testid="delete-reward-button"]').click();
     await page1.click('[data-testid="confirm-delete-button"]');
-
-    // Verify reward is permanently deleted on page1 (hard delete - removed from UI)
     await expect(rewardCard1).not.toBeVisible();
 
-    // Page 2: Verify reward is deleted automatically (hard delete via realtime)
-    const rewardCard2 = page2.locator('[data-testid^="reward-card-"]').filter({
-      hasText: 'Delete Test',
-    });
-    await expect(rewardCard2).not.toBeVisible({ timeout: 5000 });
+    // Page 2: Wait for realtime deletion
+    await waitForListItemRemoved(page2, 'Delete Test');
   });
 });

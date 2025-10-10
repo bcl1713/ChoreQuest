@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useCharacter } from "@/lib/character-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -38,72 +38,78 @@ const REWARD_TYPE_LABELS = {
 export default function RewardStore({ onError }: RewardStoreProps) {
   const { user, session, profile } = useAuth();
   const { character, refreshCharacter } = useCharacter();
-  const { onRewardRedemptionUpdate, onCharacterUpdate } = useRealtime();
+  const { onRewardUpdate, onRewardRedemptionUpdate, onCharacterUpdate } = useRealtime();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<RewardRedemptionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
-  const hasInitialized = useRef(false);
+  const loadRewards = useCallback(async () => {
+    if (!profile?.family_id) {
+      return;
+    }
+
+    try {
+      const { data: rewardsData, error: rewardsError } = await supabase
+        .from("rewards")
+        .select("*")
+        .eq("family_id", profile.family_id)
+        .eq("is_active", true);
+
+      if (rewardsError) {
+        console.error("Failed to load rewards:", rewardsError);
+        onError?.("Failed to load rewards");
+      } else {
+        setRewards(rewardsData || []);
+      }
+    } catch (error) {
+      console.error("Failed to load rewards:", error);
+      onError?.("Failed to load rewards");
+    }
+  }, [profile?.family_id, onError]);
+
+  const loadRedemptions = useCallback(async () => {
+    if (!profile?.id) {
+      return;
+    }
+
+    try {
+      const { data: redemptionsData, error: redemptionsError } = await supabase
+        .from("reward_redemptions")
+        .select(`
+          *,
+          user_profiles:user_id(id, name)
+        `)
+        .eq("user_id", profile.id)
+        .order("requested_at", { ascending: false });
+
+      if (redemptionsError) {
+        console.error("Failed to load redemptions:", redemptionsError);
+        onError?.("Failed to load redemption history");
+      } else {
+        setRedemptions(redemptionsData || []);
+      }
+    } catch (error) {
+      console.error("Failed to load redemption history:", error);
+      onError?.("Failed to load redemption history");
+    }
+  }, [profile?.id, onError]);
 
   useEffect(() => {
     if (!user || !session || !character || !profile) {
       return;
     }
 
-    // Prevent multiple initializations
-    if (hasInitialized.current) {
-      return;
-    }
-
-    hasInitialized.current = true;
-
     const loadData = async () => {
       setLoading(true);
-
       try {
-        // Load rewards for the family
-        const { data: rewardsData, error: rewardsError } = await supabase
-          .from('rewards')
-          .select('*')
-          .eq('family_id', profile?.family_id)
-          .eq('is_active', true);
-
-        if (rewardsError) {
-          console.error('Failed to load rewards:', rewardsError);
-          onError?.('Failed to load rewards');
-        } else {
-          setRewards(rewardsData || []);
-        }
-
-        // Load redemptions with user details
-        // Note: reward details are denormalized in reward_redemptions table
-        // (reward_name, reward_description, reward_type, cost) to preserve history
-        const { data: redemptionsData, error: redemptionsError } = await supabase
-          .from('reward_redemptions')
-          .select(`
-            *,
-            user_profiles:user_id(id, name)
-          `)
-          .eq('user_id', profile?.id)
-          .order('requested_at', { ascending: false });
-
-        if (redemptionsError) {
-          console.error('Failed to load redemptions:', redemptionsError);
-          onError?.('Failed to load redemption history');
-        } else {
-          // Use Supabase data directly (no transformation needed)
-          setRedemptions(redemptionsData || []);
-        }
-      } catch (error) {
-        console.error('Failed to load data:', error);
-        onError?.('Failed to load reward store data');
+        await Promise.all([loadRewards(), loadRedemptions()]);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [user, session, character, profile, onError]); // Proper dependencies - onError is stable via useCallback
+  }, [user, session, character, profile, loadRewards, loadRedemptions]);
 
   // Set up realtime reward redemption listener
   useEffect(() => {
@@ -136,6 +142,18 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
     return unsubscribe;
   }, [user, profile, onRewardRedemptionUpdate]);
+
+  useEffect(() => {
+    if (!profile?.family_id) {
+      return;
+    }
+
+    const unsubscribe = onRewardUpdate(() => {
+      loadRewards();
+    });
+
+    return unsubscribe;
+  }, [profile?.family_id, onRewardUpdate, loadRewards]);
 
   // Set up realtime character update listener for gold changes
   useEffect(() => {
@@ -340,7 +358,10 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       </div>
 
       {/* Rewards Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+        data-testid="reward-store-grid"
+      >
         {rewards.map((reward) => {
           const affordable = canAfford(reward.cost);
           const redemptionStatus = getRedemptionStatus(reward.id);
@@ -349,6 +370,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
           return (
             <motion.div
               key={reward.id}
+              data-testid={`reward-store-card-${reward.id}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className={`border rounded-lg p-4 ${
@@ -388,6 +410,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
               )}
 
               <button
+                data-testid="reward-store-redeem-button"
                 onClick={() => handleRedeem(reward)}
                 disabled={!affordable || !!redemptionStatus || isRedeeming}
                 className={`w-full py-2 px-4 rounded font-medium transition-colors ${

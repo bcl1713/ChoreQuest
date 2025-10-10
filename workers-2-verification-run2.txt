@@ -1,0 +1,62 @@
+
+Running 97 tests using 2 workers
+
+[1A[2K[1/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:19:7 › Admin Dashboard Activity Feed › displays activity feed on overview tab
+[1A[2K[2/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:37:7 › Admin Dashboard Activity Feed › shows quest completion events in activity feed
+[1A[2K[3/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:76:7 › Admin Dashboard Activity Feed › shows pending approval events with quick action buttons
+[1A[2K[4/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:125:7 › Admin Dashboard Activity Feed › displays reward redemption events in activity feed
+[1A[2K[5/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:163:7 › Admin Dashboard Activity Feed › shows relative timestamps for events
+[1A[2K[6/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:183:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events
+[1A[2K[7/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:216:7 › Admin Dashboard Activity Feed › activity feed has manual refresh button
+[1A[2K[8/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:236:7 › Admin Dashboard Activity Feed › activity feed limits to last 50 events
+[1A[2K[9/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:258:7 › Admin Dashboard Activity Feed › displays level-up events in activity feed
+[1A[2KInternal error: step id not found: fixture@51
+
+[1A[2KInternal error: step id not found: fixture@51
+
+[1A[2K  1) [chromium] › tests/e2e/admin-activity-feed.spec.ts:183:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events 
+
+    TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="login-link"]') to be visible[22m
+
+
+       at helpers/setup-helpers.ts:172
+
+      170 |     state: "attached",
+      171 |   });
+    > 172 |   await page.locator('[data-testid="login-link"]').waitFor({ state: "visible" });
+          |                                                    ^
+      173 |   await page.waitForLoadState("networkidle");
+      174 |   await page.locator('[data-testid="login-link"]').click();
+      175 |   await expect(page).toHaveURL(/.*\/auth\/login/);
+        at loginUser (/home/brian/Projects/ChoreQuest/tests/e2e/helpers/setup-helpers.ts:172:52)
+        at /home/brian/Projects/ChoreQuest/tests/e2e/admin-activity-feed.spec.ts:199:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-activity-feed-Admin--69ea4--auto-scrolls-to-new-events-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-activity-feed-Admin--69ea4--auto-scrolls-to-new-events-chromium/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[31mTesting stopped early after 1 maximum allowed failures.[39m
+
+[1A[2K  2) [chromium] › tests/e2e/admin-activity-feed.spec.ts:258:7 › Admin Dashboard Activity Feed › displays level-up events in activity feed 
+
+    Test was interrupted.
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-activity-feed-Admin--67bf3--up-events-in-activity-feed-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/admin-activity-feed.spec.ts:183:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events 
+  1 interrupted
+    [chromium] › tests/e2e/admin-activity-feed.spec.ts:258:7 › Admin Dashboard Activity Feed › displays level-up events in activity feed 
+  88 did not run
+  7 passed (51.1s)
+  1 error was not a part of any test, see above for details

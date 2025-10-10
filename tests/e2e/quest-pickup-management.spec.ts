@@ -1,148 +1,111 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
 import {
-  setupUserWithCharacter,
-  commonBeforeEach,
-} from "./helpers/setup-helpers";
+  createCustomQuest,
+  pickupQuest,
+  startQuest,
+  completeQuest,
+  approveQuest,
+} from "./helpers/quest-helpers";
+import { navigateToDashboard } from "./helpers/navigation-helpers";
+import { expectQuestStatus } from "./helpers/assertions";
+
+function uniqueQuestName(prefix: string): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `${prefix} ${timestamp}-${random}`;
+}
 
 test.describe("Quest Pickup and Management", () => {
-  test.beforeEach(async ({ page }) => {
-    await commonBeforeEach(page);
-  });
+  test("Guild Master can pick up available quests", async ({
+    workerFamily,
+  }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    const questTitle = uniqueQuestName("Clean the Kitchen");
 
-  test("Guild Master can pick up available quests", async ({ page }) => {
-    await setupUserWithCharacter(page, "PickupGM");
-
-    // Create unassigned quest
-    await page.click('[data-testid="create-quest-button"]');
-    await expect(page.locator("text=Create New Quest")).toBeVisible();
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
-    await page.fill(
-      'input[placeholder="Enter quest title..."]',
-      "Clean the Kitchen",
-    );
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Deep clean kitchen counters and dishes",
-    );
-    await page.locator("select").nth(1).selectOption("MEDIUM");
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "25");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "50");
-
-    await page.click('button[type="submit"]');
+    // Create an unassigned quest
+    await createCustomQuest(gmPage, {
+      title: questTitle,
+      description: "Deep clean kitchen counters and dishes",
+      difficulty: "MEDIUM",
+      goldReward: 25,
+      xpReward: 50,
+    });
 
     // Verify quest appears in Available Quests
-    await expect(page.getByText("📋 Available Quests")).toBeVisible();
-    await expect(page.getByText("Clean the Kitchen").first()).toBeVisible();
+    await expect(gmPage.getByText("📋 Available Quests")).toBeVisible();
 
     // Pick up the quest
-    const questCard = page.locator(
-      '.fantasy-card:has-text("Clean the Kitchen")',
-    );
-    const pickupButton = questCard.locator(
-      '[data-testid="pick-up-quest-button"]',
-    );
-    await expect(pickupButton.first()).toBeVisible();
-    await pickupButton.first().click();
+    await pickupQuest(gmPage, questTitle);
 
     // Verify quest moved to My Quests
-    await expect(page.getByText("🗡️ My Quests")).toBeVisible();
-    const myQuestsSection = page.locator("text=🗡️ My Quests").locator("..");
-
-    await expect(myQuestsSection.getByText("Clean the Kitchen")).toBeVisible();
+    await expect(gmPage.getByText("🗡️ My Quests")).toBeVisible();
+    const myQuestsSection = gmPage.locator("text=🗡️ My Quests").locator("..");
+    await expect(myQuestsSection.getByText(questTitle)).toBeVisible();
   });
 
-  test("quest permissions and state management", async ({ page }) => {
-    await setupUserWithCharacter(page, "PermissionTester");
+  test("Quest permissions and state management", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    const questTitle = uniqueQuestName("Test Permission Quest");
 
-    // Create and pick up a quest
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
-    await page.fill(
-      'input[placeholder="Enter quest title..."]',
-      "Test Permission Quest",
-    );
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Testing quest permissions",
-    );
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "30");
-
-    await page.click('button[type="submit"]');
+    // Create a quest
+    await createCustomQuest(gmPage, {
+      title: questTitle,
+      description: "Testing quest permissions",
+      xpReward: 30,
+    });
 
     // Pick up quest
-    await page.locator('button:has-text("Pick Up Quest")').first().click();
+    await pickupQuest(gmPage, questTitle);
 
     // Start the quest
-    await page.locator('button:has-text("Start Quest")').first().click();
+    await startQuest(gmPage, questTitle);
 
     // Complete the quest
-    await page.locator('button:has-text("Complete")').first().click();
+    await completeQuest(gmPage, questTitle);
+    await expectQuestStatus(gmPage, questTitle, "COMPLETED");
 
-    // Verify quest shows as completed
-    await expect(page.getByText("COMPLETED")).toBeVisible();
-
-    // Approve as Guild Master
-    await page.locator('button:has-text("Approve")').first().click();
-
-    // Verify quest shows as approved
-    await expect(page.getByText("APPROVED")).toBeVisible();
+    // Approve quest as GM
+    await approveQuest(gmPage, questTitle);
+    await expectQuestStatus(gmPage, questTitle, "APPROVED");
   });
 
-  test("quest workflow state transitions", async ({ page }) => {
-    await setupUserWithCharacter(page, "WorkflowTester");
+  test("Quest workflow state transitions", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
     const timestamp = Date.now();
+    const questTitle = `Workflow Test Quest ${timestamp}`;
 
     // Create quest
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
+    await createCustomQuest(gmPage, {
+      title: questTitle,
+      description: "Testing quest state transitions",
+      xpReward: 40,
+    });
 
-    const questTitle = `Workflow Test Quest ${timestamp}`;
-    await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Testing quest state transitions",
-    );
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "40");
+    await expect(gmPage.getByText(questTitle).first()).toBeVisible();
 
-    await page.click('button[type="submit"]');
-
-    // Verify quest was created and appears somewhere on the page
-    await expect(page.getByText(questTitle).first()).toBeVisible();
-
-    // Look for Available Quests section or quest card
-    const availableQuestExists = await page
+    const availableQuestExists = await gmPage
       .locator("text=📋 Available Quests")
       .isVisible()
       .catch(() => false);
-    const questCard = page.locator(`.fantasy-card:has-text("${questTitle}")`);
 
     if (availableQuestExists) {
-      // Pick up quest if it's in Available Quests
-      await questCard
-        .locator('button:has-text("Pick Up Quest")')
-        .first()
-        .click();
+      await pickupQuest(gmPage, questTitle);
     }
 
-    // Find the quest in My Quests and complete the workflow
-    const myQuestsQuest = page
+    const myQuestsQuest = gmPage
       .locator("text=🗡️ My Quests")
       .locator("..")
       .getByText(questTitle);
     await expect(myQuestsQuest).toBeVisible();
 
-    // Complete quest workflow
-    await page.locator('button:has-text("Start Quest")').first().click();
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await expectQuestStatus(gmPage, questTitle, "COMPLETED");
 
-    await page.locator('button:has-text("Complete")').first().click();
-
-    await expect(page.getByText("COMPLETED")).toBeVisible();
-
-    await page.locator('button:has-text("Approve")').first().click();
-
-    await expect(page.getByText("APPROVED")).toBeVisible();
+    await approveQuest(gmPage, questTitle);
+    await expectQuestStatus(gmPage, questTitle, "APPROVED");
   });
 });
-

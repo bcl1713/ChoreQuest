@@ -4,6 +4,7 @@ import {
   setupUserWithCharacter,
   commonBeforeEach,
 } from "./helpers/setup-helpers";
+import { expectInitialCharacterStats } from "./helpers/assertions";
 
 test.describe("Character Creation", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,11 +19,7 @@ test.describe("Character Creation", () => {
       page.getByText(`Welcome back, ${user.characterName}!`),
     ).toBeVisible();
     await expect(page.getByText("🛡️ Knight")).toBeVisible();
-    await expect(page.getByText("Level 1")).toBeVisible();
-    await expect(page.getByText("💰 0")).toBeVisible();
-    await expect(page.getByText("⚡ 0")).toBeVisible();
-    await expect(page.getByText("💎 0")).toBeVisible();
-    await expect(page.getByText("🏅 0")).toBeVisible();
+    await expectInitialCharacterStats(page);
   });
 
   test("existing user redirects to dashboard", async ({ page }) => {

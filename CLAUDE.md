@@ -95,6 +95,39 @@ npx prisma migrate dev # Apply migrations
 
 **Remember: The goal is quality software through disciplined TDD practice.**
 
+### 🧪 E2E Test Fixtures
+
+E2E tests use a **worker-scoped fixture system** for improved performance and reliability:
+
+- **Worker-scoped GM user**: Each Playwright worker gets a persistent Guild Master user and family that survives across all tests in that worker
+- **UI-based setup**: All users are created through the actual signup flow (not database inserts) for more realistic testing
+- **Automatic cleanup**: Worker teardown handles cleanup of all created users and families
+- **Multi-user helpers**: Use `createEphemeralUser()` or `createFamilyMember()` for tests requiring multiple users
+
+#### Using the Fixture
+
+```typescript
+import { test, expect } from './helpers/family-fixture';
+
+test('my test', async ({ workerFamily }) => {
+  const { gmPage, gmEmail, familyCode, createFamilyMember } = workerFamily;
+
+  // Use gmPage for GM user actions
+  await gmPage.goto('/dashboard');
+
+  // Create additional family members if needed
+  const hero = await createFamilyMember({ characterClass: 'KNIGHT' });
+  await hero.page.goto('/dashboard');
+});
+```
+
+#### Key Principles
+
+- **Import from family-fixture.ts**: Always import `test` and `expect` from `./helpers/family-fixture` (not `@playwright/test`)
+- **No database manipulation in tests**: All test actions should go through the UI
+- **Worker isolation**: Each worker has its own isolated family and users
+- **Parallel execution**: Tests run safely in parallel across multiple workers
+
 ## Extra Notes
 
 - Run the dev server when necessary, but keep in mind:

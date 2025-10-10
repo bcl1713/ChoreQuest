@@ -1,0 +1,34 @@
+
+Running 97 tests using 2 workers
+
+[1A[2K[1/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:19:7 › Admin Dashboard Activity Feed › displays activity feed on overview tab
+[1A[2K[2/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:37:7 › Admin Dashboard Activity Feed › shows quest completion events in activity feed
+[1A[2K[3/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:76:7 › Admin Dashboard Activity Feed › shows pending approval events with quick action buttons
+[1A[2K[4/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:125:7 › Admin Dashboard Activity Feed › displays reward redemption events in activity feed
+[1A[2K[5/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:163:7 › Admin Dashboard Activity Feed › shows relative timestamps for events
+[1A[2K[6/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:183:7 › Admin Dashboard Activity Feed › activity feed auto-scrolls to new events
+[1A[2K[7/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:217:7 › Admin Dashboard Activity Feed › activity feed has manual refresh button
+[1A[2K[8/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:237:7 › Admin Dashboard Activity Feed › activity feed limits to last 50 events
+[1A[2K[9/97] [chromium] › tests/e2e/admin-activity-feed.spec.ts:259:7 › Admin Dashboard Activity Feed › displays level-up events in activity feed
+[1A[2K[10/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:14:7 › Admin Dashboard Access Control › Guild Master can access admin dashboard
+[1A[2K[11/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:38:7 › Admin Dashboard Access Control › Hero cannot access admin dashboard
+[1A[2K[12/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:73:7 › Admin Dashboard Access Control › Unauthenticated user cannot access admin dashboard
+[1A[2K[13/97] [chromium] › tests/e2e/admin-dashboard-access.spec.ts:81:7 › Admin Dashboard Access Control › Admin button visible only for Guild Masters in header
+[1A[2K[14/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:13:7 › Admin Dashboard Tab Navigation › navigates between all tabs successfully
+[1A[2K[15/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:42:7 › Admin Dashboard Tab Navigation › persists active tab in URL query params
+[1A[2K[16/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:69:7 › Admin Dashboard Tab Navigation › direct navigation to specific tab via URL
+[1A[2K[17/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:101:7 › Admin Dashboard Tab Navigation › tab navigation is mobile responsive
+[1A[2K[18/97] [chromium] › tests/e2e/admin-dashboard-tabs.spec.ts:134:7 › Admin Dashboard Tab Navigation › each tab renders correct content and components
+[1A[2K[19/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:14:7 › Guild Master Management - Promote/Demote › Guild Master can promote a Hero to Guild Master role
+[1A[2K[20/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:95:7 › Guild Master Management - Promote/Demote › Guild Master can demote another Guild Master to Hero role
+[1A[2K[21/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:176:7 › Guild Master Management - Promote/Demote › cannot demote the last Guild Master (safeguard)
+[1A[2K[22/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:217:7 › Guild Master Management - Promote/Demote › displays Guild Master count and family members list
+[1A[2K[23/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:241:7 › Guild Master Management - Promote/Demote › promotes and demotes update in real-time across sessions
+[1A[2K[24/97] [chromium] › tests/e2e/admin-guild-master-management.spec.ts:316:7 › Guild Master Management - Promote/Demote › shows appropriate UI for Heroes vs Guild Masters in member list
+[1A[2K[25/97] [chromium] › tests/e2e/admin-statistics.spec.ts:18:7 › Admin Dashboard Statistics › displays initial family statistics correctly
+[1A[2K[26/97] [chromium] › tests/e2e/admin-statistics.spec.ts:43:7 › Admin Dashboard Statistics › updates quest completion statistics in real-time
+[1A[2K[27/97] [chromium] › tests/e2e/admin-statistics.spec.ts:85:7 › Admin Dashboard Statistics › displays character progress and levels
+[1A[2K[28/97] [chromium] › tests/e2e/admin-statistics.spec.ts:109:7 › Admin Dashboard Statistics › shows pending approvals count
+[1A[2K[29/97] [chromium] › tests/e2e/admin-statistics.spec.ts:148:7 › Admin Dashboard Statistics › statistics update when viewed in second browser window
+[1A[2K[30/97] [chromium] › tests/e2e/admin-statistics.spec.ts:184:7 › Admin Dashboard Statistics › displays most active family member correctly
+[1A[2K[31/97] [chromium] › tests/e2e/character-creation.spec.ts:14:7 › Character Creation › complete character creation flow

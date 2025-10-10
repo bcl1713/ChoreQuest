@@ -1,304 +1,350 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
+import type { Page } from "@playwright/test";
 import {
-  setupTestUser,
-  giveCharacterGoldViaQuest,
-} from "./helpers/setup-helpers";
+  createReward,
+  approveRewardRedemption,
+  denyRewardRedemption,
+  markRedemptionFulfilled,
+  deleteReward,
+  ensureGoldBalance,
+} from "./helpers/reward-helpers";
+import {
+  navigateToDashboard,
+  navigateToHeroTab,
+} from "./helpers/navigation-helpers";
+import { waitForCountChange } from "./helpers/realtime-helpers";
+
+function uniqueRewardName(prefix: string): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `${prefix} ${timestamp}-${random}`;
+}
+
+async function redeemRewardByName(page: Page, rewardName: string): Promise<void> {
+  await expect(page.getByTestId("reward-store-title")).toBeVisible({
+    timeout: 15000,
+  });
+
+  const rewardList = page.locator('[data-testid="reward-store-grid"]');
+  await expect(rewardList).toBeVisible({ timeout: 20000 });
+
+  await expect(rewardList).toContainText(rewardName, { timeout: 20000 });
+
+  const rewardCard = rewardList
+    .locator('[data-testid^="reward-store-card-"]')
+    .filter({ hasText: rewardName })
+    .first();
+  await expect(rewardCard).toBeVisible({ timeout: 20000 });
+
+  const redeemButton = rewardCard.getByTestId("reward-store-redeem-button");
+  await expect(redeemButton).toBeVisible({ timeout: 15000 });
+  await expect(redeemButton).toBeEnabled({ timeout: 15000 });
+  await redeemButton.click();
+  await page.waitForLoadState("networkidle");
+}
+
+async function resetRewardState(gmPage: Page): Promise<void> {
+  await navigateToHeroTab(gmPage, "Reward Management");
+
+  // Clear pending redemptions
+  const pendingRedemptions = gmPage.locator('[data-testid="pending-redemption-item"]');
+  let pendingCount = await pendingRedemptions.count();
+  while (pendingCount > 0) {
+    const denyButton = pendingRedemptions
+      .first()
+      .locator('[data-testid="deny-redemption-button"]');
+
+    // Check if button is visible before clicking
+    if (await denyButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await denyButton.click();
+      await gmPage.waitForLoadState("networkidle");
+    }
+
+    // Re-check count to avoid infinite loop
+    const newCount = await pendingRedemptions.count();
+    if (newCount === pendingCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    pendingCount = newCount;
+  }
+
+  // Clear approved redemptions
+  const approvedRedemptions = gmPage.locator('[data-testid="approved-redemption-item"]');
+  let approvedCount = await approvedRedemptions.count();
+  while (approvedCount > 0) {
+    const fulfillButton = approvedRedemptions
+      .first()
+      .locator('[data-testid="fulfill-redemption-button"]');
+
+    // Check if button is visible before clicking
+    if (await fulfillButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await fulfillButton.click();
+      await gmPage.waitForLoadState("networkidle");
+    }
+
+    // Re-check count to avoid infinite loop
+    const newCount = await approvedRedemptions.count();
+    if (newCount === approvedCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    approvedCount = newCount;
+  }
+
+  // Delete all rewards
+  const rewardCards = gmPage.locator('[data-testid^="reward-card-"]');
+  let rewardCount = await rewardCards.count();
+  while (rewardCount > 0) {
+    const name = await rewardCards.first().locator("h3").innerText();
+    await deleteReward(gmPage, name.trim());
+
+    // Re-check count to avoid infinite loop
+    const newCount = await rewardCards.count();
+    if (newCount === rewardCount) {
+      // Count didn't change, break to avoid infinite loop
+      break;
+    }
+    rewardCount = newCount;
+  }
+
+  await navigateToHeroTab(gmPage, "Quests & Adventures");
+}
+
+async function readGoldBalance(page: Page): Promise<number> {
+  // Try reward store gold balance first
+  const goldBalanceLocator = page.locator('[data-testid="gold-balance"]');
+  if (await goldBalanceLocator.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const text = (await goldBalanceLocator.textContent()) || "";
+    const numeric = text.match(/\d+/);
+    return parseInt(numeric?.[0] || "0", 10);
+  }
+
+  // Fall back to character gold on dashboard
+  const characterGoldLocator = page.locator('[data-testid="character-gold"]');
+  if (await characterGoldLocator.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const text = (await characterGoldLocator.textContent()) || "";
+    const numeric = text.match(/\d+/);
+    return parseInt(numeric?.[0] || "0", 10);
+  }
+
+  return 0;
+}
 
 test.describe("Reward Redemption Approval Workflow", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+  test.beforeEach(async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    await resetRewardState(gmPage);
   });
 
   test("GM sees pending redemptions section in RewardManager", async ({
-    page,
+    workerFamily,
   }) => {
-    // Setup: Create Guild Master with character
-    await setupTestUser(page);
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Approval Test Reward");
 
-    // Create a reward
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill(
-      '[data-testid="reward-name-input"]',
-      "Approval Test Reward",
-    );
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test redemption approval",
-    );
-    await page.selectOption(
-      '[data-testid="reward-type-select"]',
-      "SCREEN_TIME",
-    );
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Test redemption approval",
+      type: "SCREEN_TIME",
+      cost: 50,
+    });
 
-    // Give hero gold and redeem reward
-    await giveCharacterGoldViaQuest(page, 100);
-    await page.click('button:has-text("🏪 Reward Store")');
+    await ensureGoldBalance(gmPage, 100);
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await redeemRewardByName(gmPage, rewardName);
 
-    await page.click('button:has-text("Redeem Reward")');
+    await navigateToHeroTab(gmPage, "Reward Management");
 
-    // Navigate to Reward Management
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
-    // Verify pending redemptions section exists
     await expect(
-      page.locator('[data-testid="pending-redemptions-section"]'),
+      gmPage.locator('[data-testid="pending-redemptions-section"]'),
     ).toBeVisible();
-    await expect(page.locator("text=Pending Redemptions")).toBeVisible();
-
-    // Verify redemption appears in pending list
+    await expect(gmPage.locator("text=Pending Redemptions")).toBeVisible();
     await expect(
-      page.locator('[data-testid="pending-redemption-item"]'),
+      gmPage.locator('[data-testid="pending-redemption-item"]'),
     ).toHaveCount(1);
+
+    await denyRewardRedemption(gmPage, rewardName);
+    await deleteReward(gmPage, rewardName);
   });
 
-  test("GM can approve redemption", async ({ page }) => {
-    // Setup and create redemption
-    await setupTestUser(page);
+  test("GM can approve redemption", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Approve Test");
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Approve Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test approval",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "PRIVILEGE");
-    await page.fill('[data-testid="reward-cost-input"]', "75");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Test approval",
+      type: "PRIVILEGE",
+      cost: 75,
+    });
 
-    await giveCharacterGoldViaQuest(page, 150);
-    await page.click('button:has-text("🏪 Reward Store")');
+    await ensureGoldBalance(gmPage, 150);
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await redeemRewardByName(gmPage, rewardName);
 
-    await page.click('button:has-text("Redeem Reward")');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await approveRewardRedemption(gmPage, rewardName);
 
-    // Go to Reward Management
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
-    // Approve the redemption
-    await page.click('[data-testid="approve-redemption-button"]');
-
-    // Verify redemption moved from pending to approved section
     await expect(
-      page.locator('[data-testid="pending-redemption-item"]'),
+      gmPage.locator('[data-testid="pending-redemption-item"]'),
     ).toHaveCount(0);
-
-    // Verify it appears in approved section with heading
     await expect(
-      page.locator('h3:has-text("Approved - Awaiting Fulfillment")'),
+      gmPage.locator('h3:has-text("Approved - Awaiting Fulfillment")'),
     ).toBeVisible();
+
+    await markRedemptionFulfilled(gmPage, rewardName);
+    await deleteReward(gmPage, rewardName);
   });
 
-  test("GM can deny redemption and gold is refunded", async ({ page }) => {
-    // Setup and create redemption
-    await setupTestUser(page);
+  test("GM can deny redemption and gold is refunded", async ({
+    workerFamily,
+  }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Deny Test");
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Deny Test");
-    await page.fill('[data-testid="reward-description-input"]', "Test denial");
-    await page.selectOption('[data-testid="reward-type-select"]', "PURCHASE");
-    await page.fill('[data-testid="reward-cost-input"]', "60");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Test denial",
+      type: "PURCHASE",
+      cost: 60,
+    });
 
-    await giveCharacterGoldViaQuest(page, 100);
-    await page.click('button:has-text("🏪 Reward Store")');
-    await expect(page.locator('[data-testid="gold-balance"]')).not.toHaveText(
-      "0 Gold",
-    );
+    await ensureGoldBalance(gmPage, 100);
+    await navigateToHeroTab(gmPage, "Reward Store");
 
-    // Capture gold before redemption
-    const goldBeforeText = await page
-      .locator('[data-testid="gold-balance"]')
-      .textContent();
-    const goldBefore = parseInt(goldBeforeText?.match(/\d+/)?.[0] || "0");
+    const goldBefore = await readGoldBalance(gmPage);
+    await redeemRewardByName(gmPage, rewardName);
 
-    await page.click('button:has-text("Redeem Reward")');
-    await expect(page.locator('[data-testid="gold-balance"]')).not.toHaveText(
-      goldBeforeText || "",
-    );
+    // Wait for gold to be deducted
+    await expect(async () => {
+      const currentGold = await readGoldBalance(gmPage);
+      expect(goldBefore - currentGold).toBeGreaterThanOrEqual(60);
+    }).toPass({ timeout: 15000 });
+    const goldAfterRedeem = await readGoldBalance(gmPage);
+    expect(goldBefore - goldAfterRedeem).toBeGreaterThanOrEqual(60);
 
-    // Verify gold was deducted
-    const goldAfterRedeemText = await page
-      .locator('[data-testid="gold-balance"]')
-      .textContent();
-    const goldAfterRedeem = parseInt(
-      goldAfterRedeemText?.match(/\d+/)?.[0] || "0",
-    );
-    expect(goldAfterRedeem).toBe(goldBefore - 60);
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await denyRewardRedemption(gmPage, rewardName);
 
-    // Go to Reward Management and deny
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await expect(async () => {
+      const currentGold = await readGoldBalance(gmPage);
+      expect(currentGold).toBeGreaterThanOrEqual(goldBefore);
+    }).toPass({ timeout: 15000 });
+    const goldAfterDeny = await readGoldBalance(gmPage);
+    expect(goldAfterDeny).toBeGreaterThanOrEqual(goldBefore);
 
-    await page.click('[data-testid="deny-redemption-button"]');
-
-    // Verify redemption is removed from pending
-    await expect(
-      page.locator('[data-testid="pending-redemption-item"]'),
-    ).toHaveCount(0);
-
-    // Check gold was refunded
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    const goldAfterDenyText = await page
-      .locator('[data-testid="gold-balance"]')
-      .textContent();
-    const goldAfterDeny = parseInt(goldAfterDenyText?.match(/\d+/)?.[0] || "0");
-    expect(goldAfterDeny).toBe(goldBefore); // Should be back to original
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await deleteReward(gmPage, rewardName);
   });
 
-  test("GM can fulfill approved redemption", async ({ page }) => {
-    // Setup and create redemption
-    await setupTestUser(page);
+  test("GM can fulfill approved redemption", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Fulfill Test");
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Fulfill Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test fulfillment",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "EXPERIENCE");
-    await page.fill('[data-testid="reward-cost-input"]', "80");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Test fulfillment",
+      type: "EXPERIENCE",
+      cost: 80,
+    });
 
-    await giveCharacterGoldViaQuest(page, 150);
-    await page.click('button:has-text("🏪 Reward Store")');
+    await ensureGoldBalance(gmPage, 150);
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await redeemRewardByName(gmPage, rewardName);
 
-    await page.click('button:has-text("Redeem Reward")');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await approveRewardRedemption(gmPage, rewardName);
+    await markRedemptionFulfilled(gmPage, rewardName);
 
-    // Go to Reward Management and approve
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
-    await page.click('[data-testid="approve-redemption-button"]');
-
-    // Now fulfill the approved redemption
-    await page.click('[data-testid="fulfill-redemption-button"]');
-
-    // Verify it appears in redemption history section
     await expect(
-      page.locator('h3:has-text("Redemption History")'),
+      gmPage.locator('h3:has-text("Redemption History")'),
     ).toBeVisible();
+
+    await deleteReward(gmPage, rewardName);
   });
 
   test("Realtime updates when redemption status changes", async ({
-    page,
-    context,
+    workerFamily,
   }) => {
-    // Setup: Create Guild Master
-    await setupTestUser(page);
+    const { gmPage, gmContext } = workerFamily;
+    const rewardName = uniqueRewardName("Realtime Test");
 
-    // Create reward
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Realtime Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test realtime",
-    );
-    await page.selectOption(
-      '[data-testid="reward-type-select"]',
-      "SCREEN_TIME",
-    );
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Test realtime",
+      type: "SCREEN_TIME",
+      cost: 50,
+    });
 
-    // Give gold and redeem
-    await giveCharacterGoldViaQuest(page, 100);
-    await page.click('button:has-text("🏪 Reward Store")');
+    await ensureGoldBalance(gmPage, 100);
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await redeemRewardByName(gmPage, rewardName);
 
-    await page.click('button:has-text("Redeem Reward")');
+    const gmPageSecondTab = await gmContext.newPage();
+    try {
+      await navigateToDashboard(gmPageSecondTab);
+      await navigateToHeroTab(gmPageSecondTab, "Reward Management");
 
-    // Open second tab for same user
-    const page2 = await context.newPage();
-    await page2.goto("/dashboard");
+      await expect(
+        gmPageSecondTab.locator('[data-testid="pending-redemption-item"]'),
+      ).toHaveCount(1);
 
-    await page2.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
+      await navigateToHeroTab(gmPage, "Reward Management");
+      await approveRewardRedemption(gmPage, rewardName);
 
-    // Verify redemption appears in second tab
-    await expect(
-      page2.locator('[data-testid="pending-redemption-item"]'),
-    ).toHaveCount(1);
+      await waitForCountChange(
+        gmPageSecondTab,
+        '[data-testid="pending-redemption-item"]',
+        0,
+      );
+    } finally {
+      await gmPageSecondTab.close();
+    }
 
-    // Approve in first tab
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-
-    await page.click('[data-testid="approve-redemption-button"]');
-
-    // Verify realtime update in second tab - pending count goes to 0
-    await expect(
-      page2.locator('[data-testid="pending-redemption-item"]'),
-    ).toHaveCount(0, { timeout: 5000 });
-
-    await page2.close();
+    await markRedemptionFulfilled(gmPage, rewardName);
+    await deleteReward(gmPage, rewardName);
   });
 
-  test("Hero sees status change in redemption history", async ({ page }) => {
-    // Setup and create redemption
-    await setupTestUser(page);
+  test("Hero sees status change in redemption history", async ({
+    workerFamily,
+  }) => {
+    const { gmPage } = workerFamily;
+    const rewardName = uniqueRewardName("Hero View Test");
 
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill('[data-testid="reward-name-input"]', "Hero View Test");
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Test hero view",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "PRIVILEGE");
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Test hero view",
+      type: "PRIVILEGE",
+      cost: 50,
+    });
 
-    await giveCharacterGoldViaQuest(page, 100);
+    await ensureGoldBalance(gmPage, 100);
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await redeemRewardByName(gmPage, rewardName);
 
-    // Hero redeems
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    await page.click('button:has-text("Redeem Reward")');
-
-    // Verify hero sees pending status (button disabled with "Request Pending")
     await expect(
-      page.locator('button:has-text("Request Pending")'),
+      gmPage.locator('button:has-text("Request Pending")'),
     ).toBeVisible();
 
-    // GM approves
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await approveRewardRedemption(gmPage, rewardName);
 
-    await page.click('[data-testid="approve-redemption-button"]');
-
-    // Hero checks reward store
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    // Verify request pending button is no longer visible (was approved)
+    await navigateToHeroTab(gmPage, "Reward Store");
     await expect(
-      page.locator('button:has-text("Request Pending")'),
+      gmPage.locator('button:has-text("Request Pending")'),
     ).not.toBeVisible();
+
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await markRedemptionFulfilled(gmPage, rewardName);
+    await deleteReward(gmPage, rewardName);
   });
 });

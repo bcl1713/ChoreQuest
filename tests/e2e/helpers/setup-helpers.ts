@@ -1,4 +1,12 @@
 import { Page, expect } from "@playwright/test";
+import { clearBrowserState } from "./auth-helpers";
+import {
+  createCustomQuest,
+  pickupQuest,
+  startQuest,
+  completeQuest,
+  approveQuest,
+} from "./quest-helpers";
 
 // Type declarations for window objects used in tests
 declare global {
@@ -56,58 +64,81 @@ export async function setupUserWithCharacter(
   prefix: string,
   options: SetupOptions = {},
 ): Promise<TestUser> {
-  const user =
-    options.email && options.password
-      ? {
-          email: options.email,
-          password: options.password,
-          userName: options.userName || `${prefix} User`,
-          familyName: `${prefix} Family`,
-          characterName: `${prefix} Character`,
-        }
-      : createTestUser(prefix);
   const characterClass = options.characterClass || "KNIGHT";
+  const maxAttempts = options.email ? 1 : 3;
+  let lastError: unknown;
 
-  // Clear browser state
-  await clearBrowserState(page);
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const attemptSuffix = attempt === 0 ? "" : `-retry${attempt}`;
+    const user =
+      attempt === 0 && options.email && options.password
+        ? {
+            email: options.email,
+            password: options.password,
+            userName: options.userName || `${prefix} User`,
+            familyName: `${prefix} Family`,
+            characterName: `${prefix} Character`,
+          }
+        : createTestUser(`${prefix}${attemptSuffix}`);
 
-  // Navigate to home and start family creation
-  await page.goto("/");
-  await page.click('[data-testid="create-family-button"]');
-  await expect(page).toHaveURL(/.*\/auth\/create-family/);
-
-  // Fill family creation form
-  await page.fill('input[name="name"]', user.familyName);
-  await page.fill('input[name="email"]', user.email);
-  await page.fill('input[name="password"]', user.password);
-  await page.fill('input[name="userName"]', user.userName);
-
-  await page.click('button[type="submit"]');
-
-  if (!options.skipCharacterCreation) {
-    // Complete character creation - wait longer for Supabase auth
-    await page.waitForURL(/.*\/character\/create/, { timeout: 15000 });
-    await page.fill("input#characterName", user.characterName);
-    await page.click(`[data-testid="class-${characterClass.toLowerCase()}"]`);
-
-    // Add a small delay before clicking the submit button to ensure state is ready
-
-    await page.click('button:text("Begin Your Quest")');
-
-    // Wait for either dashboard or any error states - be more flexible
     try {
-      await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
-      await expect(
-        page.locator('[data-testid="welcome-message"]'),
-      ).toContainText(`Welcome back, ${user.characterName}!`, {
-        timeout: 10000,
-      });
+      await clearBrowserState(page);
+      await page.goto("/");
+      await page.click('[data-testid="create-family-button"]');
+      await expect(page).toHaveURL(/.*\/auth\/create-family/);
+
+      await page.fill('input[name="name"]', user.familyName);
+      await page.fill('input[name="email"]', user.email);
+      await page.fill('input[name="password"]', user.password);
+      await page.fill('input[name="userName"]', user.userName);
+
+      await page.click('button[type="submit"]');
+
+      const navigatedToCharacterCreate = await page
+        .waitForURL(/.*\/character\/create/, { timeout: 20000 })
+        .then(() => true)
+        .catch(() => false);
+
+      if (!navigatedToCharacterCreate) {
+        lastError = await captureFamilyCreationError(page);
+        continue;
+      }
+
+      if (!options.skipCharacterCreation) {
+        await page.fill("input#characterName", user.characterName);
+        await page.click(`[data-testid="class-${characterClass.toLowerCase()}"]`);
+        await page.click('button:text("Begin Your Quest")');
+
+        await page.waitForURL(/.*\/dashboard/, { timeout: 20000 });
+        await expect(
+          page.locator('[data-testid="welcome-message"]'),
+        ).toContainText(`Welcome back, ${user.characterName}!`, {
+          timeout: 10000,
+        });
+      }
+
+      return user;
     } catch (error) {
-      throw error;
+      lastError = error;
     }
   }
 
-  return user;
+  if (lastError instanceof Error) {
+    throw lastError;
+  }
+
+  throw new Error("Failed to create family and character after multiple attempts");
+}
+
+async function captureFamilyCreationError(page: Page): Promise<Error> {
+  const errorLocator = page.locator('text=/User creation failed/i');
+  if (await errorLocator.isVisible().catch(() => false)) {
+    const message = (await errorLocator.textContent())?.trim();
+    if (message) {
+      return new Error(message);
+    }
+  }
+  return new Error("Family creation did not progress to character setup");
 }
 
 /**
@@ -157,11 +188,13 @@ export async function loginUser(
     return;
   }
 
-  // Navigate to login page - wait for element to be stable
+  // Navigate to login page - wait for element to be stable and attached
   await page.waitForSelector('[data-testid="login-link"]', {
-    state: "visible",
+    state: "attached",
   });
-  await page.click('[data-testid="login-link"]');
+  await page.locator('[data-testid="login-link"]').waitFor({ state: "visible" });
+  await page.waitForLoadState("networkidle");
+  await page.locator('[data-testid="login-link"]').click();
   await expect(page).toHaveURL(/.*\/auth\/login/);
 
   await page.fill('input[name="email"]', email);
@@ -172,41 +205,14 @@ export async function loginUser(
   await page.waitForURL(/.*\/dashboard/, { timeout: 15000 });
 }
 
-/**
- * Clears all browser state (cookies, localStorage, sessionStorage)
- */
-export async function clearBrowserState(page: Page): Promise<void> {
-  await page.context().clearCookies();
-
-  // Only clear localStorage/sessionStorage if we have a proper page loaded
-  try {
-    await page.evaluate(() => {
-      if (typeof Storage !== "undefined") {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-    });
-  } catch {
-    // Ignore localStorage access errors (happens on initial page load)
-  }
-}
+// clearBrowserState has been moved to auth-helpers.ts and is imported above
 
 /**
  * Common beforeEach setup for E2E tests
  */
 export async function commonBeforeEach(page: Page): Promise<void> {
-  await page.context().clearCookies();
+  await clearBrowserState(page);
   await page.goto("/");
-
-  // Clear storage after page loads
-  try {
-    await page.evaluate(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-    });
-  } catch {
-    // Ignore localStorage access errors
-  }
 }
 
 export interface TestUserInfo {
@@ -353,42 +359,30 @@ export async function giveCharacterGoldViaQuest(
   const questTitle = `Test Gold Award ${timestamp}`;
 
   // Create a quest with specified gold reward (using EASY difficulty for 1.0x multiplier)
-  await page.click('[data-testid="create-quest-button"]');
-  await page.locator('.fixed button:has-text("Custom Quest")').click();
-
-  await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-  await page.fill(
-    'textarea[placeholder="Describe the quest..."]',
-    "Automated test quest for gold award",
-  );
-  await page.locator("select").nth(1).selectOption("EASY");
-  await page.fill(
-    'input[type="number"]:near(:text("Gold Reward"))',
-    goldAmount.toString(),
-  );
-  await page.fill('input[type="number"]:near(:text("XP Reward"))', "1");
-
-  await page.click('button[type="submit"]');
+  // Skip visibility check here since we'll verify after switching to Quests tab
+  await createCustomQuest(page, {
+    title: questTitle,
+    description: "Automated test quest for gold award",
+    difficulty: "EASY",
+    xpReward: 1,
+    goldReward: goldAmount,
+    skipVisibilityCheck: true,
+  });
 
   // Switch to Quests tab to see the created quest
   await page.click('button:has-text("⚔️ Quests & Adventures")');
 
-  // Wait for quest to appear, then complete workflow
-  await expect(page.getByText(questTitle).first()).toBeVisible();
+  // Wait for tab transition to complete
+  await page.waitForLoadState("networkidle");
+
+  // Wait for quest to appear (generous timeout for parallel runs)
+  await expect(page.getByText(questTitle).first()).toBeVisible({
+    timeout: 10000,
+  });
 
   // Complete the quest workflow: pickup -> start -> complete -> approve
-  await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
-  await expect(
-    page.locator('[data-testid="start-quest-button"]').first(),
-  ).toBeVisible();
-  await page.locator('[data-testid="start-quest-button"]').first().click();
-
-  await expect(
-    page.locator('[data-testid="complete-quest-button"]').first(),
-  ).toBeVisible();
-  await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-  await page.locator('[data-testid="approve-quest-button"]').first().click();
+  await pickupQuest(page);
+  await startQuest(page);
+  await completeQuest(page);
+  await approveQuest(page);
 }
-

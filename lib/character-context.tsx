@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './auth-context';
 import { useRealtime } from './realtime-context';
 import { supabase } from './supabase';
@@ -25,26 +25,68 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
+  const hasLoadedRef = useRef(false);
+  const isInitialLoadRef = useRef(true);
+  const isFetchingRef = useRef(false);
+  const fetchStartTimeRef = useRef<number>(0);
+
+  const updateHasLoaded = useCallback((value: boolean) => {
+    hasLoadedRef.current = value;
+    setHasLoaded(value);
+  }, []);
 
   const fetchCharacter = useCallback(async () => {
     if (!user) {
       setCharacter(null);
       setIsLoading(false);
       // Don't set hasLoaded=true here - we haven't actually tried to fetch
+      updateHasLoaded(false);
+      isInitialLoadRef.current = true;
+      isFetchingRef.current = false;
+      fetchStartTimeRef.current = 0;
       return;
     }
 
+    // Safety valve: if fetch guard has been set for more than 15 seconds, force clear it
+    // This prevents permanent hangs if finally block never executes
+    const now = Date.now();
+    if (isFetchingRef.current && fetchStartTimeRef.current > 0) {
+      const elapsed = now - fetchStartTimeRef.current;
+      if (elapsed > 15000) {
+        console.error(`CharacterContext: Fetch guard stuck for ${elapsed}ms, force clearing`);
+        isFetchingRef.current = false;
+      }
+    }
+
+    // If already fetching, skip this request (latest data will be fetched by running fetch)
+    if (isFetchingRef.current) {
+      console.log('CharacterContext: Fetch already in progress, skipping');
+      return;
+    }
+
+    isFetchingRef.current = true;
+    fetchStartTimeRef.current = now;
+
     console.log('CharacterContext: Fetching character for user:', user.id);
+
+    // Set loading state to true whenever we fetch
+    // This ensures UI shows proper loading feedback
     setIsLoading(true);
     setError(null);
-    setHasLoaded(false);
 
     try {
-      const { data, error } = await supabase
+      // Add timeout to prevent infinite hanging
+      const fetchPromise = supabase
         .from('characters')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Character fetch timeout after 10s')), 10000)
+      );
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -64,10 +106,14 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setError(message);
       console.error('Character fetch error:', err);
     } finally {
+      // Mark as loaded and clear loading state
+      updateHasLoaded(true);
       setIsLoading(false);
-      setHasLoaded(true); // Mark as loaded regardless of success/failure
+      isInitialLoadRef.current = false;
+      isFetchingRef.current = false;
+      fetchStartTimeRef.current = 0;
     }
-  }, [user]);
+  }, [user, updateHasLoaded]);
 
   useEffect(() => {
     fetchCharacter();

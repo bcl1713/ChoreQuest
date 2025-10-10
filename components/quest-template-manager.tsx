@@ -25,8 +25,9 @@ export function QuestTemplateManager() {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<QuestTemplate | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<QuestTemplate | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [formData, setFormData] = useState<TemplateFormData>({
     title: '',
@@ -182,23 +183,32 @@ export function QuestTemplateManager() {
   };
 
   const handleDeleteTemplate = async () => {
-    if (!selectedTemplate) return;
+    if (!deleteTarget || deleteLoading) return;
 
-    // Templates are blueprints - they can be safely deleted
-    // The template_id in quest_instances is just for tracking, not a foreign key
-    const { error: deleteError } = await supabase
-      .from('quest_templates')
-      .delete()
-      .eq('id', selectedTemplate.id);
+    setDeleteLoading(true);
+    setError(null);
 
-    if (deleteError) {
-      console.error('Error deleting template:', deleteError);
-      setError(`Failed to delete template: ${deleteError.message || 'Unknown error'}`);
-    } else {
-      setIsDeleteConfirmOpen(false);
-      setSelectedTemplate(null);
-      setError(null);
-      // Realtime subscription will handle UI update automatically
+    try {
+      // Templates are blueprints - they can be safely deleted
+      // The template_id in quest_instances is just for tracking, not a foreign key
+      const { error: deleteError } = await supabase
+        .from('quest_templates')
+        .delete()
+        .eq('id', deleteTarget.id);
+
+      if (deleteError) {
+        console.error('Error deleting template:', deleteError);
+        setError(`Failed to delete template: ${deleteError.message || 'Unknown error'}`);
+      } else {
+        requestAnimationFrame(() => {
+          setDeleteTarget(null);
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error deleting template:', err);
+      setError('Failed to delete template');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -305,8 +315,8 @@ export function QuestTemplateManager() {
                   </button>
                   <button
                     onClick={() => {
-                      setSelectedTemplate(template);
-                      setIsDeleteConfirmOpen(true);
+                      setDeleteLoading(false);
+                      setDeleteTarget(template);
                     }}
                     className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200"
                     data-testid={`template-delete-${template.id}`}
@@ -415,26 +425,29 @@ export function QuestTemplateManager() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {isDeleteConfirmOpen && (
+      {deleteTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="delete-confirm-modal">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this template? This action cannot
-              be undone.
+              Are you sure you want to delete
+              {' '}
+              <span className="font-semibold">{deleteTarget.title}</span>
+              ? This action cannot be undone.
             </p>
             <div className="flex gap-4">
               <button
                 onClick={handleDeleteTemplate}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                disabled={deleteLoading}
+                className={`flex-1 px-4 py-2 rounded text-white transition-colors ${deleteLoading ? 'bg-red-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
                 data-testid="confirm-delete-button"
               >
-                Confirm
+                {deleteLoading ? 'Deleting...' : 'Confirm'}
               </button>
               <button
                 onClick={() => {
-                  setIsDeleteConfirmOpen(false);
-                  setSelectedTemplate(null);
+                  setDeleteTarget(null);
+                  setDeleteLoading(false);
                 }}
                 className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
                 data-testid="cancel-delete-button"

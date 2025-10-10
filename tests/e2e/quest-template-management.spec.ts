@@ -1,93 +1,119 @@
-import { test, expect, Page } from "@playwright/test";
-import { setupUserWithCharacter } from "./helpers/setup-helpers";
+import { test, expect } from "./helpers/family-fixture";
+import type { Page } from "@playwright/test";
+import {
+  navigateToDashboard,
+  openQuestCreationModal,
+} from "./helpers/navigation-helpers";
 
-/**
- * Helper to get family code from the dashboard page
- * The family code is displayed as "Guild: Family Name (CODE)"
- */
-async function getFamilyCode(page: Page): Promise<string> {
-  // Navigate to dashboard if not already there
-  const currentUrl = page.url();
-  if (!currentUrl.includes("/dashboard")) {
-    await page.goto("/dashboard");
-    await page.waitForURL(/.*dashboard/);
+function uniqueName(prefix: string): string {
+  const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 10000);
+  return `${prefix} ${timestamp}-${random}`;
+}
+
+async function ensureTemplatesTab(page: Page): Promise<void> {
+  await navigateToDashboard(page);
+  const questModal = page.locator("text=Create New Quest");
+  if (await questModal.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const cancelButton = page.locator('[data-testid="cancel-quest-button"]');
+    if (await cancelButton.isVisible({ timeout: 500 }).catch(() => false)) {
+      await cancelButton.click();
+    } else {
+      await page.keyboard.press("Escape");
+    }
+    await expect(questModal).not.toBeVisible({ timeout: 5000 });
   }
+  await page.getByTestId("tab-templates").click();
+  await expect(page.getByTestId("quest-template-manager")).toBeVisible();
+  await expect(page.getByTestId("template-list")).toBeVisible();
+}
 
-  // Get the family code from the dashboard - it's displayed as "Guild: Family Name (CODE)"
-  const familyCodeElement = await page
-    .locator("text=/Guild:.*\\([A-Z0-9]{6}\\)/")
-    .first();
-
-  if (!(await familyCodeElement.isVisible())) {
-    throw new Error("Family code not found on dashboard");
+async function cancelQuestModal(page: Page): Promise<void> {
+  const cancelButton = page.locator('[data-testid="cancel-quest-button"]');
+  if (await cancelButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await cancelButton.click();
   }
+  await expect(page.locator("text=Create New Quest")).not.toBeVisible();
+}
 
-  const familyCodeText = await familyCodeElement.textContent();
-  if (!familyCodeText) {
-    throw new Error("Could not read family code text");
-  }
+async function loadTemplateOptions(page: Page) {
+  await page.waitForFunction(() => {
+    const select = document.querySelector(
+      '[data-testid="template-select"]',
+    ) as HTMLSelectElement | null;
+    if (!select) return false;
+    return Array.from(select.options).some((option) => !!option.value);
+  }, { timeout: 15000 });
 
-  const codeMatch = familyCodeText.match(/\(([A-Z0-9]{6})\)/);
-  if (!codeMatch) {
-    throw new Error(`Could not extract family code from: ${familyCodeText}`);
-  }
+  return page.evaluate(() => {
+    const select = document.querySelector(
+      '[data-testid="template-select"]',
+    ) as HTMLSelectElement | null;
+    if (!select) return [];
 
-  return codeMatch[1];
+    return Array.from(select.options)
+      .filter((option) => !!option.value)
+      .map((option) => ({
+        value: option.value,
+        text: option.textContent ?? "",
+      }));
+  });
+}
+
+async function selectTemplateByValue(page: Page, value: string) {
+  await expect(async () => {
+    await page.selectOption('[data-testid="template-select"]', value);
+    const selectedValue = await page.locator(
+      '[data-testid="template-select"]',
+    ).inputValue();
+    if (selectedValue !== value) {
+      throw new Error("Template select did not retain value");
+    }
+  }).toPass({ timeout: 15000 });
 }
 
 test.describe("Quest Template Management", () => {
-  test("Guild Master creates a new quest template", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "template-test", {
-      characterClass: "KNIGHT",
-    });
+  test("Guild Master creates a new quest template", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
-    // Should already be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Navigate to Quest Templates tab
-    await page.click("text=Quest Templates");
-    await expect(page.getByTestId("quest-template-manager")).toBeVisible();
-
-    // Verify default templates are loaded (from migration)
-    const templateList = page.getByTestId("template-list");
-    await expect(templateList).toBeVisible();
+    await ensureTemplatesTab(gmPage);
 
     // Click Create Template button
-    await page.click('[data-testid="create-template-button"]');
-    await expect(page.getByTestId("create-template-modal")).toBeVisible();
+    await gmPage.click('[data-testid="create-template-button"]');
+    await expect(gmPage.getByTestId("create-template-modal")).toBeVisible();
 
     // Fill in template details
-    await page.fill(
+    const templateName = uniqueName("Custom Cleaning Quest");
+    await gmPage.fill(
       '[data-testid="template-title-input"]',
-      "Custom Cleaning Quest",
+      templateName,
     );
-    await page.fill(
+    await gmPage.fill(
       '[data-testid="template-description-input"]',
       "A custom quest for cleaning tasks",
     );
-    await page.selectOption(
+    await gmPage.selectOption(
       '[data-testid="template-category-select"]',
       "WEEKLY",
     );
-    await page.selectOption(
+    await gmPage.selectOption(
       '[data-testid="template-difficulty-select"]',
       "MEDIUM",
     );
-    await page.fill('[data-testid="template-xp-input"]', "100");
-    await page.fill('[data-testid="template-gold-input"]', "25");
+    await gmPage.fill('[data-testid="template-xp-input"]', "100");
+    await gmPage.fill('[data-testid="template-gold-input"]', "25");
 
     // Save the template
-    await page.click('[data-testid="save-template-button"]');
+    await gmPage.click('[data-testid="save-template-button"]');
 
     // Wait for modal to close and template to appear in list
-    await expect(page.getByTestId("create-template-modal")).not.toBeVisible();
+    await expect(gmPage.getByTestId("create-template-modal")).not.toBeVisible();
 
     // Find the newly created template card
-    const newTemplateCard = page
+    const newTemplateCard = gmPage
       .locator('[data-testid^="template-card-"]')
       .filter({
-        hasText: "Custom Cleaning Quest",
+        hasText: templateName,
       });
 
     // Verify the new template appears with correct details
@@ -101,66 +127,56 @@ test.describe("Quest Template Management", () => {
     await expect(newTemplateCard.getByText("25 gold")).toBeVisible();
   });
 
-  test("Guild Master edits an existing quest template", async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, "template-edit", {
-      characterClass: "MAGE",
-    });
+  test("Guild Master edits an existing quest template", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
-    // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
-    await expect(page.getByTestId("quest-template-manager")).toBeVisible();
-
-    // Wait for templates to load
-    const templateList = page.getByTestId("template-list");
-    await expect(templateList).toBeVisible();
+    await ensureTemplatesTab(gmPage);
 
     // Find the first template and click edit
-    const firstTemplate = page
+    const firstTemplate = gmPage
       .locator('[data-testid^="template-card-"]')
       .first();
+    await expect(firstTemplate).toBeVisible({ timeout: 10000 });
     const templateId = (
       await firstTemplate.getAttribute("data-testid")
     )?.replace("template-card-", "");
+    expect(templateId).toBeTruthy();
     await firstTemplate
       .locator(`[data-testid="template-edit-${templateId}"]`)
       .click();
 
     // Verify edit modal opens with preview
-    await expect(page.getByTestId("edit-template-modal")).toBeVisible();
-    await expect(page.getByTestId("template-preview")).toBeVisible();
+    await expect(gmPage.getByTestId("edit-template-modal")).toBeVisible();
+    await expect(gmPage.getByTestId("template-preview")).toBeVisible();
 
     // Modify the template
-    await page.fill(
+    await gmPage.fill(
       '[data-testid="template-title-input"]',
       "Modified Template Title",
     );
-    await page.fill(
+    await gmPage.fill(
       '[data-testid="template-description-input"]',
       "Updated description",
     );
-    await page.fill('[data-testid="template-xp-input"]', "150");
+    await gmPage.fill('[data-testid="template-xp-input"]', "150");
 
     // Verify preview updates
-    await expect(page.getByTestId("template-preview")).toContainText(
+    await expect(gmPage.getByTestId("template-preview")).toContainText(
       "Modified Template Title",
     );
-    await expect(page.getByTestId("template-preview")).toContainText(
+    await expect(gmPage.getByTestId("template-preview")).toContainText(
       "Updated description",
     );
-    await expect(page.getByTestId("template-preview")).toContainText("150 XP");
+    await expect(gmPage.getByTestId("template-preview")).toContainText("150 XP");
 
     // Save the changes
-    await page.click('[data-testid="update-template-button"]');
+    await gmPage.click('[data-testid="update-template-button"]');
 
     // Verify modal closes and changes are reflected
-    await expect(page.getByTestId("edit-template-modal")).not.toBeVisible();
+    await expect(gmPage.getByTestId("edit-template-modal")).not.toBeVisible();
 
     // Find the edited template card
-    const editedTemplateCard = page
+    const editedTemplateCard = gmPage
       .locator('[data-testid^="template-card-"]')
       .filter({
         hasText: "Modified Template Title",
@@ -174,31 +190,21 @@ test.describe("Quest Template Management", () => {
   });
 
   test("Guild Master deactivates and reactivates a quest template", async ({
-    page,
+    workerFamily,
   }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, "template-toggle", {
-      characterClass: "RANGER",
-    });
+    const { gmPage } = workerFamily;
 
-    // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
-    await expect(page.getByTestId("quest-template-manager")).toBeVisible();
-
-    // Wait for templates
-    const templateList = page.getByTestId("template-list");
-    await expect(templateList).toBeVisible();
+    await ensureTemplatesTab(gmPage);
 
     // Find the first active template
-    const firstTemplate = page
+    const firstTemplate = gmPage
       .locator('[data-testid^="template-card-"]')
       .first();
+    await expect(firstTemplate).toBeVisible({ timeout: 10000 });
     const templateId = (
       await firstTemplate.getAttribute("data-testid")
     )?.replace("template-card-", "");
+    expect(templateId).toBeTruthy();
 
     // Verify template is active
     const statusButton = firstTemplate.locator(
@@ -215,7 +221,7 @@ test.describe("Quest Template Management", () => {
 
     // Wait for list to reload and re-query for the status button
 
-    const updatedTemplate = page.locator(
+    const updatedTemplate = gmPage.locator(
       `[data-testid="template-card-${templateId}"]`,
     );
     const updatedStatusButton = updatedTemplate.locator(
@@ -235,7 +241,7 @@ test.describe("Quest Template Management", () => {
 
     // Wait for list to reload again and verify it's active
 
-    const reactivatedTemplate = page.locator(
+    const reactivatedTemplate = gmPage.locator(
       `[data-testid="template-card-${templateId}"]`,
     );
     const reactivatedStatusButton = reactivatedTemplate.locator(
@@ -250,43 +256,34 @@ test.describe("Quest Template Management", () => {
     await expect(reactivatedToggleButton).toHaveText("Deactivate");
   });
 
-  test("Guild Master deletes a quest template", async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, "template-delete", {
-      characterClass: "ROGUE",
-    });
+  test("Guild Master deletes a quest template", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
-    // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Navigate to Quest Templates
-    await page.click("text=Quest Templates");
-    await expect(page.getByTestId("quest-template-manager")).toBeVisible();
+    await ensureTemplatesTab(gmPage);
 
     // Create a new template to delete
-    await page.click('[data-testid="create-template-button"]');
-    await page.fill(
-      '[data-testid="template-title-input"]',
-      "Template to Delete",
-    );
-    await page.fill(
+    const templateName = uniqueName("Template to Delete");
+    await gmPage.click('[data-testid="create-template-button"]');
+    await gmPage.fill('[data-testid="template-title-input"]', templateName);
+    await gmPage.fill(
       '[data-testid="template-description-input"]',
       "This will be deleted",
     );
-    await page.click('[data-testid="save-template-button"]');
+    await gmPage.click('[data-testid="save-template-button"]');
 
     // Wait for template to appear
-    await expect(page.getByText("Template to Delete")).toBeVisible();
+    await expect(gmPage.getByText(templateName)).toBeVisible();
 
     // Find the template we just created
-    const templateToDelete = page
+    const templateToDelete = gmPage
       .locator('[data-testid^="template-card-"]')
       .filter({
-        hasText: "Template to Delete",
+        hasText: templateName,
       });
     const templateId = (
       await templateToDelete.getAttribute("data-testid")
     )?.replace("template-card-", "");
+    expect(templateId).toBeTruthy();
 
     // Click delete button
     await templateToDelete
@@ -294,118 +291,97 @@ test.describe("Quest Template Management", () => {
       .click();
 
     // Verify confirmation modal appears
-    await expect(page.getByTestId("delete-confirm-modal")).toBeVisible();
-    await expect(page.getByText("Confirm Delete")).toBeVisible();
-    await expect(
-      page.getByText("Are you sure you want to delete this template?"),
-    ).toBeVisible();
+    await expect(gmPage.getByTestId("delete-confirm-modal")).toBeVisible();
+    await expect(gmPage.getByText("Confirm Delete")).toBeVisible();
+    await expect(gmPage.getByTestId("delete-confirm-modal")).toContainText(
+      `Are you sure you want to delete ${templateName}?`,
+    );
 
     // Confirm deletion
-    await page.click('[data-testid="confirm-delete-button"]');
+    await gmPage.click('[data-testid="confirm-delete-button"]');
 
     // Verify modal closes and template is removed
-    await expect(page.getByTestId("delete-confirm-modal")).not.toBeVisible();
-    await expect(page.getByText("Template to Delete")).not.toBeVisible();
+    await expect(gmPage.getByTestId("delete-confirm-modal")).not.toBeVisible();
+    await expect(gmPage.getByText(templateName)).not.toBeVisible();
   });
 
-  test("Active templates appear in quest creation modal", async ({ page }) => {
-    // Create family and character
-    await setupUserWithCharacter(page, "template-quest", {
-      characterClass: "HEALER",
-    });
+  test("Active templates appear in quest creation modal", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
-    // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await ensureTemplatesTab(gmPage);
 
-    // Navigate to Quest Templates and create a custom template
-    await page.click("text=Quest Templates");
-    await page.click('[data-testid="create-template-button"]');
-    await page.fill(
-      '[data-testid="template-title-input"]',
-      "Unique Test Template",
-    );
-    await page.fill(
+    const templateName = uniqueName("Unique Test Template");
+
+    await gmPage.click('[data-testid="create-template-button"]');
+    await gmPage.fill('[data-testid="template-title-input"]', templateName);
+    await gmPage.fill(
       '[data-testid="template-description-input"]',
       "For testing quest creation",
     );
-    await page.click('[data-testid="save-template-button"]');
+    await gmPage.click('[data-testid="save-template-button"]');
 
     // Verify template was created
-    await expect(page.getByText("Unique Test Template")).toBeVisible();
+    await expect(gmPage.getByText(templateName)).toBeVisible();
 
     // Navigate back to Quests & Adventures
-    await page.click("text=Quests & Adventures");
+    await gmPage.getByTestId("tab-quests").click();
 
     // Click create quest button
-    await page.click('[data-testid="create-quest-button"]');
+    await openQuestCreationModal(gmPage);
 
     // Switch to "From Template" tab
-    await page.click("text=From Template");
+    await gmPage.click("text=From Template");
 
     // Verify our custom template appears in the dropdown
-    const templateSelect = page.locator('[data-testid="template-select"]');
+    const templateSelect = gmPage.locator('[data-testid="template-select"]');
     await expect(templateSelect).toBeVisible();
 
     // Check if our template is in the options
     const options = await templateSelect.locator("option").allTextContents();
     expect(
-      options.some((opt) => opt.includes("Unique Test Template")),
+      options.some((opt) => opt.includes(templateName)),
     ).toBeTruthy();
 
     // Find the option value for our template
     const templateOption = await templateSelect
-      .locator("option", { hasText: "Unique Test Template" })
+      .locator("option", { hasText: templateName })
       .getAttribute("value");
 
     // Select our template by value
-    await templateSelect.selectOption(templateOption!);
+    await selectTemplateByValue(gmPage, templateOption!);
 
     // Verify template details are displayed
-    await expect(page.getByText("For testing quest creation")).toBeVisible();
+    await expect(gmPage.getByText("For testing quest creation")).toBeVisible();
+    await cancelQuestModal(gmPage);
   });
 
-  test("Hero users cannot access Quest Templates tab", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "template-gm", {
-      characterClass: "KNIGHT",
+  test("Hero users cannot access Quest Templates tab", async ({ workerFamily }) => {
+    const { gmPage, createFamilyMember } = workerFamily;
+
+    await navigateToDashboard(gmPage);
+    await expect(gmPage.getByTestId("welcome-message")).toBeVisible({
+      timeout: 10000,
     });
-    await expect(page).toHaveURL(/.*dashboard/);
 
     // Verify Guild Master can see Quest Templates tab
-    await expect(page.getByText("Quest Templates")).toBeVisible();
+    await expect(gmPage.getByTestId("tab-templates")).toBeVisible();
 
-    // Get the family code for joining
-    const familyCode = await getFamilyCode(page);
+    // Create a hero user within the same family
+    const heroUser = await createFamilyMember({
+      displayName: "Hero User",
+      characterName: "Hero Character",
+      characterClass: "MAGE",
+    });
 
-    // Logout
-    await page.click("text=Logout");
-    // After logout, we're redirected to login page
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
-
-    // Register as a Hero (child) user
-    const timestamp = Date.now();
-    await page.goto("http://localhost:3000/auth/register");
-    await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("textbox", { name: "Email Address" })
-      .fill(`hero-${timestamp}@test.com`);
-    await page.getByRole("textbox", { name: "Password" }).fill("password123");
-    await page.getByRole("textbox", { name: "Hero Name" }).fill("Hero User");
-    await page.getByRole("textbox", { name: "Guild Code" }).fill(familyCode);
-    await page.getByRole("button", { name: /Join Guild/i }).click();
-
-    // Create character for Hero
-    await expect(page).toHaveURL(/.*character\/create/, { timeout: 15000 });
-    await page.fill("input#characterName", "Hero Character");
-    await page.click('[data-testid="class-mage"]');
-    await page.click('button:text("Begin Your Quest")');
-    await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });
-
-    // Verify Hero CANNOT see Quest Templates tab
-    await expect(page.getByText("Quest Templates")).not.toBeVisible();
-
-    // Verify Hero can see other tabs
-    await expect(page.getByText("Quests & Adventures")).toBeVisible();
-    await expect(page.getByText("Reward Store")).toBeVisible();
+    await heroUser.page.waitForURL(/.*dashboard/, { timeout: 20000 });
+    await expect(heroUser.page.getByTestId("welcome-message")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(heroUser.page.getByTestId("tab-templates")).not.toBeVisible({
+      timeout: 10000,
+    });
+    await expect(heroUser.page.getByTestId("tab-quests")).toBeVisible();
+    await expect(heroUser.page.getByTestId("tab-rewards")).toBeVisible();
+    await heroUser.context.close();
   });
 });

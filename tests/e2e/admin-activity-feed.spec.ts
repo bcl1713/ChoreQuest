@@ -1,9 +1,19 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
+import { giveCharacterGoldViaQuest } from "./helpers/setup-helpers";
 import {
-  setupUserWithCharacter,
-  giveCharacterGoldViaQuest,
-  loginUser,
-} from "./helpers/setup-helpers";
+  navigateToAdmin,
+  navigateToDashboard,
+  navigateToHeroTab,
+  navigateToAdminTab,
+} from "./helpers/navigation-helpers";
+import {
+  createCustomQuest,
+  pickupQuest,
+  startQuest,
+  completeQuest,
+  approveQuest,
+} from "./helpers/quest-helpers";
+import { createReward, redeemReward } from "./helpers/reward-helpers";
 
 /**
  * E2E Tests for Admin Dashboard Activity Feed
@@ -13,116 +23,89 @@ import {
  */
 
 test.describe("Admin Dashboard Activity Feed", () => {
-  test("displays activity feed on overview tab", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-init", {
-      characterClass: "KNIGHT",
-    });
+  test.beforeEach(async ({ workerFamily }) => {
+    await navigateToDashboard(workerFamily.gmPage);
+  });
+  test("displays activity feed on overview tab", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Verify activity feed is visible on Overview tab
-    await expect(page.getByTestId("activity-feed")).toBeVisible();
-    await expect(page.getByText(/Recent Activity/i)).toBeVisible();
+    await expect(gmPage.getByTestId("activity-feed")).toBeVisible();
+    await expect(gmPage.getByText(/Recent Activity/i)).toBeVisible();
 
     // Verify feed structure exists (empty state or initial events)
-    const activityFeed = page.getByTestId("activity-feed");
+    const activityFeed = gmPage.getByTestId("activity-feed");
     await expect(activityFeed).toBeVisible();
   });
 
-  test("shows quest completion events in activity feed", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-quest", {
-      characterClass: "MAGE",
-    });
+  test("shows quest completion events in activity feed", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Navigate to main dashboard and complete a quest
-    await page.click("text=Back to Dashboard");
+    await navigateToDashboard(gmPage);
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
-
     const questTitle = `Activity Quest ${timestamp}`;
-    await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest for activity feed",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "10");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "50");
-    await page.click('button[type="submit"]');
 
-    // Complete quest workflow
-    await page.locator('[data-testid="pick-up-quest-button"]').first().click();
+    await createCustomQuest(gmPage, {
+      title: questTitle,
+      description: "Quest for activity feed",
+      goldReward: 10,
+      xpReward: 50,
+      skipVisibilityCheck: true,
+    });
 
-    await page.locator('[data-testid="start-quest-button"]').first().click();
-
-    await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-    // Refresh and approve
-    await page.reload();
-
-    await page.locator('[data-testid="approve-quest-button"]').first().click();
+    // Complete quest workflow for the specific quest we just created
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await approveQuest(gmPage, questTitle);
 
     // Navigate back to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Wait for activity feed to load and refresh
-    const activityFeed = page.getByTestId("activity-feed");
-
-    await page.getByTestId("activity-feed-refresh-button").click();
+    const activityFeed = gmPage.getByTestId("activity-feed");
+    await gmPage.getByTestId("activity-feed-refresh-button").click();
 
     // Verify quest completion appears in activity feed
     await expect(activityFeed).toContainText(questTitle, { timeout: 5000 });
     await expect(activityFeed).toContainText(/completed/i);
   });
 
-  test("shows pending approval events with quick action buttons", async ({
-    page,
-  }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-approval", {
-      characterClass: "RANGER",
+  test("shows pending approval events with quick action buttons", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    const timestamp = Date.now();
+    const questTitle = `Pending Quest ${timestamp}`;
+
+    // beforeEach already navigates to dashboard, no need to do it again
+
+    await createCustomQuest(gmPage, {
+      title: questTitle,
+      description: "Quest needs approval",
+      goldReward: 5,
+      xpReward: 25,
+      skipVisibilityCheck: true,
     });
 
-    // Navigate to main dashboard and complete a quest without approving
-    const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
+    // Complete quest without approving for the specific quest we just created
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
 
-    const questTitle = `Pending Quest ${timestamp}`;
-    await page.fill('input[placeholder="Enter quest title..."]', questTitle);
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest needs approval",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "5");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "25");
-    await page.click('button[type="submit"]');
-
-    // Complete quest without approving
-    await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
-    await page.locator('[data-testid="start-quest-button"]').first().click();
-
-    await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-    // Refresh to see completed status
-    await page.reload();
+    // Wait for quest completion to be processed
+    await gmPage.waitForLoadState('networkidle');
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Verify pending approval appears in activity feed (submitted events)
-    const activityFeed = page.getByTestId("activity-feed");
+    const activityFeed = gmPage.getByTestId("activity-feed");
     await expect(activityFeed).toContainText(/submitted.*for approval/i, {
       timeout: 5000,
     });
@@ -133,147 +116,111 @@ test.describe("Admin Dashboard Activity Feed", () => {
 
     // Click Review button - should navigate to dashboard with highlight
     await reviewButton.click();
-    await expect(page).toHaveURL(/.*\/dashboard/);
+    await expect(gmPage).toHaveURL(/.*\/dashboard/);
+
+    // Wait for dashboard to fully load (welcome message appears when ready)
+    await expect(gmPage.getByTestId("welcome-message")).toBeVisible({ timeout: 30000 });
 
     // Navigate back to admin to verify event persistence
-    await page.click('[data-testid="admin-dashboard-button"]');
+    await navigateToAdmin(gmPage);
     await expect(activityFeed).toContainText(/submitted.*for approval/i);
   });
 
-  test("displays reward redemption events in activity feed", async ({
-    page,
-  }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-reward", {
-      characterClass: "HEALER",
-    });
+  test("displays reward redemption events in activity feed", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // First, create a reward
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await page.getByRole("tab", { name: /Rewards/i }).click();
+    await navigateToAdmin(gmPage);
+    await navigateToAdminTab(gmPage, "Rewards");
 
     const timestamp = Date.now();
     const rewardName = `Activity Reward ${timestamp}`;
-    await page.click('[data-testid="create-reward-button"]');
-    await page.fill('[data-testid="reward-name-input"]', rewardName);
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Reward for activity feed test",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "EXPERIENCE");
-    await page.fill('[data-testid="reward-cost-input"]', "10");
-    await page.click('[data-testid="save-reward-button"]');
+    await createReward(gmPage, {
+      name: rewardName,
+      description: "Reward for activity feed test",
+      type: "EXPERIENCE",
+      cost: 10,
+    });
 
     // Give character gold
-    await page.click("text=Back to Dashboard");
-    await giveCharacterGoldViaQuest(page, 50);
+    await navigateToDashboard(gmPage);
+    await giveCharacterGoldViaQuest(gmPage, 50);
 
     // Redeem the reward
-    await page.click('[data-testid="tab-rewards"]'); // Use testid for rewards tab
-
-    // Find and click the reward - use simpler selector
-    await page.getByText(rewardName).click();
-
-    // Click redeem button (should be visible in reward details/card)
-    await page.getByRole("button", { name: /redeem/i }).click();
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await redeemReward(gmPage, rewardName);
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Verify reward redemption appears in activity feed
-    const activityFeed = page.getByTestId("activity-feed");
+    const activityFeed = gmPage.getByTestId("activity-feed");
     await expect(activityFeed).toContainText(rewardName, { timeout: 5000 });
     await expect(activityFeed).toContainText(/redeemed/i);
   });
 
-  test("shows relative timestamps for events", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-time", {
-      characterClass: "ROGUE",
-    });
+  test("shows relative timestamps for events", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // Complete a quest
-    await giveCharacterGoldViaQuest(page, 10);
+    await giveCharacterGoldViaQuest(gmPage, 10);
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Verify activity feed shows relative timestamps
-    const activityFeed = page.getByTestId("activity-feed");
+    const activityFeed = gmPage.getByTestId("activity-feed");
     await expect(activityFeed).toContainText(
       /just now|seconds? ago|minutes? ago/i,
       { timeout: 5000 },
     );
   });
 
-  test("activity feed auto-scrolls to new events", async ({ browser }) => {
-    // This test verifies auto-scroll behavior when new events arrive
-    const context = await browser.newContext();
-    const page = await context.newPage();
-
-    try {
-      // Setup user (let setupUserWithCharacter generate unique email)
-      const user = await setupUserWithCharacter(page, "activity-scroll", {
-        characterClass: "KNIGHT",
-      });
-
-      // Navigate to admin dashboard
-      await page.click('[data-testid="admin-dashboard-button"]');
-      await expect(page).toHaveURL(/.*\/admin/);
-
-      // Open second tab in same context and login
-      const page2 = await context.newPage();
-      await loginUser(page2, user.email, user.password);
-
-      // Complete a quest in second tab
-      await giveCharacterGoldViaQuest(page2, 20);
-
-      // Wait for event to appear in first tab
-
-      // Verify new event is visible (feed should have auto-scrolled or event is visible)
-      await expect(activityFeed).toContainText(/completed/i, { timeout: 5000 });
-
-      await page2.close();
-    } finally {
-      await context.close();
-    }
-  });
-
-  test("activity feed has manual refresh button", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-refresh", {
-      characterClass: "MAGE",
-    });
+  test("activity feed auto-scrolls to new events", async ({ workerFamily }) => {
+    const { gmPage, gmContext } = workerFamily;
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
+
+    // Open second tab in same GM context (already authenticated)
+    const page2 = await gmContext.newPage();
+    await navigateToDashboard(page2);
+
+    // Complete a quest in second tab to generate a new activity
+    await giveCharacterGoldViaQuest(page2, 20);
+
+    // Wait for event to appear in first tab
+    const activityFeed = gmPage.getByTestId("activity-feed");
+
+    // Verify new event is visible (feed should have auto-scrolled or event is visible)
+    await expect(activityFeed).toContainText(/completed/i, { timeout: 5000 });
+  });
+
+  test("activity feed has manual refresh button", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+
+    // Navigate to admin dashboard
+    await navigateToAdmin(gmPage);
 
     // Verify refresh button exists
-    const refreshButton = page.getByTestId("activity-feed-refresh-button");
+    const refreshButton = gmPage.getByTestId("activity-feed-refresh-button");
     await expect(refreshButton).toBeVisible();
 
     // Click refresh button
     await refreshButton.click();
 
     // Verify feed refreshes (no errors, still visible)
-    await expect(page.getByTestId("activity-feed")).toBeVisible();
+    await expect(gmPage.getByTestId("activity-feed")).toBeVisible();
   });
 
-  test("activity feed limits to last 50 events", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-limit", {
-      characterClass: "RANGER",
-    });
+  test("activity feed limits to last 50 events", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Verify activity feed exists
-    const activityFeed = page.getByTestId("activity-feed");
+    const activityFeed = gmPage.getByTestId("activity-feed");
     await expect(activityFeed).toBeVisible();
 
     // Count events (should be limited even if more exist in database)
@@ -285,45 +232,32 @@ test.describe("Admin Dashboard Activity Feed", () => {
     expect(eventCount).toBeLessThanOrEqual(50);
   });
 
-  test("displays level-up events in activity feed", async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, "activity-levelup", {
-      characterClass: "HEALER",
-    });
+  test("displays level-up events in activity feed", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // Complete multiple quests to trigger level-up
-    await page.click("text=Quests & Adventures");
+    await navigateToHeroTab(gmPage, "Quests & Adventures");
     const timestamp = Date.now();
-    await page.click('[data-testid="create-quest-button"]');
-    await page.locator('.fixed button:has-text("Custom Quest")').click();
+    const questTitle = `Levelup Quest ${timestamp}`;
 
-    await page.fill(
-      'input[placeholder="Enter quest title..."]',
-      `Levelup Quest ${timestamp}`,
-    );
-    await page.fill(
-      'textarea[placeholder="Describe the quest..."]',
-      "Quest for level up",
-    );
-    await page.fill('input[type="number"]:near(:text("Gold Reward"))', "5");
-    await page.fill('input[type="number"]:near(:text("XP Reward"))', "100");
-    await page.click('button[type="submit"]');
+    await createCustomQuest(gmPage, {
+      title: questTitle,
+      description: "Quest for level up",
+      goldReward: 5,
+      xpReward: 100,
+    });
 
-    // Complete and approve quest
-    await page.locator('[data-testid="pick-up-quest-button"]').first().click();
-
-    await page.locator('[data-testid="start-quest-button"]').first().click();
-
-    await page.locator('[data-testid="complete-quest-button"]').first().click();
-
-    await page.locator('[data-testid="approve-quest-button"]').first().click();
+    // Complete and approve the specific quest we just created
+    await pickupQuest(gmPage, questTitle);
+    await startQuest(gmPage, questTitle);
+    await completeQuest(gmPage, questTitle);
+    await approveQuest(gmPage, questTitle);
 
     // Navigate to admin dashboard
-    await page.click('[data-testid="admin-dashboard-button"]');
-    await expect(page).toHaveURL(/.*\/admin/);
+    await navigateToAdmin(gmPage);
 
     // Verify level-up event appears in activity feed
-    const activityFeed = page.getByTestId("activity-feed");
+    const activityFeed = gmPage.getByTestId("activity-feed");
     await expect(activityFeed).toContainText(
       /level.*up|reached level|leveled up/i,
       { timeout: 5000 },

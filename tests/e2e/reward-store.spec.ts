@@ -1,210 +1,177 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/family-fixture";
+import type { Page } from "@playwright/test";
 import {
-  setupTestUser,
-  giveCharacterGoldViaQuest,
-} from "./helpers/setup-helpers";
+  createReward,
+  deleteReward,
+  ensureGoldBalance,
+} from "./helpers/reward-helpers";
+import {
+  navigateToDashboard,
+  navigateToHeroTab,
+} from "./helpers/navigation-helpers";
+
+async function clearAllRewards(gmPage: Page): Promise<void> {
+  await navigateToHeroTab(gmPage, "Reward Management");
+
+  const rewardCards = gmPage.locator('[data-testid^="reward-card-"]');
+
+  while ((await rewardCards.count()) > 0) {
+    const card = rewardCards.first();
+    const name = await card.locator("h3").innerText();
+    await deleteReward(gmPage, name.trim());
+    await gmPage.waitForLoadState("networkidle");
+  }
+
+  await navigateToHeroTab(gmPage, "Quests & Adventures");
+}
 
 test.describe("Reward Store", () => {
-  test.beforeEach(async ({ page }) => {
-    // Simple setup for each test - we'll create users as needed per test
-    await page.goto("/");
+  test.beforeEach(async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
+    await navigateToDashboard(gmPage);
+    await expect(gmPage.getByTestId("welcome-message")).toBeVisible({
+      timeout: 15000,
+    });
+    await clearAllRewards(gmPage);
   });
 
   test("should display reward store with available rewards", async ({
-    page,
+    workerFamily,
   }) => {
-    // Create test user with character
-    await setupTestUser(page);
+    const { gmPage } = workerFamily;
+    await navigateToHeroTab(gmPage, "Reward Store");
 
-    // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    // Verify reward store is displayed
-    await expect(
-      page.locator('[data-testid="reward-store-title"]'),
-    ).toBeVisible();
-
-    // Verify gold balance is shown (default should be 0 for new characters)
-    await expect(page.locator('[data-testid="gold-balance"]')).toBeVisible({
+    await expect(gmPage.getByTestId("reward-store-title")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(gmPage.getByTestId("gold-balance")).toBeVisible({
       timeout: 10000,
     });
-
-    // Verify message for when no rewards are available (expected for new test family)
-    await expect(
-      page.locator('[data-testid="no-rewards-message"]'),
-    ).toBeVisible();
+    await expect(gmPage.getByTestId("no-rewards-message")).toBeVisible();
   });
 
-  test("should show empty state when no rewards exist", async ({ page }) => {
-    // Create test user
-    await setupTestUser(page);
+  test("should show empty state when no rewards exist", async ({
+    workerFamily,
+  }) => {
+    const { gmPage } = workerFamily;
 
-    // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(gmPage, "Reward Store");
 
-    // Verify reward store displays empty state
+    await expect(gmPage.getByTestId("reward-store-title")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(gmPage.getByTestId("no-rewards-message")).toBeVisible();
     await expect(
-      page.locator('[data-testid="reward-store-title"]'),
-    ).toBeVisible();
-    await expect(
-      page.locator('[data-testid="no-rewards-message"]'),
-    ).toBeVisible();
-
-    // Verify no redemption buttons are visible
-    await expect(
-      page.locator('button:has-text("Redeem Reward")'),
+      gmPage.locator('button:has-text("Redeem Reward")'),
     ).not.toBeVisible();
   });
 
-  test("should display user gold balance correctly", async ({ page }) => {
-    // Create test user with character
-    await setupTestUser(page);
+  test("should display user gold balance correctly", async ({
+    workerFamily,
+  }) => {
+    const { gmPage } = workerFamily;
+    await navigateToHeroTab(gmPage, "Reward Store");
 
-    // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    // Verify reward store is displayed
-    await expect(
-      page.locator('[data-testid="reward-store-title"]'),
-    ).toBeVisible();
-
-    // Verify default gold balance (0 for new characters)
-    await expect(page.locator('[data-testid="gold-balance"]')).toBeVisible({
+    await expect(gmPage.getByTestId("reward-store-title")).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(gmPage.getByTestId("gold-balance")).toBeVisible({
       timeout: 10000,
     });
   });
 
-  test("should show correct tab navigation", async ({ page }) => {
-    // Create test user
-    await setupTestUser(page);
+  test("should show correct tab navigation", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
-    // Verify both tabs are visible
     await expect(
-      page.locator('button:has-text("⚔️ Quests & Adventures")'),
+      gmPage.locator('button:has-text("⚔️ Quests & Adventures")'),
     ).toBeVisible();
     await expect(
-      page.locator('button:has-text("🏪 Reward Store")'),
+      gmPage.locator('button:has-text("🏪 Reward Store")'),
     ).toBeVisible();
 
-    // Verify quest tab is active by default
-    await expect(page.locator('h2:has-text("Quest Dashboard")')).toBeVisible();
+    await expect(
+      gmPage.locator('h2:has-text("Quest Dashboard")'),
+    ).toBeVisible({
+      timeout: 15000,
+    });
 
-    // Switch to reward store tab
-    await page.click('button:has-text("🏪 Reward Store")');
-    await expect(page.locator('h2:has-text("⭐ Reward Store")')).toBeVisible();
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await expect(
+      gmPage.locator('h2:has-text("⭐ Reward Store")'),
+    ).toBeVisible({
+      timeout: 15000,
+    });
 
-    // Switch back to quest tab
-    await page.click('button:has-text("⚔️ Quests & Adventures")');
-    await expect(page.locator('h2:has-text("Quest Dashboard")')).toBeVisible();
+    await navigateToHeroTab(gmPage, "Quests & Adventures");
+    await expect(
+      gmPage.locator('h2:has-text("Quest Dashboard")'),
+    ).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("should display redemption history with denormalized reward data", async ({
-    page,
+    workerFamily,
   }) => {
-    // Create test user
-    await setupTestUser(page);
+    const { gmPage } = workerFamily;
 
-    // Create a reward as Guild Master
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill(
-      '[data-testid="reward-name-input"]',
-      "Test Reward for Redemption",
-    );
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "This reward will be redeemed and deleted",
-    );
-    await page.selectOption(
-      '[data-testid="reward-type-select"]',
-      "SCREEN_TIME",
-    );
-    await page.fill('[data-testid="reward-cost-input"]', "50");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: "Test Reward for Redemption",
+      description: "This reward will be redeemed and deleted",
+      type: "SCREEN_TIME",
+      cost: 50,
+    });
 
-    // Give the hero some gold via quest completion (100 gold base with EASY difficulty + KNIGHT bonus = 105 gold)
-    await giveCharacterGoldViaQuest(page, 100);
+    await ensureGoldBalance(gmPage, 75);
 
-    // Switch to Reward Store tab
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await gmPage.click('button:has-text("Redeem Reward")');
 
-    // Redeem the reward
-    await page.click('button:has-text("Redeem Reward")');
-
-    // Verify redemption appears in history
     await expect(
-      page.locator("text=Test Reward for Redemption").first(),
+      gmPage.locator("text=Test Reward for Redemption").first(),
     ).toBeVisible();
     await expect(
-      page.locator("text=This reward will be redeemed and deleted").first(),
+      gmPage
+        .locator("text=This reward will be redeemed and deleted")
+        .first(),
     ).toBeVisible();
 
-    // Delete the reward as Guild Master
-    await page.click('button:has-text("⚙️ Reward Management")');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await deleteReward(gmPage, "Test Reward for Redemption");
 
-    // Find and delete the reward - click the first Delete button (there's only one reward)
-    await page.locator('button:has-text("Delete")').first().click();
-    await page.locator('button:has-text("Delete")').nth(1).click(); // Confirm deletion in modal
+    await navigateToHeroTab(gmPage, "Reward Store");
 
-    // Switch back to Reward Store
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    // Verify redemption history still shows with denormalized data (name and cost)
     await expect(
-      page.locator("text=Test Reward for Redemption").first(),
+      gmPage.locator("text=Test Reward for Redemption").first(),
     ).toBeVisible();
-    // Note: Description and reward type may not be displayed in redemption history UI
   });
 
   test("should persist redemption history even after reward is deleted", async ({
-    page,
+    workerFamily,
   }) => {
-    // Create test user
-    await setupTestUser(page);
+    const { gmPage } = workerFamily;
 
-    // Create a reward
-    await page.click(
-      'button:has-text("⚙️ Reward Management"), button:has-text("⚙️ Manage")',
-    );
-    await page.click('button:has-text("Create Reward")');
-    await page.fill(
-      '[data-testid="reward-name-input"]',
-      "Persistence Test Reward",
-    );
-    await page.fill(
-      '[data-testid="reward-description-input"]',
-      "Testing redemption persistence",
-    );
-    await page.selectOption('[data-testid="reward-type-select"]', "PRIVILEGE");
-    await page.fill('[data-testid="reward-cost-input"]', "75");
-    await page.click('[data-testid="save-reward-button"]');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await createReward(gmPage, {
+      name: "Persistence Test Reward",
+      description: "Testing redemption persistence",
+      type: "PRIVILEGE",
+      cost: 75,
+    });
 
-    // Give gold to hero via quest completion (150 gold base with EASY difficulty + KNIGHT bonus = 157 gold)
-    await giveCharacterGoldViaQuest(page, 150);
+    await ensureGoldBalance(gmPage, 100);
 
-    // Redeem the reward
-    await page.click('button:has-text("🏪 Reward Store")');
+    await navigateToHeroTab(gmPage, "Reward Store");
+    await gmPage.click('button:has-text("Redeem Reward")');
 
-    await page.click('button:has-text("Redeem Reward")');
+    await navigateToHeroTab(gmPage, "Reward Management");
+    await deleteReward(gmPage, "Persistence Test Reward");
 
-    // Delete the reward
-    await page.click('button:has-text("⚙️ Reward Management")');
-
-    await page.locator('button:has-text("Delete")').first().click();
-    await page.locator('button:has-text("Delete")').nth(1).click(); // Confirm deletion in modal
-
-    // Reload page to ensure data persistence
-    await page.reload();
-
-    // Navigate to Reward Store
-    await page.click('button:has-text("🏪 Reward Store")');
-
-    // Verify redemption still exists with reward name (denormalized data persisted)
+    await navigateToHeroTab(gmPage, "Reward Store");
     await expect(
-      page.locator("text=Persistence Test Reward").first(),
+      gmPage.locator("text=Persistence Test Reward").first(),
     ).toBeVisible();
   });
 });
-

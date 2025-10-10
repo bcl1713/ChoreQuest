@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { setupUserWithCharacter } from './helpers/setup-helpers';
+import { test, expect } from "./helpers/family-fixture";
+import { navigateToAdmin, navigateToDashboard } from "./helpers/navigation-helpers";
+import { getFamilyCode, joinExistingFamily } from "./helpers/auth-helpers";
 
 /**
  * E2E Tests for Admin Dashboard Access Control
@@ -8,102 +9,90 @@ import { setupUserWithCharacter } from './helpers/setup-helpers';
  * Verifies role-based access control and proper redirects.
  */
 
-test.describe('Admin Dashboard Access Control', () => {
-  test('Guild Master can access admin dashboard', async ({ page }) => {
-    // Create family and character as Guild Master
-    await setupUserWithCharacter(page, 'gm-access', { characterClass: 'KNIGHT' });
+test.describe("Admin Dashboard Access Control", () => {
+  test.beforeEach(async ({ workerFamily }) => {
+    await navigateToDashboard(workerFamily.gmPage);
+  });
 
-    // Should be on dashboard
-    await expect(page).toHaveURL(/.*\/dashboard/);
+  test("Guild Master can access admin dashboard", async ({ workerFamily }) => {
+    const { gmPage } = workerFamily;
 
     // Verify Admin button is visible for Guild Master
-    await expect(page.getByTestId('admin-dashboard-button')).toBeVisible();
+    await expect(gmPage.getByTestId("admin-dashboard-button")).toBeVisible();
 
-    // Click admin button
-    await page.click('[data-testid="admin-dashboard-button"]');
-
-    // Should navigate to admin dashboard
-    await expect(page).toHaveURL(/.*\/admin/);
+    // Navigate to admin dashboard
+    await navigateToAdmin(gmPage);
 
     // Verify admin dashboard loads
-    await expect(page.getByTestId('admin-dashboard')).toBeVisible();
+    await expect(gmPage.getByTestId("admin-dashboard")).toBeVisible();
 
     // Verify tabbed interface exists
-    await expect(page.getByRole('tab', { name: /Overview/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Quest Templates/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Rewards/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Guild Masters/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /Family Settings/i })).toBeVisible();
+    await expect(gmPage.getByRole("tab", { name: /Overview/i })).toBeVisible();
+    await expect(gmPage.getByRole("tab", { name: /Quest Templates/i })).toBeVisible();
+    await expect(gmPage.getByRole("tab", { name: /Rewards/i })).toBeVisible();
+    await expect(gmPage.getByRole("tab", { name: /Guild Masters/i })).toBeVisible();
+    await expect(gmPage.getByRole("tab", { name: /Family Settings/i })).toBeVisible();
   });
 
-  test('Hero cannot access admin dashboard', async ({ page }) => {
-    // Create family as Guild Master
-    await setupUserWithCharacter(page, 'gm-for-hero', { characterClass: 'MAGE' });
+  test("Hero cannot access admin dashboard", async ({ workerFamily, browser }) => {
+    const { gmPage } = workerFamily;
+    const familyCode = await getFamilyCode(gmPage);
+    const heroContext = await browser.newContext();
+    const heroPage = await heroContext.newPage();
 
-    // Get family code
-    const familyCodeElement = await page.locator('text=/Guild:.*\\([A-Z0-9]{6}\\)/').first();
-    const familyCodeText = await familyCodeElement.textContent();
-    const codeMatch = familyCodeText?.match(/\(([A-Z0-9]{6})\)/);
-    const familyCode = codeMatch![1];
+    try {
+      // Register as Hero (child) user in the GM's family
+      const timestamp = Date.now();
+      await joinExistingFamily(heroPage, familyCode, {
+        name: "Hero User",
+        email: `hero-access-${timestamp}@test.com`,
+        password: "password123",
+      });
 
-    // Logout
-    await page.click('text=Logout');
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
+      // Create character for Hero
+      await heroPage.fill("input#characterName", "Hero Character");
+      await heroPage.click('[data-testid="class-rogue"]');
+      await heroPage.click('button:text("Begin Your Quest")');
+      await expect(heroPage).toHaveURL(/.*\/dashboard/, { timeout: 15000 });
 
-    // Register as Hero (child) user
-    const timestamp = Date.now();
-    await page.goto('http://localhost:3000/auth/register');
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('textbox', { name: 'Email Address' }).fill(`hero-access-${timestamp}@test.com`);
-    await page.getByRole('textbox', { name: 'Password' }).fill('password123');
-    await page.getByRole('textbox', { name: 'Hero Name' }).fill('Hero User');
-    await page.getByRole('textbox', { name: 'Guild Code' }).fill(familyCode);
-    await page.getByRole('button', { name: /Join Guild/i }).click();
+      // Verify Hero cannot see admin button
+      await expect(heroPage.getByTestId("admin-dashboard-button")).not.toBeVisible();
 
-    // Create character for Hero
-    await expect(page).toHaveURL(/.*\/character\/create/, { timeout: 15000 });
-    await page.fill('input#characterName', 'Hero Character');
-    await page.click('[data-testid="class-rogue"]');
-    await page.click('button:text("Begin Your Quest")');
-    await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 15000 });
+      // Try to navigate directly to admin dashboard via URL
+      await heroPage.goto("/admin");
 
-    // Verify Hero cannot see admin button
-    await expect(page.getByTestId('admin-dashboard-button')).not.toBeVisible();
+      // Should be redirected back to dashboard
+      await expect(heroPage).toHaveURL(/.*\/dashboard/);
 
-    // Try to navigate directly to admin dashboard via URL
-    await page.goto('/admin');
-
-    // Should be redirected back to dashboard
-    await expect(page).toHaveURL(/.*\/dashboard/);
-
-    // Should see an error message about insufficient permissions
-    await expect(page.getByText(/not authorized|insufficient permissions|guild master/i)).toBeVisible({ timeout: 5000 });
+      // Should see an error message about insufficient permissions
+      await expect(
+        heroPage.getByText(/not authorized|insufficient permissions|guild master/i),
+      ).toBeVisible({ timeout: 5000 });
+    } finally {
+      await heroContext.close();
+    }
   });
 
-  test('Unauthenticated user cannot access admin dashboard', async ({ page }) => {
+  test("Unauthenticated user cannot access admin dashboard", async ({ page }) => {
     // Navigate directly to admin dashboard without logging in
-    await page.goto('/admin');
+    await page.goto("/admin");
 
     // Should be redirected to login page
     await expect(page).toHaveURL(/.*\/auth\/login/);
   });
 
-  test('Admin button visible only for Guild Masters in header', async ({ page }) => {
-    // Create family as Guild Master
-    await setupUserWithCharacter(page, 'gm-header', { characterClass: 'RANGER' });
+  test("Admin button visible only for Guild Masters in header", async ({ workerFamily, page }) => {
+    const { gmPage } = workerFamily;
 
     // Verify admin button exists in navigation
-    const adminButton = page.getByTestId('admin-dashboard-button');
+    const adminButton = gmPage.getByTestId("admin-dashboard-button");
     await expect(adminButton).toBeVisible();
 
     // Verify button has correct styling/icon
     await expect(adminButton).toContainText(/Admin|Settings|⚙️|🛡️/i);
 
-    // Logout
-    await page.click('text=Logout');
-    await expect(page).toHaveURL(/.*\/(auth\/login)?/);
-
     // Login page shouldn't show admin button
-    await expect(page.getByTestId('admin-dashboard-button')).not.toBeVisible();
+    await page.goto("/auth/login");
+    await expect(page.getByTestId("admin-dashboard-button")).not.toBeVisible();
   });
 });
