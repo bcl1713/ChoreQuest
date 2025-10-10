@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ParticleEffect } from './ParticleEffect';
 import { FantasyButton } from '@/components/ui/FantasyButton';
@@ -44,26 +44,17 @@ export function QuestCompleteOverlay({
   autoDismissDuration = 5000,
 }: QuestCompleteOverlayProps) {
   const prefersReducedMotion = useReducedMotion();
-  const [autoDismissed, setAutoDismissed] = useState(false);
 
   // Auto-dismiss timer
   useEffect(() => {
     if (show && autoDismissDuration > 0) {
       const timer = setTimeout(() => {
-        setAutoDismissed(true);
         onDismiss();
       }, autoDismissDuration);
 
       return () => clearTimeout(timer);
     }
   }, [show, autoDismissDuration, onDismiss]);
-
-  // Reset auto-dismiss flag when show changes
-  useEffect(() => {
-    if (show) {
-      setAutoDismissed(false);
-    }
-  }, [show]);
 
   const handleDismiss = () => {
     onDismiss();

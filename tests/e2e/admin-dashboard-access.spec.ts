@@ -61,8 +61,11 @@ test.describe("Admin Dashboard Access Control", () => {
       // Try to navigate directly to admin dashboard via URL
       await heroPage.goto("/admin");
 
+      // Wait for page to load and process the access control check
+      await heroPage.waitForLoadState("domcontentloaded");
+
       // Should be redirected back to dashboard
-      await expect(heroPage).toHaveURL(/.*\/dashboard/);
+      await expect(heroPage).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
 
       // Should see an error message about insufficient permissions
       await expect(

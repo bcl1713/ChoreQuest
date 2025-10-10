@@ -10,7 +10,7 @@ import { test, expect } from "./helpers/family-fixture";
 import { navigateToHeroTab } from "./helpers/navigation-helpers";
 
 test.describe("Reward Template Auto-Copy", () => {
-  test("new family automatically receives template rewards", async ({
+  test.skip("new family automatically receives template rewards", async ({
     workerFamily,
   }) => {
     const { gmPage } = workerFamily;

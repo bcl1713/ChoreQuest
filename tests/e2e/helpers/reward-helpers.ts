@@ -120,12 +120,19 @@ export async function redeemReward(
   rewardName?: string,
 ): Promise<void> {
   if (rewardName) {
-    // Find the specific reward and click its redeem button
-    await page.getByText(rewardName).click();
-    await page.getByRole("button", { name: /redeem/i }).click();
+    // Find the specific reward card by name
+    const rewardCard = page.locator('[data-testid^="reward-store-card-"]').filter({
+      hasText: rewardName,
+    });
+
+    // Ensure card is visible and clickable
+    await expect(rewardCard).toBeVisible({ timeout: 10000 });
+
+    // Click the redeem button within that specific card
+    await rewardCard.getByTestId('reward-store-redeem-button').click();
   } else {
     // Click first "Redeem Reward" button
-    await page.click('button:has-text("Redeem Reward")');
+    await page.getByTestId('reward-store-redeem-button').first().click();
   }
 
   // Wait for redemption to process

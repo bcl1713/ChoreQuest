@@ -82,16 +82,16 @@ Based on PRD: `0008-prd-visual-ui-enhancements.md`
   - [x] 3.8 Write unit tests for `components/animations/LevelUpModal.test.tsx` covering modal visibility, level changes, multi-level-ups (x3), and keyboard navigation
   - [x] 3.9 Run all unit tests: `npm run test` and verify all celebration components pass
 
-- [ ] 4.0 Integrate Animations into Existing Features
-  - [ ] 4.1 Update `lib/character-context.tsx` to add `levelUpEvent` state and `triggerLevelUp` function that tracks level changes
-  - [ ] 4.2 Modify `components/quest-dashboard.tsx` to import and use `QuestCompleteOverlay` component, triggering on quest approval with calculated rewards
-  - [ ] 4.3 Update `components/quest-dashboard.tsx` to use staggered list animations for quest items using Framer Motion variants from `lib/animations/variants.ts`
-  - [ ] 4.4 Modify `app/dashboard/page.tsx` to add `ProgressBar` component showing character XP progress and `LevelUpModal` listening to character context
-  - [ ] 4.5 Update `components/character/CharacterCreation.tsx` to enhance class selection cards with hover scale and glow animations
-  - [ ] 4.6 Modify `components/reward-store.tsx` to add redemption success animation (could reuse `QuestCompleteOverlay` pattern or create subtle feedback)
-  - [ ] 4.7 Replace all generic loading spinners across the app with `LoadingSpinner` component (in quest-dashboard, character creation, etc.)
-  - [ ] 4.8 Update button components throughout app to use `FantasyButton` component instead of inline button styles
-  - [ ] 4.9 Run `npm run build` and manually test all integrated features in dev server
+- [x] 4.0 Integrate Animations into Existing Features
+  - [x] 4.1 Update `lib/character-context.tsx` to add `levelUpEvent` state and `triggerLevelUp` function that tracks level changes
+  - [x] 4.2 Modify `components/quest-dashboard.tsx` to import and use `QuestCompleteOverlay` component, triggering on quest approval with calculated rewards
+  - [x] 4.3 Update `components/quest-dashboard.tsx` to use staggered list animations for quest items using Framer Motion variants from `lib/animations/variants.ts`
+  - [x] 4.4 Modify `app/dashboard/page.tsx` to add `ProgressBar` component showing character XP progress and `LevelUpModal` listening to character context
+  - [x] 4.5 Update `components/character/CharacterCreation.tsx` to enhance class selection cards with hover scale and glow animations
+  - [x] 4.6 Modify `components/reward-store.tsx` to add redemption success animation (could reuse `QuestCompleteOverlay` pattern or create subtle feedback)
+  - [x] 4.7 Replace all generic loading spinners across the app with `LoadingSpinner` component (in quest-dashboard, character creation, etc.)
+  - [x] 4.8 Update button components throughout app to use `FantasyButton` component instead of inline button styles
+  - [x] 4.9 Run `npm run build` and manually test all integrated features in dev server
 
 - [ ] 5.0 Add E2E Tests & Accessibility Validation
   - [ ] 5.1 Create `tests/e2e/quest-completion-animation.spec.ts` to test: hero completes quest → overlay appears → shows rewards → auto-dismisses after 5s

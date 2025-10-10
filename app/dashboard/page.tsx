@@ -14,6 +14,10 @@ import { FamilyManagement } from '@/components/family-management';
 import { QuestTemplate } from '@/lib/types/database';
 import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
+import { ProgressBar } from '@/components/animations/ProgressBar';
+import { LevelUpModal } from '@/components/animations/LevelUpModal';
+import { RewardCalculator } from '@/lib/reward-calculator';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -37,7 +41,7 @@ function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null)
 function DashboardContent() {
   const router = useRouter();
   const { user, profile, family, logout, isLoading } = useAuth();
-  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter } = useCharacter();
+  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter, levelUpEvent, clearLevelUpEvent } = useCharacter();
   const { onQuestTemplateUpdate } = useRealtime();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates' | 'reward-management' | 'family'>('quests');
@@ -172,7 +176,7 @@ function DashboardContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500 mx-auto mb-4"></div>
+          <LoadingSpinner size="lg" className="mb-4" aria-label="Loading your realm" />
           <p className="text-gray-400">Loading your realm...</p>
         </div>
       </div>
@@ -308,6 +312,18 @@ function DashboardContent() {
           </div>
         </div>
 
+        {/* XP Progress Bar */}
+        <div className="mb-8 sm:mb-12">
+          <ProgressBar
+            current={character.xp}
+            max={RewardCalculator.getXpForLevel(character.level + 1)}
+            label="Experience Progress"
+            showValues={true}
+            showPercentage={true}
+            variant="gold"
+          />
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg">
           <button
@@ -407,6 +423,18 @@ function DashboardContent() {
           onQuestCreated={handleQuestCreated}
           templates={questTemplates}
         />
+
+        {/* Level Up Modal */}
+        {levelUpEvent && (
+          <LevelUpModal
+            show={true}
+            oldLevel={levelUpEvent.oldLevel}
+            newLevel={levelUpEvent.newLevel}
+            characterName={levelUpEvent.characterName}
+            characterClass={levelUpEvent.characterClass}
+            onDismiss={clearLevelUpEvent}
+          />
+        )}
       </main>
     </div>
     </>
@@ -418,7 +446,7 @@ export default function Dashboard() {
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500 mx-auto mb-4"></div>
+          <LoadingSpinner size="lg" className="mb-4" aria-label="Loading your realm" />
           <p className="text-gray-400">Loading your realm...</p>
         </div>
       </div>

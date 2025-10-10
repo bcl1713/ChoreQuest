@@ -7,6 +7,9 @@ import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { motion } from "framer-motion";
+import { QuestCompleteOverlay, QuestReward } from "@/components/animations/QuestCompleteOverlay";
+import { staggerContainer, staggerItem } from "@/lib/animations/variants";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface QuestDashboardProps {
   onError?: (error: string) => void;
@@ -26,6 +29,15 @@ export default function QuestDashboard({
   const [selectedAssignee, setSelectedAssignee] = useState<{
     [questId: string]: string;
   }>({});
+  const [questCompleteData, setQuestCompleteData] = useState<{
+    show: boolean;
+    questTitle: string;
+    rewards: QuestReward;
+  }>({
+    show: false,
+    questTitle: '',
+    rewards: {},
+  });
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -260,6 +272,16 @@ export default function QuestDashboard({
             }
           }
         }
+
+        // Show quest complete overlay with rewards
+        setQuestCompleteData({
+          show: true,
+          questTitle: questData.title || 'Quest Complete!',
+          rewards: {
+            gold: finalRewards.gold,
+            xp: finalRewards.xp,
+          },
+        });
 
         // Character stats updates will be handled by realtime subscriptions
         // Emit a custom event that the dashboard can listen to for character stats updates
@@ -508,7 +530,7 @@ export default function QuestDashboard({
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mx-auto mb-4"></div>
+        <LoadingSpinner size="lg" className="mb-4" aria-label="Loading quests" />
         <p className="text-gray-400">Loading quests...</p>
       </div>
     );
@@ -546,19 +568,23 @@ export default function QuestDashboard({
         <h3 className="text-xl font-fantasy text-gray-200 mb-4">
           🗡️ My Quests
         </h3>
-        <div className="grid gap-4">
-          {myQuests.length === 0 ? (
-            <div className="fantasy-card p-6 text-center">
-              <p className="text-gray-400">
-                No active quests. Ready for adventure?
-              </p>
-            </div>
-          ) : (
-            myQuests.map((quest) => (
+        {myQuests.length === 0 ? (
+          <div className="fantasy-card p-6 text-center">
+            <p className="text-gray-400">
+              No active quests. Ready for adventure?
+            </p>
+          </div>
+        ) : (
+          <motion.div
+            className="grid gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {myQuests.map((quest) => (
               <motion.div
                 key={quest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={staggerItem}
                 className="fantasy-card p-6"
               >
                 <div className="flex justify-between items-start mb-4">
@@ -629,9 +655,9 @@ export default function QuestDashboard({
                   </div>
                 </div>
               </motion.div>
-            ))
-          )}
-        </div>
+            ))}
+          </motion.div>
+        )}
       </section>
 
       {/* Available Quests (for guild masters and unassigned quests) */}
@@ -640,12 +666,16 @@ export default function QuestDashboard({
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             📋 Available Quests
           </h3>
-          <div className="grid gap-4">
+          <motion.div
+            className="grid gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {unassignedQuests.map((quest) => (
               <motion.div
                 key={quest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={staggerItem}
                 className="fantasy-card p-6 border-l-4 border-gold-500"
               >
                 <div className="flex justify-between items-start">
@@ -755,7 +785,7 @@ export default function QuestDashboard({
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
 
@@ -765,12 +795,16 @@ export default function QuestDashboard({
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             👥 Family Quests
           </h3>
-          <div className="grid gap-4">
+          <motion.div
+            className="grid gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {otherQuests.map((quest) => (
               <motion.div
                 key={quest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={staggerItem}
                 className="fantasy-card p-6 opacity-75"
               >
                 <div className="flex justify-between items-start">
@@ -816,9 +850,17 @@ export default function QuestDashboard({
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
+
+      {/* Quest Complete Overlay */}
+      <QuestCompleteOverlay
+        show={questCompleteData.show}
+        questTitle={questCompleteData.questTitle}
+        rewards={questCompleteData.rewards}
+        onDismiss={() => setQuestCompleteData({ show: false, questTitle: '', rewards: {} })}
+      />
     </div>
   );
 }

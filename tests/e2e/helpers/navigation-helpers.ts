@@ -136,25 +136,12 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   // Navigate to dashboard
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/.*\/dashboard/);
-  await page.waitForLoadState("networkidle");
 
-  // Wait for loading to complete
-  // After the app fix, character context always sets isLoading=true during fetch,
-  // so the dashboard will always show a loading spinner before rendering content
-  // Increased timeout for high-concurrency scenarios (e.g., when running full test suite)
-  await page.waitForFunction(
-    () => {
-      const loadingSpinner = document.querySelector('.animate-spin');
-      const welcome = document.querySelector('[data-testid="welcome-message"]');
-      // Wait until spinner is gone and welcome message appears
-      return !loadingSpinner && !!welcome;
-    },
-    { timeout: 60000 }
-  );
-
-  // Verify welcome message is visible
+  // Wait for welcome message to appear
+  // The dashboard may need time for the realtime connection to establish
+  // before rendering content, so we give it a generous timeout
   await expect(page.getByTestId("welcome-message")).toBeVisible({
-    timeout: 10000,
+    timeout: 30000,
   });
 }
 
@@ -240,27 +227,10 @@ export async function setQuestCreationMode(
       ? page.locator('[data-testid="template-select"]')
       : page.locator('input[placeholder="Enter quest title..."]');
 
-  const templatePlaceholder = page.locator(
-    'select[data-testid="template-select"] option[value=""]',
-  );
-
   await expect(targetButton).toBeVisible({ timeout: 15000 });
   await targetButton.click();
 
-  // Wait for the button to reflect active state
-  await expect(targetButton).toHaveAttribute(
-    "class",
-    /bg-gold-600/,
-    { timeout: 15000 },
-  );
-
-  if (mode === "template") {
-    // Wait for placeholder option to be present which confirms select rendered
-    await expect(templatePlaceholder).toBeAttached({ timeout: 15000 });
-  }
-
-  // Wait for the relevant form controls to appear
-  await modeIndicator.waitFor({ state: "attached", timeout: 15000 });
+  // Wait for the mode indicator to appear (this confirms the mode was switched)
   await expect(modeIndicator).toBeVisible({ timeout: 15000 });
 }
 

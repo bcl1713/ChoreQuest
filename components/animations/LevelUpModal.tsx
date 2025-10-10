@@ -203,7 +203,7 @@ export function LevelUpModal({
 
                 {/* Congratulations message */}
                 <p className="mb-8 text-center text-lg text-gray-300">
-                  Congratulations! You've grown stronger on your quest!
+                  Congratulations! You&apos;ve grown stronger on your quest!
                 </p>
 
                 {/* Dismiss button */}
