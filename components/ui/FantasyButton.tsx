@@ -3,7 +3,7 @@
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ANIMATION_DURATION } from '@/lib/animations/constants';
-import { ReactNode } from 'react';
+import { ReactNode, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 export type FantasyButtonVariant = 'primary' | 'secondary' | 'danger' | 'success';
@@ -27,7 +27,7 @@ export interface FantasyButtonProps extends Omit<HTMLMotionProps<'button'>, 'chi
  * Supports multiple variants, sizes, loading states, and hover animations.
  * Respects user's motion preferences for accessibility.
  */
-export function FantasyButton({
+export const FantasyButton = forwardRef<HTMLButtonElement, FantasyButtonProps>(function FantasyButton({
   variant = 'primary',
   size = 'md',
   isLoading = false,
@@ -36,7 +36,7 @@ export function FantasyButton({
   disabled,
   className,
   ...props
-}: FantasyButtonProps) {
+}, ref) {
   const prefersReducedMotion = useReducedMotion();
 
   // Variant styles
@@ -69,6 +69,7 @@ export function FantasyButton({
 
   return (
     <motion.button
+      ref={ref}
       {...buttonAnimation}
       disabled={isDisabled}
       className={cn(
@@ -107,4 +108,4 @@ export function FantasyButton({
       <span>{children}</span>
     </motion.button>
   );
-}
+});
