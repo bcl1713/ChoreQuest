@@ -151,7 +151,8 @@ test.describe("Guild Master Management - Promote/Demote", () => {
       timeout: 5000,
     });
 
-    await hero.page.goto("/dashboard");
+    // Use navigateToDashboard helper which has proper waits and URL verification
+    await navigateToDashboard(hero.page);
     await expect(hero.page.getByTestId("admin-dashboard-button")).toBeVisible({
       timeout: 10000,
     });
@@ -161,7 +162,8 @@ test.describe("Guild Master Management - Promote/Demote", () => {
 
     await expect(heroRow).toContainText(/HERO|Hero/i, { timeout: 5000 });
 
-    await hero.page.goto("/dashboard");
+    // Use navigateToDashboard helper for consistent navigation
+    await navigateToDashboard(hero.page);
     await expect(hero.page.getByTestId("admin-dashboard-button")).not.toBeVisible({
       timeout: 10000,
     });

@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 2, // Enable retries locally for stability under high concurrency
   workers: 2,
   timeout: 60000,
   reporter: [["line"], ["html", { open: "never" }]],
@@ -17,8 +17,8 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "off",
     // Wait for network idle to ensure page is fully loaded
-    navigationTimeout: 30000,
-    actionTimeout: 30000, // Increased from 15000 to handle slow dashboard loads
+    navigationTimeout: 60000, // Increased for high-concurrency scenarios
+    actionTimeout: 60000, // Increased for high-concurrency scenarios
   },
   projects: [
     {

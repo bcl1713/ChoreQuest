@@ -27,6 +27,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
   const hasLoadedRef = useRef(false);
   const isInitialLoadRef = useRef(true);
+  const isFetchingRef = useRef(false);
+  const fetchStartTimeRef = useRef<number>(0);
 
   const updateHasLoaded = useCallback((value: boolean) => {
     hasLoadedRef.current = value;
@@ -40,8 +42,30 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       // Don't set hasLoaded=true here - we haven't actually tried to fetch
       updateHasLoaded(false);
       isInitialLoadRef.current = true;
+      isFetchingRef.current = false;
+      fetchStartTimeRef.current = 0;
       return;
     }
+
+    // Safety valve: if fetch guard has been set for more than 15 seconds, force clear it
+    // This prevents permanent hangs if finally block never executes
+    const now = Date.now();
+    if (isFetchingRef.current && fetchStartTimeRef.current > 0) {
+      const elapsed = now - fetchStartTimeRef.current;
+      if (elapsed > 15000) {
+        console.error(`CharacterContext: Fetch guard stuck for ${elapsed}ms, force clearing`);
+        isFetchingRef.current = false;
+      }
+    }
+
+    // If already fetching, skip this request (latest data will be fetched by running fetch)
+    if (isFetchingRef.current) {
+      console.log('CharacterContext: Fetch already in progress, skipping');
+      return;
+    }
+
+    isFetchingRef.current = true;
+    fetchStartTimeRef.current = now;
 
     console.log('CharacterContext: Fetching character for user:', user.id);
 
@@ -82,9 +106,12 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       setError(message);
       console.error('Character fetch error:', err);
     } finally {
-      updateHasLoaded(true); // Mark as loaded regardless of success/failure
+      // Mark as loaded and clear loading state
+      updateHasLoaded(true);
       setIsLoading(false);
       isInitialLoadRef.current = false;
+      isFetchingRef.current = false;
+      fetchStartTimeRef.current = 0;
     }
   }, [user, updateHasLoaded]);
 

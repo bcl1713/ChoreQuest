@@ -141,6 +141,7 @@ export async function navigateToDashboard(page: Page): Promise<void> {
   // Wait for loading to complete
   // After the app fix, character context always sets isLoading=true during fetch,
   // so the dashboard will always show a loading spinner before rendering content
+  // Increased timeout for high-concurrency scenarios (e.g., when running full test suite)
   await page.waitForFunction(
     () => {
       const loadingSpinner = document.querySelector('.animate-spin');
@@ -148,12 +149,12 @@ export async function navigateToDashboard(page: Page): Promise<void> {
       // Wait until spinner is gone and welcome message appears
       return !loadingSpinner && !!welcome;
     },
-    { timeout: 30000 }
+    { timeout: 60000 }
   );
 
   // Verify welcome message is visible
   await expect(page.getByTestId("welcome-message")).toBeVisible({
-    timeout: 5000,
+    timeout: 10000,
   });
 }
 

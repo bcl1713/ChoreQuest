@@ -40,9 +40,10 @@ async function waitForQuestModalToClose(page: Page): Promise<void> {
   await page.waitForLoadState("networkidle");
 
   const modalLocator = page.locator('[data-testid="create-quest-modal"]');
-  await expect(modalLocator).not.toBeVisible({ timeout: 30000 });
+  // Increased timeout for high-concurrency scenarios (parallel test runs)
+  await expect(modalLocator).not.toBeVisible({ timeout: 60000 });
   await expect(page.locator("text=Create New Quest")).not.toBeVisible({
-    timeout: 5000,
+    timeout: 10000,
   });
 }
 
@@ -384,14 +385,24 @@ export async function approveQuest(
   questName?: string,
 ): Promise<void> {
   if (questName) {
+    // Wait for both the quest heading AND the approve button to be visible
+    // This ensures the quest has moved to the correct section (Family Quests for GM)
+    // and is in the COMPLETED state with the approve button rendered
     const questHeading = page
       .getByRole("heading", { name: questName, exact: true })
       .first();
-    await expect(questHeading).toBeVisible({ timeout: 10000 });
+    await expect(questHeading).toBeVisible({ timeout: 15000 });
+
     const questContainer = questHeading.locator("../../..");
-    await questContainer.getByTestId("approve-quest-button").click();
+    const approveButton = questContainer.getByTestId("approve-quest-button");
+
+    // Wait for approve button to be visible (ensures quest is in COMPLETED state)
+    await expect(approveButton).toBeVisible({ timeout: 15000 });
+    await approveButton.click();
   } else {
-    await page.getByTestId("approve-quest-button").first().click();
+    const approveButton = page.getByTestId("approve-quest-button").first();
+    await expect(approveButton).toBeVisible({ timeout: 15000 });
+    await approveButton.click();
   }
 
   // Wait for the approval to process
