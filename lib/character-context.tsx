@@ -93,7 +93,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => reject(new Error('Character fetch timeout after 5s')), 5000)
       );
 
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+      const result = await Promise.race([fetchPromise, timeoutPromise]);
+      const { data, error } = result;
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -123,6 +124,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
         // Clear fetch guard to allow retry
         isFetchingRef.current = false;
+        fetchStartTimeRef.current = 0; // Reset timestamp to fix duration calculation on retry
 
         // Wait 1 second before retry
         await new Promise(resolve => setTimeout(resolve, 1000));
