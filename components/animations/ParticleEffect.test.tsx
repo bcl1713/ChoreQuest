@@ -1,25 +1,31 @@
 import { render } from '@testing-library/react';
 import { ParticleEffect } from './ParticleEffect';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import React from 'react';
 
 // Mock the useReducedMotion hook
 jest.mock('@/hooks/useReducedMotion');
 
 // Mock framer-motion to avoid animation complexity in tests
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, style, className, ...props }: any) => (
-      <div
-        data-testid="motion-div"
-        style={style}
-        className={className}
-        {...props}
-      >
-        {children}
-      </div>
-    ),
-  },
-}));
+jest.mock('framer-motion', () => {
+  const MockMotionDiv = ({ children, style, className, ...props }: Record<string, unknown>) => (
+    <div
+      data-testid="motion-div"
+      style={style as React.CSSProperties}
+      className={className as string}
+      {...props}
+    >
+      {children as React.ReactNode}
+    </div>
+  );
+  MockMotionDiv.displayName = 'motion.div';
+
+  return {
+    motion: {
+      div: MockMotionDiv,
+    },
+  };
+});
 
 describe('ParticleEffect', () => {
   beforeEach(() => {

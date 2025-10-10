@@ -315,8 +315,8 @@ function DashboardContent() {
         {/* XP Progress Bar */}
         <div className="mb-8 sm:mb-12">
           <ProgressBar
-            current={character.xp}
-            max={RewardCalculator.getXpForLevel(character.level + 1)}
+            current={character.xp || 0}
+            max={RewardCalculator.getXPRequiredForLevel((character.level || 1) + 1)}
             label="Experience Progress"
             showValues={true}
             showPercentage={true}

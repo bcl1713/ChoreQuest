@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LevelUpModal } from './LevelUpModal';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import React from 'react';
 
 // Mock dependencies
 jest.mock('@/hooks/useReducedMotion');
@@ -11,28 +12,41 @@ jest.mock('./ParticleEffect', () => ({
 }));
 
 jest.mock('framer-motion', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
 
   // Filter out framer-motion specific props
-  const filterProps = (props: any) => {
+  const filterProps = (props: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { whileHover, whileTap, animate, initial, exit, variants, transition, ...rest } = props;
     return rest;
   };
 
+  const MockMotionDiv = ({ children, className, ...props }: Record<string, unknown>) => (
+    <div className={className as string} {...filterProps(props)}>
+      {children as React.ReactNode}
+    </div>
+  );
+  MockMotionDiv.displayName = 'motion.div';
+
+  const MockMotionButton = React.forwardRef<HTMLButtonElement, Record<string, unknown>>(
+    ({ children, className, ...props }: Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
+      <button ref={ref} className={className as string} {...filterProps(props)}>
+        {children as React.ReactNode}
+      </button>
+    )
+  );
+  MockMotionButton.displayName = 'motion.button';
+
+  const MockAnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  MockAnimatePresence.displayName = 'AnimatePresence';
+
   return {
     motion: {
-      div: ({ children, className, ...props }: any) => (
-        <div className={className} {...filterProps(props)}>
-          {children}
-        </div>
-      ),
-      button: React.forwardRef(({ children, className, ...props }: any, ref: any) => (
-        <button ref={ref} className={className} {...filterProps(props)}>
-          {children}
-        </button>
-      )),
+      div: MockMotionDiv,
+      button: MockMotionButton,
     },
-    AnimatePresence: ({ children }: any) => <>{children}</>,
+    AnimatePresence: MockAnimatePresence,
   };
 });
 
@@ -175,7 +189,7 @@ describe('LevelUpModal', () => {
     });
 
     it('should not show character info section when neither name nor class provided', () => {
-      const { container } = render(
+      render(
         <LevelUpModal
           show={true}
           oldLevel={5}

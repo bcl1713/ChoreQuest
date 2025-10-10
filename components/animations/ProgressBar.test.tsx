@@ -1,20 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import { ProgressBar } from './ProgressBar';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import React from 'react';
 
 // Mock the useReducedMotion hook
 jest.mock('@/hooks/useReducedMotion');
 
 // Mock framer-motion
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, className, style, ...props }: any) => (
-      <div className={className} style={style} {...props}>
-        {children}
-      </div>
-    ),
-  },
-}));
+jest.mock('framer-motion', () => {
+  const MockMotionDiv = ({ children, className, style, ...props }: Record<string, unknown>) => (
+    <div className={className as string} style={style as React.CSSProperties} {...props}>
+      {children as React.ReactNode}
+    </div>
+  );
+  MockMotionDiv.displayName = 'motion.div';
+
+  return {
+    motion: {
+      div: MockMotionDiv,
+    },
+  };
+});
 
 describe('ProgressBar', () => {
   beforeEach(() => {
