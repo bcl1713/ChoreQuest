@@ -94,6 +94,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Add timeout to prevent infinite hanging
+      // Use longer timeout (15s) to handle slow database queries during E2E tests
       const fetchPromise = supabase
         .from('characters')
         .select('*')
@@ -101,7 +102,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Character fetch timeout after 5s')), 5000)
+        setTimeout(() => reject(new Error('Character fetch timeout after 15s')), 15000)
       );
 
       const result = await Promise.race([fetchPromise, timeoutPromise]);

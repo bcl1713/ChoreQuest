@@ -1,4 +1,5 @@
 import { test, expect } from './helpers/family-fixture';
+import { navigateToDashboard } from './helpers/navigation-helpers';
 
 test.describe.serial('Worker-scoped Fixture Verification', () => {
   let initialGmEmail: string;
@@ -8,7 +9,7 @@ test.describe.serial('Worker-scoped Fixture Verification', () => {
     expect(initialGmEmail).toContain('worker');
 
     // Verify GM is logged in
-    await workerFamily.gmPage.goto('/dashboard');
+    await navigateToDashboard(workerFamily.gmPage);
     await expect(workerFamily.gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
     await expect(workerFamily.gmPage.locator('body')).toContainText(workerFamily.characterName);
   });
@@ -18,7 +19,7 @@ test.describe.serial('Worker-scoped Fixture Verification', () => {
     expect(workerFamily.gmEmail).toBe(initialGmEmail);
 
     // Verify GM is still logged in
-    await workerFamily.gmPage.goto('/dashboard');
+    await navigateToDashboard(workerFamily.gmPage);
     await expect(workerFamily.gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
   });
 
@@ -30,7 +31,7 @@ test.describe.serial('Worker-scoped Fixture Verification', () => {
     await expect(ephemeralUser.page.locator('body')).toContainText(ephemeralUser.characterName);
 
     // Verify the GM is still logged in in their own context
-    await workerFamily.gmPage.goto('/dashboard');
+    await navigateToDashboard(workerFamily.gmPage);
     await expect(workerFamily.gmPage.locator('[data-testid="welcome-message"]')).toBeVisible();
 
     // Close the ephemeral user's context

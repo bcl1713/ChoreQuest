@@ -3,6 +3,8 @@ import {
   openQuestCreationModal,
   setQuestCreationMode,
   navigateToDashboard,
+  dismissLevelUpModalIfVisible,
+  dismissQuestCompleteOverlayIfVisible,
 } from "./navigation-helpers";
 
 /**
@@ -389,17 +391,28 @@ export async function completeQuest(
 /**
  * Approves a completed quest (Guild Master action, awards rewards)
  *
+ * IMPORTANT: This may trigger celebration overlays:
+ * 1. Quest Complete Overlay - Shows rewards earned
+ * 2. Level-Up Modal - Shows if character gains enough XP to level up
+ * By default, both overlays are automatically dismissed after approval.
+ *
  * @param page - Playwright page object
  * @param questName - Optional quest title to target specific quest (defaults to first quest)
+ * @param options - Optional settings
+ * @param options.skipLevelUpDismiss - If true, don't auto-dismiss the level-up modal (for tests that need to verify it)
+ * @param options.skipQuestCompleteDismiss - If true, don't auto-dismiss the quest complete overlay (for tests that need to verify it)
  *
  * @example
  * ```typescript
  * await approveQuest(page);
+ * await approveQuest(page, "My Quest", { skipLevelUpDismiss: true }); // For level-up modal tests
+ * await approveQuest(page, "My Quest", { skipQuestCompleteDismiss: true }); // For quest complete overlay tests
  * ```
  */
 export async function approveQuest(
   page: Page,
   questName?: string,
+  options?: { skipLevelUpDismiss?: boolean; skipQuestCompleteDismiss?: boolean },
 ): Promise<void> {
   if (questName) {
     // Wait for both the quest heading AND the approve button to be visible
@@ -424,6 +437,20 @@ export async function approveQuest(
 
   // Wait for the approval to process
   await page.waitForLoadState("networkidle");
+
+  // Dismiss quest complete overlay first (appears immediately after approval)
+  // This overlay blocks all interactions and auto-dismisses after 5 seconds
+  // Skip this if the test explicitly wants to verify the quest complete overlay
+  if (!options?.skipQuestCompleteDismiss) {
+    await dismissQuestCompleteOverlayIfVisible(page);
+  }
+
+  // Check for and dismiss level-up modal if it appeared from the XP reward
+  // This modal also blocks all interactions and requires manual dismissal
+  // Skip this if the test explicitly wants to verify the level-up modal
+  if (!options?.skipLevelUpDismiss) {
+    await dismissLevelUpModalIfVisible(page);
+  }
 }
 
 /**

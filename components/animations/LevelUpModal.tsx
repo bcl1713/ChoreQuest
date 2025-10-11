@@ -73,11 +73,12 @@ export function LevelUpModal({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md"
             variants={modalBackdrop}
             initial="hidden"
             animate="visible"
             exit="hidden"
+            onClick={onDismiss}
             aria-hidden="true"
           />
 
@@ -98,7 +99,7 @@ export function LevelUpModal({
 
           {/* Modal content */}
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="level-up-title"

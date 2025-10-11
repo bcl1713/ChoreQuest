@@ -84,14 +84,17 @@ export function QuestCompleteOverlay({
           />
 
           {/* Content card */}
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            variants={prefersReducedMotion ? modalBackdrop : modalContent}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-          >
-            <div className="relative w-full max-w-md rounded-lg border border-gold-700 bg-gradient-to-br from-dark-800 to-dark-900 p-8 shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              className="relative w-full max-w-md rounded-lg border border-gold-700 bg-gradient-to-br from-dark-800 to-dark-900 p-8 shadow-2xl pointer-events-auto"
+              variants={prefersReducedMotion ? modalBackdrop : modalContent}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="quest-complete-title"
+            >
               {/* Close button */}
               <button
                 onClick={handleDismiss}
@@ -124,7 +127,7 @@ export function QuestCompleteOverlay({
               </div>
 
               {/* Title */}
-              <h2 className="mb-2 text-center text-3xl font-bold text-gold-300">
+              <h2 id="quest-complete-title" className="mb-2 text-center text-3xl font-bold text-gold-300">
                 {questTitle}
               </h2>
 
@@ -184,8 +187,8 @@ export function QuestCompleteOverlay({
                   Continue Adventure
                 </FantasyButton>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

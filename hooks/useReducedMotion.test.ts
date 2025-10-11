@@ -79,7 +79,7 @@ describe('useReducedMotion', () => {
   it('should update state when media query changes', async () => {
     let changeHandler: ((event: MediaQueryListEvent) => void) | null = null;
 
-    addEventListenerMock.mockImplementation((event: string, handler: any) => {
+    addEventListenerMock.mockImplementation((event: string, handler: (e: MediaQueryListEvent) => void) => {
       if (event === 'change') {
         changeHandler = handler;
       }
@@ -108,7 +108,7 @@ describe('useReducedMotion', () => {
   it('should update from true to false when media query changes', async () => {
     let changeHandler: ((event: MediaQueryListEvent) => void) | null = null;
 
-    addEventListenerMock.mockImplementation((event: string, handler: any) => {
+    addEventListenerMock.mockImplementation((event: string, handler: (e: MediaQueryListEvent) => void) => {
       if (event === 'change') {
         changeHandler = handler;
       }

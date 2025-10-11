@@ -22,6 +22,66 @@ export type HeroTab =
 export type QuestCreationMode = "template" | "adhoc";
 
 /**
+ * Dismisses the level up modal if it's currently visible
+ * This is useful for tests that may trigger level ups but don't want to test the modal itself
+ *
+ * @param page - Playwright page object
+ */
+export async function dismissLevelUpModalIfVisible(page: Page): Promise<void> {
+  // Wait a moment for the modal to appear if it's going to
+  await page.waitForTimeout(500);
+
+  const levelUpModal = page.locator('[role="dialog"][aria-labelledby="level-up-title"]');
+  const isVisible = await levelUpModal.isVisible().catch(() => false);
+
+  if (isVisible) {
+    // Try clicking the dismiss button first
+    const dismissButton = page.getByRole('button', { name: /Continue Your Journey/i });
+    if (await dismissButton.isVisible().catch(() => false)) {
+      await dismissButton.click();
+    } else {
+      // If button not found, click the backdrop to dismiss
+      const backdrop = page.locator('.fixed.inset-0.z-50.bg-black\\/80');
+      if (await backdrop.isVisible().catch(() => false)) {
+        await backdrop.click({ position: { x: 10, y: 10 } }); // Click top-left corner
+      }
+    }
+    // Wait for modal to fully close with longer timeout for animations
+    await expect(levelUpModal).not.toBeVisible({ timeout: 10000 });
+  }
+}
+
+/**
+ * Dismisses the quest complete overlay if it's currently visible
+ * This is useful for tests that complete quests but don't want to test the overlay itself
+ *
+ * @param page - Playwright page object
+ */
+export async function dismissQuestCompleteOverlayIfVisible(page: Page): Promise<void> {
+  // Wait a moment for the overlay to appear if it's going to
+  await page.waitForTimeout(500);
+
+  const questCompleteOverlay = page.locator('[role="dialog"][aria-labelledby="quest-complete-title"]');
+  const isVisible = await questCompleteOverlay.isVisible().catch(() => false);
+
+  if (isVisible) {
+    // Try clicking the dismiss button first
+    const dismissButton = page.getByRole('button', { name: /Continue Adventure/i });
+    if (await dismissButton.isVisible().catch(() => false)) {
+      await dismissButton.click();
+    } else {
+      // If button not found, click the backdrop to dismiss
+      const backdrop = page.locator('.fixed.inset-0.z-40.bg-black\\/70');
+      if (await backdrop.isVisible().catch(() => false)) {
+        await backdrop.click({ position: { x: 10, y: 10 } }); // Click top-left corner
+      }
+    }
+    // Wait for overlay to fully close with longer timeout for animations
+    await expect(questCompleteOverlay).not.toBeVisible({ timeout: 10000 });
+  }
+}
+
+/**
  * Navigates to the Admin Dashboard from any page
  *
  * Clicks the admin dashboard button and waits for the admin page to load.
@@ -36,6 +96,9 @@ export type QuestCreationMode = "template" | "adhoc";
  * ```
  */
 export async function navigateToAdmin(page: Page): Promise<void> {
+  // Dismiss level up modal if it's blocking the admin button
+  await dismissLevelUpModalIfVisible(page);
+
   await page.click('[data-testid="admin-dashboard-button"]');
   await expect(page).toHaveURL(/.*\/admin/);
   await expect(page.getByTestId("admin-dashboard")).toBeVisible();
@@ -97,6 +160,10 @@ export async function navigateToHeroTab(
   page: Page,
   tabName: HeroTab,
 ): Promise<void> {
+  // Dismiss any overlays that might be blocking the tab
+  await dismissLevelUpModalIfVisible(page);
+  await dismissQuestCompleteOverlayIfVisible(page);
+
   const buttonPatterns: Record<HeroTab, string> = {
     "Quests & Adventures": "⚔️ Quests & Adventures",
     "Reward Store": "🏪 Reward Store",
@@ -126,23 +193,38 @@ export async function navigateToHeroTab(
  * ```
  */
 export async function navigateToDashboard(page: Page): Promise<void> {
-  const welcomeMessage = page.locator('[data-testid="welcome-message"]');
+  // Check if we're already on the dashboard URL
+  const currentUrl = page.url();
+  const isOnDashboard = /\/dashboard/.test(currentUrl);
 
-  // Check if already on dashboard with welcome message visible
-  if (await welcomeMessage.isVisible().catch(() => false)) {
-    return;
+  // If not on dashboard, navigate there
+  if (!isOnDashboard) {
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/.*\/dashboard/);
   }
 
-  // Navigate to dashboard
-  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
-  await expect(page).toHaveURL(/.*\/dashboard/);
+  // Wait for loading to complete
+  // After the character context fix, the dashboard always shows a loading spinner
+  // before rendering content. We must wait for the spinner to disappear AND
+  // the welcome message to appear.
+  await page.waitForFunction(
+    () => {
+      const loadingSpinner = document.querySelector('.animate-spin');
+      const welcome = document.querySelector('[data-testid="welcome-message"]');
+      // Wait until spinner is gone and welcome message appears
+      return !loadingSpinner && !!welcome;
+    },
+    { timeout: 30000 }
+  );
 
-  // Wait for welcome message to appear
-  // The dashboard may need time for the realtime connection to establish
-  // before rendering content, so we give it a generous timeout
+  // Verify welcome message is visible
   await expect(page.getByTestId("welcome-message")).toBeVisible({
-    timeout: 30000,
+    timeout: 5000,
   });
+
+  // Dismiss any overlays that appeared during navigation or page load
+  await dismissLevelUpModalIfVisible(page);
+  await dismissQuestCompleteOverlayIfVisible(page);
 }
 
 /**
@@ -252,6 +334,9 @@ export async function switchToTab(
   page: Page,
   tabTestId: string,
 ): Promise<void> {
+  // Dismiss level up modal if it's blocking the tab
+  await dismissLevelUpModalIfVisible(page);
+
   await page.click(`[data-testid="${tabTestId}"]`);
   await page.waitForLoadState("networkidle");
 }
@@ -303,6 +388,9 @@ export async function openQuestCreationModal(page: Page): Promise<void> {
     // Wait for modal to fully close (Framer Motion exit animation)
     await expect(questModal).not.toBeVisible({ timeout: 5000 });
   }
+
+  // Dismiss level up modal if it's blocking the create quest button
+  await dismissLevelUpModalIfVisible(page);
 
   // Wait for create button to be ready before clicking
   await expect(createButton).toBeVisible();

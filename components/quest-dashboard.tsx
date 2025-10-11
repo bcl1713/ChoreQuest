@@ -7,18 +7,20 @@ import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { motion } from "framer-motion";
-import { QuestCompleteOverlay, QuestReward } from "@/components/animations/QuestCompleteOverlay";
+import { QuestReward } from "@/components/animations/QuestCompleteOverlay";
 import { staggerContainer, staggerItem } from "@/lib/animations/variants";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface QuestDashboardProps {
   onError?: (error: string) => void;
   onLoadQuestsRef?: (loadQuests: () => Promise<void>) => void;
+  onQuestComplete?: (questTitle: string, rewards: QuestReward) => void;
 }
 
 export default function QuestDashboard({
   onError,
   onLoadQuestsRef,
+  onQuestComplete,
 }: QuestDashboardProps) {
   const { user, session, profile } = useAuth();
   const { onQuestUpdate } = useRealtime();
@@ -29,15 +31,6 @@ export default function QuestDashboard({
   const [selectedAssignee, setSelectedAssignee] = useState<{
     [questId: string]: string;
   }>({});
-  const [questCompleteData, setQuestCompleteData] = useState<{
-    show: boolean;
-    questTitle: string;
-    rewards: QuestReward;
-  }>({
-    show: false,
-    questTitle: '',
-    rewards: {},
-  });
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -193,37 +186,22 @@ export default function QuestDashboard({
           throw questError;
         }
 
-        // Update quest status
-        const { error: updateError } = await supabase
-          .from('quest_instances')
-          .update({
-            status: 'APPROVED',
-            approved_at: new Date().toISOString(),
-          })
-          .eq('id', questId);
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        // Calculate rewards for events (before character update)
+        // Calculate rewards FIRST (before any database updates)
         let finalRewards = {
           xp: questData.xp_reward,
           gold: questData.gold_reward,
         };
 
-        // Update character stats if quest is assigned
+        // If quest is assigned, calculate rewards with bonuses
         if (questData.assigned_to_id) {
-          // First get current character stats and class
+          // Get current character stats and class
           const { data: characterData, error: characterFetchError } = await supabase
             .from('characters')
             .select('xp, gold, level, class')
             .eq('user_id', questData.assigned_to_id)
             .single();
 
-          if (characterFetchError) {
-            console.error('Failed to fetch character stats:', characterFetchError);
-          } else {
+          if (!characterFetchError && characterData) {
             // Calculate rewards using RewardCalculator with class bonuses
             const baseRewards = {
               xpReward: questData.xp_reward,
@@ -244,15 +222,43 @@ export default function QuestDashboard({
               xp: calculatedRewards.xp,
               gold: calculatedRewards.gold,
             };
+          }
+        }
 
-            // Calculate new stats with proper rewards
-            const newXp = characterData.xp + calculatedRewards.xp;
-            const newGold = characterData.gold + calculatedRewards.gold;
+        // Update quest status
+        const { error: updateError } = await supabase
+          .from('quest_instances')
+          .update({
+            status: 'APPROVED',
+            approved_at: new Date().toISOString(),
+          })
+          .eq('id', questId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Update character stats if quest is assigned
+        if (questData.assigned_to_id) {
+          // Get current character stats again (in case they changed)
+          const { data: characterData, error: characterFetchError } = await supabase
+            .from('characters')
+            .select('xp, gold, level, class')
+            .eq('user_id', questData.assigned_to_id)
+            .single();
+
+          if (characterFetchError) {
+            console.error('Failed to fetch character stats:', characterFetchError);
+            // Continue to show overlay even if character fetch fails
+          } else {
+            // Calculate new stats with rewards
+            const newXp = characterData.xp + finalRewards.xp;
+            const newGold = characterData.gold + finalRewards.gold;
 
             // Calculate level up using RewardCalculator
             const levelUpResult = RewardCalculator.calculateLevelUp(
               characterData.xp,
-              calculatedRewards.xp,
+              finalRewards.xp,
               characterData.level
             );
             const newLevel = levelUpResult ? levelUpResult.newLevel : characterData.level;
@@ -267,33 +273,24 @@ export default function QuestDashboard({
               .eq('user_id', questData.assigned_to_id);
 
             if (characterError) {
-              // Throw error to prevent quest from being marked as approved if character update fails
-              throw new Error(`Failed to award rewards: ${characterError.message}`);
+              console.error('Failed to award rewards:', characterError);
+              // Continue to show overlay even if character update fails
             }
           }
         }
 
-        // Show quest complete overlay with rewards
-        setQuestCompleteData({
-          show: true,
-          questTitle: questData.title || 'Quest Complete!',
-          rewards: {
+        // Character stats updates are handled automatically by CharacterContext's
+        // realtime subscription (see lib/character-context.tsx lines 206-229).
+
+        // Show quest complete overlay after quest approval succeeds
+        // Use the callback to lift state up to parent (dashboard page) to prevent
+        // state loss on re-renders triggered by character updates
+        if (onQuestComplete) {
+          onQuestComplete(questData.title || 'Quest Complete!', {
             gold: finalRewards.gold,
             xp: finalRewards.xp,
-          },
-        });
-
-        // Character stats updates will be handled by realtime subscriptions
-        // Emit a custom event that the dashboard can listen to for character stats updates
-        window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
-          detail: {
-            questId,
-            rewards: finalRewards,
-            characterUpdates: {
-              assigned_to_id: questData.assigned_to_id,
-            }
-          }
-        }));
+          });
+        }
 
       } else {
         // Handle other status updates normally
@@ -853,14 +850,6 @@ export default function QuestDashboard({
           </motion.div>
         </section>
       )}
-
-      {/* Quest Complete Overlay */}
-      <QuestCompleteOverlay
-        show={questCompleteData.show}
-        questTitle={questCompleteData.questTitle}
-        rewards={questCompleteData.rewards}
-        onDismiss={() => setQuestCompleteData({ show: false, questTitle: '', rewards: {} })}
-      />
     </div>
   );
 }

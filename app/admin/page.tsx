@@ -79,25 +79,10 @@ export default function AdminPage() {
     );
   }
 
-  // Show error message if user is not a Guild Master
-  if (!user) {
+  // Don't render anything if not authenticated or not authorized
+  // The useEffect above handles the redirect
+  if (!user || profile?.role !== 'GUILD_MASTER') {
     return null;
-  }
-
-  if (profile?.role !== 'GUILD_MASTER') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
-        <div className="fantasy-card p-8 max-w-md text-center">
-          <h2 className="text-2xl font-fantasy text-red-400 mb-4">🚫 Access Denied</h2>
-          <p className="text-gray-300 mb-4">
-            You are not authorized to access the admin dashboard. Only Guild Masters have access to this area.
-          </p>
-          <p className="text-sm text-gray-500 mb-6">
-            Redirecting you back to the dashboard...
-          </p>
-        </div>
-      </div>
-    );
   }
 
   return (

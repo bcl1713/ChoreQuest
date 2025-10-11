@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { ProgressBar } from '@/components/animations/ProgressBar';
 import { LevelUpModal } from '@/components/animations/LevelUpModal';
+import { QuestCompleteOverlay, QuestReward } from '@/components/animations/QuestCompleteOverlay';
 import { RewardCalculator } from '@/lib/reward-calculator';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -41,7 +42,7 @@ function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null)
 function DashboardContent() {
   const router = useRouter();
   const { user, profile, family, logout, isLoading } = useAuth();
-  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, refreshCharacter, levelUpEvent, clearLevelUpEvent } = useCharacter();
+  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, levelUpEvent, clearLevelUpEvent } = useCharacter();
   const { onQuestTemplateUpdate } = useRealtime();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'quests' | 'rewards' | 'templates' | 'reward-management' | 'family'>('quests');
@@ -50,6 +51,16 @@ function DashboardContent() {
   const [error, setError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const dashboardLoadQuestsRef = useRef<(() => Promise<void>) | null>(null);
+  const [questCompleteData, setQuestCompleteData] = useState<{
+    show: boolean;
+    questTitle: string;
+    rewards: QuestReward;
+  }>({
+    show: false,
+    questTitle: '',
+    rewards: {},
+  });
+
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -145,19 +156,9 @@ function DashboardContent() {
     return unsubscribe;
   }, [user, profile, onQuestTemplateUpdate]);
 
-  // Listen for character stats updates from quest approvals
-  useEffect(() => {
-    const handleCharacterStatsUpdate = () => {
-      // Refresh character data when quest is approved
-      refreshCharacter();
-    };
-
-    window.addEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
-
-    return () => {
-      window.removeEventListener('characterStatsUpdated', handleCharacterStatsUpdate as EventListener);
-    };
-  }, [refreshCharacter]);
+  // Character stats updates are now handled automatically by CharacterContext's
+  // realtime subscription (see lib/character-context.tsx lines 206-229).
+  // No need to manually call refreshCharacter on custom events.
 
   const handleQuestCreated = async () => {
     loadQuestTemplates();
@@ -170,6 +171,10 @@ function DashboardContent() {
   const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage);
     setTimeout(() => setError(null), 5000);
+  }, []);
+
+  const handleQuestCompleteDismiss = useCallback(() => {
+    setQuestCompleteData({ show: false, questTitle: '', rewards: {} });
   }, []);
 
   if (isLoading || characterLoading) {
@@ -405,6 +410,13 @@ function DashboardContent() {
             onLoadQuestsRef={(loadQuests) => {
               dashboardLoadQuestsRef.current = loadQuests;
             }}
+            onQuestComplete={(questTitle, rewards) => {
+              setQuestCompleteData({
+                show: true,
+                questTitle,
+                rewards,
+              });
+            }}
           />
         ) : activeTab === 'rewards' ? (
           <RewardStore onError={handleError} />
@@ -424,8 +436,8 @@ function DashboardContent() {
           templates={questTemplates}
         />
 
-        {/* Level Up Modal */}
-        {levelUpEvent && (
+        {/* Level Up Modal - only show if quest complete overlay is not visible */}
+        {levelUpEvent && !questCompleteData.show && (
           <LevelUpModal
             show={true}
             oldLevel={levelUpEvent.oldLevel}
@@ -435,6 +447,14 @@ function DashboardContent() {
             onDismiss={clearLevelUpEvent}
           />
         )}
+
+        {/* Quest Complete Overlay - takes priority over level-up modal */}
+        <QuestCompleteOverlay
+          show={questCompleteData.show}
+          questTitle={questCompleteData.questTitle}
+          rewards={questCompleteData.rewards}
+          onDismiss={handleQuestCompleteDismiss}
+        />
       </main>
     </div>
     </>

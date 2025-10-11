@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const jwt = require("jsonwebtoken");
 
 // Replace with your actual JWT secret from supabase/config.toml
