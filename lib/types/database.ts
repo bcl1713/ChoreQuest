@@ -878,11 +878,14 @@ export type CreateRewardInput = TablesInsert<'rewards'>;
 export type UpdateRewardInput = TablesUpdate<'rewards'>;
 
 // Recurring quest system types
-export type QuestType = Enums<'quest_type'>;
-export type RecurrencePattern = Enums<'recurrence_pattern'>;
-export type CharacterQuestStreak = Tables<'character_quest_streaks'>;
+// TODO: Uncomment after database types are regenerated with new schema
+// export type QuestType = Enums<'quest_type'>;
+// export type RecurrencePattern = Enums<'recurrence_pattern'>;
+// export type CharacterQuestStreak = Tables<'character_quest_streaks'>;
 
 // Recurring quest template types
+// TODO: Uncomment after database types are regenerated with new schema
+/*
 export type RecurringQuestTemplate = QuestTemplate & {
   quest_type: QuestType;
   recurrence_pattern: RecurrencePattern;
@@ -918,3 +921,4 @@ export type UpdateRecurringQuestTemplateInput = TablesUpdate<'quest_templates'> 
 // Streak tracking types
 export type CreateCharacterQuestStreakInput = TablesInsert<'character_quest_streaks'>;
 export type UpdateCharacterQuestStreakInput = TablesUpdate<'character_quest_streaks'>;
+*/

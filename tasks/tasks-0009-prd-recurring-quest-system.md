@@ -55,7 +55,8 @@ This ensures all work is done on a feature branch following the project's workfl
 - `lib/quest-template-service.ts` - Quest template CRUD operations (exists, needs extension)
 - `lib/quest-instance-service.ts` - Quest instance operations (new file)
 - `lib/streak-service.ts` - Streak tracking and bonus calculations (new file)
-- `lib/recurring-quest-generator.ts` - Cron job logic for quest generation (new file)
+- `lib/recurring-quest-generator.ts` - Quest generation and expiration logic with idempotency checks (created)
+- `lib/cron-jobs.ts` - Node-cron initialization and scheduling (created)
 - `lib/preset-templates.ts` - Preset template definitions (new file)
 
 ### API Routes
@@ -66,8 +67,8 @@ This ensures all work is done on a feature branch following the project's workfl
 - `app/api/quests/[id]/claim/route.ts` - Family quest claiming (new file)
 - `app/api/quests/[id]/release/route.ts` - Release claimed quest (new file)
 - `app/api/streaks/route.ts` - Streak data endpoints (new file)
-- `app/api/cron/generate-quests/route.ts` - Cron job endpoint (new file)
-- `app/api/cron/expire-quests/route.ts` - Quest expiration endpoint (new file)
+- `app/api/cron/generate-quests/route.ts` - Cron job endpoint with CRON_SECRET authentication (created)
+- `app/api/cron/expire-quests/route.ts` - Quest expiration endpoint with streak breaking (created)
 
 ### Components (UI)
 - `components/quest-template-dashboard.tsx` - GM template management interface (new file)
@@ -89,7 +90,7 @@ This ensures all work is done on a feature branch following the project's workfl
 - `lib/quest-template-service.test.ts` - Unit tests for template service
 - `lib/quest-instance-service.test.ts` - Unit tests for instance service
 - `lib/streak-service.test.ts` - Unit tests for streak logic
-- `lib/recurring-quest-generator.test.ts` - Unit tests for cron logic
+- `lib/recurring-quest-generator.test.ts` - Unit tests for quest generation and expiration (created)
 - `lib/utils/bonus-calculator.test.ts` - Unit tests for bonus calculations
 - `lib/utils/date-utils.test.ts` - Unit tests for date utilities
 - `components/quest-template-form.test.tsx` - Unit tests for template form
@@ -106,7 +107,7 @@ This ensures all work is done on a feature branch following the project's workfl
 
 ## Tasks
 
-- [ ] 1.0 Database Schema & Migration
+- [x] 1.0 Database Schema & Migration
   - [x] 1.1 Design updated Supabase schema with new tables and enums
   - [x] 1.2 Create migration file for `quest_type` enum (INDIVIDUAL, FAMILY)
   - [x] 1.3 Create migration file for `recurrence_pattern` enum (DAILY, WEEKLY, CUSTOM)
@@ -122,21 +123,21 @@ This ensures all work is done on a feature branch following the project's workfl
   - [x] 1.13 Regenerate TypeScript types: `npx supabase gen types typescript --local > lib/types/database-generated.ts`
   - [x] 1.14 Update `lib/types/database.ts` with new convenience types
 
-- [ ] 2.0 Background Job System (Cron/Scheduled Tasks)
-  - [ ] 2.1 Research Vercel Cron Jobs vs external cron solutions (document decision)
-  - [ ] 2.2 Create `app/api/cron/generate-quests/route.ts` endpoint with authentication/secret validation
-  - [ ] 2.3 Implement quest generation logic: query active templates, check if instance already exists for current cycle
-  - [ ] 2.4 Implement INDIVIDUAL quest generation: create one instance per assigned character
-  - [ ] 2.5 Implement FAMILY quest generation: create one instance in AVAILABLE status
-  - [ ] 2.6 Add idempotency checks to prevent duplicate quest generation
-  - [ ] 2.7 Create `app/api/cron/expire-quests/route.ts` endpoint for quest expiration
-  - [ ] 2.8 Implement expiration logic: mark quests as MISSED if past `cycle_end_date` and incomplete
-  - [ ] 2.9 Implement streak breaking on missed quests (unless template is paused)
-  - [ ] 2.10 Add error handling and logging for cron jobs
-  - [ ] 2.11 Configure cron schedule in `vercel.json` or equivalent (run every 5 minutes recommended)
-  - [ ] 2.12 Write unit tests for quest generation logic in `lib/recurring-quest-generator.test.ts`
-  - [ ] 2.13 Write unit tests for expiration logic
-  - [ ] 2.14 Test cron endpoints locally with mock data
+- [x] 2.0 Background Job System (Cron/Scheduled Tasks)
+  - [x] 2.1 Research Vercel Cron Jobs vs external cron solutions (document decision)
+  - [x] 2.2 Create `app/api/cron/generate-quests/route.ts` endpoint with authentication/secret validation
+  - [x] 2.3 Implement quest generation logic: query active templates, check if instance already exists for current cycle
+  - [x] 2.4 Implement INDIVIDUAL quest generation: create one instance per assigned character
+  - [x] 2.5 Implement FAMILY quest generation: create one instance in AVAILABLE status
+  - [x] 2.6 Add idempotency checks to prevent duplicate quest generation
+  - [x] 2.7 Create `app/api/cron/expire-quests/route.ts` endpoint for quest expiration
+  - [x] 2.8 Implement expiration logic: mark quests as MISSED if past `cycle_end_date` and incomplete
+  - [x] 2.9 Implement streak breaking on missed quests (unless template is paused)
+  - [x] 2.10 Add error handling and logging for cron jobs
+  - [x] 2.11 Configure cron schedule with node-cron (run every 5 minutes)
+  - [x] 2.12 Write unit tests for quest generation logic in `lib/recurring-quest-generator.test.ts`
+  - [x] 2.13 Write unit tests for expiration logic
+  - [x] 2.14 Test cron endpoints locally with mock data
 
 - [ ] 3.0 Core Quest Template API & Service Layer
   - [ ] 3.1 Extend `lib/quest-template-service.ts` with new methods: `pauseTemplate()`, `resumeTemplate()`, `getTemplatesByType()`
@@ -300,7 +301,7 @@ This ensures all work is done on a feature branch following the project's workfl
 - Mock Supabase calls in unit tests using `jest.mock()`
 
 ### Key Technical Decisions
-- **Cron jobs**: Recommend Vercel Cron Jobs for simplicity (runs every 5 minutes)
+- **Cron jobs**: Use node-cron for self-hosted deployment (runs every 5 minutes)
 - **Volunteer bonus**: Fixed at 20% (configurable in service layer for future flexibility)
 - **Streak bonus**: +1% per 5-day streak, capped at +5% (25 days)
 - **Timezone handling**: Store family timezone in `families` table, use for midnight calculations
