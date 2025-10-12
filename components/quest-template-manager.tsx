@@ -235,21 +235,22 @@ export function QuestTemplateManager() {
   }
 
   return (
-    <div className="p-6" data-testid="quest-template-manager">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Quest Templates</h2>
+    <div className="space-y-6" data-testid="quest-template-manager">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-fantasy text-gray-100">📜 Quest Templates</h2>
         <button
           onClick={openCreateModal}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
           data-testid="create-template-button"
         >
-          Create Template
+          ⚡ Create Template
         </button>
       </div>
 
       {templates.length === 0 ? (
-        <div className="text-center py-12" data-testid="no-templates-message">
-          <p className="text-gray-600">No quest templates found</p>
+        <div className="fantasy-card text-center py-12" data-testid="no-templates-message">
+          <div className="text-6xl mb-4">📜</div>
+          <p className="text-gray-300 text-lg">No quest templates found</p>
           <p className="text-sm text-gray-500 mt-2">
             Create your first template to get started!
           </p>
@@ -259,69 +260,71 @@ export function QuestTemplateManager() {
           {templates.map((template) => (
             <div
               key={template.id}
-              className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="fantasy-card p-6 hover:border-gold-500/50 transition-all"
               data-testid={`template-card-${template.id}`}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold" data-testid={`template-title-${template.id}`}>{template.title}</h3>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-xl font-fantasy text-gray-100" data-testid={`template-title-${template.id}`}>{template.title}</h3>
+                    {!template.is_active && (
+                      <span className="px-2 py-1 text-xs font-medium bg-gray-700 text-gray-400 rounded">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-400 text-sm mb-3">
                     {template.description}
                   </p>
-                  <div className="flex gap-4 mt-2 text-sm">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                  <div className="flex gap-3 mt-3 text-sm flex-wrap">
+                    <span className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full font-medium">
                       {template.category}
                     </span>
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded">
+                    <span className={`px-3 py-1 rounded-full font-medium ${
+                      template.difficulty === 'EASY'
+                        ? 'bg-gradient-to-r from-green-600 to-green-700 text-white'
+                        : template.difficulty === 'MEDIUM'
+                        ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white'
+                        : 'bg-gradient-to-r from-red-600 to-red-700 text-white'
+                    }`}>
                       {template.difficulty}
                     </span>
-                    <span className="text-gray-600">
-                      {template.xp_reward} XP
+                    <span className="xp-text font-medium">
+                      ⚡ {template.xp_reward} XP
                     </span>
-                    <span className="text-yellow-600">
-                      {template.gold_reward} gold
+                    <span className="gold-text font-medium">
+                      💰 {template.gold_reward} gold
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-2 ml-4">
+                <div className="flex gap-2 ml-4 flex-wrap justify-end">
                   <button
                     onClick={() => handleToggleActive(template)}
-                    className={`px-3 py-1 rounded text-sm ${
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       template.is_active
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        ? 'bg-dark-600 text-green-400 border border-green-500/50 hover:bg-dark-500'
+                        : 'bg-dark-600 text-gray-400 border border-gray-600 hover:bg-dark-500'
                     }`}
-                    data-testid={`template-status-${template.id}`}
-                  >
-                    {template.is_active ? 'Active' : 'Inactive'}
-                  </button>
-                  <button
-                    onClick={() =>
-                      template.is_active
-                        ? handleToggleActive(template)
-                        : handleToggleActive(template)
-                    }
-                    className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded text-sm hover:bg-yellow-200"
                     data-testid={`template-toggle-${template.id}`}
                   >
-                    {template.is_active ? 'Deactivate' : 'Activate'}
+                    {template.is_active ? '✓ Active' : '○ Inactive'}
                   </button>
                   <button
                     onClick={() => openEditModal(template)}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200"
+                    className="px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg text-sm font-medium hover:bg-blue-600/30 transition-colors"
                     data-testid={`template-edit-${template.id}`}
                   >
-                    Edit
+                    ✏️ Edit
                   </button>
                   <button
                     onClick={() => {
                       setDeleteLoading(false);
                       setDeleteTarget(template);
                     }}
-                    className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200"
+                    className="px-3 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg text-sm font-medium hover:bg-red-600/30 transition-colors"
                     data-testid={`template-delete-${template.id}`}
                   >
-                    Delete
+                    🗑️ Delete
                   </button>
                 </div>
               </div>
@@ -333,9 +336,9 @@ export function QuestTemplateManager() {
       {/* Create Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="create-template-modal">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fantasy-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Create Quest Template</h2>
+              <h2 className="text-2xl font-fantasy text-gray-100 mb-6">⚡ Create Quest Template</h2>
 
               <TemplateForm
                 formData={formData}
@@ -345,14 +348,14 @@ export function QuestTemplateManager() {
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={handleCreateTemplate}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
                   data-testid="save-template-button"
                 >
-                  Save
+                  💾 Save Template
                 </button>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
                   data-testid="cancel-template-button"
                 >
                   Cancel
@@ -366,9 +369,9 @@ export function QuestTemplateManager() {
       {/* Edit Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="edit-template-modal">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fantasy-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Edit Quest Template</h2>
+              <h2 className="text-2xl font-fantasy text-gray-100 mb-6">✏️ Edit Quest Template</h2>
 
               <TemplateForm
                 formData={formData}
@@ -376,25 +379,31 @@ export function QuestTemplateManager() {
               />
 
               {/* Preview Section */}
-              <div className="mt-6 p-4 bg-gray-50 rounded" data-testid="template-preview">
-                <h3 className="font-semibold mb-2">Preview</h3>
-                <div className="border rounded p-3 bg-white">
-                  <h4 className="font-bold">{formData.title || 'Quest Title'}</h4>
-                  <p className="text-sm text-gray-600 mt-1">
+              <div className="mt-6 p-4 bg-dark-800 border border-dark-600 rounded-lg" data-testid="template-preview">
+                <h3 className="font-semibold text-gray-200 mb-3">📋 Preview</h3>
+                <div className="fantasy-card p-4">
+                  <h4 className="font-fantasy text-lg text-gray-100">{formData.title || 'Quest Title'}</h4>
+                  <p className="text-sm text-gray-400 mt-2">
                     {formData.description || 'Quest description...'}
                   </p>
-                  <div className="flex gap-2 mt-2 text-xs">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                  <div className="flex gap-2 mt-3 text-xs flex-wrap">
+                    <span className="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full font-medium">
                       {formData.category}
                     </span>
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded">
+                    <span className={`px-3 py-1 rounded-full font-medium ${
+                      formData.difficulty === 'EASY'
+                        ? 'bg-gradient-to-r from-green-600 to-green-700 text-white'
+                        : formData.difficulty === 'MEDIUM'
+                        ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white'
+                        : 'bg-gradient-to-r from-red-600 to-red-700 text-white'
+                    }`}>
                       {formData.difficulty}
                     </span>
-                    <span className="text-gray-600">
-                      {formData.xp_reward} XP
+                    <span className="xp-text font-medium">
+                      ⚡ {formData.xp_reward} XP
                     </span>
-                    <span className="text-yellow-600">
-                      {formData.gold_reward} gold
+                    <span className="gold-text font-medium">
+                      💰 {formData.gold_reward} gold
                     </span>
                   </div>
                 </div>
@@ -403,17 +412,17 @@ export function QuestTemplateManager() {
               <div className="flex gap-4 mt-6">
                 <button
                   onClick={handleUpdateTemplate}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
                   data-testid="update-template-button"
                 >
-                  Save
+                  💾 Save Changes
                 </button>
                 <button
                   onClick={() => {
                     setIsEditModalOpen(false);
                     setSelectedTemplate(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
                   data-testid="cancel-edit-button"
                 >
                   Cancel
@@ -427,29 +436,28 @@ export function QuestTemplateManager() {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" data-testid="delete-confirm-modal">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete
-              {' '}
-              <span className="font-semibold">{deleteTarget.title}</span>
+          <div className="fantasy-card max-w-md w-full p-6">
+            <h2 className="text-xl font-fantasy text-red-400 mb-4">⚠️ Confirm Delete</h2>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-gray-100">{deleteTarget.title}</span>
               ? This action cannot be undone.
             </p>
             <div className="flex gap-4">
               <button
                 onClick={handleDeleteTemplate}
                 disabled={deleteLoading}
-                className={`flex-1 px-4 py-2 rounded text-white transition-colors ${deleteLoading ? 'bg-red-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-all ${deleteLoading ? 'bg-red-400 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-md'}`}
                 data-testid="confirm-delete-button"
               >
-                {deleteLoading ? 'Deleting...' : 'Confirm'}
+                {deleteLoading ? '⏳ Deleting...' : '🗑️ Confirm Delete'}
               </button>
               <button
                 onClick={() => {
                   setDeleteTarget(null);
                   setDeleteLoading(false);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
                 data-testid="cancel-delete-button"
               >
                 Cancel
@@ -473,8 +481,8 @@ function TemplateForm({
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium mb-1">
-          Title
+        <label htmlFor="title" className="block text-sm font-medium text-gray-200 mb-2">
+          Quest Title
         </label>
         <input
           id="title"
@@ -483,8 +491,9 @@ function TemplateForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, title: e.target.value }))
           }
-          className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
           data-testid="template-title-input"
+          placeholder="Enter quest title..."
           required
         />
       </div>
@@ -492,7 +501,7 @@ function TemplateForm({
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium mb-1"
+          className="block text-sm font-medium text-gray-200 mb-2"
         >
           Description
         </label>
@@ -502,15 +511,16 @@ function TemplateForm({
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, description: e.target.value }))
           }
-          className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
           data-testid="template-description-input"
+          placeholder="Describe the quest..."
           rows={3}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="category" className="block text-sm font-medium mb-1">
+          <label htmlFor="category" className="block text-sm font-medium text-gray-200 mb-2">
             Category
           </label>
           <select
@@ -522,19 +532,19 @@ function TemplateForm({
                 category: e.target.value as 'DAILY' | 'WEEKLY' | 'BOSS_BATTLE',
               }))
             }
-            className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             data-testid="template-category-select"
           >
-            <option value="DAILY">DAILY</option>
-            <option value="WEEKLY">WEEKLY</option>
-            <option value="BOSS_BATTLE">BOSS_BATTLE</option>
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+            <option value="BOSS_BATTLE">Boss Battle</option>
           </select>
         </div>
 
         <div>
           <label
             htmlFor="difficulty"
-            className="block text-sm font-medium mb-1"
+            className="block text-sm font-medium text-gray-200 mb-2"
           >
             Difficulty
           </label>
@@ -547,20 +557,20 @@ function TemplateForm({
                 difficulty: e.target.value as 'EASY' | 'MEDIUM' | 'HARD',
               }))
             }
-            className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             data-testid="template-difficulty-select"
           >
-            <option value="EASY">EASY</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HARD">HARD</option>
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
           </select>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="xp_reward" className="block text-sm font-medium mb-1">
-            XP Reward
+          <label htmlFor="xp_reward" className="block text-sm font-medium text-gray-200 mb-2">
+            ⚡ XP Reward
           </label>
           <input
             id="xp_reward"
@@ -572,7 +582,7 @@ function TemplateForm({
                 xp_reward: parseInt(e.target.value) || 0,
               }))
             }
-            className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             data-testid="template-xp-input"
             min="0"
           />
@@ -581,9 +591,9 @@ function TemplateForm({
         <div>
           <label
             htmlFor="gold_reward"
-            className="block text-sm font-medium mb-1"
+            className="block text-sm font-medium text-gray-200 mb-2"
           >
-            Gold Reward
+            💰 Gold Reward
           </label>
           <input
             id="gold_reward"
@@ -595,7 +605,7 @@ function TemplateForm({
                 gold_reward: parseInt(e.target.value) || 0,
               }))
             }
-            className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             data-testid="template-gold-input"
             min="0"
           />
