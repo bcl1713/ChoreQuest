@@ -3,6 +3,8 @@ import {
   openQuestCreationModal,
   setQuestCreationMode,
   navigateToDashboard,
+  dismissLevelUpModalIfVisible,
+  dismissQuestCompleteOverlayIfVisible,
 } from "./navigation-helpers";
 
 /**
@@ -36,14 +38,31 @@ export interface QuestFromTemplateOptions {
 }
 
 async function waitForQuestModalToClose(page: Page): Promise<void> {
-  // Wait for any background operations to complete before checking modal state
-  await page.waitForLoadState("networkidle");
-
   const modalLocator = page.locator('[data-testid="create-quest-modal"]');
-  // Increased timeout for high-concurrency scenarios (parallel test runs)
-  await expect(modalLocator).not.toBeVisible({ timeout: 60000 });
-  await expect(page.locator("text=Create New Quest")).not.toBeVisible({
-    timeout: 10000,
+
+  // Wait for the modal to actually close (DOM element removed by AnimatePresence)
+  // Under high load, quest creation can take longer
+  await expect(async () => {
+    // Check if modal is gone (success case)
+    const modalCount = await modalLocator.count();
+    if (modalCount === 0) {
+      return; // Success - modal closed
+    }
+
+    // Check if there's an error message in the modal (failure case)
+    const errorMessage = await page.locator('[data-testid="create-quest-modal"] .bg-red-600').count();
+    if (errorMessage > 0) {
+      const errorText = await page.locator('[data-testid="create-quest-modal"] .bg-red-600').textContent();
+      throw new Error(`Quest creation failed: ${errorText}`);
+    }
+
+    // Modal still visible and no error - keep waiting
+    throw new Error('Modal still visible');
+  }).toPass({ timeout: 30000, intervals: [500, 1000, 2000] });
+
+  // Final confirmation - wait for network to stabilize
+  await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {
+    // Ignore networkidle timeout - the modal closing is what matters
   });
 }
 
@@ -214,8 +233,8 @@ export async function createQuestFromTemplate(
       .getAttribute("value");
     await templateSelect.selectOption(firstTemplateValue!);
   } else {
-    // Find template by name
-    await templateSelect.selectOption({ label: new RegExp(templateName, "i") });
+    // Find template by name - use label selector with string
+    await templateSelect.selectOption({ label: templateName });
   }
 
   // Verify template preview appears
@@ -224,7 +243,7 @@ export async function createQuestFromTemplate(
   // Optionally assign to a character
   if (options?.assignTo) {
     const assignSelect = page.locator("select#assign-to");
-    await assignSelect.selectOption({ label: new RegExp(options.assignTo, "i") });
+    await assignSelect.selectOption({ label: options.assignTo });
   }
 
   // Optionally set due date
@@ -372,17 +391,28 @@ export async function completeQuest(
 /**
  * Approves a completed quest (Guild Master action, awards rewards)
  *
+ * IMPORTANT: This may trigger celebration overlays:
+ * 1. Quest Complete Overlay - Shows rewards earned
+ * 2. Level-Up Modal - Shows if character gains enough XP to level up
+ * By default, both overlays are automatically dismissed after approval.
+ *
  * @param page - Playwright page object
  * @param questName - Optional quest title to target specific quest (defaults to first quest)
+ * @param options - Optional settings
+ * @param options.skipLevelUpDismiss - If true, don't auto-dismiss the level-up modal (for tests that need to verify it)
+ * @param options.skipQuestCompleteDismiss - If true, don't auto-dismiss the quest complete overlay (for tests that need to verify it)
  *
  * @example
  * ```typescript
  * await approveQuest(page);
+ * await approveQuest(page, "My Quest", { skipLevelUpDismiss: true }); // For level-up modal tests
+ * await approveQuest(page, "My Quest", { skipQuestCompleteDismiss: true }); // For quest complete overlay tests
  * ```
  */
 export async function approveQuest(
   page: Page,
   questName?: string,
+  options?: { skipLevelUpDismiss?: boolean; skipQuestCompleteDismiss?: boolean },
 ): Promise<void> {
   if (questName) {
     // Wait for both the quest heading AND the approve button to be visible
@@ -407,6 +437,20 @@ export async function approveQuest(
 
   // Wait for the approval to process
   await page.waitForLoadState("networkidle");
+
+  // Dismiss quest complete overlay first (appears immediately after approval)
+  // This overlay blocks all interactions and auto-dismisses after 5 seconds
+  // Skip this if the test explicitly wants to verify the quest complete overlay
+  if (!options?.skipQuestCompleteDismiss) {
+    await dismissQuestCompleteOverlayIfVisible(page);
+  }
+
+  // Check for and dismiss level-up modal if it appeared from the XP reward
+  // This modal also blocks all interactions and requires manual dismissal
+  // Skip this if the test explicitly wants to verify the level-up modal
+  if (!options?.skipLevelUpDismiss) {
+    await dismissLevelUpModalIfVisible(page);
+  }
 }
 
 /**

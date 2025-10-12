@@ -134,3 +134,119 @@ body {
 .touch-target {
   @apply min-w-[44px] min-h-[44px];
 }
+
+/* Fantasy Button Variants */
+.fantasy-button-primary {
+  @apply bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+}
+
+.fantasy-button-secondary {
+  @apply bg-gradient-to-r from-dark-700 to-dark-800 hover:from-dark-600 hover:to-dark-700 text-dark-100 font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-dark-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+}
+
+.fantasy-button-danger {
+  @apply bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+}
+
+.fantasy-button-success {
+  @apply bg-gradient-to-r from-xp-600 to-xp-700 hover:from-xp-700 hover:to-xp-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+}
+
+/* Glow Effects */
+.glow-effect {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.6);
+  }
+}
+
+.glow-effect-gold {
+  animation: glow-pulse-gold 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(245, 158, 11, 0.7);
+  }
+}
+
+.glow-effect-gem {
+  animation: glow-pulse-gem 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-gem {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(14, 165, 233, 0.7);
+  }
+}
+
+.glow-effect-xp {
+  animation: glow-pulse-xp 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-xp {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(34, 197, 94, 0.7);
+  }
+}
+
+/* Pulse Animation */
+.pulse-animation {
+  animation: pulse-scale 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .glow-effect,
+  .glow-effect-gold,
+  .glow-effect-gem,
+  .glow-effect-xp,
+  .pulse-animation {
+    animation: none;
+  }
+
+  .fantasy-button-primary,
+  .fantasy-button-secondary,
+  .fantasy-button-danger,
+  .fantasy-button-success {
+    transition: none;
+  }
+
+  .fantasy-button-primary:hover,
+  .fantasy-button-secondary:hover,
+  .fantasy-button-danger:hover,
+  .fantasy-button-success:hover {
+    transform: none;
+  }
+
+  .fantasy-button-primary:active,
+  .fantasy-button-secondary:active,
+  .fantasy-button-danger:active,
+  .fantasy-button-success:active {
+    transform: none;
+  }
+}

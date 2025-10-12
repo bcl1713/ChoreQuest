@@ -1,4 +1,4 @@
-import { test, expect } from "./helpers/family-fixture";
+import { test, expect, setupConsoleLogging } from "./helpers/family-fixture";
 import { navigateToAdmin, navigateToDashboard } from "./helpers/navigation-helpers";
 import { getFamilyCode, joinExistingFamily } from "./helpers/auth-helpers";
 
@@ -39,6 +39,7 @@ test.describe("Admin Dashboard Access Control", () => {
     const familyCode = await getFamilyCode(gmPage);
     const heroContext = await browser.newContext();
     const heroPage = await heroContext.newPage();
+    setupConsoleLogging(heroPage);
 
     try {
       // Register as Hero (child) user in the GM's family
@@ -53,7 +54,24 @@ test.describe("Admin Dashboard Access Control", () => {
       await heroPage.fill("input#characterName", "Hero Character");
       await heroPage.click('[data-testid="class-rogue"]');
       await heroPage.click('button:text("Begin Your Quest")');
+
+      // Wait for URL change and page navigation to complete
       await expect(heroPage).toHaveURL(/.*\/dashboard/, { timeout: 15000 });
+      await heroPage.waitForLoadState("domcontentloaded");
+
+      // Give database a moment to ensure character INSERT completes before fetch
+      // This prevents race condition where dashboard loads before character exists
+      await heroPage.waitForTimeout(500);
+
+      // Wait for dashboard to fully load (character data fetched)
+      await heroPage.waitForFunction(
+        () => {
+          const loadingSpinner = document.querySelector('.animate-spin');
+          const welcome = document.querySelector('[data-testid="welcome-message"]');
+          return !loadingSpinner && !!welcome;
+        },
+        { timeout: 30000 }
+      );
 
       // Verify Hero cannot see admin button
       await expect(heroPage.getByTestId("admin-dashboard-button")).not.toBeVisible();
@@ -61,8 +79,11 @@ test.describe("Admin Dashboard Access Control", () => {
       // Try to navigate directly to admin dashboard via URL
       await heroPage.goto("/admin");
 
+      // Wait for page to load and process the access control check
+      await heroPage.waitForLoadState("domcontentloaded");
+
       // Should be redirected back to dashboard
-      await expect(heroPage).toHaveURL(/.*\/dashboard/);
+      await expect(heroPage).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
 
       // Should see an error message about insufficient permissions
       await expect(

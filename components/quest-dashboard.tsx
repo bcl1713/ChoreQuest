@@ -7,15 +7,20 @@ import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { motion } from "framer-motion";
+import { QuestReward } from "@/components/animations/QuestCompleteOverlay";
+import { staggerContainer, staggerItem } from "@/lib/animations/variants";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface QuestDashboardProps {
   onError?: (error: string) => void;
   onLoadQuestsRef?: (loadQuests: () => Promise<void>) => void;
+  onQuestComplete?: (questTitle: string, rewards: QuestReward) => void;
 }
 
 export default function QuestDashboard({
   onError,
   onLoadQuestsRef,
+  onQuestComplete,
 }: QuestDashboardProps) {
   const { user, session, profile } = useAuth();
   const { onQuestUpdate } = useRealtime();
@@ -181,37 +186,22 @@ export default function QuestDashboard({
           throw questError;
         }
 
-        // Update quest status
-        const { error: updateError } = await supabase
-          .from('quest_instances')
-          .update({
-            status: 'APPROVED',
-            approved_at: new Date().toISOString(),
-          })
-          .eq('id', questId);
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        // Calculate rewards for events (before character update)
+        // Calculate rewards FIRST (before any database updates)
         let finalRewards = {
           xp: questData.xp_reward,
           gold: questData.gold_reward,
         };
 
-        // Update character stats if quest is assigned
+        // If quest is assigned, calculate rewards with bonuses
         if (questData.assigned_to_id) {
-          // First get current character stats and class
+          // Get current character stats and class
           const { data: characterData, error: characterFetchError } = await supabase
             .from('characters')
             .select('xp, gold, level, class')
             .eq('user_id', questData.assigned_to_id)
             .single();
 
-          if (characterFetchError) {
-            console.error('Failed to fetch character stats:', characterFetchError);
-          } else {
+          if (!characterFetchError && characterData) {
             // Calculate rewards using RewardCalculator with class bonuses
             const baseRewards = {
               xpReward: questData.xp_reward,
@@ -232,15 +222,43 @@ export default function QuestDashboard({
               xp: calculatedRewards.xp,
               gold: calculatedRewards.gold,
             };
+          }
+        }
 
-            // Calculate new stats with proper rewards
-            const newXp = characterData.xp + calculatedRewards.xp;
-            const newGold = characterData.gold + calculatedRewards.gold;
+        // Update quest status
+        const { error: updateError } = await supabase
+          .from('quest_instances')
+          .update({
+            status: 'APPROVED',
+            approved_at: new Date().toISOString(),
+          })
+          .eq('id', questId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Update character stats if quest is assigned
+        if (questData.assigned_to_id) {
+          // Get current character stats again (in case they changed)
+          const { data: characterData, error: characterFetchError } = await supabase
+            .from('characters')
+            .select('xp, gold, level, class')
+            .eq('user_id', questData.assigned_to_id)
+            .single();
+
+          if (characterFetchError) {
+            console.error('Failed to fetch character stats:', characterFetchError);
+            // Continue to show overlay even if character fetch fails
+          } else {
+            // Calculate new stats with rewards
+            const newXp = characterData.xp + finalRewards.xp;
+            const newGold = characterData.gold + finalRewards.gold;
 
             // Calculate level up using RewardCalculator
             const levelUpResult = RewardCalculator.calculateLevelUp(
               characterData.xp,
-              calculatedRewards.xp,
+              finalRewards.xp,
               characterData.level
             );
             const newLevel = levelUpResult ? levelUpResult.newLevel : characterData.level;
@@ -255,23 +273,24 @@ export default function QuestDashboard({
               .eq('user_id', questData.assigned_to_id);
 
             if (characterError) {
-              // Throw error to prevent quest from being marked as approved if character update fails
-              throw new Error(`Failed to award rewards: ${characterError.message}`);
+              console.error('Failed to award rewards:', characterError);
+              // Continue to show overlay even if character update fails
             }
           }
         }
 
-        // Character stats updates will be handled by realtime subscriptions
-        // Emit a custom event that the dashboard can listen to for character stats updates
-        window.dispatchEvent(new CustomEvent('characterStatsUpdated', {
-          detail: {
-            questId,
-            rewards: finalRewards,
-            characterUpdates: {
-              assigned_to_id: questData.assigned_to_id,
-            }
-          }
-        }));
+        // Character stats updates are handled automatically by CharacterContext's
+        // realtime subscription (see lib/character-context.tsx lines 206-229).
+
+        // Show quest complete overlay after quest approval succeeds
+        // Use the callback to lift state up to parent (dashboard page) to prevent
+        // state loss on re-renders triggered by character updates
+        if (onQuestComplete) {
+          onQuestComplete(questData.title || 'Quest Complete!', {
+            gold: finalRewards.gold,
+            xp: finalRewards.xp,
+          });
+        }
 
       } else {
         // Handle other status updates normally
@@ -295,7 +314,7 @@ export default function QuestDashboard({
         setQuestInstances(currentQuests =>
           currentQuests.map(quest =>
             quest.id === questId
-              ? { ...quest, ...updateData }
+              ? { ...quest, ...updateData } as QuestInstance
               : quest
           )
         );
@@ -508,7 +527,7 @@ export default function QuestDashboard({
   if (loading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mx-auto mb-4"></div>
+        <LoadingSpinner size="lg" className="mb-4" aria-label="Loading quests" />
         <p className="text-gray-400">Loading quests...</p>
       </div>
     );
@@ -546,19 +565,23 @@ export default function QuestDashboard({
         <h3 className="text-xl font-fantasy text-gray-200 mb-4">
           🗡️ My Quests
         </h3>
-        <div className="grid gap-4">
-          {myQuests.length === 0 ? (
-            <div className="fantasy-card p-6 text-center">
-              <p className="text-gray-400">
-                No active quests. Ready for adventure?
-              </p>
-            </div>
-          ) : (
-            myQuests.map((quest) => (
+        {myQuests.length === 0 ? (
+          <div className="fantasy-card p-6 text-center">
+            <p className="text-gray-400">
+              No active quests. Ready for adventure?
+            </p>
+          </div>
+        ) : (
+          <motion.div
+            className="grid gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {myQuests.map((quest) => (
               <motion.div
                 key={quest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={staggerItem}
                 className="fantasy-card p-6"
               >
                 <div className="flex justify-between items-start mb-4">
@@ -629,9 +652,9 @@ export default function QuestDashboard({
                   </div>
                 </div>
               </motion.div>
-            ))
-          )}
-        </div>
+            ))}
+          </motion.div>
+        )}
       </section>
 
       {/* Available Quests (for guild masters and unassigned quests) */}
@@ -640,12 +663,16 @@ export default function QuestDashboard({
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             📋 Available Quests
           </h3>
-          <div className="grid gap-4">
+          <motion.div
+            className="grid gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {unassignedQuests.map((quest) => (
               <motion.div
                 key={quest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={staggerItem}
                 className="fantasy-card p-6 border-l-4 border-gold-500"
               >
                 <div className="flex justify-between items-start">
@@ -755,7 +782,7 @@ export default function QuestDashboard({
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
 
@@ -765,12 +792,16 @@ export default function QuestDashboard({
           <h3 className="text-xl font-fantasy text-gray-200 mb-4">
             👥 Family Quests
           </h3>
-          <div className="grid gap-4">
+          <motion.div
+            className="grid gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {otherQuests.map((quest) => (
               <motion.div
                 key={quest.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                variants={staggerItem}
                 className="fantasy-card p-6 opacity-75"
               >
                 <div className="flex justify-between items-start">
@@ -816,7 +847,7 @@ export default function QuestDashboard({
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
     </div>

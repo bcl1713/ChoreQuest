@@ -6,7 +6,8 @@ import { useCharacter } from "@/lib/character-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import { Reward, RewardRedemption, UserProfile } from "@/lib/types/database";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle } from "lucide-react";
 
 interface RewardRedemptionWithDetails extends RewardRedemption {
   user_profiles: UserProfile;
@@ -43,6 +44,10 @@ export default function RewardStore({ onError }: RewardStoreProps) {
   const [redemptions, setRedemptions] = useState<RewardRedemptionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState<string | null>(null);
+  const [redeemSuccess, setRedeemSuccess] = useState<{ show: boolean; rewardName: string }>({
+    show: false,
+    rewardName: '',
+  });
   const loadRewards = useCallback(async () => {
     if (!profile?.family_id) {
       return;
@@ -218,6 +223,12 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       // Character and redemption updates will be handled by realtime subscriptions
       // Refresh character data to get updated gold balance immediately
       await refreshCharacter();
+
+      // Show success message
+      setRedeemSuccess({ show: true, rewardName: reward.name });
+      setTimeout(() => {
+        setRedeemSuccess({ show: false, rewardName: '' });
+      }, 3000);
 
     } catch (error) {
       console.error('Failed to redeem reward:', error);
@@ -586,6 +597,24 @@ export default function RewardStore({ onError }: RewardStoreProps) {
           )}
         </div>
       )}
+
+      {/* Success Toast */}
+      <AnimatePresence>
+        {redeemSuccess.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-lg shadow-2xl border border-green-400 flex items-center gap-3"
+          >
+            <CheckCircle className="h-6 w-6" />
+            <div>
+              <p className="font-semibold">Reward Redeemed!</p>
+              <p className="text-sm text-green-100">{redeemSuccess.rewardName}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

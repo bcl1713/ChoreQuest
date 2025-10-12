@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Character, CharacterClass } from '@/lib/types/database';
 import { CHARACTER_CLASSES, formatBonusPercentage } from '@/lib/constants/character-classes';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
@@ -17,6 +19,7 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { user } = useAuth();
+  const prefersReducedMotion = useReducedMotion();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,15 +155,25 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
             {/* Mobile: Horizontal scrollable cards, Desktop: Grid */}
             <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 flex md:flex-none overflow-x-auto md:overflow-x-visible snap-x snap-mandatory gap-4 pb-4 md:pb-0 -mx-2 px-2 md:mx-0 md:px-0">
               {CHARACTER_CLASSES.map((characterClass) => (
-                <div
+                <motion.div
                   key={characterClass.id}
                   data-testid={`class-${characterClass.name.toLowerCase()}`}
-                  className={`fantasy-card p-4 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-gold-500/20 min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
+                  className={`fantasy-card p-4 cursor-pointer min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
                     selectedClass === characterClass.id
                       ? 'ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50'
                       : 'hover:border-gold-500/30'
                   }`}
                   onClick={() => setSelectedClass(characterClass.id)}
+                  whileHover={
+                    prefersReducedMotion
+                      ? {}
+                      : {
+                          scale: 1.05,
+                          boxShadow: '0 10px 30px rgba(251, 191, 36, 0.2)',
+                        }
+                  }
+                  whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">{characterClass.icon}</div>
@@ -182,7 +195,7 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>

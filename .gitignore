@@ -57,3 +57,4 @@ prisma/dev.db-journal
 # Supabase Docker volumes (runtime files managed by Supabase)
 supabase-docker/volumes/
 
+playwright-report/

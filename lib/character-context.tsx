@@ -8,12 +8,21 @@ import { Character } from '@/lib/types/database';
 
 // Using Character type from @/lib/types/database
 
+export interface LevelUpEvent {
+  oldLevel: number;
+  newLevel: number;
+  characterName: string;
+  characterClass: string;
+}
+
 interface CharacterContextType {
   character: Character | null;
   isLoading: boolean;
   error: string | null;
   hasLoaded: boolean; // true when character fetch completed (regardless of result)
   refreshCharacter: () => Promise<void>;
+  levelUpEvent: LevelUpEvent | null;
+  clearLevelUpEvent: () => void;
 }
 
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
@@ -25,10 +34,12 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false); // Track if character fetch completed
+  const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null);
   const hasLoadedRef = useRef(false);
   const isInitialLoadRef = useRef(true);
   const isFetchingRef = useRef(false);
   const fetchStartTimeRef = useRef<number>(0);
+  const previousLevelRef = useRef<number | null>(null);
 
   const updateHasLoaded = useCallback((value: boolean) => {
     hasLoadedRef.current = value;
@@ -83,6 +94,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // Add timeout to prevent infinite hanging
+      // Use longer timeout (15s) to handle slow database queries during E2E tests
       const fetchPromise = supabase
         .from('characters')
         .select('*')
@@ -90,7 +102,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Character fetch timeout after 5s')), 5000)
+        setTimeout(() => reject(new Error('Character fetch timeout after 15s')), 15000)
       );
 
       const result = await Promise.race([fetchPromise, timeoutPromise]);
@@ -107,6 +119,21 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Use Supabase data directly
         console.log('CharacterContext: Character fetched successfully:', data);
+
+        // Check for level up
+        if (previousLevelRef.current !== null && data.level > previousLevelRef.current) {
+          console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${data.level}`);
+          setLevelUpEvent({
+            oldLevel: previousLevelRef.current,
+            newLevel: data.level,
+            characterName: data.name,
+            characterClass: data.class || 'Adventurer',
+          });
+        }
+
+        // Update previous level reference
+        previousLevelRef.current = data.level;
+
         setCharacter(data);
         retryCountRef.current = 0; // Reset retry count on success
       }
@@ -206,13 +233,19 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     await fetchCharacter();
   };
 
+  const clearLevelUpEvent = useCallback(() => {
+    setLevelUpEvent(null);
+  }, []);
+
   return (
     <CharacterContext.Provider value={{
       character,
       isLoading,
       error,
       hasLoaded,
-      refreshCharacter
+      refreshCharacter,
+      levelUpEvent,
+      clearLevelUpEvent
     }}>
       {children}
     </CharacterContext.Provider>

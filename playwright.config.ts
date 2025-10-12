@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 2, // Enable retries locally for stability under high concurrency
+  retries: process.env.CI ? 2 : 0, // Enable retries locally for stability under high concurrency
   workers: 2,
   timeout: 60000,
   reporter: [["line"], ["html", { open: "never" }]],

@@ -118,7 +118,7 @@ test.describe("Admin Dashboard Activity Feed", () => {
     await reviewButton.click();
     await expect(gmPage).toHaveURL(/.*\/dashboard/);
 
-    // Wait for dashboard to fully load (welcome message appears when ready)
+    // Wait for dashboard to fully load
     await expect(gmPage.getByTestId("welcome-message")).toBeVisible({ timeout: 30000 });
 
     // Navigate back to admin to verify event persistence

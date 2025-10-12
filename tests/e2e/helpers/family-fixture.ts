@@ -4,6 +4,34 @@ import { joinExistingFamily } from "./auth-helpers";
 import { createClient } from "@supabase/supabase-js";
 
 /**
+ * Sets up console logging for a Playwright page.
+ * Logs browser console errors and warnings to the terminal for easier debugging.
+ * Filters out known noisy warnings that don't indicate actual problems.
+ *
+ * This is automatically called for all pages created via the workerFamily fixture,
+ * but can be manually called for pages created outside the fixture.
+ *
+ * @example
+ * ```typescript
+ * const context = await browser.newContext();
+ * const page = await context.newPage();
+ * setupConsoleLogging(page); // Enable console logging for this page
+ * ```
+ */
+export function setupConsoleLogging(page: Page): void {
+  page.on('console', msg => {
+    const type = msg.type();
+    const text = msg.text();
+    // Log errors and warnings, but filter out known noisy messages
+    if ((type === 'error' || type === 'warning') &&
+        !text.startsWith('#setScale') &&
+        !text.startsWith('offsetParent is not set')) {
+      console.log(`BROWSER ${type.toUpperCase()}:`, text);
+    }
+  });
+}
+
+/**
  * Worker-scoped fixture that provides a persistent GM user and family
  * for all tests within a worker. This reduces setup overhead and improves
  * test performance by creating the GM user only once per worker.
@@ -97,12 +125,14 @@ export interface StoragePaths {
  * The fixture setup runs ONCE per worker (not per test), and the teardown
  * runs ONCE when the worker finishes all its tests.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
   workerFamily: [
     async ({ browser }, use, workerInfo) => {
       // SETUP PHASE: Create the persistent GM user and family for this worker
       const gmContext = await browser.newContext();
       const gmPage = await gmContext.newPage();
+      setupConsoleLogging(gmPage);
 
       // Create unique GM user for this worker (worker0, worker1, etc.)
       const timestamp = Date.now();
@@ -166,6 +196,7 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
         const context = await browser.newContext();
         createdContexts.push(context);
         const page = await context.newPage();
+        setupConsoleLogging(page);
         const user = await setupUserWithCharacter(page, userName, {
           characterClass: options.characterClass,
         });
@@ -222,6 +253,7 @@ export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
         const context = await browser.newContext();
         createdContexts.push(context);
         const page = await context.newPage();
+        setupConsoleLogging(page);
 
         const timestamp = Date.now();
         const random = Math.floor(Math.random() * 10000);
