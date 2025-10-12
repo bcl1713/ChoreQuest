@@ -140,17 +140,17 @@ This ensures all work is done on a feature branch following the project's workfl
   - [x] 2.14 Test cron endpoints locally with mock data
 
 - [ ] 3.0 Core Quest Template API & Service Layer
-  - [ ] 3.1 Extend `lib/quest-template-service.ts` with new methods: `pauseTemplate()`, `resumeTemplate()`, `getTemplatesByType()`
-  - [ ] 3.2 Create `POST /api/quest-templates` endpoint for creating templates
-  - [ ] 3.3 Create `GET /api/quest-templates?familyId=X` endpoint for listing templates
-  - [ ] 3.4 Create `GET /api/quest-templates/:id` endpoint for single template
-  - [ ] 3.5 Create `PATCH /api/quest-templates/:id` endpoint for updating templates
-  - [ ] 3.6 Create `DELETE /api/quest-templates/:id` endpoint (soft delete via `is_active=false`)
-  - [ ] 3.7 Create `PATCH /api/quest-templates/:id/pause` endpoint for pausing templates
-  - [ ] 3.8 Create `PATCH /api/quest-templates/:id/resume` endpoint for resuming templates
-  - [ ] 3.9 Add validation using Zod schemas for all template operations
-  - [ ] 3.10 Add authorization checks: ensure user is Guild Master of the template's family
-  - [ ] 3.11 Write unit tests for extended template service methods
+  - [x] 3.1 Extend `lib/quest-template-service.ts` with new methods: `pauseTemplate()`, `resumeTemplate()`, `getTemplatesByType()`
+  - [x] 3.2 Create `POST /api/quest-templates` endpoint for creating templates
+  - [x] 3.3 Create `GET /api/quest-templates?familyId=X` endpoint for listing templates
+  - [x] 3.4 Create `GET /api/quest-templates/:id` endpoint for single template
+  - [x] 3.5 Create `PATCH /api/quest-templates/:id` endpoint for updating templates
+  - [x] 3.6 Create `DELETE /api/quest-templates/:id` endpoint (soft delete via `is_active=false`)
+  - [x] 3.7 Create `PATCH /api/quest-templates/:id/pause` endpoint for pausing templates
+  - [x] 3.8 Create `PATCH /api/quest-templates/:id/resume` endpoint for resuming templates
+  - [x] 3.9 Add validation using Zod schemas for all template operations
+  - [x] 3.10 Add authorization checks: ensure user is Guild Master of the template's family
+  - [x] 3.11 Write unit tests for extended template service methods
   - [ ] 3.12 Write API route tests for all template endpoints
   - [ ] 3.13 Test template CRUD operations with Postman or similar tool
 
