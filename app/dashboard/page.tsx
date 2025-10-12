@@ -40,7 +40,7 @@ function DashboardContent() {
   const router = useRouter();
   const { user, profile, family, logout, isLoading } = useAuth();
   const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, levelUpEvent, clearLevelUpEvent } = useCharacter();
-  const { onQuestTemplateUpdate } = useRealtime();
+  const { onQuestTemplateUpdate, onQuestUpdate } = useRealtime();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'quests' | 'rewards'>('quests');
   const [showCreateQuest, setShowCreateQuest] = useState(false);
@@ -156,6 +156,59 @@ function DashboardContent() {
   // Character stats updates are now handled automatically by CharacterContext's
   // realtime subscription (see lib/character-context.tsx lines 206-229).
   // No need to manually call refreshCharacter on custom events.
+
+  // Set up realtime quest updates to show congratulations modal when quest is approved
+  useEffect(() => {
+    if (!user || !character) return;
+
+    const unsubscribe = onQuestUpdate(async (event) => {
+      // Only process UPDATE events where status changes to APPROVED
+      if (event.action === 'UPDATE') {
+        const updatedQuest = event.record as {
+          id: string;
+          assigned_to_id?: string;
+          status?: string;
+          title?: string;
+          xp_reward?: number;
+          gold_reward?: number;
+          difficulty?: string;
+        };
+
+        // Check if this quest was just approved and is assigned to current user
+        const wasJustApproved = updatedQuest.status === 'APPROVED';
+        const isAssignedToMe = updatedQuest.assigned_to_id === user.id;
+
+        if (wasJustApproved && isAssignedToMe && character) {
+          // Calculate rewards with bonuses using the same logic as quest approval
+          const baseRewards = {
+            xpReward: updatedQuest.xp_reward || 0,
+            goldReward: updatedQuest.gold_reward || 0,
+            gemsReward: 0,
+            honorPointsReward: 0,
+          };
+
+          const calculatedRewards = RewardCalculator.calculateQuestRewards(
+            baseRewards,
+            (updatedQuest.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
+            character.class as 'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER',
+            character.level || 1
+          );
+
+          // Show congratulations modal with calculated rewards
+          setQuestCompleteData({
+            show: true,
+            questTitle: updatedQuest.title || 'Quest Complete!',
+            rewards: {
+              xp: calculatedRewards.xp,
+              gold: calculatedRewards.gold,
+            },
+          });
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [user, character, onQuestUpdate]);
 
   const handleQuestCreated = async () => {
     loadQuestTemplates();
@@ -367,13 +420,6 @@ function DashboardContent() {
             onError={handleError}
             onLoadQuestsRef={(loadQuests) => {
               dashboardLoadQuestsRef.current = loadQuests;
-            }}
-            onQuestComplete={(questTitle, rewards) => {
-              setQuestCompleteData({
-                show: true,
-                questTitle,
-                rewards,
-              });
             }}
           />
         ) : activeTab === 'rewards' ? (

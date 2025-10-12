@@ -7,20 +7,17 @@ import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { motion } from "framer-motion";
-import { QuestReward } from "@/components/animations/QuestCompleteOverlay";
 import { staggerContainer, staggerItem } from "@/lib/animations/variants";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface QuestDashboardProps {
   onError?: (error: string) => void;
   onLoadQuestsRef?: (loadQuests: () => Promise<void>) => void;
-  onQuestComplete?: (questTitle: string, rewards: QuestReward) => void;
 }
 
 export default function QuestDashboard({
   onError,
   onLoadQuestsRef,
-  onQuestComplete,
 }: QuestDashboardProps) {
   const { user, session, profile } = useAuth();
   const { onQuestUpdate } = useRealtime();
@@ -282,15 +279,9 @@ export default function QuestDashboard({
         // Character stats updates are handled automatically by CharacterContext's
         // realtime subscription (see lib/character-context.tsx lines 206-229).
 
-        // Show quest complete overlay after quest approval succeeds
-        // Use the callback to lift state up to parent (dashboard page) to prevent
-        // state loss on re-renders triggered by character updates
-        if (onQuestComplete) {
-          onQuestComplete(questData.title || 'Quest Complete!', {
-            gold: finalRewards.gold,
-            xp: finalRewards.xp,
-          });
-        }
+        // The quest complete overlay will be shown via realtime updates on the
+        // quest completer's screen (see dashboard page realtime quest listener).
+        // We don't show the modal on the GM's screen when they approve someone else's quest.
 
       } else {
         // Handle other status updates normally
