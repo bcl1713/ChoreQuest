@@ -876,3 +876,45 @@ export type UpdateQuestTemplateInput = TablesUpdate<'quest_templates'> & {
 // Reward-specific types for operations
 export type CreateRewardInput = TablesInsert<'rewards'>;
 export type UpdateRewardInput = TablesUpdate<'rewards'>;
+
+// Recurring quest system types
+export type QuestType = Enums<'quest_type'>;
+export type RecurrencePattern = Enums<'recurrence_pattern'>;
+export type CharacterQuestStreak = Tables<'character_quest_streaks'>;
+
+// Recurring quest template types
+export type RecurringQuestTemplate = QuestTemplate & {
+  quest_type: QuestType;
+  recurrence_pattern: RecurrencePattern;
+  is_paused: boolean;
+  assigned_character_ids: string[];
+};
+
+// Recurring quest instance types
+export type RecurringQuestInstance = QuestInstance & {
+  quest_type: QuestType;
+  volunteered_by: string | null;
+  volunteer_bonus: number;
+  streak_count: number;
+  streak_bonus: number;
+  cycle_start_date: string | null;
+  cycle_end_date: string | null;
+};
+
+// Create inputs for recurring quests
+export type CreateRecurringQuestTemplateInput = TablesInsert<'quest_templates'> & {
+  quest_type: QuestType;
+  recurrence_pattern: RecurrencePattern;
+  assigned_character_ids?: string[];
+};
+
+export type UpdateRecurringQuestTemplateInput = TablesUpdate<'quest_templates'> & {
+  quest_type?: QuestType;
+  recurrence_pattern?: RecurrencePattern;
+  is_paused?: boolean;
+  assigned_character_ids?: string[];
+};
+
+// Streak tracking types
+export type CreateCharacterQuestStreakInput = TablesInsert<'character_quest_streaks'>;
+export type UpdateCharacterQuestStreakInput = TablesUpdate<'character_quest_streaks'>;
