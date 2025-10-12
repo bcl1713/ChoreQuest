@@ -139,7 +139,7 @@ This ensures all work is done on a feature branch following the project's workfl
   - [x] 2.13 Write unit tests for expiration logic
   - [x] 2.14 Test cron endpoints locally with mock data
 
-- [ ] 3.0 Core Quest Template API & Service Layer
+- [x] 3.0 Core Quest Template API & Service Layer
   - [x] 3.1 Extend `lib/quest-template-service.ts` with new methods: `pauseTemplate()`, `resumeTemplate()`, `getTemplatesByType()`
   - [x] 3.2 Create `POST /api/quest-templates` endpoint for creating templates
   - [x] 3.3 Create `GET /api/quest-templates?familyId=X` endpoint for listing templates
