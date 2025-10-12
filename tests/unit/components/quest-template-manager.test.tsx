@@ -48,7 +48,7 @@ describe('QuestTemplateManager', () => {
 
     // Wait for component to load and async updates to complete
     await waitFor(async () => {
-      expect(await screen.findByText('Quest Templates')).toBeInTheDocument();
+      expect(await screen.findByText('📜 Quest Templates')).toBeInTheDocument();
     });
   });
 
@@ -57,7 +57,7 @@ describe('QuestTemplateManager', () => {
 
     // Wait for component to load and async updates to complete
     await waitFor(async () => {
-      expect(await screen.findByText('Quest Templates')).toBeInTheDocument();
+      expect(await screen.findByText('📜 Quest Templates')).toBeInTheDocument();
     });
 
     const createButton = screen.getByRole('button', { name: /create template/i });

@@ -259,13 +259,13 @@ export default function RewardManager() {
     <div className="space-y-6" data-testid="reward-manager">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Reward Management</h2>
+        <h2 className="text-2xl font-fantasy text-gray-100">🏆 Reward Management</h2>
         <button
           onClick={handleCreate}
           data-testid="create-reward-button"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
         >
-          Create Reward
+          ⚡ Create Reward
         </button>
       </div>
 
@@ -361,58 +361,62 @@ export default function RewardManager() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className={`bg-white border rounded-lg p-4 shadow-sm ${
-                !reward.is_active ? "opacity-50" : ""
+              className={`fantasy-card p-6 hover:border-gold-500/50 transition-all ${
+                !reward.is_active ? "opacity-60" : ""
               }`}
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">
                     {REWARD_TYPE_ICONS[reward.type]}
                   </span>
                   <div>
-                    <h3 className="font-bold">{reward.name}</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="font-fantasy text-lg text-gray-100">{reward.name}</h3>
+                    <p className="text-sm text-gray-400">
                       {REWARD_TYPE_LABELS[reward.type]}
                     </p>
                   </div>
                 </div>
                 {!reward.is_active && (
-                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                  <span className="text-xs bg-gray-700 text-gray-400 px-2 py-1 rounded">
                     Inactive
                   </span>
                 )}
               </div>
 
-              <p className="text-sm text-gray-700 mb-3">{reward.description}</p>
+              <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
 
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-lg font-bold text-yellow-600">
-                  {reward.cost} gold
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xl font-bold gold-text">
+                  💰 {reward.cost} gold
                 </span>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => handleEdit(reward)}
                   data-testid="edit-reward-button"
-                  className="flex-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                  className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg text-sm font-medium hover:bg-blue-600/30 transition-colors"
                 >
-                  Edit
+                  ✏️ Edit
                 </button>
                 <button
                   onClick={() => handleToggleActive(reward)}
                   data-testid="toggle-reward-active"
-                  className="flex-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    reward.is_active
+                      ? 'bg-dark-600 text-green-400 border border-green-500/50 hover:bg-dark-500'
+                      : 'bg-dark-600 text-gray-400 border border-gray-600 hover:bg-dark-500'
+                  }`}
                 >
-                  {reward.is_active ? "Deactivate" : "Activate"}
+                  {reward.is_active ? "✓ Active" : "○ Inactive"}
                 </button>
                 <button
                   onClick={() => handleDelete(reward)}
                   data-testid="delete-reward-button"
-                  className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+                  className="px-3 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg text-sm font-medium hover:bg-red-600/30 transition-colors"
                 >
-                  Delete
+                  🗑️
                 </button>
               </div>
             </motion.div>
@@ -421,8 +425,10 @@ export default function RewardManager() {
       </div>
 
       {rewards.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          No rewards yet. Create one to get started!
+        <div className="fantasy-card text-center py-12">
+          <div className="text-6xl mb-4">🏆</div>
+          <p className="text-gray-300 text-lg">No rewards yet</p>
+          <p className="text-gray-500 text-sm mt-2">Create one to get started!</p>
         </div>
       )}
 
@@ -465,13 +471,13 @@ export default function RewardManager() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div
-            className="bg-white rounded-lg p-6 max-w-md w-full"
+            className="fantasy-card p-6 max-w-md w-full"
             data-testid="create-reward-modal"
           >
-            <h3 className="text-xl font-bold mb-4">Create New Reward</h3>
+            <h3 className="text-xl font-fantasy text-gray-100 mb-6">⚡ Create New Reward</h3>
             <form onSubmit={handleSubmitCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-200 mb-2">Reward Name</label>
                 <input
                   type="text"
                   data-testid="reward-name-input"
@@ -480,12 +486,13 @@ export default function RewardManager() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="Enter reward name..."
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   Description
                 </label>
                 <textarea
@@ -496,12 +503,13 @@ export default function RewardManager() {
                   }
                   required
                   rows={3}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="Describe the reward..."
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-200 mb-2">Type</label>
                 <select
                   data-testid="reward-type-select"
                   value={formData.type}
@@ -509,7 +517,7 @@ export default function RewardManager() {
                     setFormData({ ...formData, type: e.target.value as RewardType })
                   }
                   required
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 >
                   {Object.entries(REWARD_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -520,8 +528,8 @@ export default function RewardManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Cost (gold)
+                <label className="block text-sm font-medium text-gray-200 mb-2">
+                  💰 Cost (gold)
                 </label>
                 <input
                   type="number"
@@ -532,27 +540,27 @@ export default function RewardManager() {
                   }
                   required
                   min="1"
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   data-testid="save-reward-button"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
                 >
-                  Create Reward
+                  💾 Create Reward
                 </button>
               </div>
             </form>
@@ -564,13 +572,13 @@ export default function RewardManager() {
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div
-            className="bg-white rounded-lg p-6 max-w-md w-full"
+            className="fantasy-card p-6 max-w-md w-full"
             data-testid="edit-reward-modal"
           >
-            <h3 className="text-xl font-bold mb-4">Edit Reward</h3>
+            <h3 className="text-xl font-fantasy text-gray-100 mb-6">✏️ Edit Reward</h3>
             <form onSubmit={handleSubmitEdit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-200 mb-2">Reward Name</label>
                 <input
                   type="text"
                   data-testid="reward-name-input"
@@ -579,12 +587,12 @@ export default function RewardManager() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   Description
                 </label>
                 <textarea
@@ -595,12 +603,12 @@ export default function RewardManager() {
                   }
                   required
                   rows={3}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
+                <label className="block text-sm font-medium text-gray-200 mb-2">Type</label>
                 <select
                   data-testid="reward-type-select"
                   value={formData.type}
@@ -608,7 +616,7 @@ export default function RewardManager() {
                     setFormData({ ...formData, type: e.target.value as RewardType })
                   }
                   required
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 >
                   {Object.entries(REWARD_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -619,8 +627,8 @@ export default function RewardManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Cost (gold)
+                <label className="block text-sm font-medium text-gray-200 mb-2">
+                  💰 Cost (gold)
                 </label>
                 <input
                   type="number"
@@ -631,11 +639,11 @@ export default function RewardManager() {
                   }
                   required
                   min="1"
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -643,16 +651,16 @@ export default function RewardManager() {
                     setSelectedReward(null);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   data-testid="save-reward-button"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
                 >
-                  Save Changes
+                  💾 Save Changes
                 </button>
               </div>
             </form>
@@ -664,13 +672,14 @@ export default function RewardManager() {
       {showDeleteConfirm && deleteTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div
-            className="bg-white rounded-lg p-6 max-w-md w-full"
+            className="fantasy-card p-6 max-w-md w-full"
             data-testid="delete-confirmation-dialog"
           >
-            <h3 className="text-xl font-bold mb-4">Delete Reward?</h3>
-            <p className="mb-6">
-              Are you sure you want to delete &ldquo;{deleteTarget.name}&rdquo;? This action
-              will deactivate the reward.
+            <h3 className="text-xl font-fantasy text-red-400 mb-4">⚠️ Delete Reward?</h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-gray-100">&ldquo;{deleteTarget.name}&rdquo;</span>?
+              This action will deactivate the reward.
             </p>
             <div className="flex gap-2">
               <button
@@ -681,7 +690,7 @@ export default function RewardManager() {
                   setDeleteTarget(null);
                   setDeleteLoading(false);
                 }}
-                className={`flex-1 px-4 py-2 rounded-lg ${deleteLoading ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-gray-200 hover:bg-gray-300"}`}
+                className={`flex-1 px-4 py-2 rounded-lg ${deleteLoading ? "bg-dark-700 text-gray-500 cursor-not-allowed" : "bg-dark-600 text-gray-300 border border-dark-500 hover:bg-dark-500 transition-colors"}`}
                 disabled={deleteLoading}
               >
                 Cancel
@@ -690,9 +699,9 @@ export default function RewardManager() {
                 onClick={handleConfirmDelete}
                 disabled={deleteLoading}
                 data-testid="confirm-delete-button"
-                className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${deleteLoading ? "bg-red-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-all ${deleteLoading ? "bg-red-400 cursor-not-allowed" : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-md"}`}
               >
-                {deleteLoading ? "Deleting..." : "Delete"}
+                {deleteLoading ? "⏳ Deleting..." : "🗑️ Delete"}
               </button>
             </div>
           </div>
