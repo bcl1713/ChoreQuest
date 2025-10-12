@@ -11,8 +11,7 @@
     "docker:down": "docker compose down || true",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:e2e": "npx playwright test --reporter=line"
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
