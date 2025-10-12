@@ -877,15 +877,22 @@ export type UpdateQuestTemplateInput = TablesUpdate<'quest_templates'> & {
 export type CreateRewardInput = TablesInsert<'rewards'>;
 export type UpdateRewardInput = TablesUpdate<'rewards'>;
 
-// Recurring quest system types
-// TODO: Uncomment after database types are regenerated with new schema
-// export type QuestType = Enums<'quest_type'>;
-// export type RecurrencePattern = Enums<'recurrence_pattern'>;
-// export type CharacterQuestStreak = Tables<'character_quest_streaks'>;
+// Recurring quest system types (using generated types from database-generated.ts)
+export type QuestType = "INDIVIDUAL" | "FAMILY";
+export type RecurrencePattern = "DAILY" | "WEEKLY" | "CUSTOM";
+// Character quest streaks table type
+export type CharacterQuestStreak = {
+  id: string;
+  character_id: string;
+  template_id: string;
+  current_streak: number | null;
+  longest_streak: number | null;
+  last_completed_date: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
 
 // Recurring quest template types
-// TODO: Uncomment after database types are regenerated with new schema
-/*
 export type RecurringQuestTemplate = QuestTemplate & {
   quest_type: QuestType;
   recurrence_pattern: RecurrencePattern;
@@ -919,6 +926,18 @@ export type UpdateRecurringQuestTemplateInput = TablesUpdate<'quest_templates'> 
 };
 
 // Streak tracking types
-export type CreateCharacterQuestStreakInput = TablesInsert<'character_quest_streaks'>;
-export type UpdateCharacterQuestStreakInput = TablesUpdate<'character_quest_streaks'>;
-*/
+export type CreateCharacterQuestStreakInput = {
+  character_id: string;
+  template_id: string;
+  current_streak?: number | null;
+  longest_streak?: number | null;
+  last_completed_date?: string | null;
+};
+
+export type UpdateCharacterQuestStreakInput = {
+  character_id?: string;
+  template_id?: string;
+  current_streak?: number | null;
+  longest_streak?: number | null;
+  last_completed_date?: string | null;
+};

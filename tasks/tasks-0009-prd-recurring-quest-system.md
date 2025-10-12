@@ -53,19 +53,20 @@ This ensures all work is done on a feature branch following the project's workfl
 
 ### Services & Business Logic
 - `lib/quest-template-service.ts` - Quest template CRUD operations (exists, needs extension)
-- `lib/quest-instance-service.ts` - Quest instance operations (new file)
+- `lib/quest-instance-service.ts` - Quest instance operations (created)
 - `lib/streak-service.ts` - Streak tracking and bonus calculations (new file)
 - `lib/recurring-quest-generator.ts` - Quest generation and expiration logic with idempotency checks (created)
 - `lib/cron-jobs.ts` - Node-cron initialization and scheduling (created)
 - `lib/preset-templates.ts` - Preset template definitions (new file)
 
 ### API Routes
-- `app/api/quest-templates/route.ts` - Template CRUD endpoints (new file)
-- `app/api/quest-templates/[id]/route.ts` - Individual template operations (new file)
-- `app/api/quest-templates/[id]/pause/route.ts` - Pause/resume endpoint (new file)
+- `app/api/quest-templates/route.ts` - Template CRUD endpoints (created)
+- `app/api/quest-templates/[id]/route.ts` - Individual template operations (created)
+- `app/api/quest-templates/[id]/pause/route.ts` - Pause/resume endpoint (created)
 - `app/api/quest-templates/presets/route.ts` - Preset templates endpoint (new file)
-- `app/api/quests/[id]/claim/route.ts` - Family quest claiming (new file)
-- `app/api/quests/[id]/release/route.ts` - Release claimed quest (new file)
+- `app/api/quests/[id]/claim/route.ts` - Family quest claiming (created)
+- `app/api/quests/[id]/release/route.ts` - Release claimed quest (created)
+- `app/api/quests/[id]/assign/route.ts` - GM manual assignment endpoint (created)
 - `app/api/streaks/route.ts` - Streak data endpoints (new file)
 - `app/api/cron/generate-quests/route.ts` - Cron job endpoint with CRON_SECRET authentication (created)
 - `app/api/cron/expire-quests/route.ts` - Quest expiration endpoint with streak breaking (created)
@@ -88,7 +89,7 @@ This ensures all work is done on a feature branch following the project's workfl
 
 ### Tests (Unit Tests Only - NO E2E)
 - `lib/quest-template-service.test.ts` - Unit tests for template service
-- `lib/quest-instance-service.test.ts` - Unit tests for instance service
+- `lib/quest-instance-service.test.ts` - Unit tests for instance service (created)
 - `lib/streak-service.test.ts` - Unit tests for streak logic
 - `lib/recurring-quest-generator.test.ts` - Unit tests for quest generation and expiration (created)
 - `lib/utils/bonus-calculator.test.ts` - Unit tests for bonus calculations
@@ -155,17 +156,17 @@ This ensures all work is done on a feature branch following the project's workfl
   - [ ] 3.13 Test template CRUD operations with Postman or similar tool
 
 - [ ] 4.0 Family Quest Claiming & Individual Quest Assignment Logic
-  - [ ] 4.1 Create `lib/quest-instance-service.ts` with methods: `claimQuest()`, `releaseQuest()`, `assignQuest()`
-  - [ ] 4.2 Implement `claimQuest()`: check hero has no active family quest, update `assigned_to_id`, set `volunteered_by`, calculate `volunteer_bonus`
-  - [ ] 4.3 Implement `releaseQuest()`: clear `assigned_to_id` and `volunteered_by`, return quest to AVAILABLE status
-  - [ ] 4.4 Implement `assignQuest()` (GM manual assignment): set `assigned_to_id` without volunteer bonus
-  - [ ] 4.5 Add one-family-quest-per-hero enforcement: update `characters.active_family_quest_id` on claim, clear on release/completion
-  - [ ] 4.6 Create `POST /api/quests/:id/claim` endpoint with hero authentication
-  - [ ] 4.7 Create `POST /api/quests/:id/release` endpoint (hero or GM can release)
-  - [ ] 4.8 Create `POST /api/quests/:id/assign` endpoint (GM only) for manual assignment
-  - [ ] 4.9 Add validation: prevent claiming if hero already has active family quest
+  - [x] 4.1 Create `lib/quest-instance-service.ts` with methods: `claimQuest()`, `releaseQuest()`, `assignQuest()`
+  - [x] 4.2 Implement `claimQuest()`: check hero has no active family quest, update `assigned_to_id`, set `volunteered_by`, calculate `volunteer_bonus`
+  - [x] 4.3 Implement `releaseQuest()`: clear `assigned_to_id` and `volunteered_by`, return quest to AVAILABLE status
+  - [x] 4.4 Implement `assignQuest()` (GM manual assignment): set `assigned_to_id` without volunteer bonus
+  - [x] 4.5 Add one-family-quest-per-hero enforcement: update `characters.active_family_quest_id` on claim, clear on release/completion
+  - [x] 4.6 Create `POST /api/quests/:id/claim` endpoint with hero authentication
+  - [x] 4.7 Create `POST /api/quests/:id/release` endpoint (hero or GM can release)
+  - [x] 4.8 Create `POST /api/quests/:id/assign` endpoint (GM only) for manual assignment
+  - [x] 4.9 Add validation: prevent claiming if hero already has active family quest
   - [ ] 4.10 Add real-time event publishing via Supabase when quest is claimed/released
-  - [ ] 4.11 Write unit tests for `quest-instance-service.ts` claim/release/assign methods
+  - [x] 4.11 Write unit tests for `quest-instance-service.ts` claim/release/assign methods
   - [ ] 4.12 Write API route tests for claiming endpoints
   - [ ] 4.13 Test claiming flow with multiple heroes to verify anti-hoarding
 
