@@ -31,7 +31,9 @@ and merge to main
 - Continuously update TASKS.md as you work with completed or newly discovered
   tasks as you work
 
-4. Write Tests for jest and Playwright
+4. Write Tests for jest. Do NOT write tests for Playwright or run Playwright
+   tests during TDD. Playwright tests are for end-to-end testing after feature
+   complete and will be written by the user.
 
 - Tests MUST be comprehensive - happy path, edge cases, error conditions
 
@@ -42,7 +44,7 @@ and merge to main
 - Don't just simplify the tests to make implementation easier. Break the
   implementation into smaller steps if necessary.
 
-6. Refactor and impove code quality (Refactor phase)
+6. Refactor and improve code quality (Refactor phase)
 
 7. Continue Red-Green-Refactor cycle until feature complete
 
@@ -52,7 +54,6 @@ and merge to main
 npm run build        # Zero compilation errors
 npm run lint         # Zero linting errors/warnings
 npm run test         # All unit tests pass
-npx playwright test  # All E2E tests pass. You will have to have a running dev server for this.
 ```
 
 **If ANY step fails, fix it. No exceptions.**
@@ -71,7 +72,6 @@ gh pr merge --squash --delete-branch
 # Essential TDD Commands
 npm run test         # Run unit tests
 npm run test:watch   # Watch mode for TDD cycles
-npx playwright test  # E2E tests
 npm run build        # Verify compilation
 npm run lint         # Check code quality
 
@@ -80,53 +80,7 @@ npx prisma generate  # After schema changes
 npx prisma migrate dev # Apply migrations
 ```
 
-### 💡 Lessons Learned
-
-- **Always run tests headless for CI/automation**:
-  `npx playwright test --reporter=line`
-- **Use `--reporter=line` for clean output** - avoids spawning report servers
-  that hang processes
-- **Tests should complete and terminate properly** - no hanging servers blocking
-  workflow
-- **Use `--headed` only for debugging specific issues** - not for regular test
-  runs
-- **Create focused tests for specific bugs** - isolate the exact scenario being
-  fixed
-
 **Remember: The goal is quality software through disciplined TDD practice.**
-
-### 🧪 E2E Test Fixtures
-
-E2E tests use a **worker-scoped fixture system** for improved performance and reliability:
-
-- **Worker-scoped GM user**: Each Playwright worker gets a persistent Guild Master user and family that survives across all tests in that worker
-- **UI-based setup**: All users are created through the actual signup flow (not database inserts) for more realistic testing
-- **Automatic cleanup**: Worker teardown handles cleanup of all created users and families
-- **Multi-user helpers**: Use `createEphemeralUser()` or `createFamilyMember()` for tests requiring multiple users
-
-#### Using the Fixture
-
-```typescript
-import { test, expect } from './helpers/family-fixture';
-
-test('my test', async ({ workerFamily }) => {
-  const { gmPage, gmEmail, familyCode, createFamilyMember } = workerFamily;
-
-  // Use gmPage for GM user actions
-  await gmPage.goto('/dashboard');
-
-  // Create additional family members if needed
-  const hero = await createFamilyMember({ characterClass: 'KNIGHT' });
-  await hero.page.goto('/dashboard');
-});
-```
-
-#### Key Principles
-
-- **Import from family-fixture.ts**: Always import `test` and `expect` from `./helpers/family-fixture` (not `@playwright/test`)
-- **No database manipulation in tests**: All test actions should go through the UI
-- **Worker isolation**: Each worker has its own isolated family and users
-- **Parallel execution**: Tests run safely in parallel across multiple workers
 
 ## Extra Notes
 
@@ -138,9 +92,14 @@ test('my test', async ({ workerFamily }) => {
 
 ## Critical Supabase Configuration
 
-⚠️ **IMPORTANT**: The `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env` MUST be a valid JWT token, not the "Publishable key" shown in `supabase status`.
+⚠️ **IMPORTANT**: The `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env` MUST be a valid
+JWT token, not the "Publishable key" shown in `supabase status`.
 
-- **Wrong**: `sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH` (causes "Expected 3 parts in JWT; got 1" errors)
-- **Correct**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsaG9zdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzU5MTA2NjMxLCJleHAiOjE3OTA2NDI2MzF9.NkngKkUpeZJRgEwsTAOQFzauIXVPgHsx7M6afIk3iZ8`
+- **Wrong**: `sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH` (causes "Expected
+  3 parts in JWT; got 1" errors)
+- **Correct**:
+  `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsaG9zdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzU5MTA2NjMxLCJleHAiOjE3OTA2NDI2MzF9.NkngKkUpeZJRgEwsTAOQFzauIXVPgHsx7M6afIk3iZ8`
 
-If family joining shows "Invalid family code" for ALL codes (even valid ones), check that the anon key is a proper JWT token. Generate using the default Supabase local secret: `super-secret-jwt-token-with-at-least-32-characters-long`
+If family joining shows "Invalid family code" for ALL codes (even valid ones),
+check that the anon key is a proper JWT token. Generate using the default
+Supabase local secret: `super-secret-jwt-token-with-at-least-32-characters-long`
