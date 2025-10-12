@@ -97,6 +97,7 @@ This ensures all work is done on a feature branch following the project's workfl
 - `components/quest-template-form.test.tsx` - Unit tests for template form
 - `components/family-quest-claiming.test.tsx` - Unit tests for claiming UI
 - `components/streak-display.test.tsx` - Unit tests for streak display
+- `tests/integration/quest-claiming-api.integration.test.ts` - Integration tests for API routes (created)
 
 ### Notes
 - Unit tests should be placed alongside the code files they are testing
@@ -155,7 +156,7 @@ This ensures all work is done on a feature branch following the project's workfl
   - [ ] 3.12 Write API route tests for all template endpoints
   - [ ] 3.13 Test template CRUD operations with Postman or similar tool
 
-- [ ] 4.0 Family Quest Claiming & Individual Quest Assignment Logic
+- [x] 4.0 Family Quest Claiming & Individual Quest Assignment Logic
   - [x] 4.1 Create `lib/quest-instance-service.ts` with methods: `claimQuest()`, `releaseQuest()`, `assignQuest()`
   - [x] 4.2 Implement `claimQuest()`: check hero has no active family quest, update `assigned_to_id`, set `volunteered_by`, calculate `volunteer_bonus`
   - [x] 4.3 Implement `releaseQuest()`: clear `assigned_to_id` and `volunteered_by`, return quest to AVAILABLE status
@@ -165,9 +166,9 @@ This ensures all work is done on a feature branch following the project's workfl
   - [x] 4.7 Create `POST /api/quests/:id/release` endpoint (hero or GM can release)
   - [x] 4.8 Create `POST /api/quests/:id/assign` endpoint (GM only) for manual assignment
   - [x] 4.9 Add validation: prevent claiming if hero already has active family quest
-  - [ ] 4.10 Add real-time event publishing via Supabase when quest is claimed/released
+  - [x] 4.10 Add real-time event publishing via Supabase when quest is claimed/released
   - [x] 4.11 Write unit tests for `quest-instance-service.ts` claim/release/assign methods
-  - [ ] 4.12 Write API route tests for claiming endpoints
+  - [x] 4.12 Write API route tests for claiming endpoints
   - [ ] 4.13 Test claiming flow with multiple heroes to verify anti-hoarding
 
 - [ ] 5.0 Streak Tracking System
