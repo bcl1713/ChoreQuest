@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import '@testing-library/jest-dom'
 
 // Only setup fetch polyfills for Node.js environment tests

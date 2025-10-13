@@ -4,8 +4,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
-import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
+import { QuestInstance, QuestDifficulty, UserProfile, Tables } from "@/lib/types/database";
 import { RewardCalculator } from "@/lib/reward-calculator";
+import { streakService } from "@/lib/streak-service";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations/variants";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -22,6 +23,7 @@ export default function QuestDashboard({
   const { user, session, profile } = useAuth();
   const { onQuestUpdate } = useRealtime();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
+  const [streaks, setStreaks] = useState<Tables<"character_quest_streaks">[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
@@ -63,6 +65,12 @@ export default function QuestDashboard({
         }
 
         setQuestInstances(deduplicateQuests(questData || []));
+
+        // Load streaks for the current character
+        if (user.id) {
+          const characterStreaks = await streakService.getCharacterStreaks(user.id);
+          setStreaks(characterStreaks);
+        }
 
         // Load family members for assignment dropdown
         try {
@@ -175,7 +183,7 @@ export default function QuestDashboard({
         // First get quest details
         const { data: questData, error: questError } = await supabase
           .from('quest_instances')
-          .select('*')
+          .select('*, quest_templates ( recurrence_pattern )')
           .eq('id', questId)
           .single();
 
@@ -189,6 +197,8 @@ export default function QuestDashboard({
           gold: questData.gold_reward,
         };
 
+        let streakBonus = 0;
+
         // If quest is assigned, calculate rewards with bonuses
         if (questData.assigned_to_id) {
           // Get current character stats and class
@@ -199,6 +209,27 @@ export default function QuestDashboard({
             .single();
 
           if (!characterFetchError && characterData) {
+            // --- Streak Logic ---
+            if (questData.template_id) {
+              const streak = await streakService.getStreak(questData.assigned_to_id, questData.template_id);
+              const isConsecutive = streakService.validateConsecutiveCompletion(
+                streak.last_completed_date,
+                questData.quest_templates?.recurrence_pattern || 'CUSTOM',
+                new Date()
+              );
+
+              let currentStreak = streak.current_streak || 0;
+              if (isConsecutive) {
+                const updatedStreak = await streakService.incrementStreak(questData.assigned_to_id, questData.template_id, new Date());
+                currentStreak = updatedStreak.current_streak || 0;
+              } else {
+                await streakService.resetStreak(questData.assigned_to_id, questData.template_id);
+                currentStreak = 0;
+              }
+              streakBonus = streakService.calculateStreakBonus(currentStreak);
+            }
+            // --- End Streak Logic ---
+
             // Calculate rewards using RewardCalculator with class bonuses
             const baseRewards = {
               xpReward: questData.xp_reward,
@@ -214,10 +245,10 @@ export default function QuestDashboard({
               characterData.level
             );
 
-            // Update final rewards with calculated values
+            // Update final rewards with calculated values and streak bonus
             finalRewards = {
-              xp: calculatedRewards.xp,
-              gold: calculatedRewards.gold,
+              xp: Math.floor(calculatedRewards.xp * (1 + streakBonus)),
+              gold: Math.floor(calculatedRewards.gold * (1 + streakBonus)),
             };
           }
         }
@@ -228,6 +259,9 @@ export default function QuestDashboard({
           .update({
             status: 'APPROVED',
             approved_at: new Date().toISOString(),
+            xp_awarded: finalRewards.xp,
+            gold_awarded: finalRewards.gold,
+            streak_bonus: streakBonus,
           })
           .eq('id', questId);
 
@@ -569,81 +603,89 @@ export default function QuestDashboard({
             initial="hidden"
             animate="visible"
           >
-            {myQuests.map((quest) => (
-              <motion.div
-                key={quest.id}
-                variants={staggerItem}
-                className="fantasy-card p-6"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-100">
-                      {quest.title}
-                    </h4>
-                    <p className="text-gray-400 text-sm">{quest.description}</p>
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
-                  >
-                    {(quest.status || 'PENDING').replace("_", " ")}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-4 text-sm">
-                    <span className={getDifficultyColor(quest.difficulty)}>
-                      {quest.difficulty}
+            {myQuests.map((quest) => {
+              const streak = streaks.find(s => s.template_id === quest.template_id);
+              return (
+                <motion.div
+                  key={quest.id}
+                  variants={staggerItem}
+                  className="fantasy-card p-6"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-100 flex items-center">
+                        {quest.title}
+                        {streak && streak.current_streak > 0 && (
+                          <span className="ml-2 text-sm font-bold text-orange-400 flex items-center">
+                            <span className="text-lg">🔥</span> {streak.current_streak}-day streak
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-gray-400 text-sm">{quest.description}</p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
+                    >
+                      {(quest.status || 'PENDING').replace("_", " ")}
                     </span>
-                    <span className="text-gold-400">💰 {quest.gold_reward}</span>
-                    <span className="xp-text">⚡ {quest.xp_reward} XP</span>
-                    {formatDueDate(quest.due_date) && (
-                      <span className="text-blue-400">
-                        {formatDueDate(quest.due_date)}
-                      </span>
-                    )}
                   </div>
 
-                  <div className="flex gap-2">
-                    {quest.status === "PENDING" &&
-                      canUpdateStatus(quest, "IN_PROGRESS") && (
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "IN_PROGRESS")
-                          }
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          data-testid="start-quest-button"
-                        >
-                          Start Quest
-                        </button>
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-4 text-sm">
+                      <span className={getDifficultyColor(quest.difficulty)}>
+                        {quest.difficulty}
+                      </span>
+                      <span className="text-gold-400">💰 {quest.gold_reward}</span>
+                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
+                      {formatDueDate(quest.due_date) && (
+                        <span className="text-blue-400">
+                          {formatDueDate(quest.due_date)}
+                        </span>
                       )}
-                    {quest.status === "IN_PROGRESS" &&
-                      canUpdateStatus(quest, "COMPLETED") && (
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "COMPLETED")
-                          }
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          data-testid="complete-quest-button"
-                        >
-                          Complete
-                        </button>
-                      )}
-                    {quest.status === "COMPLETED" &&
-                      canUpdateStatus(quest, "APPROVED") && (
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "APPROVED")
-                          }
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          data-testid="approve-quest-button"
-                        >
-                          Approve
-                        </button>
-                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      {quest.status === "PENDING" &&
+                        canUpdateStatus(quest, "IN_PROGRESS") && (
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(quest.id, "IN_PROGRESS")
+                            }
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            data-testid="start-quest-button"
+                          >
+                            Start Quest
+                          </button>
+                        )}
+                      {quest.status === "IN_PROGRESS" &&
+                        canUpdateStatus(quest, "COMPLETED") && (
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(quest.id, "COMPLETED")
+                            }
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            data-testid="complete-quest-button"
+                          >
+                            Complete
+                          </button>
+                        )}
+                      {quest.status === "COMPLETED" &&
+                        canUpdateStatus(quest, "APPROVED") && (
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(quest.id, "APPROVED")
+                            }
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            data-testid="approve-quest-button"
+                          >
+                            Approve
+                          </button>
+                        )}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
       </section>

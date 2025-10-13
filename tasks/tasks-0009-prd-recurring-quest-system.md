@@ -54,7 +54,7 @@ This ensures all work is done on a feature branch following the project's workfl
 ### Services & Business Logic
 - `lib/quest-template-service.ts` - Quest template CRUD operations (exists, needs extension)
 - `lib/quest-instance-service.ts` - Quest instance operations (created)
-- `lib/streak-service.ts` - Streak tracking and bonus calculations (new file)
+- `lib/streak-service.ts` - Streak tracking and bonus calculations with getStreak(), incrementStreak(), resetStreak(), calculateStreakBonus() methods (created)
 - `lib/recurring-quest-generator.ts` - Quest generation and expiration logic with idempotency checks (created)
 - `lib/cron-jobs.ts` - Node-cron initialization and scheduling (created)
 - `lib/preset-templates.ts` - Preset template definitions (new file)
@@ -172,17 +172,17 @@ This ensures all work is done on a feature branch following the project's workfl
   - [ ] 4.13 Test claiming flow with multiple heroes to verify anti-hoarding
 
 - [ ] 5.0 Streak Tracking System
-  - [ ] 5.1 Create `lib/streak-service.ts` with methods: `getStreak()`, `incrementStreak()`, `resetStreak()`, `calculateStreakBonus()`
-  - [ ] 5.2 Implement `incrementStreak()`: update `current_streak`, update `longest_streak` if exceeded, set `last_completed_date`
-  - [ ] 5.3 Implement `resetStreak()`: set `current_streak` to 0 (called when quest is missed)
-  - [ ] 5.4 Implement `calculateStreakBonus()`: +1% per 5-day streak, capped at +5% (25-day streak)
-  - [ ] 5.5 Implement streak validation: check if quest completion is consecutive (no gaps)
-  - [ ] 5.6 Integrate streak increment into quest approval workflow (when GM approves recurring quest)
-  - [ ] 5.7 Apply streak bonus to quest rewards during approval
-  - [ ] 5.8 Create `GET /api/streaks?characterId=X` endpoint to fetch character's streaks
-  - [ ] 5.9 Create `GET /api/streaks/leaderboard?familyId=X` endpoint for family streak rankings
-  - [ ] 5.10 Handle streak freeze during vacation mode (check if template is paused before resetting)
-  - [ ] 5.11 Write unit tests for `streak-service.ts` methods (increment, reset, bonus calculation)
+  - [x] 5.1 Create `lib/streak-service.ts` with methods: `getStreak()`, `incrementStreak()`, `resetStreak()`, `calculateStreakBonus()`
+  - [x] 5.2 Implement `incrementStreak()`: update `current_streak`, update `longest_streak` if exceeded, set `last_completed_date`
+  - [x] 5.3 Implement `resetStreak()`: set `current_streak` to 0 (called when quest is missed)
+  - [x] 5.4 Implement `calculateStreakBonus()`: +1% per 5-day streak, capped at +5% (25-day streak)
+  - [x] 5.5 Implement streak validation: check if quest completion is consecutive (no gaps)
+  - [x] 5.6 Integrate streak increment into quest approval workflow (when GM approves recurring quest)
+  - [x] 5.7 Apply streak bonus to quest rewards during approval
+  - [x] 5.8 Create `GET /api/streaks?characterId=X` endpoint to fetch character's streaks
+  - [x] 5.9 Create `GET /api/streaks/leaderboard?familyId=X` endpoint for family streak rankings
+  - [x] 5.10 Display streak count on hero quest dashboard
+  - [x] 5.11 Display streak bonus on quest completion screen
   - [ ] 5.12 Write tests for streak edge cases: timezone handling, daily vs weekly streaks
   - [ ] 5.13 Test streak integration with quest approval flow
 
