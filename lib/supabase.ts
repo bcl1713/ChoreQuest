@@ -8,7 +8,11 @@ import { createClient } from '@supabase/supabase-js';
 // Use internal URL when running on the server (Docker-to-Docker communication)
 const resolveSupabaseUrl = () => {
   if (typeof window === 'undefined') {
-    return process.env.SUPABASE_INTERNAL_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return (
+      process.env.SUPABASE_INTERNAL_URL ||
+      process.env.SUPABASE_URL ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL
+    );
   }
   return process.env.NEXT_PUBLIC_SUPABASE_URL;
 };

@@ -11,9 +11,11 @@ import type { Database } from './types/database';
 
 const resolveServerSupabaseUrl = (): string => {
   const internalUrl = process.env.SUPABASE_INTERNAL_URL;
+  const serverUrl = process.env.SUPABASE_URL;
   const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (internalUrl) return internalUrl;
+  if (serverUrl) return serverUrl;
   if (publicUrl) return publicUrl;
 
   throw new Error('Missing Supabase URL (SUPABASE_INTERNAL_URL or NEXT_PUBLIC_SUPABASE_URL)');

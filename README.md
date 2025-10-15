@@ -253,6 +253,7 @@ cp .env.production.example .env.production
 # Also set:
 #   NEXTAUTH_URL=http://127.0.0.1:3000
 #   SUPABASE_INTERNAL_URL=http://host.docker.internal:54321
+#   SUPABASE_URL=http://127.0.0.1:54321  # optional override for Node/test clients
 #   CRON_SECRET=<generate-a-strong-random-string>
 
 # 4. Build and deploy ChoreQuest
@@ -287,6 +288,7 @@ cp .env.production.example .env.production
 # Also set:
 #   NEXTAUTH_URL=http://127.0.0.1:3000
 #   SUPABASE_INTERNAL_URL=<your-supabase-project-url>
+#   SUPABASE_URL=<same-as-public-url if you run tests/CLI>
 #   CRON_SECRET=<generate-a-strong-random-string>
 
 # 5. Build and deploy ChoreQuest
