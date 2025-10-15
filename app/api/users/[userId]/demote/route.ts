@@ -91,6 +91,13 @@ export async function POST(
       );
     }
 
+    if (!requesterProfile.family_id) {
+      return NextResponse.json(
+        { error: 'Requester is not associated with a family' },
+        { status: 400 }
+      );
+    }
+
     // Verify target is a Guild Master
     if (targetProfile.role !== 'GUILD_MASTER') {
       return NextResponse.json(
