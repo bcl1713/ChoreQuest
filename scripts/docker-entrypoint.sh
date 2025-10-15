@@ -79,13 +79,12 @@ run_migrations() {
             echo "→ Applying migration: $filename"
 
             # Execute migration directly with psql
-            PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration" > /dev/null 2>&1
-
-            if [ $? -eq 0 ]; then
+            if PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration"; then
                 migration_count=$((migration_count + 1))
                 echo "  ✓ Applied: $filename"
             else
                 echo "  ✗ Failed: $filename"
+                return 1
             fi
         fi
     done
@@ -107,12 +106,11 @@ seed_database() {
     echo "→ Running seed data..."
 
     # Execute seed SQL directly with psql
-    PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "./supabase/seed.sql" > /dev/null 2>&1
-
-    if [ $? -eq 0 ]; then
+    if PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "./supabase/seed.sql"; then
         echo "✓ Database seeded successfully"
     else
         echo "✗ Database seeding failed"
+        return 1
     fi
 }
 
