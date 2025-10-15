@@ -224,209 +224,93 @@ ChoreQuest follows Test-Driven Development (TDD) principles:
 
 Target: **80%+ code coverage** across all modules.
 
-## 🚀 Production Deployment
+## 🚀 Deployment (Preferred)
 
-ChoreQuest can be deployed using three different Supabase options. All options use the same ChoreQuest Docker container, which automatically initializes the database on first run.
+The recommended way to run ChoreQuest is a single-host Docker Compose stack that includes both Supabase and the app. It keeps everything local, mirrors production behaviour, and remains repeatable.
 
 ### Prerequisites
 
-- Docker and Docker Compose installed
-- Git (for cloning the repository)
+- Docker & Docker Compose
+- Git
+- A LAN IP or hostname that all of your devices can reach (e.g. `192.168.86.114`)
 
-### Deployment Options
-
-#### Option A: Local Supabase CLI (Development/Testing)
-
-**Best for:** Quick local development and testing
+### 1. Set up Supabase
 
 ```bash
-# 1. Start local Supabase
-npx supabase start
-
-# 2. Get credentials
-npx supabase status
-# Copy: API URL, anon key, service_role key
-
-# 3. Configure ChoreQuest
-cp .env.production.example .env.production
-# Edit .env.production with credentials from step 2
-# Also set:
-#   NEXTAUTH_URL=http://127.0.0.1:3000
-#   SUPABASE_INTERNAL_URL=http://host.docker.internal:54321
-#   SUPABASE_URL=http://127.0.0.1:54321  # optional override for Node/test clients
-#   CRON_SECRET=<generate-a-strong-random-string>
-
-# 4. Build and deploy ChoreQuest
-docker compose --env-file .env.production -f docker-compose.prod.yml build
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d
-
-# 5. Access application
-# ChoreQuest: http://localhost:3000
-# Database auto-initializes on first run
-```
-
-#### Option B: Hosted Supabase (supabase.com)
-
-**Best for:** Production deployments without infrastructure management
-
-```bash
-# 1. Create Supabase project
-# Go to https://supabase.com and create a new project
-
-# 2. Get credentials from Supabase Dashboard
-# Project Settings → API
-# Copy: Project URL, anon/public key, service_role key
-# ⚠️ Use "anon key" not "publishable key" (JWT format: eyJ...)
-
-# 3. Run database migrations
-# In Supabase Dashboard → SQL Editor
-# Copy and run each migration from supabase/migrations/*.sql in order
-
-# 4. Configure ChoreQuest
-cp .env.production.example .env.production
-# Edit .env.production with credentials from step 2
-# Also set:
-#   NEXTAUTH_URL=http://127.0.0.1:3000
-#   SUPABASE_INTERNAL_URL=<your-supabase-project-url>
-#   SUPABASE_URL=<same-as-public-url if you run tests/CLI>
-#   CRON_SECRET=<generate-a-strong-random-string>
-
-# 5. Build and deploy ChoreQuest
-docker compose --env-file .env.production -f docker-compose.prod.yml build
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d
-
-# 6. Access application
-# ChoreQuest: http://localhost:3000
-```
-
-#### Option C: Self-Hosted Supabase Docker (Full Control)
-
-**Best for:** Production deployments with full infrastructure control
-
-This is a **two-step process**: First deploy Supabase, then deploy ChoreQuest.
-
-**Quick Start (Docker Compose for everything)**
-
-```bash
-# In one terminal: run Supabase stack
-cd supabase-docker
-cp .env.example .env  # edit secrets before production!
-./bin/fetch-volumes.sh  # download required Supabase config + SQL assets
-docker compose up -d
-
-# In a second terminal: deploy ChoreQuest app
-cd ..
-cp .env.production.example .env.production  # add Supabase credentials
-# Required edits in .env.production:
-#   - NEXT_PUBLIC_SUPABASE_URL / SUPABASE_INTERNAL_URL
-#   - NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
-#   - NEXTAUTH_URL=http://127.0.0.1:3000 (container-to-container base URL)
-#   - CRON_SECRET=<generate a strong shared secret>
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
-
-# Verify both stacks
-docker compose -f supabase-docker/docker-compose.yml ps
-docker compose --env-file .env.production -f docker-compose.prod.yml ps
-```
-
-> Need a specific Supabase release? Run `SUPABASE_REF=<git-ref> ./bin/fetch-volumes.sh` to pin the downloaded assets to a tag or commit.
-
-**Step 1: Deploy Supabase**
-
-```bash
-# 1. Configure Supabase
 cd supabase-docker
 cp .env.example .env
-# Edit .env and CHANGE DEFAULT PASSWORDS!
-
-# 2. Download Supabase assets + start services
-./bin/fetch-volumes.sh  # run again when SUPABASE_REF changes
-docker compose up -d
-
-# Wait 30-60 seconds for services to start
-docker compose ps  # Verify all services are healthy
-
-# 3. Access Supabase Studio
-# Open: http://localhost:8000
-# Login: supabase / this_password_is_insecure_and_should_be_updated
-# ⚠️ Change these credentials immediately!
-
-# 4. Get API credentials from .env file
-# The keys are already in your supabase-docker/.env file
-cd supabase-docker
-cat .env | grep -E "ANON_KEY=|SERVICE_ROLE_KEY="
-# Copy these JWT tokens (starting with eyJ...)
+./bin/fetch-volumes.sh              # downloads Kong/Vector/config SQL assets
 ```
 
-**Step 2: Deploy ChoreQuest**
+Edit `supabase-docker/.env`:
+
+- Rotate every secret (`POSTGRES_PASSWORD`, `JWT_SECRET`, keys, dashboard creds, …).
+- Replace all `localhost` references that face the outside world:
+  ```
+  SITE_URL=http://<your-host>:3000
+  API_EXTERNAL_URL=http://<your-host>:8000
+  SUPABASE_PUBLIC_URL=http://<your-host>:8000
+  ADDITIONAL_REDIRECT_URLS=http://<your-host>:3000
+  ```
+- Adjust SMTP/OpenAI/etc. as needed.
+
+Then launch Supabase:
 
 ```bash
-# 5. Configure ChoreQuest
-cd ..  # Back to project root
-cp .env.production.example .env.production
-
-# Edit .env.production with the following:
-# IMPORTANT: Client needs localhost, server needs container name
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000  # For browser
-SUPABASE_INTERNAL_URL=http://supabase-kong:8000  # For server-side migrations
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-from-supabase/.env>
-SUPABASE_SERVICE_ROLE_KEY=<service-role-key-from-supabase/.env>
-NEXTAUTH_URL=http://127.0.0.1:3000  # Internal URL for cron + auth callbacks
-CRON_SECRET=<generate-a-strong-random-string>
-
-# 6. Build ChoreQuest with Supabase credentials
-docker compose --env-file .env.production -f docker-compose.prod.yml build
-
-# 7. Deploy ChoreQuest
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d
-
-# 8. Verify deployment
-# ChoreQuest: http://localhost:3000
-# Supabase Studio: http://localhost:8000
-# Database auto-initializes and migrates on first run
+docker compose up -d
+docker compose ps                # wait until everything reports healthy
 ```
 
-#### Local Smoke Test Checklist
+> Need to pin a specific Supabase release? Run `SUPABASE_REF=<git-ref> ./bin/fetch-volumes.sh` before `docker compose up`.
 
-Use this checklist before promoting a release:
+### 2. Configure ChoreQuest
 
-1. `docker compose -f supabase-docker/docker-compose.yml ps` shows all Supabase containers as `healthy`.
-2. `docker compose --env-file .env.production -f docker-compose.prod.yml ps` shows the `app` container as `healthy`.
-3. `docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app` includes `Prisma schema loaded` and `Database migrations complete`.
-4. Visit `http://localhost:3000/api/health` and confirm the JSON response reports `"status":"ok"` and `"version":"0.2.0"`.
-5. Run `npm run test` locally for regression coverage (optional but recommended).
-> During first boot, the app's health check may briefly report Supabase as unavailable while migrations are still running; it becomes healthy once initialization finishes.
+```bash
+cd ..
+cp .env.production.example .env.production
+```
 
-### Portainer Deployment
+Edit `.env.production` so the application and every client know where Supabase lives:
 
-**Works with all three Supabase options**
+```
+NEXT_PUBLIC_SUPABASE_URL=http://<your-host>:8000      # browsers/mobile devices
+SUPABASE_INTERNAL_URL=http://supabase-kong:8000       # container-to-container traffic
+SUPABASE_URL=http://<your-host>:8000                  # optional fallback for tests/CLI
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<copy from supabase-docker/.env>
+SUPABASE_SERVICE_ROLE_KEY=<copy from supabase-docker/.env>
+DB_PASSWORD=<same POSTGRES_PASSWORD as Supabase stack>
 
-1. **Setup Supabase** (choose your option):
-   - Option A: Run `npx supabase start` on your server
-   - Option B: Create project at supabase.com
-   - Option C: Deploy Supabase stack in Portainer first
+NEXTAUTH_URL=http://<your-host>:3000                  # must match the URL users visit
+CRON_SECRET=<generate-a-strong-random-string>
+```
 
-2. **Get Supabase credentials** (see option-specific instructions above)
+### 3. Start ChoreQuest
 
-3. **Deploy ChoreQuest in Portainer**:
-   - Stacks → Add Stack
-   - Name: `chorequest`
-   - Build method: **Repository**
-   - Repository URL: `https://github.com/your-org/ChoreQuest`
-   - Compose path: `docker-compose.prod.yml`
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+```
 
-4. **Add Environment Variables**:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-   ```
+### 4. Verify
 
-5. **Deploy Stack**
+```bash
+docker compose -f supabase-docker/docker-compose.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app
+```
 
-6. **Verify**: Access ChoreQuest at `http://your-server:3000`
+- First boot runs migrations automatically. Health checks may show “unhealthy” until Supabase finishes initialising.
+- Visit `http://<your-host>:3000/api/health` — expect `{ "status": "ok", "version": "0.2.0", … }`.
+- Optionally run `npm run test` locally for extra assurance.
 
-### Important Notes
+### 5. Daily Use
+
+- App: `http://<your-host>:3000`
+- Supabase Studio: `http://<your-host>:8000`
+- Update or restart: rerun the same `docker compose … up -d` commands (include `--build` after pulling new code).
+
+### Alternative Deployments
+
+Hosted Supabase or the Supabase CLI still work — copy the relevant values into `.env.production` and skip the Supabase Docker stack. Portainer users can point a stack at this repo and provide the same environment variables.
 
 ⚠️ **Supabase Keys:** Always use the "anon key" from Supabase, NOT the "publishable key". The correct key is a JWT token (3 parts separated by dots, starting with `eyJ...`).
 

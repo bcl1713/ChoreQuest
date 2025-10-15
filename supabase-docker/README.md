@@ -40,23 +40,25 @@ All services should show as "healthy" or "running".
 
 ### 4. Access Supabase Studio
 
-Open your browser to: `http://localhost:8000`
+Open your browser to: `http://<your-host-or-ip>:8000`
 
 **Default credentials:**
 - Username: `supabase`
 - Password: `this_password_is_insecure_and_should_be_updated`
 
-⚠️ **IMPORTANT**: Change these credentials in production!
+⚠️ **IMPORTANT**:
+- Change these credentials in production.
+- Replace every `localhost` entry in `.env` (e.g. `SITE_URL`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `ADDITIONAL_REDIRECT_URLS`) with the host or IP that other devices will use, such as `http://192.168.x.x`.
 
 ## Getting API Credentials
 
 Once Supabase Studio is running, you can find your API credentials:
 
-1. Open Supabase Studio: `http://localhost:8000`
+1. Open Supabase Studio: `http://<your-host-or-ip>:8000`
 2. Log in with default credentials
 3. Go to **Project Settings** → **API**
 4. Copy the following:
-   - **API URL**: `http://localhost:8000` (or your server's IP/domain)
+   - **API URL**: `http://<your-host-or-ip>:8000`
    - **anon/public key**: Starts with `eyJh...` (this is a JWT token)
    - **service_role key**: Also starts with `eyJh...` (this is a JWT token)
 
@@ -74,7 +76,7 @@ After Supabase is running and you have your credentials:
    ```
 3. Edit `.env.production` and add your Supabase credentials:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
+   NEXT_PUBLIC_SUPABASE_URL=http://<your-host-or-ip>:8000
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key-from-studio>
    SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key-from-studio>
    ```
