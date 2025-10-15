@@ -248,6 +248,24 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 
 This is a **two-step process**: First deploy Supabase, then deploy ChoreQuest.
 
+**Quick Start (Docker Compose for everything)**
+
+```bash
+# In one terminal: run Supabase stack
+cd supabase-docker
+cp .env.example .env  # edit secrets before production!
+docker compose up -d
+
+# In a second terminal: deploy ChoreQuest app
+cd ..
+cp .env.production.example .env.production  # add Supabase credentials
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+
+# Verify both stacks
+docker compose -f supabase-docker/docker-compose.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+```
+
 **Step 1: Deploy Supabase**
 
 ```bash
@@ -299,6 +317,16 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 # Supabase Studio: http://localhost:8000
 # Database auto-initializes and migrates on first run
 ```
+
+#### Local Smoke Test Checklist
+
+Use this checklist before promoting a release:
+
+1. `docker compose -f supabase-docker/docker-compose.yml ps` shows all Supabase containers as `healthy`.
+2. `docker compose --env-file .env.production -f docker-compose.prod.yml ps` shows the `app` container as `healthy`.
+3. `docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app` includes `Prisma schema loaded` and `Database migrations complete`.
+4. Visit `http://localhost:3000/api/health` and confirm the JSON response reports `"status":"ok"` and `"version":"0.2.0"`.
+5. Run `npm run test` locally for regression coverage (optional but recommended).
 
 ### Portainer Deployment
 
