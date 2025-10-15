@@ -312,21 +312,25 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app
 
 Hosted Supabase or the Supabase CLI still work — copy the relevant values into `.env.production` and skip the Supabase Docker stack. Portainer users can point a stack at this repo and provide the same environment variables.
 
-#### Portainer Stack
+#### Portainer Stacks
 
-1. Package the environment values you would normally place in `.env.production`:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `SUPABASE_INTERNAL_URL` (if you are also running Supabase in Portainer; otherwise omit)
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXTAUTH_URL`
-   - `CRON_SECRET`
-   - Any optional overrides (`SUPABASE_URL`, `DB_PASSWORD`, etc.)
-2. In Portainer:
+1. **Supabase stack** (from `supabase-docker/`):
+   - Copy `supabase-docker/.env.example` to `.env`, rotate all secrets, and replace every `localhost` host/IP that external devices will hit.
+   - In Portainer ➜ Stacks ➜ **Add Stack**, choose **Upload** (or paste the file contents) and load `supabase-docker/docker-compose.yml`.
+   - Provide the `.env` values you prepared and deploy. Wait until all services show “healthy”.
+2. **ChoreQuest stack**:
+   - Package the environment values you would normally place in `.env.production`:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `SUPABASE_INTERNAL_URL` (if you are also running Supabase in Portainer; otherwise omit)
+     - `SUPABASE_SERVICE_ROLE_KEY`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     - `NEXTAUTH_URL`
+     - `CRON_SECRET`
+     - Any optional overrides (`SUPABASE_URL`, `DB_PASSWORD`, etc.)
+   - In Portainer ➜ Stacks ➜ **Add Stack**, choose **Repository**, point to `https://github.com/your-org/ChoreQuest`, and set `docker-compose.prod.yml` as the compose path.
    - Stacks → **Add Stack** → enter a stack name (e.g. `chorequest`).
-   - Choose the **Repository** method, supply `https://github.com/your-org/ChoreQuest`, and set `docker-compose.prod.yml` as the compose path.
    - Paste the environment variables collected in step 1.
-3. Deploy the stack, then open the Portainer console for the Supabase services (if you are hosting Supabase there as well) and ensure the same LAN host/IP values are used so mobile devices stay authenticated.
+3. Deploy both stacks. The Supabase stack should expose Kong on `:8000` and Studio on `:8000`; the ChoreQuest stack should point to the same host/IP and the internal URL `http://supabase-kong:8000`.
 
 ⚠️ **Supabase Keys:** Always use the "anon key" from Supabase, NOT the "publishable key". The correct key is a JWT token (3 parts separated by dots, starting with `eyJ...`).
 
