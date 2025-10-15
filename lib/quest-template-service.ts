@@ -81,7 +81,19 @@ export class QuestTemplateService {
    * @param templateId - The template ID to delete
    * @returns The deleted quest template
    */
-  async deleteTemplate(templateId: string): Promise<QuestTemplate> {
+  async deleteTemplate(templateId: string, cleanup: boolean = false): Promise<QuestTemplate> {
+    if (cleanup) {
+      // Also delete all quest instances associated with this template
+      const { error: deleteInstancesError } = await supabase
+        .from('quest_instances')
+        .delete()
+        .eq('template_id', templateId);
+
+      if (deleteInstancesError) {
+        throw new Error(`Failed to clean up quest instances: ${deleteInstancesError.message}`);
+      }
+    }
+
     const { data, error } = await supabase
       .from("quest_templates")
       .update({ is_active: false })

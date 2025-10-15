@@ -322,6 +322,7 @@ export type Database = {
           family_id: string | null
           gold_reward: number
           id: string
+          recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern"] | null
           quest_type: Database["public"]["Enums"]["quest_type"] | null
           status: Database["public"]["Enums"]["quest_status"] | null
           streak_bonus: number | null
@@ -348,6 +349,7 @@ export type Database = {
           family_id?: string | null
           gold_reward: number
           id?: string
+          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
           quest_type?: Database["public"]["Enums"]["quest_type"] | null
           status?: Database["public"]["Enums"]["quest_status"] | null
           streak_bonus?: number | null
@@ -374,6 +376,7 @@ export type Database = {
           family_id?: string | null
           gold_reward?: number
           id?: string
+          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
           quest_type?: Database["public"]["Enums"]["quest_type"] | null
           status?: Database["public"]["Enums"]["quest_status"] | null
           streak_bonus?: number | null
@@ -976,4 +979,3 @@ export const Constants = {
     },
   },
 } as const
-

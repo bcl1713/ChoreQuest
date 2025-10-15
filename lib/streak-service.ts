@@ -5,6 +5,7 @@
  */
 
 import { supabase } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database-generated";
 
 type CharacterQuestStreak = Tables<"character_quest_streaks">;
@@ -17,6 +18,9 @@ const STREAK_THRESHOLD_DAYS = 5; // Bonus increases every 5 days
 const MAX_STREAK_BONUS = 0.05; // 5% maximum bonus (25-day streak)
 
 export class StreakService {
+  constructor(
+    private readonly client: SupabaseClient | typeof supabase = supabase
+  ) {}
   /**
    * Get the current streak for a character and template
    * Creates a new streak record if one doesn't exist
@@ -25,7 +29,7 @@ export class StreakService {
    * @returns The streak record
    */
   async getStreak(characterId: string, templateId: string): Promise<CharacterQuestStreak> {
-    const { data: streak, error } = await supabase
+    const { data: streak, error } = await this.client
       .from("character_quest_streaks")
       .select("*")
       .eq("character_id", characterId)
@@ -42,7 +46,7 @@ export class StreakService {
         last_completed_date: null,
       };
 
-      const { data: createdStreak, error: createError } = await supabase
+      const { data: createdStreak, error: createError } = await this.client
         .from("character_quest_streaks")
         .insert(newStreak)
         .select()
@@ -89,7 +93,7 @@ export class StreakService {
       last_completed_date: completedDate.toISOString(),
     };
 
-    const { data: updatedStreak, error } = await supabase
+    const { data: updatedStreak, error } = await this.client
       .from("character_quest_streaks")
       .update(update)
       .eq("id", streak.id)
@@ -119,7 +123,7 @@ export class StreakService {
       current_streak: 0,
     };
 
-    const { data: updatedStreak, error } = await supabase
+    const { data: updatedStreak, error } = await this.client
       .from("character_quest_streaks")
       .update(update)
       .eq("id", streak.id)
@@ -161,7 +165,7 @@ export class StreakService {
    * @returns Array of streak records
    */
   async getCharacterStreaks(characterId: string): Promise<CharacterQuestStreak[]> {
-    const { data: streaks, error } = await supabase
+    const { data: streaks, error } = await this.client
       .from("character_quest_streaks")
       .select("*")
       .eq("character_id", characterId)
@@ -183,7 +187,7 @@ export class StreakService {
   async getStreakLeaderboard(familyId: string): Promise<
     Array<CharacterQuestStreak & { character_name: string; template_title: string }>
   > {
-    const { data: streaks, error } = await supabase
+    const { data: streaks, error } = await this.client
       .from("character_quest_streaks")
       .select(
         `
@@ -205,12 +209,23 @@ export class StreakService {
     }
 
     // Filter by family and transform the data
-    const leaderboard = (streaks || [])
-      .filter((streak: any) => streak.quest_templates?.family_id === familyId)
-      .map((streak: any) => ({
+    type JoinedStreakRow = CharacterQuestStreak & {
+      characters?: {
+        name?: string | null;
+        user_id?: string | null;
+      } | null;
+      quest_templates?: {
+        title?: string | null;
+        family_id?: string | null;
+      } | null;
+    };
+
+    const leaderboard = ((streaks ?? []) as JoinedStreakRow[])
+      .filter((streak) => streak.quest_templates?.family_id === familyId)
+      .map((streak) => ({
         ...streak,
-        character_name: streak.characters?.name || "Unknown",
-        template_title: streak.quest_templates?.title || "Unknown",
+        character_name: streak.characters?.name ?? "Unknown",
+        template_title: streak.quest_templates?.title ?? "Unknown",
       }));
 
     return leaderboard;
@@ -243,7 +258,7 @@ export class StreakService {
     if (recurrencePattern === "DAILY") {
       return diffInDays <= 2;
     } else if (recurrencePattern === "WEEKLY") {
-      return diffInDays <= 8;
+      return diffInDays < 8;
     }
 
     // For CUSTOM, we can't validate without more info, so allow it

@@ -13,6 +13,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from './types/database';
 
+const TEST_INTERVAL_MINUTES_ENV = process.env.RECURRING_TEST_INTERVAL_MINUTES;
+const TEST_INTERVAL_MINUTES = TEST_INTERVAL_MINUTES_ENV
+  ? Number.parseInt(TEST_INTERVAL_MINUTES_ENV, 10)
+  : null;
+
 type QuestTemplate = Database['public']['Tables']['quest_templates']['Row'];
 
 interface GenerationResult {
@@ -33,6 +38,20 @@ function calculateCycleDates(
   weekStartDay: number = 0
 ): { cycleStart: Date; cycleEnd: Date } {
   const now = new Date();
+
+  if (TEST_INTERVAL_MINUTES && TEST_INTERVAL_MINUTES > 0) {
+    const interval = Math.max(TEST_INTERVAL_MINUTES, 1);
+    const cycleStart = new Date(now);
+    const minutes = cycleStart.getMinutes();
+    const alignedMinutes = Math.floor(minutes / interval) * interval;
+    cycleStart.setMinutes(alignedMinutes, 0, 0);
+
+    const cycleEnd = new Date(cycleStart);
+    cycleEnd.setMinutes(cycleEnd.getMinutes() + interval);
+    cycleEnd.setMilliseconds(cycleEnd.getMilliseconds() - 1);
+
+    return { cycleStart, cycleEnd };
+  }
 
   if (recurrencePattern === 'DAILY') {
     // Daily: midnight to midnight
@@ -151,6 +170,7 @@ async function generateIndividualQuests(
     // Create quest instance
     const questInstance = {
       template_id: template.id,
+      recurrence_pattern: template.recurrence_pattern,
       title: template.title,
       description: template.description,
       category: template.category,
@@ -214,6 +234,7 @@ async function generateFamilyQuest(
   // Create family quest instance in AVAILABLE status
   const questInstance = {
     template_id: template.id,
+    recurrence_pattern: template.recurrence_pattern,
     title: template.title,
     description: template.description,
     category: template.category,

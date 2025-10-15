@@ -5,6 +5,9 @@
 
 import { QuestInstanceService } from "@/lib/quest-instance-service";
 import { supabase } from "@/lib/supabase";
+import { StreakService } from "@/lib/streak-service";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/types/database-generated";
 
 // Mock Supabase
 jest.mock("@/lib/supabase", () => ({
@@ -64,9 +67,10 @@ describe("QuestInstanceService", () => {
   };
 
   beforeEach(() => {
-    service = new QuestInstanceService();
+    const supabaseMock = supabase as unknown as { from: jest.Mock };
     mockFrom = jest.fn();
-    (supabase.from as jest.Mock) = mockFrom;
+    supabaseMock.from = mockFrom;
+    service = new QuestInstanceService(supabase as unknown as SupabaseClient<Database>);
   });
 
   afterEach(() => {
@@ -304,6 +308,209 @@ describe("QuestInstanceService", () => {
     });
   });
 
+  describe("approveQuest", () => {
+    it("applies volunteer and streak bonuses and updates metadata", async () => {
+      const questId = "quest-approve-123";
+      const templateId = "template-approve-456";
+      const characterId = "character-approve-789";
+      const userId = "user-approve-001";
+
+      const questRecord = {
+        id: questId,
+        title: "Daily Practice",
+        description: "Practice instrument for 30 minutes",
+        xp_reward: 100,
+        gold_reward: 60,
+        difficulty: "MEDIUM",
+        category: "DAILY",
+        status: "CLAIMED",
+        assigned_to_id: userId,
+        created_by_id: "gm-approve-002",
+        family_id: "family-approve-003",
+        template_id: templateId,
+        recurrence_pattern: "DAILY",
+        volunteer_bonus: 0.2,
+        volunteered_by: characterId,
+        streak_count: 0,
+        streak_bonus: 0,
+        cycle_start_date: null,
+        cycle_end_date: null,
+        due_date: null,
+        completed_at: null,
+        approved_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        quest_type: "FAMILY",
+      };
+
+      const characterRecord = {
+        id: characterId,
+        user_id: userId,
+        name: "Hero",
+        class: "KNIGHT",
+        level: 1,
+        xp: 0,
+        gold: 0,
+        gems: 0,
+        honor_points: 0,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        active_family_quest_id: questId,
+      };
+
+      const templateRecord = {
+        id: templateId,
+        title: "Daily Practice Template",
+        description: "Recurring practice session",
+        xp_reward: 100,
+        gold_reward: 60,
+        difficulty: "MEDIUM",
+        category: "DAILY",
+        family_id: "family-approve-003",
+        is_active: true,
+        is_paused: false,
+        quest_type: "FAMILY",
+        recurrence_pattern: "DAILY",
+        assigned_character_ids: [],
+        class_bonuses: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const updatedQuestRecord = {
+        ...questRecord,
+        status: "APPROVED",
+        completed_at: new Date().toISOString(),
+        approved_at: new Date().toISOString(),
+        streak_count: 3,
+        streak_bonus: 0.05,
+      };
+
+      const questSelectSingle = jest.fn().mockResolvedValue({ data: questRecord, error: null });
+      const questSelectBuilder = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: questSelectSingle,
+          }),
+        }),
+      };
+
+      const questUpdateBuilder = {
+        update: jest.fn().mockImplementation((payload) => ({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  ...updatedQuestRecord,
+                  ...payload,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        })),
+      };
+
+      const characterSelectSingle = jest.fn().mockResolvedValue({ data: characterRecord, error: null });
+      const characterSelectBuilder = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: characterSelectSingle,
+          }),
+        }),
+      };
+
+      const characterUpdateEq = jest.fn().mockResolvedValue({ error: null });
+      const characterUpdateBuilder = {
+        update: jest.fn().mockImplementation((payload) => ({
+          eq: jest.fn().mockReturnValue(characterUpdateEq),
+          payload,
+        })),
+      };
+
+      const templateMaybeSingle = jest.fn().mockResolvedValue({ data: templateRecord, error: null });
+      const templateBuilder = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            maybeSingle: templateMaybeSingle,
+          }),
+        }),
+      };
+
+      const questInstanceBuilders = [questSelectBuilder, questUpdateBuilder];
+      const characterBuilders = [characterSelectBuilder, characterUpdateBuilder];
+
+      const fromMock = jest.fn((table: string) => {
+        if (table === "quest_instances") {
+          const builder = questInstanceBuilders.shift();
+          if (!builder) throw new Error("Unexpected quest_instances call");
+          return builder;
+        }
+        if (table === "characters") {
+          const builder = characterBuilders.shift();
+          if (!builder) throw new Error("Unexpected characters call");
+          return builder;
+        }
+        if (table === "quest_templates") {
+          return templateBuilder;
+        }
+        throw new Error(`Unexpected table: ${table}`);
+      });
+
+      const supabaseStub = { from: fromMock };
+
+      const streakServiceMock = {
+        getStreak: jest.fn().mockResolvedValue({
+          id: "streak-1",
+          character_id: characterId,
+          template_id: templateId,
+          current_streak: 2,
+          longest_streak: 5,
+          last_completed_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }),
+        validateConsecutiveCompletion: jest.fn().mockReturnValue(true),
+        incrementStreak: jest.fn().mockResolvedValue({
+          current_streak: 3,
+        }),
+        calculateStreakBonus: jest.fn().mockReturnValue(0.05),
+        resetStreak: jest.fn().mockResolvedValue({
+          current_streak: 0,
+        }),
+      };
+
+      const questService = new QuestInstanceService(
+        supabaseStub as unknown as typeof supabase,
+        streakServiceMock as unknown as StreakService
+      );
+
+      const result = await questService.approveQuest(questId);
+
+      expect(result.status).toBe("APPROVED");
+      expect(streakServiceMock.getStreak).toHaveBeenCalledWith(characterId, templateId);
+      expect(streakServiceMock.incrementStreak).toHaveBeenCalled();
+      expect(streakServiceMock.calculateStreakBonus).toHaveBeenCalledWith(3);
+      expect(streakServiceMock.resetStreak).not.toHaveBeenCalled();
+
+      const [characterUpdatePayload] = characterUpdateBuilder.update.mock.calls[0];
+      expect(characterUpdatePayload).toEqual({
+        gold: 75,
+        xp: 125,
+        active_family_quest_id: null,
+        level: 2,
+      });
+
+      const [questUpdatePayload] = questUpdateBuilder.update.mock.calls[0];
+      expect(questUpdatePayload.status).toBe("APPROVED");
+      expect(questUpdatePayload.streak_count).toBe(3);
+      expect(questUpdatePayload.streak_bonus).toBe(0.05);
+      expect(questUpdatePayload.completed_at).toEqual(expect.any(String));
+      expect(questUpdatePayload.approved_at).toEqual(expect.any(String));
+    });
+  });
+
   describe("releaseQuest", () => {
     it("should successfully release a claimed family quest", async () => {
       const releasedQuest = {
@@ -439,7 +646,7 @@ describe("QuestInstanceService", () => {
         ...mockFamilyQuest,
         status: "CLAIMED",
         assigned_to_id: mockUserId,
-        volunteered_by: null, // No volunteer for GM assignment
+        volunteered_by: mockCharacterId,
         volunteer_bonus: null, // No bonus for GM assignment
       };
 
@@ -494,7 +701,7 @@ describe("QuestInstanceService", () => {
 
       expect(result).toEqual(assignedQuest);
       expect(result.assigned_to_id).toBe(mockUserId);
-      expect(result.volunteered_by).toBeNull(); // No volunteer for GM assignment
+      expect(result.volunteered_by).toBe(mockCharacterId);
       expect(result.volunteer_bonus).toBeNull(); // No bonus for GM assignment
       expect(result.status).toBe("CLAIMED");
     });
@@ -589,6 +796,7 @@ describe("QuestInstanceService", () => {
         ...mockFamilyQuest,
         status: "CLAIMED",
         assigned_to_id: mockUserId,
+        volunteered_by: mockCharacterId,
       };
 
       const mockUpdate = jest.fn().mockReturnValue({

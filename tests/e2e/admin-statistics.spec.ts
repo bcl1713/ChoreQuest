@@ -46,7 +46,6 @@ test.describe("Admin Dashboard Statistics", () => {
     await expect(gmPage.getByText(/Pending Approvals/i)).toBeVisible();
 
     // Verify statistics show reasonable initial values
-    const statsPanel = gmPage.getByTestId("statistics-panel");
     const pendingQuests = await readPendingQuestCount(gmPage);
     expect(pendingQuests).toBeGreaterThanOrEqual(0);
   });

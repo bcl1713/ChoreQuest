@@ -105,7 +105,8 @@ export async function GET(
     });
 
     // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data, error: authError } = await supabase.auth.getUser(token);
+    const user = data?.user;
 
     if (authError || !user) {
       return NextResponse.json(
@@ -134,7 +135,11 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Unexpected error in GET /api/quest-templates/[id]:', error);
+    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
+      console.error('Unexpected error in GET /api/quest-templates/[id]: data=', error.data, 'error=', error.error);
+    } else {
+      console.error('Unexpected error in GET /api/quest-templates/[id]:', error);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -174,7 +179,8 @@ export async function PATCH(
     });
 
     // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data, error: authError } = await supabase.auth.getUser(token);
+    const user = data?.user;
 
     if (authError || !user) {
       return NextResponse.json(
@@ -231,7 +237,11 @@ export async function PATCH(
       );
     }
 
-    console.error('Unexpected error in PATCH /api/quest-templates/[id]:', error);
+    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
+      console.error('Unexpected error in PATCH /api/quest-templates/[id]: data=', error.data, 'error=', error.error);
+    } else {
+      console.error('Unexpected error in PATCH /api/quest-templates/[id]:', error);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -271,7 +281,8 @@ export async function DELETE(
     });
 
     // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data, error: authError } = await supabase.auth.getUser(token);
+    const user = data?.user;
 
     if (authError || !user) {
       return NextResponse.json(
@@ -294,8 +305,12 @@ export async function DELETE(
       );
     }
 
+    // Get cleanup option from request body
+    const body = await request.json();
+    const cleanup = body.cleanup || false;
+
     // Soft delete the template using the service
-    const deletedTemplate = await questTemplateService.deleteTemplate(templateId);
+    const deletedTemplate = await questTemplateService.deleteTemplate(templateId, cleanup);
 
     return NextResponse.json({
       success: true,
@@ -304,7 +319,11 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Unexpected error in DELETE /api/quest-templates/[id]:', error);
+    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
+      console.error('Unexpected error in DELETE /api/quest-templates/[id]: data=', error.data, 'error=', error.error);
+    } else {
+      console.error('Unexpected error in DELETE /api/quest-templates/[id]:', error);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

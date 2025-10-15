@@ -84,6 +84,50 @@ global.localStorage = localStorageMock
 global.confirm = jest.fn(() => true)
 global.alert = jest.fn()
 
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // deprecated
+    removeListener: jest.fn(), // deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
+
+
+jest.mock('next/server', () => ({
+  NextRequest: class MockNextRequest extends Request {
+    constructor(input, init) {
+      super(input, init);
+      const url = new URL(input.toString());
+      Object.defineProperty(this, 'nextUrl', {
+        value: {
+          searchParams: url.searchParams,
+          pathname: url.pathname,
+        },
+        writable: true,
+        configurable: true,
+      });
+    }
+  },
+  NextResponse: class MockNextResponse extends Response {
+    static json(data, init) {
+      return new MockNextResponse(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+    }
+  },
+}));
+
 /**
  * Console output suppression for cleaner test output
  *

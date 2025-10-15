@@ -159,7 +159,6 @@ test.describe("Quest Template Creation E2E", () => {
     await expect(gmPage.locator('[data-testid="template-preview"]')).not.toBeVisible();
 
     // Select a template
-    const templateSelect = gmPage.locator('[data-testid="template-select"]');
     const templateOptions = await loadTemplateOptions(gmPage);
     expect(templateOptions.length).toBeGreaterThan(0);
     const firstTemplateOption = templateOptions[0];
@@ -220,7 +219,6 @@ test.describe("Quest Template Creation E2E", () => {
     // Switch to template mode
     await setQuestCreationMode(gmPage, "template");
 
-    const templateSelect = gmPage.locator('[data-testid="template-select"]');
     const templateOptions = await loadTemplateOptions(gmPage);
     expect(templateOptions.length).toBeGreaterThan(0);
 

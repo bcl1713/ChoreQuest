@@ -16,6 +16,13 @@ A fantasy RPG-themed family chore management system that transforms household ta
 - **Real-time Updates**: Live activity feed for family interactions
 - **SOS System**: Request and provide help between family members
 
+### ♻️ Recurring Quest System
+- **Quest Templates**: Build daily or weekly quest blueprints for individuals or the entire guild
+- **Automated Generation**: Cron-backed jobs spawn quest instances every cycle with idempotent safeguards
+- **Hero Claiming Flow**: Family quests can be claimed, released, or reassigned without leaving the dashboard
+- **Streaks & Bonuses**: Track consecutive completions and apply volunteer/streak multipliers to rewards
+- **Preset Library**: One-click starter templates covering common household chores
+
 ### 📱 Modern Tech Stack
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS with fantasy theme
@@ -67,6 +74,8 @@ For local development:
    cp .env.example .env
    # .env is automatically configured for local development
    ```
+   - Set a unique value for `CRON_SECRET` so scheduled jobs can authenticate requests.
+   - (Optional) Add `RECURRING_TEST_INTERVAL_MINUTES=15` to shorten cycles when demoing recurring quests locally.
 
 3. **Start development services**
    ```bash
@@ -85,6 +94,44 @@ For local development:
 
 5. **Visit the application**
    Open [http://localhost:3000](http://localhost:3000) to see ChoreQuest in action!
+
+## 🔁 Recurring Quest System
+
+### Core Concepts
+- **Quest templates** define difficulty, rewards, recurrence pattern (`DAILY`, `WEEKLY`, or `CUSTOM`), and optional character assignments.
+- **Quest instances** are generated each cycle with cached recurrence metadata so dashboards and streak logic never need to join templates.
+- **Family quests** stay in `AVAILABLE` status until a hero claims them; individual quests spawn per assigned character automatically.
+
+### Cron Scheduling
+- `instrumentation.ts` boots `lib/cron-jobs.ts` when the server starts in a Node.js runtime; jobs run every five minutes.
+- Requests to `/api/cron/generate-quests` and `/api/cron/expire-quests` require an `Authorization: Bearer <CRON_SECRET>` header.
+- Set `NEXTAUTH_URL` (or `VERCEL_URL`) and `CRON_SECRET` in the environment so self-hosted deployments can reach the API routes.
+- For manual backfills you can trigger the endpoints locally:
+  ```bash
+  curl -X POST http://localhost:3000/api/cron/generate-quests \
+    -H "Authorization: Bearer $CRON_SECRET"
+  ```
+- Add `RECURRING_TEST_INTERVAL_MINUTES` to `.env` to shorten cycles during demos (e.g. `5` to regenerate quests every 5 minutes).
+
+### API Surface
+- `POST /api/quest-templates` / `PATCH /api/quest-templates/:id` / `DELETE /api/quest-templates/:id` for CRUD operations.
+- `PATCH /api/quest-templates/:id/pause` toggles recurring templates without deleting them; `GET /api/quest-templates?familyId=...` lists active templates.
+- `GET /api/quest-templates/presets` exposes curated starter templates that the dashboard surfaces.
+- `POST /api/quests/:id/claim`, `/release`, and `/assign` manage family quest claiming, releasing, and GM assignments with anti-hoarding checks.
+- `GET /api/streaks` and `GET /api/streaks/leaderboard?familyId=...` surface streak metrics for analytics dashboards.
+- Cron routes (`/api/cron/generate-quests`, `/api/cron/expire-quests`) are idempotent and safe to run in parallel jobs.
+
+### UI Enhancements
+- **Quest Template Manager** lets Guild Masters create, edit, pause, or delete recurring templates inline.
+- **Family Quest Claiming** panel shows heroes which family quests are available, claimed, or missed in real time.
+- **Preset Template Library** provides one-click import of common chores grouped by household category.
+- **Quest Conversion Wizard** upgrades ad-hoc quests into recurring templates without re-entering data.
+- **Streak Display** highlights active streaks, volunteer bonuses, and longest-run achievements inside the dashboard.
+
+### Analytics Hooks
+- New Supabase SQL helpers—`get_completion_rate_by_template`, `get_most_missed_quests`, and `get_volunteer_patterns`—power the admin insights views.
+- `character_quest_streaks` table stores rolling streak counts and longest streaks per character/template pair.
+- Volunteer and streak bonuses are cached on each quest instance so reward payouts remain deterministic during approvals.
 
 ## 📝 Available Scripts
 

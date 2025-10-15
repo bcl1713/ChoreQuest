@@ -92,7 +92,6 @@ describe('generateRecurringQuests', () => {
       { id: 'char-2', user_id: 'user-2' },
     ];
 
-    let questInstanceCallCount = 0;
     (mockSupabase.from as jest.Mock).mockImplementation((table: string) => {
       if (table === 'quest_templates') {
         return {
@@ -139,7 +138,6 @@ describe('generateRecurringQuests', () => {
           }),
         };
       } else if (table === 'quest_instances') {
-        questInstanceCallCount++;
         // Check if this is a select (idempotency check) or insert
         const mockChain = {
           select: jest.fn().mockReturnValue({

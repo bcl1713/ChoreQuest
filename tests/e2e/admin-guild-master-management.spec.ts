@@ -183,7 +183,7 @@ test.describe("Guild Master Management - Promote/Demote", () => {
     await navigateToAdmin(gmPage);
     await navigateToAdminTab(gmPage, "Guild Masters");
 
-    const hero = await createFamilyMember({
+    await createFamilyMember({
       displayName: "UI Test Hero",
       characterName: "UI Hero Character",
       characterClass: "RANGER",

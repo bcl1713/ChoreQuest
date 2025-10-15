@@ -11,6 +11,7 @@ import { questInstanceService } from "@/lib/quest-instance-service";
 describe("QuestInstanceService Integration Tests", () => {
   let testFamilyId: string;
   let testGMUserId: string;
+  let testGMEmail: string;
   let testHeroUserId: string;
   let testHeroCharacterId: string;
   let testFamilyQuestId: string;
@@ -26,6 +27,7 @@ describe("QuestInstanceService Integration Tests", () => {
       throw new Error(`Failed to create GM user: ${gmAuthError?.message}`);
     }
     testGMUserId = gmAuthUser.user.id;
+    testGMEmail = gmAuthUser.user.email!;
 
     // Create test family
     const { data: family, error: familyError } = await supabase
@@ -187,8 +189,84 @@ describe("QuestInstanceService Integration Tests", () => {
       expect(assignedQuest).toBeDefined();
       expect(assignedQuest.status).toBe("CLAIMED");
       expect(assignedQuest.assigned_to_id).toBe(testHeroUserId);
-      expect(assignedQuest.volunteered_by).toBeNull(); // No volunteer for GM assignment
+      expect(assignedQuest.volunteered_by).toBe(testHeroCharacterId); // Track specific character for approval path
       expect(assignedQuest.volunteer_bonus).toBeNull(); // No bonus for GM assignment
+    });
+  });
+
+  describe("approveQuest", () => {
+    let questToApproveId: string;
+
+    beforeAll(async () => {
+      await supabase.auth.signInWithPassword({
+        email: testGMEmail,
+        password: "testpassword123",
+      });
+
+      const { data: quest, error: questError } = await supabase
+        .from("quest_instances")
+        .insert({
+          title: "Quest Ready For Approval",
+          description: "Approve this quest to complete the flow",
+          xp_reward: 100,
+          gold_reward: 60,
+          difficulty: "EASY",
+          category: "DAILY",
+          family_id: testFamilyId,
+          created_by_id: testGMUserId,
+          quest_type: "FAMILY",
+          status: "CLAIMED",
+          assigned_to_id: testHeroUserId,
+          volunteered_by: testHeroCharacterId,
+          volunteer_bonus: 0.2,
+        })
+        .select()
+        .single();
+
+      if (questError || !quest) {
+        throw new Error(`Failed to create quest for approval test: ${questError?.message}`);
+      }
+
+      questToApproveId = quest.id;
+
+      // Simulate active family quest assignment
+      const { error: activeQuestError } = await supabase
+        .from("characters")
+        .update({ active_family_quest_id: questToApproveId })
+        .eq("id", testHeroCharacterId);
+
+      if (activeQuestError) {
+        throw new Error(`Failed to set active family quest: ${activeQuestError.message}`);
+      }
+    });
+
+    it("should allow GM to approve an ad-hoc family quest", async () => {
+      await supabase.auth.signInWithPassword({
+        email: testGMEmail,
+        password: "testpassword123",
+      });
+
+      const approvedQuest = await questInstanceService.approveQuest(questToApproveId);
+
+      expect(approvedQuest).toBeDefined();
+      expect(approvedQuest.status).toBe("APPROVED");
+      expect(approvedQuest.approved_at).toBeTruthy();
+      expect(approvedQuest.completed_at).toBeTruthy();
+
+      const { data: updatedCharacter, error: characterError } = await supabase
+        .from("characters")
+        .select("xp, gold, level, active_family_quest_id")
+        .eq("id", testHeroCharacterId)
+        .single();
+
+      if (characterError || !updatedCharacter) {
+        throw new Error(`Failed to fetch character after approval: ${characterError?.message}`);
+      }
+
+      expect(updatedCharacter.xp).toBe(120); // 100 base + 20 volunteer bonus
+      expect(updatedCharacter.gold).toBe(60 + 12); // 60 base + 12 volunteer bonus
+      expect(updatedCharacter.active_family_quest_id).toBeNull();
+      expect(updatedCharacter.level).toBeGreaterThan(1);
     });
   });
 });

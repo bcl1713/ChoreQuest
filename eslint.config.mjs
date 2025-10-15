@@ -22,6 +22,10 @@ const eslintConfig = [
       "jest.config.js",
       "*.config.js",
       "coverage/**",
+      "dist/**",
+      "playwright-report/**",
+      "test-results/**",
+      ".playwright-mcp/**",
     ],
   },
 ];

@@ -424,7 +424,7 @@ function DashboardContent() {
         {activeTab === 'quests' ? (
           <QuestDashboard
             onError={handleError}
-            onLoadQuestsRef={(loadQuests) => {
+            onLoadQuestsRef={(loadQuests: () => Promise<void>) => {
               dashboardLoadQuestsRef.current = loadQuests;
             }}
           />

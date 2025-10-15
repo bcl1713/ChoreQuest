@@ -13,6 +13,25 @@ ChoreQuest currently supports one-time quests that must be manually recreated by
 5. **Support Flexibility**: Allow GM to pause quests during vacations or special circumstances
 6. **Maintain Engagement**: Track missed quests and streaks to provide meaningful progress feedback
 
+## Status Update — October 2025
+
+**Delivered in `feature/recurring-quest-system`:**
+- Recurring quest templates with daily/weekly patterns, pause/resume controls, and per-character assignments.
+- Cron-backed quest generation and expiration endpoints secured with `CRON_SECRET`, wired up through Next.js instrumentation.
+- Family quest claiming flow with volunteer bonuses, anti-hoarding guardrails, and Supabase realtime updates.
+- Streak tracking service, streak bonuses, and hero UI surfaces (streak display, claim/release interactions, quest completion overlay).
+- Initial preset template definitions plus API plumbing (`GET /api/quest-templates/presets`, enable endpoint) and conversion wizard foundations.
+- Supabase RPC analytics helpers for completion rate, missed quests, volunteer patterns (UI integration pending).
+
+**Still in progress / deferred:**
+- GM-facing analytics dashboard and history views powered by the new RPCs.
+- Enhanced preset library UX (admin dashboard entry point, unit tests).
+- Multi-step conversion wizard with character assignment and richer confirmation flow.
+- Comprehensive documentation set (GM/Hero guides), CLAUDE/TASKS roll-up, end-to-end QA checklist execution.
+- Additional automation and performance testing (cron load, timezone edge cases).
+
+These deferred items will be scheduled on a follow-up branch so this PR can focus on the core recurring quest functionality.
+
 ## User Stories
 
 1. **As a Guild Master**, I want to create a recurring quest template for "make bed" that automatically assigns to my children every day, so that I don't have to manually create this quest repeatedly.
@@ -423,6 +442,8 @@ ChoreQuest currently supports one-time quests that must be manually recreated by
 ```
 
 ## Technical Considerations
+
+> **Platform Note:** The original PRD called for Prisma-based models. The current implementation uses Supabase SQL migrations (`supabase/migrations/*`) and generated types in `lib/types/database-generated.ts`. The Prisma schema below is kept for historical context; reference the Supabase migrations for the authoritative schema.
 
 ### Database Schema Changes (Prisma)
 

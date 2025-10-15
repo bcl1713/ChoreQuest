@@ -31,6 +31,11 @@
 - UI components for template management and quest claiming
 - Preset template library
 
+### Status Snapshot — October 2025
+
+- ✅ Core schema, cron endpoints, quest services, streak tracking, and hero/GM surface updates ship in `feature/recurring-quest-system`.
+- 🟡 Outstanding items to tackle post-PR: analytics dashboards & endpoints, richer preset integration + tests, multi-step conversion wizard with character assignment, and the QA/documentation checklist in section 10.
+
 ---
 
 ## ⚠️ IMPORTANT: Create Development Branch First!
@@ -220,7 +225,7 @@ This ensures all work is done on a feature branch following the project's workfl
   - [ ] 7.12 Update `components/quest-dashboard.tsx` to integrate family quest claiming section
   - [ ] 7.13 Show active family quest separately from individual quests with clear distinction
   - [ ] 7.14 Add real-time updates: refresh when family quest is claimed/released by another hero
-  - [ ] 7.15 Update `components/animations/QuestCompleteOverlay.tsx` to show volunteer bonus and streak bonus on completion
+  - [x] 7.15 Update `components/animations/QuestCompleteOverlay.tsx` to show volunteer bonus and streak bonus on completion
   - [ ] 7.16 Write unit tests for `family-quest-claiming.tsx` component
   - [ ] 7.17 Write unit tests for `recurring-quest-card.tsx` component
   - [ ] 7.18 Write unit tests for `streak-display.tsx` component
@@ -239,17 +244,18 @@ This ensures all work is done on a feature branch following the project's workfl
   - [ ] 8.11 Create `components/quest-conversion-wizard.tsx` for converting existing quests to templates
   - [ ] 8.12 Add "Convert to Template" action on existing one-time quests in GM dashboard
   - [ ] 8.13 Wizard steps: 1) Select quest type, 2) Select recurrence, 3) Assign characters (if INDIVIDUAL), 4) Confirm
-  - [ ] 8.14 Add option to delete original one-time quest after conversion
+        - Current implementation uses a single-step modal without character assignment; follow-up work needed.
+  - [x] 8.14 Add option to delete original one-time quest after conversion
   - [ ] 8.15 Integrate preset library into admin dashboard with prominent "Browse Presets" button
   - [ ] 8.16 Write unit tests for preset enabling logic
   - [ ] 8.17 Write unit tests for `preset-template-library.tsx` component
   - [ ] 8.18 Write unit tests for `quest-conversion-wizard.tsx` component
 
 - [ ] 9.0 Analytics Dashboard & Quest History
-  - [ ] 9.1 Create analytics service: `lib/analytics-service.ts` with methods for completion rate, missed quests, volunteer patterns
-  - [ ] 9.2 Implement `getCompletionRateByTemplate()`: calculate % of completed vs missed/expired quests per template
-  - [ ] 9.3 Implement `getMostMissedQuests()`: identify templates with lowest completion rates
-  - [ ] 9.4 Implement `getVolunteerPatterns()`: track which heroes volunteer most often for family quests
+  - [x] 9.1 Create analytics service: `lib/analytics-service.ts` with methods for completion rate, missed quests, volunteer patterns
+  - [x] 9.2 Implement `getCompletionRateByTemplate()`: calculate % of completed vs missed/expired quests per template
+  - [x] 9.3 Implement `getMostMissedQuests()`: identify templates with lowest completion rates
+  - [x] 9.4 Implement `getVolunteerPatterns()`: track which heroes volunteer most often for family quests
   - [ ] 9.5 Create `GET /api/analytics/quest-templates?familyId=X` endpoint for template analytics
   - [ ] 9.6 Create `GET /api/analytics/family-quests?familyId=X` endpoint for family quest claiming stats
   - [ ] 9.7 Create `components/recurring-quest-analytics.tsx` component for GM insights

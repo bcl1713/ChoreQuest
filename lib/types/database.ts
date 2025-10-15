@@ -179,6 +179,7 @@ export type Database = {
           id: string
           level: number | null
           name: string
+          active_family_quest_id: string | null
           updated_at: string | null
           user_id: string | null
           xp: number | null
@@ -193,6 +194,7 @@ export type Database = {
           id?: string
           level?: number | null
           name: string
+          active_family_quest_id?: string | null
           updated_at?: string | null
           user_id?: string | null
           xp?: number | null
@@ -207,6 +209,7 @@ export type Database = {
           id?: string
           level?: number | null
           name?: string
+          active_family_quest_id?: string | null
           updated_at?: string | null
           user_id?: string | null
           xp?: number | null
@@ -253,16 +256,24 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           created_by_id: string
+          cycle_end_date: string | null
+          cycle_start_date: string | null
           description: string
           difficulty: Database["public"]["Enums"]["quest_difficulty"]
           due_date: string | null
           family_id: string | null
           gold_reward: number
           id: string
+          recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern"] | null
+          quest_type: Database["public"]["Enums"]["quest_type"] | null
           status: Database["public"]["Enums"]["quest_status"] | null
+          streak_bonus: number | null
+          streak_count: number | null
           template_id: string | null
           title: string
           updated_at: string | null
+          volunteer_bonus: number | null
+          volunteered_by: string | null
           xp_reward: number
         }
         Insert: {
@@ -272,16 +283,24 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           created_by_id: string
+          cycle_end_date?: string | null
+          cycle_start_date?: string | null
           description: string
           difficulty: Database["public"]["Enums"]["quest_difficulty"]
           due_date?: string | null
           family_id?: string | null
           gold_reward: number
           id?: string
+          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null
           status?: Database["public"]["Enums"]["quest_status"] | null
+          streak_bonus?: number | null
+          streak_count?: number | null
           template_id?: string | null
           title: string
           updated_at?: string | null
+          volunteer_bonus?: number | null
+          volunteered_by?: string | null
           xp_reward: number
         }
         Update: {
@@ -291,16 +310,24 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           created_by_id?: string
+          cycle_end_date?: string | null
+          cycle_start_date?: string | null
           description?: string
           difficulty?: Database["public"]["Enums"]["quest_difficulty"]
           due_date?: string | null
           family_id?: string | null
           gold_reward?: number
           id?: string
+          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null
           status?: Database["public"]["Enums"]["quest_status"] | null
+          streak_bonus?: number | null
+          streak_count?: number | null
           template_id?: string | null
           title?: string
           updated_at?: string | null
+          volunteer_bonus?: number | null
+          volunteered_by?: string | null
           xp_reward?: number
         }
         Relationships: [
@@ -326,16 +353,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "quest_instances_template_id_fkey"
-            columns: ["template_id"]
+            foreignKeyName: "quest_instances_volunteered_by_fkey"
+            columns: ["volunteered_by"]
             isOneToOne: false
-            referencedRelation: "quest_templates"
+            referencedRelation: "characters"
             referencedColumns: ["id"]
           },
         ]
       }
       quest_templates: {
         Row: {
+          assigned_character_ids: string[] | null
           category: Database["public"]["Enums"]["quest_category"]
           class_bonuses: Json | null
           created_at: string | null
@@ -345,11 +373,15 @@ export type Database = {
           gold_reward: number
           id: string
           is_active: boolean | null
+          is_paused: boolean | null
+          quest_type: Database["public"]["Enums"]["quest_type"] | null
+          recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern"] | null
           title: string
           updated_at: string | null
           xp_reward: number
         }
         Insert: {
+          assigned_character_ids?: string[] | null
           category: Database["public"]["Enums"]["quest_category"]
           class_bonuses?: Json | null
           created_at?: string | null
@@ -359,11 +391,15 @@ export type Database = {
           gold_reward: number
           id?: string
           is_active?: boolean | null
+          is_paused?: boolean | null
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null
+          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
           title: string
           updated_at?: string | null
           xp_reward: number
         }
         Update: {
+          assigned_character_ids?: string[] | null
           category?: Database["public"]["Enums"]["quest_category"]
           class_bonuses?: Json | null
           created_at?: string | null
@@ -373,6 +409,9 @@ export type Database = {
           gold_reward?: number
           id?: string
           is_active?: boolean | null
+          is_paused?: boolean | null
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null
+          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
           title?: string
           updated_at?: string | null
           xp_reward?: number
@@ -701,6 +740,11 @@ export type Database = {
         | "COMPLETED"
         | "APPROVED"
         | "EXPIRED"
+        | "AVAILABLE"
+        | "CLAIMED"
+        | "MISSED"
+      quest_type: "INDIVIDUAL" | "FAMILY"
+      recurrence_pattern: "DAILY" | "WEEKLY" | "CUSTOM"
       reward_type: "SCREEN_TIME" | "PRIVILEGE" | "PURCHASE" | "EXPERIENCE"
       transaction_type:
         | "QUEST_REWARD"

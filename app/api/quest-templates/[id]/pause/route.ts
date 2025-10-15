@@ -91,7 +91,8 @@ export async function PATCH(
     });
 
     // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data, error: authError } = await supabase.auth.getUser(token);
+    const user = data?.user;
 
     if (authError || !user) {
       return NextResponse.json(
@@ -139,7 +140,11 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Unexpected error in PATCH /api/quest-templates/[id]/pause:', error);
+    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
+      console.error('Unexpected error in PATCH /api/quest-templates/[id]/pause: data=', error.data, 'error=', error.error);
+    } else {
+      console.error('Unexpected error in PATCH /api/quest-templates/[id]/pause:', error);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
