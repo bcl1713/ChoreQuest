@@ -1,5 +1,5 @@
 import { Browser, Page } from "@playwright/test";
-import { setupUserWithCharacter, loginUser, TestUser } from "./setup-helpers";
+import { setupUserWithCharacter, TestUser } from "./setup-helpers";
 import { createReward, RewardData } from "./reward-helpers";
 import { createCustomQuest, QuestData } from "./quest-helpers";
 import { navigateToAdminTab } from "./navigation-helpers";

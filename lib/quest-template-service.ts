@@ -6,10 +6,12 @@
 import { supabase } from "@/lib/supabase";
 import {
   QuestTemplate,
-  CreateQuestTemplateInput,
-  UpdateQuestTemplateInput,
   QuestInstance,
 } from "@/lib/types/database";
+import type { Database } from "@/lib/types/database-generated";
+
+type CreateQuestTemplateInput = Database['public']['Tables']['quest_templates']['Insert'];
+type UpdateQuestTemplateInput = Database['public']['Tables']['quest_templates']['Update'];
 
 export class QuestTemplateService {
   /**
@@ -79,7 +81,19 @@ export class QuestTemplateService {
    * @param templateId - The template ID to delete
    * @returns The deleted quest template
    */
-  async deleteTemplate(templateId: string): Promise<QuestTemplate> {
+  async deleteTemplate(templateId: string, cleanup: boolean = false): Promise<QuestTemplate> {
+    if (cleanup) {
+      // Also delete all quest instances associated with this template
+      const { error: deleteInstancesError } = await supabase
+        .from('quest_instances')
+        .delete()
+        .eq('template_id', templateId);
+
+      if (deleteInstancesError) {
+        throw new Error(`Failed to clean up quest instances: ${deleteInstancesError.message}`);
+      }
+    }
+
     const { data, error } = await supabase
       .from("quest_templates")
       .update({ is_active: false })
@@ -112,6 +126,73 @@ export class QuestTemplateService {
     }
 
     return data;
+  }
+
+  /**
+   * Pause a quest template (for vacation mode)
+   * Sets is_paused to true, preventing new quest generation
+   * Streaks are preserved during pause
+   * @param templateId - The template ID to pause
+   * @returns The paused quest template
+   */
+  async pauseTemplate(templateId: string): Promise<QuestTemplate> {
+    const { data, error } = await supabase
+      .from("quest_templates")
+      .update({ is_paused: true })
+      .eq("id", templateId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to pause quest template: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  /**
+   * Resume a paused quest template
+   * Sets is_paused to false, allowing quest generation to continue
+   * @param templateId - The template ID to resume
+   * @returns The resumed quest template
+   */
+  async resumeTemplate(templateId: string): Promise<QuestTemplate> {
+    const { data, error } = await supabase
+      .from("quest_templates")
+      .update({ is_paused: false })
+      .eq("id", templateId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to resume quest template: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  /**
+   * Get quest templates filtered by quest type
+   * @param familyId - The family ID to fetch templates for
+   * @param questType - The quest type to filter by (INDIVIDUAL or FAMILY)
+   * @returns Array of quest templates matching the type
+   */
+  async getTemplatesByType(
+    familyId: string,
+    questType: "INDIVIDUAL" | "FAMILY"
+  ): Promise<QuestTemplate[]> {
+    const { data, error } = await supabase
+      .from("quest_templates")
+      .select("*")
+      .eq("family_id", familyId)
+      .eq("quest_type", questType)
+      .eq("is_active", true);
+
+    if (error) {
+      throw new Error(`Failed to fetch quest templates by type: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   /**

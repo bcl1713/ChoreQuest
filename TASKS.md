@@ -46,7 +46,6 @@ transforms household tasks into epic adventures.
 - [x] Loading animations with reduced motion support
 - [x] Particle effects for celebrations
 - [x] Comprehensive E2E tests for animations and accessibility
-- [ ] Sound effects system (toggleable) - Future enhancement
 
 ### Avatar & Customization System
 

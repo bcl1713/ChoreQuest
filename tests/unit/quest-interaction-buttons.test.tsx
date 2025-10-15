@@ -7,89 +7,46 @@
  * THESE TESTS WILL FAIL until the quest pickup/management features are implemented.
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+
+
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import QuestDashboard from "../../components/quest-dashboard";
 import React from "react";
+import { useAuth } from "../../lib/auth-context";
+import { useRealtime } from "../../lib/realtime-context";
+import { questInstanceApiService } from "../../lib/quest-instance-api-service";
+import { supabase } from "../../lib/supabase";
 
-// Mock the auth context
-const mockUseAuth = jest.fn();
-jest.mock("../../lib/auth-context", () => ({
-  useAuth: () => mockUseAuth(),
+jest.mock("../../lib/streak-service", () => ({
+  streakService: {
+    getStreaksForCharacter: jest.fn().mockResolvedValue([]),
+  },
 }));
 
-// Mock the realtime context
-const mockUseRealtime = jest.fn();
-jest.mock("../../lib/realtime-context", () => ({
-  useRealtime: () => mockUseRealtime(),
-  RealtimeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-// Mock Supabase client with full operation chain
+jest.mock("../../lib/auth-context");
+jest.mock("../../lib/realtime-context");
 jest.mock("../../lib/supabase", () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          order: jest.fn(() => ({
-            data: [],
-            error: null,
-          })),
-          data: [],
-          error: null,
-        })),
-      })),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: null,
-          error: null,
-        })),
-      })),
-      delete: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: null,
-          error: null,
-        })),
-      })),
-    })),
+    from: jest.fn(),
   },
 }));
-
-// Mock framer-motion to avoid animation issues in tests
-jest.mock("framer-motion", () => ({
-  motion: {
-    div: ({ children, ...props }: React.ComponentProps<'div'>) => <div {...props}>{children}</div>,
+jest.mock("../../lib/quest-instance-api-service", () => ({
+  questInstanceApiService: {
+    claimQuest: jest.fn().mockResolvedValue(undefined),
+    releaseQuest: jest.fn().mockResolvedValue(undefined),
+    approveQuest: jest.fn().mockResolvedValue(undefined),
   },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-
-// Mock window.matchMedia for useReducedMotion hook
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
 
 describe("Quest Interaction Buttons - Core MVP Feature", () => {
   const mockHeroUser = {
     id: "hero-123",
     email: "hero@test.com",
-    role: "HERO",
-    userName: "Hero Player",
   };
 
   const mockGMUser = {
     id: "gm-123",
     email: "gm@test.com",
-    role: "GUILD_MASTER",
-    userName: "Guild Master",
   };
 
   const mockUnassignedQuest = {
@@ -98,200 +55,171 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     description: "Deep clean kitchen counters and dishes",
     status: "PENDING",
     difficulty: "MEDIUM",
-    xpReward: 50,
-    goldReward: 25,
-    assignedToId: null, // This makes it unassigned
-    dueDate: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    xp_reward: 50,
+    gold_reward: 25,
+    assigned_to_id: null, // This makes it unassigned
+    template_id: null, // For one-time quests
+    recurrence_pattern: null,
+    due_date: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
+
+  const mockCompletedQuest = {
+    id: "quest-789",
+    title: "Tidy the Living Room",
+    description: "Reset the living room before dinner",
+    status: "COMPLETED",
+    difficulty: "EASY",
+    xp_reward: 40,
+    gold_reward: 15,
+    assigned_to_id: "hero-123",
+    template_id: "template-001",
+    quest_type: "FAMILY",
+    volunteered_by: "char-123",
+    volunteer_bonus: 0.2,
+    streak_bonus: 0.02,
+    streak_count: 3,
+    recurrence_pattern: "DAILY",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  type QuestInstanceMock = typeof mockUnassignedQuest | typeof mockCompletedQuest;
+
+  let questInstancesMock: QuestInstanceMock[] = [];
 
   beforeEach(() => {
     jest.clearAllMocks();
+    questInstancesMock = [mockUnassignedQuest];
 
-    // Mock useRealtime hook
-    mockUseRealtime.mockReturnValue({
-      isConnected: true,
-      connectionError: null,
-      lastEvent: null,
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onCharacterUpdate: jest.fn(() => jest.fn()),
-      onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-      refreshQuests: jest.fn(),
-      refreshCharacters: jest.fn(),
-      refreshRewards: jest.fn(),
+    (useAuth as jest.Mock).mockReturnValue({
+      user: mockHeroUser,
+      session: { user: { id: mockHeroUser.id } },
+      profile: {
+        id: mockHeroUser.id,
+        family_id: "00000000-0000-4000-8000-000000000001",
+        name: "Hero Player",
+        role: "HERO"
+      },
     });
 
-    // Import the mocked supabase
-    const { supabase } = jest.requireMock("../../lib/supabase");
+    (useRealtime as jest.Mock).mockReturnValue({
+      onQuestUpdate: jest.fn(),
+    });
 
-    // Set up Supabase mock chain for quest loading
-    const mockOrderChain = {
-      data: [mockUnassignedQuest],
-      error: null,
-    };
-    const mockEqChain = {
-      order: jest.fn().mockResolvedValue(mockOrderChain),
-    };
-    const mockSelectChain = {
-      eq: jest.fn().mockReturnValue(mockEqChain),
-    };
-
-    // Mock all Supabase operations to prevent console errors
-    (supabase.from as jest.Mock).mockReturnValue({
-      select: jest.fn().mockReturnValue(mockSelectChain),
-      update: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          select: jest.fn(() => Promise.resolve({
-            data: null,
-            error: null,
-          })),
-        })),
-      })),
-      delete: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: null,
-          error: null,
-        })),
-      })),
+    (supabase.from as jest.Mock).mockImplementation((tableName) => {
+      if (tableName === 'characters') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: { id: 'char-123', user_id: 'hero-123' }, error: null }),
+        };
+      }
+      if (tableName === 'user_profiles') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        };
+      }
+      if (tableName === 'quest_instances') {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest.fn().mockResolvedValue({ data: questInstancesMock, error: null }),
+        };
+      }
+      return supabase;
     });
   });
 
   test("Hero user sees Pick Up Quest button on unassigned quests", async () => {
-    mockUseAuth.mockReturnValue({
-      user: mockHeroUser,
-      session: { user: { id: mockHeroUser.id } },
-      profile: {
-        id: mockHeroUser.id,
-        family_id: "family-123",
-        name: mockHeroUser.userName,
-        role: mockHeroUser.role
-      },
-    });
-
     render(<QuestDashboard onError={jest.fn()} />);
 
-    // Wait for quest data to load
     await waitFor(() => {
-      const { supabase } = jest.requireMock("../../lib/supabase");
-      expect(supabase.from).toHaveBeenCalledWith('quest_instances');
+      expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
     });
 
-    // Verify Available Quests section appears
     await waitFor(() => {
-      expect(screen.getByText("📋 Available Quests")).toBeInTheDocument();
+      expect(screen.getByTestId("available-quests-heading")).toBeInTheDocument();
     });
 
-    // Verify unassigned quest appears
     expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
-
-    // Pick Up Quest button should exist
-    const pickUpButton = screen.getByText("Pick Up Quest");
-    expect(pickUpButton).toBeInTheDocument();
-
-    // Test button click functionality
-    fireEvent.click(pickUpButton);
-
-    // Note: Quest assignment logic would need to be tested separately
-    // as the current component structure uses direct Supabase calls
+    const questCard = screen.getByText("Clean the Kitchen").closest(".fantasy-card");
+    expect(within(questCard).getByText("Pick Up Quest")).toBeInTheDocument();
   });
 
   test("Guild Master sees both Pick Up and Management controls on unassigned quests", async () => {
-    mockUseAuth.mockReturnValue({
+    (useAuth as jest.Mock).mockReturnValue({
       user: mockGMUser,
       session: { user: { id: mockGMUser.id } },
       profile: {
         id: mockGMUser.id,
-        family_id: "family-123",
-        name: mockGMUser.userName,
-        role: mockGMUser.role
+        family_id: "00000000-0000-4000-8000-000000000001",
+        name: "Guild Master",
+        role: "GUILD_MASTER"
       },
     });
 
     render(<QuestDashboard onError={jest.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText("📋 Available Quests")).toBeInTheDocument();
+      expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("available-quests-heading")).toBeInTheDocument();
     });
 
     expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
 
-    // GM controls should exist
-    expect(screen.getByText("Pick Up Quest")).toBeInTheDocument();
+    const questCard = screen.getByText("Clean the Kitchen").closest(".fantasy-card");
+    expect(within(questCard).getByText("Pick Up Quest")).toBeInTheDocument();
+    expect(within(questCard).getByTestId("assign-quest-dropdown")).toBeInTheDocument();
+    expect(within(questCard).getByText("Cancel Quest")).toBeInTheDocument();
+  });
 
-    const assignDropdown = screen.getByTestId("assign-quest-dropdown");
-    expect(assignDropdown).toBeInTheDocument();
+  test("Guild Master can approve completed quests", async () => {
+    questInstancesMock = [mockCompletedQuest];
 
-    expect(screen.getByText("Cancel Quest")).toBeInTheDocument();
+    (useAuth as jest.Mock).mockReturnValue({
+      user: mockGMUser,
+      session: { user: { id: mockGMUser.id } },
+      profile: {
+        id: mockGMUser.id,
+        family_id: "00000000-0000-4000-8000-000000000001",
+        name: "Guild Master",
+        role: "GUILD_MASTER"
+      },
+    });
 
-    // Test assignment functionality
-    fireEvent.change(assignDropdown, { target: { value: "hero-123" } });
-    const assignButton = screen.getByText("Assign");
-    fireEvent.click(assignButton);
+    render(<QuestDashboard onError={jest.fn()} />);
 
-    // Note: Quest assignment and cancellation logic would need to be tested separately
-    // as the current component structure uses direct Supabase calls
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
+    });
+
+    const approveButton = await screen.findByRole("button", { name: /approve quest/i });
+    expect(approveButton).toBeInTheDocument();
+
+    fireEvent.click(approveButton);
+
+    await waitFor(() => {
+      expect(questInstanceApiService.approveQuest).toHaveBeenCalledWith(mockCompletedQuest.id);
+    });
   });
 
   test("Unassigned quests display without interaction buttons when no user", async () => {
-    mockUseAuth.mockReturnValue({
+    (useAuth as jest.Mock).mockReturnValue({
       user: null,
-      token: null,
-    });
-
-    render(<QuestDashboard onError={jest.fn()} />);
-
-    // Should show error state for no user
-    await waitFor(() => {
-      expect(screen.getByText(/User not authenticated/)).toBeInTheDocument();
-    });
-  });
-
-  test("Quest pickup updates quest list and moves quest to My Quests section", async () => {
-
-    mockUseAuth.mockReturnValue({
-      user: mockHeroUser,
-      session: { user: { id: mockHeroUser.id } },
-      profile: {
-        id: mockHeroUser.id,
-        family_id: "family-123",
-        name: mockHeroUser.userName,
-        role: mockHeroUser.role
-      },
+      session: null,
+      profile: null,
     });
 
     render(<QuestDashboard onError={jest.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText("📋 Available Quests")).toBeInTheDocument();
+      expect(screen.getByText("User not authenticated")).toBeInTheDocument();
     });
-
-    // Note: Quest pickup functionality testing would need to be handled separately
-    // as the component now uses direct Supabase calls for quest management
-  });
-
-  test("Role-based button visibility is correctly implemented", async () => {
-    // Test Hero role first
-    mockUseAuth.mockReturnValue({
-      user: mockHeroUser,
-      session: { user: { id: mockHeroUser.id } },
-      profile: {
-        id: mockHeroUser.id,
-        family_id: "family-123",
-        name: mockHeroUser.userName,
-        role: mockHeroUser.role
-      },
-    });
-
-    render(<QuestDashboard onError={jest.fn()} />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
-    });
-
-    // Note: Role-based button visibility testing would need to be updated
-    // to match the current Supabase-based component implementation
   });
 });
-
