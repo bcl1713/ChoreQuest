@@ -31,6 +31,8 @@ services:
       - CRON_SECRET=${CRON_SECRET}
       - HOSTNAME=${HOSTNAME_OVERRIDE:-0.0.0.0}
       - HOST=0.0.0.0
+      # Database bootstrap toggle
+      - ENABLE_DB_BOOTSTRAP=${ENABLE_DB_BOOTSTRAP:-false}
       # Database credentials for migrations (Option C only)
       - DB_HOST=${DB_HOST:-supabase-db}
       - DB_PORT=${DB_PORT:-5432}
