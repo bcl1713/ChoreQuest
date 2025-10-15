@@ -21,6 +21,16 @@ echo "✓ Supabase configuration detected: $NEXT_PUBLIC_SUPABASE_URL"
 SUPABASE_API_URL="${SUPABASE_INTERNAL_URL:-$NEXT_PUBLIC_SUPABASE_URL}"
 echo "✓ Using internal API URL for migrations: $SUPABASE_API_URL"
 
+# Allow skipping database bootstrap when Supabase runs in a separate stack
+BOOTSTRAP_ENABLED="${ENABLE_DB_BOOTSTRAP:-false}"
+if [ "$BOOTSTRAP_ENABLED" != "true" ]; then
+    echo "✓ Database bootstrap disabled (ENABLE_DB_BOOTSTRAP=$BOOTSTRAP_ENABLED)"
+    echo "=================================================="
+    echo "Starting ChoreQuest Application"
+    echo "=================================================="
+    exec "$@"
+fi
+
 # Function to check if database is initialized
 check_database_initialized() {
     echo "Checking if database is initialized..."
