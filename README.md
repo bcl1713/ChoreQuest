@@ -312,6 +312,22 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app
 
 Hosted Supabase or the Supabase CLI still work — copy the relevant values into `.env.production` and skip the Supabase Docker stack. Portainer users can point a stack at this repo and provide the same environment variables.
 
+#### Portainer Stack
+
+1. Package the environment values you would normally place in `.env.production`:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `SUPABASE_INTERNAL_URL` (if you are also running Supabase in Portainer; otherwise omit)
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXTAUTH_URL`
+   - `CRON_SECRET`
+   - Any optional overrides (`SUPABASE_URL`, `DB_PASSWORD`, etc.)
+2. In Portainer:
+   - Stacks → **Add Stack** → enter a stack name (e.g. `chorequest`).
+   - Choose the **Repository** method, supply `https://github.com/your-org/ChoreQuest`, and set `docker-compose.prod.yml` as the compose path.
+   - Paste the environment variables collected in step 1.
+3. Deploy the stack, then open the Portainer console for the Supabase services (if you are hosting Supabase there as well) and ensure the same LAN host/IP values are used so mobile devices stay authenticated.
+
 ⚠️ **Supabase Keys:** Always use the "anon key" from Supabase, NOT the "publishable key". The correct key is a JWT token (3 parts separated by dots, starting with `eyJ...`).
 
 ⚠️ **Security:** For production deployments:
