@@ -27,8 +27,10 @@ services:
       # Internal server-side URL (for Docker-to-Docker communication)
       - SUPABASE_INTERNAL_URL=${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
       # Cron + auth configuration
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://127.0.0.1:3000}
       - CRON_SECRET=${CRON_SECRET}
+      - HOSTNAME=${HOSTNAME_OVERRIDE:-0.0.0.0}
+      - HOST=0.0.0.0
       # Database credentials for migrations (Option C only)
       - DB_HOST=${DB_HOST:-supabase-db}
       - DB_PORT=${DB_PORT:-5432}
