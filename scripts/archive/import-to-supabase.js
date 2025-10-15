@@ -10,7 +10,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 // Initialize Supabase client (will be configured with environment variables)
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -28,7 +28,7 @@ const idMappings = new Map();
 
 function generateUUID(oldId) {
   if (!idMappings.has(oldId)) {
-    idMappings.set(oldId, uuidv4());
+    idMappings.set(oldId, randomUUID());
   }
   return idMappings.get(oldId);
 }
