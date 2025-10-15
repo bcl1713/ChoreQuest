@@ -11,14 +11,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl =
+  process.env.SUPABASE_INTERNAL_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const cronSecret = process.env.CRON_SECRET;
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    if (!supabaseUrl) {
+      console.error('SUPABASE URL not configured for cron job');
+      return NextResponse.json(
+        { error: 'Supabase URL not configured' },
+        { status: 500 }
+      );
+    }
+
+    if (!supabaseServiceKey) {
+      console.error('SUPABASE_SERVICE_ROLE_KEY not configured for cron job');
+      return NextResponse.json(
+        { error: 'Supabase service key not configured' },
+        { status: 500 }
+      );
+    }
+
     // Validate cron secret
     const authHeader = request.headers.get('authorization');
     const providedSecret = authHeader?.startsWith('Bearer ')
