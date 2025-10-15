@@ -4,13 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { questTemplateService } from '@/lib/quest-template-service';
 import { QuestTemplate } from '@/lib/types/database';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 // Zod schema for updating quest templates
 const updateQuestTemplateSchema = z.object({
@@ -96,13 +93,7 @@ export async function GET(
     const token = authHeader.substring(7);
 
     // Create Supabase client with the user's token
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    });
+    const supabase = createServerSupabaseClient(token);
 
     // Get the authenticated user
     const { data, error: authError } = await supabase.auth.getUser(token);
@@ -170,13 +161,7 @@ export async function PATCH(
     const token = authHeader.substring(7);
 
     // Create Supabase client with the user's token
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    });
+    const supabase = createServerSupabaseClient(token);
 
     // Get the authenticated user
     const { data, error: authError } = await supabase.auth.getUser(token);
@@ -272,13 +257,7 @@ export async function DELETE(
     const token = authHeader.substring(7);
 
     // Create Supabase client with the user's token
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    });
+    const supabase = createServerSupabaseClient(token);
 
     // Get the authenticated user
     const { data, error: authError } = await supabase.auth.getUser(token);

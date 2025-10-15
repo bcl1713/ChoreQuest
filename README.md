@@ -433,6 +433,7 @@ Use this checklist before promoting a release:
 - Use HTTPS with SSL/TLS certificates
 - Set up regular database backups
 - Review and secure all environment variables
+- Testing from another device on your network? Set `NEXT_PUBLIC_SUPABASE_URL` to a reachable host/IP (e.g. `http://<server-ip>:8000`) while keeping `SUPABASE_INTERNAL_URL` pointed at the Docker service (`http://supabase-kong:8000`).
 - Keep Docker images updated
 
 ⚠️ **Database Initialization:** The ChoreQuest container automatically:
