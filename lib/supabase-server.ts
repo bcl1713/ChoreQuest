@@ -10,7 +10,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types/database';
 
 const resolveServerSupabaseUrl = (): string => {
-  const internalUrl = process.env.SUPABASE_INTERNAL_URL;
+  const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+  const internalUrl = !isTest ? process.env.SUPABASE_INTERNAL_URL : undefined;
   const serverUrl = process.env.SUPABASE_URL;
   const publicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
