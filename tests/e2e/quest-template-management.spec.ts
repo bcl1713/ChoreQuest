@@ -36,30 +36,6 @@ async function cancelQuestModal(page: Page): Promise<void> {
   await expect(page.locator("text=Create New Quest")).not.toBeVisible();
 }
 
-async function loadTemplateOptions(page: Page) {
-  await page.waitForFunction(() => {
-    const select = document.querySelector(
-      '[data-testid="template-select"]',
-    ) as HTMLSelectElement | null;
-    if (!select) return false;
-    return Array.from(select.options).some((option) => !!option.value);
-  }, { timeout: 15000 });
-
-  return page.evaluate(() => {
-    const select = document.querySelector(
-      '[data-testid="template-select"]',
-    ) as HTMLSelectElement | null;
-    if (!select) return [];
-
-    return Array.from(select.options)
-      .filter((option) => !!option.value)
-      .map((option) => ({
-        value: option.value,
-        text: option.textContent ?? "",
-      }));
-  });
-}
-
 async function selectTemplateByValue(page: Page, value: string) {
   await expect(async () => {
     await page.selectOption('[data-testid="template-select"]', value);

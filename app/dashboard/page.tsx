@@ -52,6 +52,8 @@ function DashboardContent() {
     show: boolean;
     questTitle: string;
     rewards: QuestReward;
+    streakBonus?: number;
+    volunteerBonus?: number;
   }>({
     show: false,
     questTitle: '',
@@ -172,6 +174,8 @@ function DashboardContent() {
           xp_reward?: number;
           gold_reward?: number;
           difficulty?: string;
+          streak_bonus?: number;
+          volunteer_bonus?: number;
         };
 
         // Check if this quest was just approved and is assigned to current user
@@ -202,6 +206,8 @@ function DashboardContent() {
               xp: calculatedRewards.xp,
               gold: calculatedRewards.gold,
             },
+            streakBonus: updatedQuest.streak_bonus,
+            volunteerBonus: updatedQuest.volunteer_bonus,
           });
         }
       }
@@ -418,7 +424,7 @@ function DashboardContent() {
         {activeTab === 'quests' ? (
           <QuestDashboard
             onError={handleError}
-            onLoadQuestsRef={(loadQuests) => {
+            onLoadQuestsRef={(loadQuests: () => Promise<void>) => {
               dashboardLoadQuestsRef.current = loadQuests;
             }}
           />
@@ -451,6 +457,8 @@ function DashboardContent() {
           show={questCompleteData.show}
           questTitle={questCompleteData.questTitle}
           rewards={questCompleteData.rewards}
+          streakBonus={questCompleteData.streakBonus}
+          volunteerBonus={questCompleteData.volunteerBonus}
           onDismiss={handleQuestCompleteDismiss}
         />
       </main>

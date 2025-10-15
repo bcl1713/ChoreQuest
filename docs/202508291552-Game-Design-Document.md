@@ -30,7 +30,7 @@ everyone stays engaged.
 **Key Differentiators:**
 
 - Persistent boss battles that require real teamwork
-- Full RPG progression with classes, abilities, and equipment
+- Full RPG progression with classes and abilities
 - Real-time collaboration with push notifications and live updates
 - Dual competitive/cooperative mechanics that strengthen family bonds
 - Integration with smart home systems for automated quest generation
@@ -49,8 +49,7 @@ everyone stays engaged.
 3. **Task Execution**: Complete real-world chores with optional bonus objectives
 4. **Progress Reporting**: Mark quests complete, take photos for verification if
    needed
-5. **Reward Collection**: Receive XP, gold, and items after parent/system
-   approval
+5. **Reward Collection**: Receive XP and gold after parent/system approval
 6. **Character Growth**: Spend currency, level up, unlock new abilities and
    cosmetics
 
@@ -64,6 +63,14 @@ everyone stays engaged.
 4. **Reward Redemption**: Exchange earned currency for real-world privileges and
    items
 5. **Family Celebration**: Acknowledge achievements and plan future challenges
+
+### Recurring Quest Mechanics (2025 Update)
+
+- **Quest Templates**: Guild Masters define daily or weekly quest blueprints with loot tables, class bonuses, and optional hero assignments.
+- **Family Claim Flow**: Family quests spawn in an `AVAILABLE` state. Heroes can volunteer to claim one at a time, gaining a 20% volunteer reward bonus if they convert it to `CLAIMED`.
+- **Streaks & Momentum**: Completing recurring quests consecutively increases streak counters. Every 5-day streak unlocks an extra 1% reward bonus (capped at 5%).
+- **Pause & Resume**: Templates can be paused during vacations or busy seasons without deleting historical streak data.
+- **Preset Library**: Admins can import curated packs (Kitchen, Hygiene, Bedroom, etc.) to jump-start a new family's recurring routine.
 
 ---
 
@@ -98,12 +105,11 @@ everyone stays engaged.
 
 ### Character Creation & Classes
 
-Each player creates a unique fantasy avatar with:
-
 **🎨 Avatar Customization**
 
-- **Base Appearance**: Hair color, style, skin tone, facial features
-- **Equipment Display**: Weapons, armor, and accessories visible on character
+Each player creates a unique fantasy avatar with:
+
+**🎨 Base Appearance**: Hair color, style, skin tone, facial features
 - **Unlockable Cosmetics**: Earned through gameplay achievements
 - **Seasonal Themes**: Special holiday and event-based appearance options
 - **Prestige Indicators**: Visual markers for high-level accomplishments
@@ -113,16 +119,18 @@ Each player creates a unique fantasy avatar with:
 **Knight** 🛡️
 
 - **Specialty**: Organization and cleaning tasks
-- **Bonus**: +20% XP for tidying, organizing, and maintenance chores
-- **Special Ability**: "Shield Wall" - Protect party from quest failure
-  penalties
+- **Bonus**: +5% XP & +5% Gold from all sources.
+- **Special Ability**: "Vow of Excellence" - Reveals a pre-defined
+  "Excellence Checklist" on a quest, guiding the player on the steps to
+  achieve a perfect result. Completing the checklist makes the player eligible
+  for an "Excellence Bonus" upon GM approval.
 - **Ultimate**: "Fortress Command" - Temporarily double organization quest
   rewards for whole family
 
 **Mage** 📚
 
 - **Specialty**: Academic and learning tasks
-- **Bonus**: +20% XP for homework, reading, and educational activities
+- **Bonus**: +20% XP from all sources.
 - **Special Ability**: "Time Warp" - Extend quest deadlines by 24 hours
 - **Ultimate**: "Wisdom Blessing" - Grant massive XP bonus to family's next
   educational quest
@@ -130,58 +138,80 @@ Each player creates a unique fantasy avatar with:
 **Ranger** 🏹
 
 - **Specialty**: Outdoor and pet care tasks
-- **Bonus**: +20% XP for yard work, pet care, and nature-related chores
-- **Special Ability**: "Track & Hunt" - Reveal hidden bonus objectives in quests
+- **Bonus**: +30% Gems from all sources.
+- **Special Ability**: "Track & Hunt" - Reveals a pre-defined "Hidden
+  Objective" on a quest, if one exists. The player can then choose to complete
+  this secret task to become eligible for a bonus reward upon GM approval.
 - **Ultimate**: "Nature's Ally" - All outdoor quests generate bonus rewards for
   48 hours
 
 **Rogue** 🗡️
 
 - **Specialty**: Quick daily tasks and problem-solving
-- **Bonus**: +20% XP for speed-based and daily routine chores
-- **Special Ability**: "Stealth Strike" - Complete tasks unnoticed for bonus XP
+- **Bonus**: +15% Gold from all sources.
+- **Special Ability**: "Swift Strike" - Enables the "Beat the Clock" challenge on a
+  daily chore, rewarding successful completion within a set time with a Gold
+  bonus.
 - **Ultimate**: "Shadow Clone" - Complete two different quest types
   simultaneously
 
 **Healer** ⚕️
 
 - **Specialty**: Helping family members and community service
-- **Bonus**: +20% XP for assisting others and family cooperation tasks
-- **Special Ability**: "Blessing" - Grant temporary XP boost to chosen family
-  member
+- **Bonus**: +10% XP & +25% Honor Points from all sources.
+- **Special Ability**: "Blessing" - Enables the "Mentorship Bonus" when helping
+  another family member, granting them bonus XP while earning Honor Points for
+  the Healer.
 - **Ultimate**: "Rally Cry" - Instantly restore all family members' daily
   abilities
 
 ### Leveling & Progression System
 
-**📈 Experience Point Structure**
+**📈 Experience Point & Reward Calculation**
 
-- **Level 1-10**: Apprentice Hero (100 XP per level)
-- **Level 11-25**: Veteran Adventurer (200 XP per level)
-- **Level 26-50**: Elite Champion (400 XP per level)
-- **Level 51-100**: Legendary Hero (800 XP per level)
-- **Level 100+**: Prestige Levels (1000 XP per level, cosmetic rewards only)
+The total XP required to reach a certain level is governed by the formula:
+`Total XP for Level = 50 * (level - 1) ** 2`
 
-**🔓 Level Unlock Rewards**
+This creates a smooth progression curve that makes early levels fast and
+higher levels increasingly challenging. Final rewards for any given quest are also
+affected by two key multipliers:
 
-- **Every Level**: Avatar customization options, gold bonus
-- **Every 5 Levels**: New special ability or ability upgrade
-- **Every 10 Levels**: Access to higher quest tiers and better rewards
-- **Major Milestones**: Exclusive cosmetic sets, unique titles, family
-  recognition
+- **Difficulty Multiplier**: Quests can be set to Easy (1.0x rewards),
+  Medium (1.5x rewards), or Hard (2.0x rewards).
+- **Class Bonus**: Each character class has a permanent bonus to earning
+  specific types of rewards (see Class Selection below).
 
-**🎭 Special Abilities (Unlocked by Level)**
+**🎁 Level Unlock Rewards**
 
-- **Level 5**: "Quick Strike" - Complete any daily quest 50% faster (once per
-  day)
-- **Level 10**: "Lucky Find" - 20% chance for double rewards on quest completion
-- **Level 15**: "Inspiration" - Grant bonus XP to another family member's quest
-- **Level 20**: "Champion's Focus" - Accept and work on two quests
-  simultaneously
-- **Level 25**: "Master's Wisdom" - Create custom quest proposals for family
-- **Level 30**: Class Ultimate Ability unlocked
-- **Level 40**: "Legendary Aura" - All nearby family members get +10% XP
-- **Level 50**: "Hero's Journey" - Unlock prestige progression and unique titles
+Leveling up is a measure of a player's seniority, trust, and status within the
+family guild. It grants access to new privileges and powers, not new chores.
+
+- **Status & Recognition**:
+  - **Every Level**: Receive a small Gold bonus.
+  - **Major Milestones**: Earn new, more prestigious titles displayed under your
+    character name (e.g., "Recruit" -> "Iron Adventurer" -> "Silver Champion").
+- **Cosmetic Customization**:
+  - **Level 10**: Unlock a "Cape" slot for your avatar.
+  - **Level 20**: Unlock a "Pet" slot for a companion that follows your avatar.
+  - **Level 30**: Unlock an "Aura" slot for a special visual effect.
+- **Economic Power**:
+  - **Level 15**: Gain access to Tier 2 of the Real-World Reward Store.
+  - **Level 30**: Gain access to Tier 3 of the Real-World Reward Store.
+- **In-Game Agency**:
+  - **Level 20**: Unlock the ability to propose new quests for the family (GM
+    approval required).
+  - **Level 40**: Unlock the ability to help design a family "Boss Battle."
+
+**🎭 Class Ability Unlock Schedule**
+
+Class abilities are unlocked and upgraded at specific level milestones.
+
+- **Level 5**: Unlock the Core Ability for your chosen class (e.g., `Vow of
+  Excellence I` for Knight, `Swift Strike I` for Rogue).
+- **Level 15**: Upgrade the Core Ability to its second stage (e.g., `Vow of
+  Excellence II`), making it more effective or flexible.
+- **Level 30**: Unlock the powerful "Ultimate" ability for your class (e.g.,
+  `Fortress Command` for Knight, `Shadow Clone` for Rogue).
 
 ---
 
@@ -228,7 +258,9 @@ Each player creates a unique fantasy avatar with:
 - **Real-Time Participation**: Multiple family members can contribute
   simultaneously
 - **Visual Feedback**: Live boss HP bar updates as tasks are completed
-- **Epic Rewards**: Exclusive loot only available from boss defeats
+- **Epic Rewards**: Exclusive loot only available from boss defeats. Boss
+  battles are a primary source of the rare **Gem Crystals** used for high-tier
+  rewards.
 
 **⚔️ Boss Categories & Examples**
 
@@ -301,14 +333,15 @@ Each player creates a unique fantasy avatar with:
 - **Legendary Cosmetics** (500+ gold + rare gems): Exclusive boss battle rewards
 - **Avatar Pets** (200 gold + gems): Companions that follow your character
 
-**⚡ Consumable Items**
+**⚡ Planned Consumable Items**
 
-- **XP Potion** (50 gold): +50% XP for next completed quest
-- **Lucky Charm** (30 gold): +20% chance for bonus rewards today
-- **Time Extension** (25 honor points): Add 6 hours to any quest deadline
-- **Auto-Complete Token** (100 gold): Instantly complete one daily quest
-- **Inspiration Boost** (40 honor points): Grant +25% XP to another family
-  member
+As a future addition, players may be able to purchase single-use items from the
+marketplace to provide strategic advantages:
+
+- **XP Potion**: +50% XP for next completed quest
+- **Lucky Charm**: +20% chance for bonus rewards today
+- **Time Extension**: Add 6 hours to any quest deadline
+- **Inspiration Boost**: Grant +25% XP to another family member
 
 **🏠 Housing & Personalization**
 
@@ -416,15 +449,17 @@ Each player creates a unique fantasy avatar with:
 
 ### Balance & Fairness Mechanics
 
-**⚖️ Automatic Catch-Up Systems**
+⚖️ Future-State Balance & Fairness Mechanics
 
-- **Inspiration Bonus**: Players 2+ levels behind receive +50% XP until balanced
-- **Mentorship Rewards**: Higher-level family members earn bonus rewards for
-  helping others
-- **Flexible Quest Scaling**: Behind players access to higher-value "urgent
-  priority" quests
+To ensure long-term family engagement, several mechanics are designed for future
+implementation to help players who have fallen behind.
+
+- **Inspiration Bonus**: A planned feature where players who are significantly
+  behind the family's average level would receive a passive XP boost.
+- **Mentorship Rewards**: Higher-level family members could earn bonus rewards for
+  completing quests jointly with lower-level members.
 - **Comeback Story Achievement**: Special recognition and rewards for dramatic
-  improvement
+  improvement over a set period.
 
 **🎈 Participation Rewards**
 
@@ -526,21 +561,22 @@ progress on essential household management.
 - **TypeScript**: Full type safety for robust development
 - **Tailwind CSS**: Mobile-first responsive design framework
 - **Framer Motion**: Smooth animations and micro-interactions
-- **React Query (TanStack)**: Efficient data fetching, caching, and
-  synchronization
-- **Socket.io Client**: Real-time updates and live collaboration features
+- **Supabase Client Library**: Handles data fetching, real-time subscriptions,
+  and authentication.
 - **PWA Capabilities**: "Install to home screen" functionality for mobile app
   experience
 
 **⚙️ Backend Architecture**
 
-- **Node.js/Express**: RESTful API server with TypeScript
-- **PostgreSQL + Prisma ORM**: Type-safe database operations with migrations
-- **Redis**: Session management, caching, and real-time feature support
-- **Socket.io**: WebSocket connections for live updates and push notifications
-- **JWT Authentication**: Secure role-based access control
-- **GraphQL (Apollo)**: Flexible data fetching for complex family relationship
-  queries
+- **Supabase**: An all-in-one backend-as-a-service platform that provides the
+  core infrastructure for ChoreQuest.
+  - **PostgreSQL Database**: The underlying relational database, managed by
+    Supabase.
+  - **Real-time Engine**: Provides live updates and collaboration features via
+    websockets, replacing the need for a separate Socket.io server.
+  - **Authentication**: Manages user sign-up, login, and role-based security.
+  - **Auto-generated APIs**: Supabase provides RESTful and GraphQL APIs directly
+    from the database schema, removing the need for a custom Express server.
 
 **🐳 Infrastructure & Deployment**
 
@@ -636,21 +672,21 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 **🎯 Core Functionality**
 
-- [ ] User authentication with family grouping
-- [ ] Basic character creation (name, class selection)
-- [ ] Simple quest system (create, assign, complete, approve workflow)
-- [ ] Core progression (XP earning, level advancement, gold accumulation)
+- [x] User authentication with family grouping
+- [x] Basic character creation (name, class selection)
+- [x] Simple quest system (create, assign, complete, approve workflow)
+- [x] Core progression (XP earning, level advancement, gold accumulation)
 - [ ] Basic reward store (text-based real-world reward redemption)
-- [ ] Mobile-responsive interface with touch-friendly controls
-- [ ] Parent dashboard for quest management and completion approval
+- [x] Mobile-responsive interface with touch-friendly controls
+- [x] Parent dashboard for quest management and completion approval
 
 **🔧 Technical Deliverables**
 
-- [ ] Database schema implementation with core tables
-- [ ] REST API endpoints for all basic functionality
-- [ ] React frontend with essential pages and components
-- [ ] Docker development environment setup
-- [ ] Basic authentication and authorization system
+- [x] Database schema implementation with core tables
+- [x] REST API endpoints for all basic functionality
+- [x] React frontend with essential pages and components
+- [x] Docker development environment setup
+- [x] Basic authentication and authorization system
 
 **✅ Success Criteria**
 
@@ -669,7 +705,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [ ] Fantasy-themed UI/UX with animations and visual feedback
 - [ ] Avatar customization system with unlockable cosmetics
 - [ ] Class abilities and special powers implementation
-- [ ] Real-time updates using Socket.io for live family activity
+- [ ] Real-time updates using Supabase Realtime for live family activity
 - [ ] Push notification system for quest updates and family communication
 - [ ] Basic boss battle system with persistent HP and group participation
 - [ ] Achievement system with progress tracking and celebrations
@@ -841,6 +877,10 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 **🤖 AI & Automation Integration**
 
+- **AI-Assisted Quest Creation**: Leverage AI to help Guild Masters enrich
+  quests. The system could suggest a few sub-tasks for a Knight's "Excellence
+  Checklist" or propose creative "Hidden Objectives" for a Ranger's quest,
+  reducing the creative burden on parents.
 - **Smart Quest Generation**: Machine learning-driven personalized quest
   recommendations
 - **Predictive Engagement**: Early warning systems for declining family
@@ -893,8 +933,7 @@ with a single chore completed with joy."_
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: [Current Date]  
-**Status**: Ready for Technical Design Phase  
-**Next Steps**: Create Technical Design Document and begin Phase 1
-implementation
+**Document Version**: 3.0  
+**Last Updated**: October 15, 2025  
+**Status**: In Active Development  
+**Next Steps**: Continue implementation of Phase 2 features

@@ -48,23 +48,23 @@ tags: []
 
 **🖥️ Frontend (Client-Side)**
 
-- **React 18 + Next.js 15**: Server-side rendering and static generation
+- **React 19 + Next.js 15 (App Router)**: Hybrid SSR/ISR rendering with streaming support
 - **Progressive Web App**: Installable web application with offline capabilities
-- **Real-Time UI**: Socket.io client for live updates and notifications
-- **Mobile-First Design**: Responsive across all device sizes
+- **Real-Time UI**: Supabase Realtime channels for live updates and notifications
+- **Mobile-First Design**: Responsive across all device sizes using Tailwind CSS 4
 
 **⚙️ Backend (Server-Side)**
 
-- **Node.js/Express API**: RESTful endpoints with TypeScript
-- **GraphQL Layer**: Flexible data queries for complex family relationships
-- **Socket.io Server**: WebSocket management for real-time features
-- **Background Jobs**: Quest scheduling, notifications, and maintenance tasks
+- **Next.js API Routes**: Type-safe handlers backed by Supabase
+- **Supabase PostgreSQL**: Row Level Security and RPC functions for business logic
+- **Supabase Realtime**: Broadcast quest template and instance changes to clients
+- **Background Jobs**: Node-cron scheduled tasks for quest generation and expiration
 
 **💾 Data Layer**
 
-- **PostgreSQL**: Primary database for all persistent data
-- **Redis**: Session storage, caching, and real-time data
-- **File Storage**: Avatar images and achievement badges (local filesystem)
+- **Supabase PostgreSQL**: Managed Postgres with RLS enforcing family isolation
+- **Redis (optional)**: Session storage and caching (legacy support while Supabase Auth rollout completes)
+- **Supabase Storage**: Avatar images and achievement badges (migrating from local filesystem)
 
 **🔧 Infrastructure**
 
@@ -80,92 +80,60 @@ tags: []
 
 **Core Framework**
 
-```json
-{
-  "next": "^15.0.0",
-  "react": "^18.3.0",
-  "typescript": "^5.4.0",
-  "@types/react": "^18.3.0"
-}
-```
+- `next@15.5.2`
+- `react@19.1.0`
+- `react-dom@19.1.0`
+- `typescript@5.x`
+- `@types/react@19`
 
 **UI & Styling**
 
-```json
-{
-  "tailwindcss": "^3.4.0",
-  "framer-motion": "^11.0.0",
-  "@headlessui/react": "^2.0.0",
-  "lucide-react": "^0.263.1"
-}
-```
+- `tailwindcss@4`
+- `tailwind-merge@3.3.1`
+- `@headlessui/react@2.2.9`
+- `framer-motion@12.23.12`
+- `lucide-react@0.544.0`
 
 **State Management & Data Fetching**
 
-```json
-{
-  "@tanstack/react-query": "^5.28.0",
-  "zustand": "^4.5.0",
-  "socket.io-client": "^4.7.0"
-}
-```
+- `@supabase/supabase-js@2.58.0` (client-side queries and channel subscriptions)
+- React Context providers for auth, realtime feeds, and animations
+- Local component state + Suspense boundaries for optimistic updates
 
 **PWA & Mobile Features**
 
-```json
-{
-  "next-pwa": "^5.6.0",
-  "workbox-webpack-plugin": "^7.0.0"
-}
-```
+- App Router metadata + manifest.json (install prompts)
+- Responsive Tailwind primitives tuned for mobile-first layouts
+- Planned: service worker + offline caching (tracked in PLANNING.md)
 
 ### Backend Technologies
 
 **Core Server**
 
-```json
-{
-  "express": "^4.19.0",
-  "cors": "^2.8.5",
-  "helmet": "^7.1.0",
-  "compression": "^1.7.4",
-  "typescript": "^5.4.0",
-  "@types/express": "^4.17.21"
-}
-```
+- Next.js App Router (API routes deployed alongside UI)
+- `@supabase/supabase-js@2.58.0` for database access
+- `node-cron@4.2.1` scheduled jobs (initialized via `instrumentation.ts`)
+- `zod@4.1.5` request validation for API endpoints
 
 **Database & ORM**
 
-```json
-{
-  "prisma": "^5.12.0",
-  "@prisma/client": "^5.12.0",
-  "pg": "^8.11.0",
-  "@types/pg": "^8.11.0"
-}
-```
+- Supabase SQL migrations stored under `supabase/migrations/`
+- Generated TypeScript helpers in `lib/types/database-generated.ts`
+- Direct Supabase client (`@supabase/supabase-js`) rather than Prisma
 
 **Authentication & Security**
 
-```json
-{
-  "jsonwebtoken": "^9.0.2",
-  "bcrypt": "^5.1.0",
-  "express-rate-limit": "^7.2.0",
-  "express-validator": "^7.0.0"
-}
-```
+- Supabase Auth handles session issuance (JWT)
+- `jsonwebtoken@9` used for legacy service tokens + cron signing
+- RLS policies enforce per-family data isolation
+- Zod schemas sanitize incoming payloads in API routes
 
 **Real-Time & Background Processing**
 
-```json
-{
-  "socket.io": "^4.7.0",
-  "redis": "^4.6.0",
-  "node-cron": "^3.0.3",
-  "bull": "^4.12.0"
-}
-```
+- Supabase Realtime subscriptions broadcast quest/template/table changes
+- Node-cron orchestrates quest generation and expiration via authenticated API routes
+- Cron jobs bootstrap through Next.js `instrumentation.ts` to avoid double execution
+- Redis remains available for caching legacy flows but is optional in current builds
 
 ### Infrastructure & Deployment
 
@@ -178,6 +146,51 @@ tags: []
 - redis (Cache & Sessions)
 - nginx (Reverse Proxy)
 ```
+
+## ♻️ Recurring Quest System (2025-10 Update)
+
+### Data Model Changes
+- `supabase/migrations/20251014000001_cache_recurrence_on_quest_instances.sql` caches `recurrence_pattern` on `quest_instances` to keep streak calculations local to the instance record.
+- Template schema adds `quest_type`, `recurrence_pattern`, `assigned_character_ids[]`, and `is_paused` so the UI can filter individual vs family quests and support pauses without data loss.
+- `quest_instances` now stores `cycle_start_date`, `cycle_end_date`, `volunteer_bonus`, `streak_count`, and `streak_bonus`, enabling idempotent cron runs and deterministic reward payouts.
+- New table `character_quest_streaks` tracks `current_streak`, `longest_streak`, and `last_completed_date` per character/template pair.
+
+### Cron & Scheduling
+- `instrumentation.ts` boots `initializeCronJobs()` only when `NEXT_RUNTIME === 'nodejs'` to avoid duplicated cron runners on edge functions.
+- `lib/cron-jobs.ts` schedules `generate-quests` and `expire-quests` every five minutes, authenticating with `Authorization: Bearer ${CRON_SECRET}`.
+- Optional `RECURRING_TEST_INTERVAL_MINUTES` env var lets maintainers shorten cycles for local demos or automated tests.
+
+### Service Layer
+- `lib/recurring-quest-generator.ts` encapsulates idempotent quest generation for both individual and family templates, including weekly cycle alignment via `families.week_start_day`.
+- `lib/quest-instance-service.ts` governs claiming, releasing, and GM assignment with anti-hoarding checks (`characters.active_family_quest_id`) and volunteer bonus caching.
+- `lib/streak-service.ts` (and `lib/streak-service.test.ts`) handles streak CRUD, bonus calculations, and leaderboard hydration.
+- `lib/preset-template-api-service.ts`, `lib/quest-template-api-service.ts`, and `lib/quest-instance-api-service.ts` centralize API fetch logic for the dashboard components.
+
+### API Surface (Next.js App Router)
+- `/app/api/quest-templates` (list/create) and `/app/api/quest-templates/[id]` (read/update/delete) enforce Guild Master authorization and Zod validation.
+- `/app/api/quest-templates/[id]/pause` toggles template activity while leaving history intact.
+- `/app/api/quest-templates/presets` exposes curated starter definitions from `lib/preset-templates.ts`.
+- `/app/api/quests/[id]/claim`, `/release`, and `/assign` route through `QuestInstanceService` to manage family quest workflows.
+- `/app/api/cron/generate-quests` and `/app/api/cron/expire-quests` provide secure entry points for scheduler triggers.
+- `/app/api/streaks` and `/app/api/streaks/leaderboard` aggregate streak data for admin dashboards.
+
+### Client Experience
+- `components/quest-template-manager.tsx` combines template CRUD, pause/resume, and inline deletion with Supabase realtime updates.
+- `components/family-quest-claiming.tsx` visualizes available/claimed/missed family quests, integrating volunteer bonus messaging.
+- `components/preset-template-library.tsx` lets Guild Masters import curated templates in bulk.
+- `components/quest-conversion-wizard.tsx` upgrades ad-hoc quests to recurring templates in place.
+- `components/streak-display.tsx` and `components/quest-dashboard.tsx` surface streak metrics and claim status to heroes.
+
+### Analytics & Reporting
+- Supabase functions: `get_completion_rate_by_template`, `get_most_missed_quests`, and `get_volunteer_patterns` support GM dashboards (see `supabase/migrations/20251013000002_*`).
+- `tests/integration/quest-templates-api.integration.test.ts` and `tests/integration/quest-instance-service.integration.test.ts` cover happy-path and failure scenarios for the new API surface.
+- Jest suites in `lib/recurring-quest-generator.test.ts`, `lib/quest-instance-service.test.ts`, and `lib/streak-service.test.ts` guard regression-critical logic.
+
+### Environment Variables
+- `CRON_SECRET` must be set consistently for both the server runtime and any external scheduler/webhook.
+- `NEXTAUTH_URL` (or `VERCEL_URL`) defines the base URL used by cron jobs when calling internal API routes.
+- `RECURRING_TEST_INTERVAL_MINUTES` (optional) shortens cycle length for local development demos.
+- Legacy JWT and Redis settings remain for backward compatibility but are slated for removal once Supabase Auth migration completes.
 
 **Development Tools**
 

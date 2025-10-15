@@ -26,6 +26,10 @@ export interface QuestCompleteOverlayProps {
   questTitle?: string;
   /** Rewards earned from quest */
   rewards: QuestReward;
+  /** Streak bonus percentage */
+  streakBonus?: number;
+  /** Volunteer bonus percentage */
+  volunteerBonus?: number;
   /** Callback when overlay is dismissed */
   onDismiss: () => void;
   /** Auto-dismiss duration in milliseconds (default: 5000ms) */
@@ -40,6 +44,8 @@ export function QuestCompleteOverlay({
   show,
   questTitle = 'Quest Complete!',
   rewards,
+  streakBonus,
+  volunteerBonus,
   onDismiss,
   autoDismissDuration = 5000,
 }: QuestCompleteOverlayProps) {
@@ -170,6 +176,24 @@ export function QuestCompleteOverlay({
                       <Star className="h-6 w-6 text-primary-400" />
                       <span className="text-lg font-semibold text-primary-300">
                         {rewards.customReward}
+                      </span>
+                    </div>
+                  )}
+
+                  {(streakBonus !== undefined && streakBonus > 0) && (
+                    <div className="flex items-center justify-center gap-3 rounded-md bg-orange-950/50 p-3">
+                      <Sparkles className="h-6 w-6 text-orange-400" />
+                      <span className="text-lg font-semibold text-orange-300">
+                        +{(streakBonus * 100).toFixed(0)}% Streak Bonus
+                      </span>
+                    </div>
+                  )}
+
+                  {(volunteerBonus !== undefined && volunteerBonus > 0) && (
+                    <div className="flex items-center justify-center gap-3 rounded-md bg-green-950/50 p-3">
+                      <Sparkles className="h-6 w-6 text-green-400" />
+                      <span className="text-lg font-semibold text-green-300">
+                        +{(volunteerBonus * 100).toFixed(0)}% Volunteer Bonus
                       </span>
                     </div>
                   )}

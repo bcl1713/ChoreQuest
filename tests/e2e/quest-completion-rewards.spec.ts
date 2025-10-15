@@ -111,7 +111,7 @@ test.describe("Quest Completion Rewards", () => {
       difficulty: "HARD",
       xpReward: 100,
     });
-    baselineXP = await expectStatDelta(
+    await expectStatDelta(
       gmPage,
       "character-xp",
       baselineXP,
@@ -171,8 +171,8 @@ test.describe("Quest Completion Rewards", () => {
     const { gmPage } = workerFamily;
     await navigateToDashboard(gmPage);
 
-    let baselineXP = await getNumericStat(gmPage, "character-xp");
-    let baselineGold = await getNumericStat(gmPage, "character-gold");
+    const baselineXP = await getNumericStat(gmPage, "character-xp");
+    const baselineGold = await getNumericStat(gmPage, "character-gold");
 
     const questTitle = uniqueQuestName("Multi-Reward Quest");
 
@@ -189,13 +189,13 @@ test.describe("Quest Completion Rewards", () => {
     await completeQuest(gmPage, questTitle);
     await approveQuest(gmPage, questTitle);
 
-    baselineGold = await expectStatDelta(
+    await expectStatDelta(
       gmPage,
       "character-gold",
       baselineGold,
       118,
     );
-    baselineXP = await expectStatDelta(
+    await expectStatDelta(
       gmPage,
       "character-xp",
       baselineXP,

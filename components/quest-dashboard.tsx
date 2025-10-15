@@ -1,515 +1,546 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
-import { QuestInstance, QuestDifficulty, UserProfile } from "@/lib/types/database";
-import { RewardCalculator } from "@/lib/reward-calculator";
-import { motion } from "framer-motion";
-import { staggerContainer, staggerItem } from "@/lib/animations/variants";
+import {
+  QuestInstance,
+  QuestDifficulty,
+  QuestStatus,
+  UserProfile,
+  Tables,
+} from "@/lib/types/database";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import FamilyQuestClaiming from "./family-quest-claiming";
+import { questInstanceApiService } from "@/lib/quest-instance-api-service";
+import { staggerContainer, staggerItem } from "@/lib/animations/variants";
 
-interface QuestDashboardProps {
-  onError?: (error: string) => void;
-  onLoadQuestsRef?: (loadQuests: () => Promise<void>) => void;
-}
+type QuestDashboardProps = {
+  onError: (error: string) => void;
+  onLoadQuestsRef?: (reload: () => Promise<void>) => void;
+};
 
-export default function QuestDashboard({
-  onError,
-  onLoadQuestsRef,
-}: QuestDashboardProps) {
+type LoadDataOptions = {
+  useSpinner?: boolean;
+};
+
+const deduplicateQuests = (quests: QuestInstance[]): QuestInstance[] => {
+  const seen = new Set<string>();
+  return quests.filter((quest) => {
+    if (seen.has(quest.id)) {
+      return false;
+    }
+    seen.add(quest.id);
+    return true;
+  });
+};
+
+const getDifficultyColor = (difficulty: QuestDifficulty) => {
+  switch (difficulty) {
+    case "EASY":
+      return "text-green-400";
+    case "MEDIUM":
+      return "text-yellow-400";
+    case "HARD":
+      return "text-red-400";
+    default:
+      return "text-gray-400";
+  }
+};
+
+const getStatusColor = (status: QuestStatus | null | undefined) => {
+  switch (status) {
+    case "PENDING":
+      return "bg-gray-600 text-gray-200";
+    case "IN_PROGRESS":
+      return "bg-blue-600 text-blue-100";
+    case "COMPLETED":
+      return "bg-yellow-600 text-yellow-100";
+    case "APPROVED":
+      return "bg-green-600 text-green-100";
+    case "EXPIRED":
+    case "MISSED":
+      return "bg-red-600 text-red-100";
+    case "AVAILABLE":
+      return "bg-emerald-700 text-emerald-100";
+    case "CLAIMED":
+      return "bg-purple-700 text-purple-100";
+    default:
+      return "bg-gray-600 text-gray-200";
+  }
+};
+
+const formatDueDate = (dueDate: string | null) => {
+  if (!dueDate) return null;
+
+  const date = new Date(dueDate);
+  const now = new Date();
+  const diffTime = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+  const formattedTime = date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (diffDays < 0) {
+    return `🚨 Overdue (${formattedDate})`;
+  }
+  if (diffDays === 0) {
+    return `⏰ Due Today ${formattedTime}`;
+  }
+  if (diffDays === 1) {
+    return `📅 Due Tomorrow ${formattedTime}`;
+  }
+  return `📅 Due ${formattedDate} ${formattedTime}`;
+};
+
+const formatPercent = (value: number | null | undefined) => {
+  if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) {
+    return null;
+  }
+  const normalized = value <= 1 ? value * 100 : value;
+  if (normalized <= 0) return null;
+  return `${Math.round(normalized)}%`;
+};
+
+const formatDateTime = (value: string | null | undefined) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getQuestTimestamp = (quest: QuestInstance) => {
+  const toTime = (timestamp: string | null | undefined) => {
+    if (!timestamp) return 0;
+    const value = new Date(timestamp).getTime();
+    return Number.isFinite(value) ? value : 0;
+  };
+
+  return (
+    toTime(quest.completed_at) ||
+    toTime(quest.updated_at) ||
+    toTime(quest.created_at)
+  );
+};
+
+export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashboardProps) {
   const { user, session, profile } = useAuth();
   const { onQuestUpdate } = useRealtime();
   const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
-  const [selectedAssignee, setSelectedAssignee] = useState<{
-    [questId: string]: string;
-  }>({});
+  const [familyCharacters, setFamilyCharacters] = useState<Tables<"characters">[]>([]);
+  const [character, setCharacter] = useState<Tables<"characters"> | null>(null);
+  const [selectedAssignee, setSelectedAssignee] = useState<Record<string, string>>({});
+  const [selectedFamilyAssignments, setSelectedFamilyAssignments] = useState<Record<string, string>>({});
+  const [showQuestHistory, setShowQuestHistory] = useState(false);
   const hasInitialized = useRef(false);
+  const hasLoadedOnceRef = useRef(false);
 
-  useEffect(() => {
+  const loadQuests = useCallback(
+    async (familyId: string) => {
+      const { data, error: fetchError } = await supabase
+        .from("quest_instances")
+        .select("*")
+        .eq("family_id", familyId)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) {
+        throw new Error(`Failed to fetch quest instances: ${fetchError.message}`);
+      }
+
+      setQuestInstances(deduplicateQuests((data as QuestInstance[]) ?? []));
+    },
+    []
+  );
+
+  const loadData = useCallback(async (options: LoadDataOptions = {}) => {
+    const shouldUseSpinner = options.useSpinner ?? !hasLoadedOnceRef.current;
+
     if (!user || !session || !profile) {
-      if (!user) {
-        // If no user, set error state
-        setError("User not authenticated");
-        setLoading(false);
-      }
+      setError("User not authenticated");
+      setLoading(false);
+      setIsRefreshing(false);
       return;
     }
 
-    // Prevent multiple initializations
-    if (hasInitialized.current) {
-      return;
-    }
-
-    hasInitialized.current = true;
-
-    const loadData = async () => {
+    if (shouldUseSpinner) {
       setLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
 
-      try {
-        // Load quest instances for the family
-        const { data: questData, error: questError } = await supabase
-          .from('quest_instances')
-          .select('*')
-          .eq('family_id', profile.family_id)
-          .order('created_at', { ascending: false });
-
-        if (questError) {
-          throw questError;
-        }
-
-        setQuestInstances(deduplicateQuests(questData || []));
-
-        // Load family members for assignment dropdown
-        try {
-          const { data: membersData, error: membersError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('family_id', profile.family_id);
-
-          if (!membersError && membersData) {
-            // Use UserProfile data directly (no transformation needed)
-            setFamilyMembers(membersData);
-          }
-        } catch (err) {
-          console.error("Failed to load family members:", err);
-        }
-      } catch (err) {
-        const errorMsg =
-          err instanceof Error ? err.message : "Failed to load quests";
-        setError(errorMsg);
-        onError?.(errorMsg);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [user, session, profile, onError]);
-
-  const loadQuests = useCallback(async () => {
-    if (!profile) return;
+    setError(null);
+    let loadSucceeded = false;
 
     try {
-      setLoading(true);
-      const { data: questData, error: questError } = await supabase
-        .from('quest_instances')
-        .select('*')
-        .eq('family_id', profile.family_id)
-        .order('created_at', { ascending: false });
+      // Load hero character (if any)
+      const { data: characterData, error: characterError } = await supabase
+        .from("characters")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
-      if (questError) {
-        throw questError;
+      if (!characterError) {
+        setCharacter(characterData);
+      } else if (characterError.code !== "PGRST116") {
+        throw new Error(`Failed to fetch character: ${characterError.message}`);
+      } else {
+        setCharacter(null);
       }
 
-      setQuestInstances(deduplicateQuests(questData || []));
+      // Load family members for assignment
+      const { data: familyMembersData, error: familyMembersError } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("family_id", profile.family_id);
+
+      if (familyMembersError) {
+        throw new Error(`Failed to fetch family members: ${familyMembersError.message}`);
+      }
+
+      setFamilyMembers(familyMembersData || []);
+
+      const memberIds = (familyMembersData || []).map((member) => member.id);
+      if (memberIds.length > 0) {
+        const { data: charactersData, error: charactersError } = await supabase
+          .from("characters")
+          .select("*")
+          .in("user_id", memberIds);
+
+        if (charactersError) {
+          throw new Error(`Failed to fetch family characters: ${charactersError.message}`);
+        }
+
+        setFamilyCharacters(charactersData || []);
+        setSelectedFamilyAssignments({});
+      } else {
+        setFamilyCharacters([]);
+        setSelectedFamilyAssignments({});
+      }
+
+      if (profile.family_id) {
+        await loadQuests(profile.family_id);
+      } else {
+        setQuestInstances([]);
+      }
+      loadSucceeded = true;
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to load quests";
-      setError(errorMsg);
-      onError?.(errorMsg);
+      const message = err instanceof Error ? err.message : "An unknown error occurred";
+      setError(message);
+      onError(message);
     } finally {
-      setLoading(false);
-    }
-  }, [profile, onError]);
-
-  // Helper function to deduplicate quests by ID
-  const deduplicateQuests = (quests: QuestInstance[]): QuestInstance[] => {
-    const seen = new Set<string>();
-    return quests.filter(quest => {
-      if (seen.has(quest.id)) {
-        return false;
+      if (shouldUseSpinner) {
+        setLoading(false);
+      } else {
+        setIsRefreshing(false);
       }
-      seen.add(quest.id);
-      return true;
-    });
-  };
 
-  useEffect(() => {
-    // Pass the loadQuests function to parent
-    if (onLoadQuestsRef) {
-      onLoadQuestsRef(loadQuests);
+      if (loadSucceeded) {
+        hasLoadedOnceRef.current = true;
+      }
     }
-  }, [onLoadQuestsRef, loadQuests]);
+  }, [loadQuests, onError, profile, session, user]);
 
-  // Set up realtime quest update listener
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!onLoadQuestsRef) return;
+    onLoadQuestsRef(() => loadData({ useSpinner: false }));
+  }, [loadData, onLoadQuestsRef]);
+
+  useEffect(() => {
+    const isFirstRun = !hasInitialized.current;
+    hasInitialized.current = true;
+    void loadData({ useSpinner: isFirstRun });
+  }, [loadData]);
+
+  useEffect(() => {
+    if (!profile?.family_id) return;
 
     const unsubscribe = onQuestUpdate((event) => {
+      setQuestInstances((current) => {
+        if (!event?.action) return current;
+        const record = (event.record ?? {}) as Partial<QuestInstance>;
+        const oldRecord = (event.old_record ?? {}) as Partial<QuestInstance>;
 
-      setQuestInstances(currentQuests => {
-        if (event.action === 'INSERT') {
-          // Check if quest already exists before adding
-          const questExists = currentQuests.some(quest => quest.id === event.record.id);
-          if (questExists) {
-            return currentQuests;
-          }
-          // Add new quest to the list
-          return deduplicateQuests([event.record as QuestInstance, ...currentQuests]);
-        } else if (event.action === 'UPDATE') {
-          // Update existing quest
-          const updatedQuests = currentQuests.map(quest =>
-            quest.id === event.record.id ? { ...quest, ...event.record } as QuestInstance : quest
-          );
-          return deduplicateQuests(updatedQuests);
-        } else if (event.action === 'DELETE') {
-          // Remove quest from the list
-          return currentQuests.filter(quest => quest.id !== event.old_record?.id);
+        if (event.action === "INSERT" && record.id) {
+          return deduplicateQuests([record as QuestInstance, ...current]);
         }
-        return deduplicateQuests(currentQuests);
+
+        if (event.action === "UPDATE" && record.id) {
+          return deduplicateQuests(
+            current.map((quest) =>
+              quest.id === record.id
+                ? { ...quest, ...record }
+                : quest
+            )
+          );
+        }
+
+        if (event.action === "DELETE" && oldRecord.id) {
+          return current.filter((quest) => quest.id !== oldRecord.id);
+        }
+
+        return current;
       });
     });
 
     return unsubscribe;
-  }, [user, profile, onQuestUpdate]);
+  }, [onQuestUpdate, profile?.family_id]);
 
-  const handleStatusUpdate = async (questId: string, status: string) => {
+  const handleStatusUpdate = async (questId: string, status: QuestStatus) => {
     try {
-      if (status === "APPROVED" && profile?.role === "GUILD_MASTER") {
-        // Handle quest approval with reward processing
-        // First get quest details
-        const { data: questData, error: questError } = await supabase
-          .from('quest_instances')
-          .select('*')
-          .eq('id', questId)
-          .single();
+      if (status === "APPROVED") {
+        await questInstanceApiService.approveQuest(questId);
+        await loadData({ useSpinner: false });
+        return;
+      }
 
-        if (questError) {
-          throw questError;
-        }
+      const updateData: Partial<QuestInstance> = {
+        status,
+      };
 
-        // Calculate rewards FIRST (before any database updates)
-        let finalRewards = {
-          xp: questData.xp_reward,
-          gold: questData.gold_reward,
-        };
+      if (status === "COMPLETED") {
+        updateData.completed_at = new Date().toISOString();
+      }
 
-        // If quest is assigned, calculate rewards with bonuses
-        if (questData.assigned_to_id) {
-          // Get current character stats and class
-          const { data: characterData, error: characterFetchError } = await supabase
-            .from('characters')
-            .select('xp, gold, level, class')
-            .eq('user_id', questData.assigned_to_id)
-            .single();
+      setQuestInstances((current) =>
+        current.map((quest) =>
+          quest.id === questId ? { ...quest, ...updateData } : quest
+        )
+      );
 
-          if (!characterFetchError && characterData) {
-            // Calculate rewards using RewardCalculator with class bonuses
-            const baseRewards = {
-              xpReward: questData.xp_reward,
-              goldReward: questData.gold_reward,
-              gemsReward: questData.gems_reward || 0,
-              honorPointsReward: questData.honor_points_reward || 0,
-            };
+      const { error: updateError } = await supabase
+        .from("quest_instances")
+        .update(updateData)
+        .eq("id", questId);
 
-            const calculatedRewards = RewardCalculator.calculateQuestRewards(
-              baseRewards,
-              questData.difficulty,
-              characterData.class,
-              characterData.level
-            );
-
-            // Update final rewards with calculated values
-            finalRewards = {
-              xp: calculatedRewards.xp,
-              gold: calculatedRewards.gold,
-            };
-          }
-        }
-
-        // Update quest status
-        const { error: updateError } = await supabase
-          .from('quest_instances')
-          .update({
-            status: 'APPROVED',
-            approved_at: new Date().toISOString(),
-          })
-          .eq('id', questId);
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        // Update character stats if quest is assigned
-        if (questData.assigned_to_id) {
-          // Get current character stats again (in case they changed)
-          const { data: characterData, error: characterFetchError } = await supabase
-            .from('characters')
-            .select('xp, gold, level, class')
-            .eq('user_id', questData.assigned_to_id)
-            .single();
-
-          if (characterFetchError) {
-            console.error('Failed to fetch character stats:', characterFetchError);
-            // Continue to show overlay even if character fetch fails
-          } else {
-            // Calculate new stats with rewards
-            const newXp = characterData.xp + finalRewards.xp;
-            const newGold = characterData.gold + finalRewards.gold;
-
-            // Calculate level up using RewardCalculator
-            const levelUpResult = RewardCalculator.calculateLevelUp(
-              characterData.xp,
-              finalRewards.xp,
-              characterData.level
-            );
-            const newLevel = levelUpResult ? levelUpResult.newLevel : characterData.level;
-
-            const { error: characterError } = await supabase
-              .from('characters')
-              .update({
-                xp: newXp,
-                gold: newGold,
-                level: newLevel,
-              })
-              .eq('user_id', questData.assigned_to_id);
-
-            if (characterError) {
-              console.error('Failed to award rewards:', characterError);
-              // Continue to show overlay even if character update fails
-            }
-          }
-        }
-
-        // Character stats updates are handled automatically by CharacterContext's
-        // realtime subscription (see lib/character-context.tsx lines 206-229).
-
-        // The quest complete overlay will be shown via realtime updates on the
-        // quest completer's screen (see dashboard page realtime quest listener).
-        // We don't show the modal on the GM's screen when they approve someone else's quest.
-
-      } else {
-        // Handle other status updates normally
-        const updateData: {
-          status: string;
-          completed_at?: string;
-        } = {
-          status: status as
-            | "PENDING"
-            | "IN_PROGRESS"
-            | "COMPLETED"
-            | "APPROVED"
-            | "EXPIRED",
-        };
-
-        if (status === "COMPLETED") {
-          updateData.completed_at = new Date().toISOString();
-        }
-
-        // Optimistically update local state immediately for instant UI feedback
-        setQuestInstances(currentQuests =>
-          currentQuests.map(quest =>
-            quest.id === questId
-              ? { ...quest, ...updateData } as QuestInstance
-              : quest
-          )
-        );
-
-        const { error } = await supabase
-          .from('quest_instances')
-          .update(updateData)
-          .eq('id', questId);
-
-        if (error) {
-          // Revert optimistic update on error
-          await loadQuests();
-          throw error;
-        }
-
-        // Quest updates will also be handled by realtime subscriptions (for other users)
+      if (updateError) {
+        throw new Error(updateError.message);
       }
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to update quest";
-      setError(errorMsg);
-      onError?.(errorMsg);
+      const message = err instanceof Error ? err.message : "Failed to update quest";
+      setError(message);
+      onError(message);
+      await loadData({ useSpinner: false });
     }
   };
 
-  // TODO: Implement quest pickup functionality
-  const handlePickupQuest = async (questId: string) => {
-    if (!user) return;
+  const handlePickupQuest = async (quest: QuestInstance) => {
+    if (!user) {
+      const message = "You must be signed in to pick up quests.";
+      setError(message);
+      onError(message);
+      return;
+    }
 
-    // Optimistically update local state immediately for instant UI feedback
-    setQuestInstances(currentQuests =>
-      currentQuests.map(quest =>
-        quest.id === questId
-          ? { ...quest, assigned_to_id: user.id, status: 'PENDING' as const }
-          : quest
-      )
-    );
+    if (quest.quest_type === "FAMILY") {
+      await handleClaimQuest(quest.id);
+      return;
+    }
 
     try {
-      const { error } = await supabase
-        .from('quest_instances')
+      setQuestInstances((current) =>
+        current.map((existing) =>
+          existing.id === quest.id
+            ? { ...existing, assigned_to_id: user.id, status: "PENDING" }
+            : existing
+        )
+      );
+
+      const { error: updateError } = await supabase
+        .from("quest_instances")
         .update({
           assigned_to_id: user.id,
-          status: 'PENDING',
+          status: "PENDING",
         })
-        .eq('id', questId)
-        .select();
+        .eq("id", quest.id);
 
-      if (error) {
-        // Revert optimistic update on error
-        await loadQuests();
-        throw error;
+      if (updateError) {
+        throw new Error(updateError.message);
       }
-
-      // Quest updates will also be handled by realtime subscriptions (for other users)
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to pick up quest";
-      console.error('Quest pickup failed:', err);
-      setError(errorMsg);
-      onError?.(errorMsg);
+      const message = err instanceof Error ? err.message : "Failed to pick up quest";
+      setError(message);
+      onError(message);
+      await loadData({ useSpinner: false });
     }
   };
 
-  // TODO: Implement quest assignment functionality
-  const handleAssignQuest = async (questId: string, assigneeId: string) => {
+  const handleAssignQuest = async (questId: string, assigneeId: string | undefined) => {
     if (!assigneeId) return;
 
-    // Optimistically update local state immediately for instant UI feedback
-    setQuestInstances(currentQuests =>
-      currentQuests.map(quest =>
-        quest.id === questId
-          ? { ...quest, assigned_to_id: assigneeId, status: 'PENDING' as const }
-          : quest
-      )
-    );
-
-    // Clear the dropdown selection immediately
-    setSelectedAssignee((prev) => ({
-      ...prev,
-      [questId]: "",
-    }));
-
     try {
-      const { error } = await supabase
-        .from('quest_instances')
+      setQuestInstances((current) =>
+        current.map((quest) =>
+          quest.id === questId
+            ? { ...quest, assigned_to_id: assigneeId, status: "PENDING" }
+            : quest
+        )
+      );
+
+      const { error: updateError } = await supabase
+        .from("quest_instances")
         .update({
           assigned_to_id: assigneeId,
-          status: 'PENDING',
+          status: "PENDING",
         })
-        .eq('id', questId);
+        .eq("id", questId);
 
-      if (error) {
-        // Revert optimistic update on error
-        await loadQuests();
-        throw error;
+      if (updateError) {
+        throw new Error(updateError.message);
       }
 
-      // Quest updates will also be handled by realtime subscriptions (for other users)
+      setSelectedAssignee((prev) => ({
+        ...prev,
+        [questId]: "",
+      }));
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to assign quest";
-      setError(errorMsg);
-      onError?.(errorMsg);
+      const message = err instanceof Error ? err.message : "Failed to assign quest";
+      setError(message);
+      onError(message);
+      await loadData({ useSpinner: false });
+    }
+  };
+
+  const handleAssignFamilyQuest = async (questId: string) => {
+    const characterId = selectedFamilyAssignments[questId];
+    if (!characterId) return;
+
+    try {
+      await questInstanceApiService.assignFamilyQuest(questId, characterId);
+      setSelectedFamilyAssignments((prev) => {
+        const updated = { ...prev };
+        delete updated[questId];
+        return updated;
+      });
+      await loadData({ useSpinner: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to assign family quest";
+      setError(message);
+      onError(message);
+      await loadData({ useSpinner: false });
     }
   };
 
   const handleCancelQuest = async (questId: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this quest?",
-    );
+    const confirmed = typeof window === "undefined" ? true : window.confirm("Are you sure you want to cancel this quest?");
     if (!confirmed) return;
 
     try {
-      const { error } = await supabase
-        .from('quest_instances')
+      const { error: deleteError } = await supabase
+        .from("quest_instances")
         .delete()
-        .eq('id', questId);
+        .eq("id", questId);
 
-      if (error) {
-        throw error;
+      if (deleteError) {
+        throw new Error(deleteError.message);
       }
-
-      // Quest updates will be handled automatically by realtime subscriptions
     } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to cancel quest";
-      setError(errorMsg);
-      onError?.(errorMsg);
+      const message = err instanceof Error ? err.message : "Failed to cancel quest";
+      setError(message);
+      onError(message);
+      await loadData({ useSpinner: false });
     }
   };
 
-
-  const getDifficultyColor = (difficulty: QuestDifficulty) => {
-    switch (difficulty) {
-      case "EASY":
-        return "text-green-400";
-      case "MEDIUM":
-        return "text-yellow-400";
-      case "HARD":
-        return "text-red-400";
-      default:
-        return "text-gray-400";
+  const handleClaimQuest = async (questId: string) => {
+    try {
+      await questInstanceApiService.claimQuest(questId);
+      await loadData({ useSpinner: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to claim quest";
+      setError(message);
+      onError(message);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-gray-600 text-gray-300";
-      case "IN_PROGRESS":
-        return "bg-blue-600 text-blue-100";
-      case "COMPLETED":
-        return "bg-yellow-600 text-yellow-100";
-      case "APPROVED":
-        return "bg-green-600 text-green-100";
-      case "EXPIRED":
-        return "bg-red-600 text-red-100";
-      default:
-        return "bg-gray-600 text-gray-300";
+  const handleReleaseQuest = async (questId: string) => {
+    try {
+      await questInstanceApiService.releaseQuest(questId);
+      await loadData({ useSpinner: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to release quest";
+      setError(message);
+      onError(message);
     }
   };
 
-  const formatDueDate = (dueDate: string | Date | null) => {
-    if (!dueDate) return null;
-
-    const date = typeof dueDate == "string" ? new Date(dueDate) : dueDate;
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // Format the date
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const time = date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    if (diffDays < 0) {
-      return `🚨 Overdue (${month}/${day})`;
-    } else if (diffDays === 0) {
-      return `⏰ Due Today ${time}`;
-    } else if (diffDays === 1) {
-      return `📅 Due Tomorrow ${time}`;
-    } else {
-      return `📅 Due ${month}/${day} ${time}`;
+  const handleApproveQuest = async (questId: string) => {
+    try {
+      await questInstanceApiService.approveQuest(questId);
+      await loadData({ useSpinner: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to approve quest";
+      setError(message);
+      onError(message);
     }
   };
 
-  const canUpdateStatus = (quest: QuestInstance, newStatus: string) => {
+  const myQuests = questInstances.filter((quest) => quest.assigned_to_id === user?.id);
+  const activeQuestStatuses: QuestStatus[] = ["PENDING", "IN_PROGRESS", "CLAIMED"];
+  const historicalQuestStatuses: QuestStatus[] = ["COMPLETED", "APPROVED", "EXPIRED", "MISSED"];
+  const activeStatusSet = new Set<QuestStatus>(activeQuestStatuses);
+  const historyStatusSet = new Set<QuestStatus>(historicalQuestStatuses);
+
+  const myActiveQuests = myQuests.filter((quest) => {
+    if (!quest.status) return true;
+    return activeStatusSet.has(quest.status);
+  });
+
+  const myHistoricalQuests = myQuests
+    .filter((quest) => quest.status && historyStatusSet.has(quest.status))
+    .sort((a, b) => getQuestTimestamp(b) - getQuestTimestamp(a));
+
+  const unassignedIndividualQuests = questInstances.filter(
+    (quest) => !quest.assigned_to_id && quest.quest_type !== "FAMILY"
+  );
+  const unassignedFamilyQuests = questInstances.filter(
+    (quest) => quest.quest_type === "FAMILY" && !quest.assigned_to_id
+  );
+  const questsAwaitingApproval = questInstances.filter((quest) => quest.status === "COMPLETED");
+  const otherQuests = profile?.role === "GUILD_MASTER"
+    ? questInstances.filter(
+        (quest) => quest.assigned_to_id && quest.assigned_to_id !== user?.id
+      )
+    : [];
+  const claimableFamilyQuests = questInstances.filter(
+    (quest) => quest.quest_type === "FAMILY" && quest.status === "AVAILABLE"
+  );
+
+  const formatRecurrence = (value: QuestInstance["recurrence_pattern"]) => {
+    if (!value) return null;
+    const lower = value.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  };
+
+  const canUpdateStatus = (quest: QuestInstance, newStatus: QuestStatus) => {
     if (!user) return false;
-
-    // Heroes can mark their own quests as IN_PROGRESS or COMPLETED
-    if (
-      (newStatus === "IN_PROGRESS" || newStatus === "COMPLETED") &&
-      quest.assigned_to_id === user.id
-    ) {
-      return true;
+    if (newStatus === "APPROVED") {
+      return profile?.role === "GUILD_MASTER";
     }
 
-    // Guild masters can approve quests
-    if (newStatus === "APPROVED" && profile?.role === "GUILD_MASTER") {
-      return true;
+    if (quest.assigned_to_id === user.id) {
+      if (newStatus === "IN_PROGRESS" && (quest.status === "PENDING" || quest.status === "CLAIMED" || !quest.status)) {
+        return true;
+      }
+      if (newStatus === "COMPLETED" && quest.status === "IN_PROGRESS") {
+        return true;
+      }
     }
 
     return false;
@@ -517,20 +548,23 @@ export default function QuestDashboard({
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <LoadingSpinner size="lg" className="mb-4" aria-label="Loading quests" />
-        <p className="text-gray-400">Loading quests...</p>
+      <div className="flex justify-center py-10">
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="fantasy-card p-6 text-center">
-        <p className="text-red-400 mb-4">⚠️ {error}</p>
+      <div className="fantasy-card p-6 text-center text-red-400">
+        <p>{error}</p>
         <button
-          onClick={loadQuests}
-          className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
+          type="button"
+          className="mt-4 px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+          onClick={() => {
+            setError(null);
+            void loadData({ useSpinner: true });
+          }}
         >
           Try Again
         </button>
@@ -538,29 +572,38 @@ export default function QuestDashboard({
     );
   }
 
-  const myQuests = questInstances.filter((q) => q.assigned_to_id === user?.id);
-  const unassignedQuests = questInstances.filter((q) => !q.assigned_to_id);
-  const otherQuests = questInstances.filter(
-    (q) => q.assigned_to_id && q.assigned_to_id !== user?.id,
-  );
-
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-fantasy text-gray-100">Quest Dashboard</h2>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-3xl font-fantasy text-gray-100">Quest Dashboard</h2>
+          <p className="text-gray-400 text-sm">Manage active quests, approvals, and family challenges.</p>
+        </div>
+        {isRefreshing && (
+          <span className="inline-flex items-center gap-2 text-sm text-gray-400">
+            <LoadingSpinner size="sm" aria-label="Refreshing quest data" />
+            Refreshing...
+          </span>
+        )}
       </div>
 
-      {/* My Active Quests */}
       <section>
-        <h3 className="text-xl font-fantasy text-gray-200 mb-4">
-          🗡️ My Quests
-        </h3>
-        {myQuests.length === 0 ? (
-          <div className="fantasy-card p-6 text-center">
-            <p className="text-gray-400">
-              No active quests. Ready for adventure?
+        <div className="mb-4">
+          <h3 className="text-xl font-fantasy text-gray-200">🗡️ My Quests</h3>
+          {myHistoricalQuests.length > 0 && (
+            <p className="text-xs text-gray-500 mt-1">
+              Completed adventures live in Quest History near the bottom of the page.
             </p>
+          )}
+        </div>
+        {myActiveQuests.length === 0 ? (
+          <div className="fantasy-card p-6 text-center text-gray-300">
+            You have no active quests right now.
+            {myHistoricalQuests.length > 0 ? (
+              <p className="text-xs text-gray-500 mt-2">
+                Check Quest History to revisit your completed quests.
+              </p>
+            ) : null}
           </div>
         ) : (
           <motion.div
@@ -569,89 +612,230 @@ export default function QuestDashboard({
             initial="hidden"
             animate="visible"
           >
-            {myQuests.map((quest) => (
-              <motion.div
-                key={quest.id}
-                variants={staggerItem}
-                className="fantasy-card p-6"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-100">
-                      {quest.title}
-                    </h4>
-                    <p className="text-gray-400 text-sm">{quest.description}</p>
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
-                  >
-                    {(quest.status || 'PENDING').replace("_", " ")}
-                  </span>
-                </div>
+            {myActiveQuests.map((quest) => {
+              const statusLabel = (quest.status ?? "PENDING").replace("_", " ");
+              const volunteerBonusPercent = formatPercent(quest.volunteer_bonus);
+              const streakBonusPercent = formatPercent(quest.streak_bonus);
+              const recurrenceLabel = formatRecurrence(quest.recurrence_pattern);
 
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-4 text-sm">
-                    <span className={getDifficultyColor(quest.difficulty)}>
-                      {quest.difficulty}
+              return (
+                <motion.div key={quest.id} variants={staggerItem} className="fantasy-card p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                      <p className="text-gray-300 text-sm">{quest.description}</p>
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-300 mt-2">
+                        <span className={getDifficultyColor(quest.difficulty)}>{quest.difficulty}</span>
+                        <span>⚡ {quest.xp_reward} XP</span>
+                        <span>💰 {quest.gold_reward} Gold</span>
+                        {recurrenceLabel && <span>{recurrenceLabel}</span>}
+                        {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
+                        {volunteerBonusPercent && (
+                          <span className="text-emerald-300">+{volunteerBonusPercent} Volunteer Bonus</span>
+                        )}
+                        {streakBonusPercent && quest.streak_count ? (
+                          <span className="text-amber-300">
+                            🔥 {quest.streak_count}-day streak (+{streakBonusPercent})
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quest.status)}`}>
+                      {statusLabel}
                     </span>
-                    <span className="text-gold-400">💰 {quest.gold_reward}</span>
-                    <span className="xp-text">⚡ {quest.xp_reward} XP</span>
-                    {formatDueDate(quest.due_date) && (
-                      <span className="text-blue-400">
-                        {formatDueDate(quest.due_date)}
-                      </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {canUpdateStatus(quest, "IN_PROGRESS") && (
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 transition"
+                        onClick={() => handleStatusUpdate(quest.id, "IN_PROGRESS")}
+                        data-testid="start-quest-button"
+                      >
+                        Start Quest
+                      </button>
+                    )}
+
+                    {canUpdateStatus(quest, "COMPLETED") && (
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-500 transition"
+                        onClick={() => handleStatusUpdate(quest.id, "COMPLETED")}
+                        data-testid="complete-quest-button"
+                      >
+                        Complete Quest
+                      </button>
+                    )}
+
+                    {quest.quest_type === "FAMILY" && quest.status === "CLAIMED" && (
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-md bg-rose-600 text-white hover:bg-rose-500 transition"
+                        onClick={() => handleReleaseQuest(quest.id)}
+                      >
+                        Release Quest
+                      </button>
                     )}
                   </div>
-
-                  <div className="flex gap-2">
-                    {quest.status === "PENDING" &&
-                      canUpdateStatus(quest, "IN_PROGRESS") && (
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "IN_PROGRESS")
-                          }
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          data-testid="start-quest-button"
-                        >
-                          Start Quest
-                        </button>
-                      )}
-                    {quest.status === "IN_PROGRESS" &&
-                      canUpdateStatus(quest, "COMPLETED") && (
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "COMPLETED")
-                          }
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          data-testid="complete-quest-button"
-                        >
-                          Complete
-                        </button>
-                      )}
-                    {quest.status === "COMPLETED" &&
-                      canUpdateStatus(quest, "APPROVED") && (
-                        <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "APPROVED")
-                          }
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          data-testid="approve-quest-button"
-                        >
-                          Approve
-                        </button>
-                      )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
       </section>
 
-      {/* Available Quests (for guild masters and unassigned quests) */}
-      {(profile?.role === "GUILD_MASTER" || unassignedQuests.length > 0) && (
+      {profile?.role === "GUILD_MASTER" && questsAwaitingApproval.length > 0 && (
         <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">
+          <h3 className="text-xl font-fantasy text-gray-200 mb-4">🛡️ Quests Awaiting Approval</h3>
+          <div className="space-y-4">
+            {questsAwaitingApproval.map((quest) => {
+              const assignedHero = familyMembers.find((member) => member.id === quest.assigned_to_id);
+              const volunteerBonusPercent = formatPercent(quest.volunteer_bonus);
+              const streakBonusPercent = formatPercent(quest.streak_bonus);
+              const recurrenceLabel = formatRecurrence(quest.recurrence_pattern);
+
+              return (
+                <div key={quest.id} className="fantasy-card p-6 border border-emerald-800/40 bg-dark-800/70 backdrop-blur-sm">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                        <p className="text-gray-300 text-sm">{quest.description}</p>
+                      </div>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-900/70 text-emerald-200">
+                        {quest.quest_type === "FAMILY" ? "Family Quest" : "Individual Quest"}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-300">
+                      <span>XP: {quest.xp_reward}</span>
+                      <span>Gold: {quest.gold_reward}</span>
+                      {recurrenceLabel && <span>{recurrenceLabel}</span>}
+                      {assignedHero && <span>Hero: {assignedHero.name}</span>}
+                      {volunteerBonusPercent && (
+                        <span className="text-emerald-300">+{volunteerBonusPercent} Volunteer Bonus</span>
+                      )}
+                      {streakBonusPercent && quest.streak_count ? (
+                        <span className="text-amber-300">
+                          🔥 {quest.streak_count}-day streak (+{streakBonusPercent})
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+                        onClick={() => handleApproveQuest(quest.id)}
+                        data-testid="approve-quest-button"
+                      >
+                        Approve Quest
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {character && claimableFamilyQuests.length > 0 && (
+        <section>
+          <FamilyQuestClaiming
+            quests={claimableFamilyQuests}
+            character={character}
+            onClaimQuest={handleClaimQuest}
+          />
+        </section>
+      )}
+
+      {profile?.role === "GUILD_MASTER" && claimableFamilyQuests.length > 0 && (
+        <section className="bg-gray-800 border border-gray-700 rounded-lg p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-fantasy text-gray-100">👑 Manual Family Quest Assignment</h3>
+            <p className="text-sm text-gray-400">Assign a family quest directly to a hero when no one has claimed it.</p>
+          </div>
+
+          {familyCharacters.length === 0 ? (
+            <p className="text-sm text-gray-400">
+              No hero characters found. Ask heroes to create their characters before assigning quests.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {claimableFamilyQuests.map((quest) => {
+                const currentlyAssignedCharacterId = selectedFamilyAssignments[quest.id] ?? "";
+
+                return (
+                  <div
+                    key={quest.id}
+                    className="bg-gray-900 rounded-lg border border-gray-700 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                      <p className="text-sm text-gray-400">{quest.description}</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-gray-400 mt-2">
+                        <span className={getDifficultyColor(quest.difficulty)}>Difficulty: {quest.difficulty}</span>
+                        <span>⚡ {quest.xp_reward} XP</span>
+                        <span>💰 {quest.gold_reward} Gold</span>
+                        {quest.recurrence_pattern && <span>{formatRecurrence(quest.recurrence_pattern)}</span>}
+                      </div>
+                    </div>
+                    <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 w-full md:w-80">
+                      <label className="block text-xs uppercase tracking-wide text-gray-400 mb-2">
+                        Assign to Character
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          className="flex-1 bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-gold-500"
+                          value={currentlyAssignedCharacterId}
+                          onChange={(event) =>
+                            setSelectedFamilyAssignments((prev) => ({
+                              ...prev,
+                              [quest.id]: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Choose hero...</option>
+                          {familyCharacters.map((familyCharacter) => {
+                            const owner = familyMembers.find((member) => member.id === familyCharacter.user_id);
+                            const disabled =
+                              Boolean(
+                                familyCharacter.active_family_quest_id &&
+                                  familyCharacter.active_family_quest_id !== quest.id
+                              );
+
+                            return (
+                              <option key={familyCharacter.id} value={familyCharacter.id} disabled={disabled}>
+                                {familyCharacter.name}
+                                {owner ? ` (${owner.name})` : ""}
+                                {disabled ? " — already on a family quest" : ""}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <button
+                          type="button"
+                          className="px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-500 transition disabled:bg-gray-600 disabled:text-gray-300"
+                          disabled={!selectedFamilyAssignments[quest.id]}
+                          onClick={() => handleAssignFamilyQuest(quest.id)}
+                        >
+                          Assign
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {unassignedIndividualQuests.length > 0 && (
+        <section>
+          <h3 data-testid="available-quests-heading" className="text-xl font-fantasy text-gray-200 mb-4">
             📋 Available Quests
           </h3>
           <motion.div
@@ -660,112 +844,77 @@ export default function QuestDashboard({
             initial="hidden"
             animate="visible"
           >
-            {unassignedQuests.map((quest) => (
-              <motion.div
-                key={quest.id}
-                variants={staggerItem}
-                className="fantasy-card p-6 border-l-4 border-gold-500"
-              >
-                <div className="flex justify-between items-start">
+            {unassignedIndividualQuests.map((quest) => (
+              <motion.div key={quest.id} variants={staggerItem} className="fantasy-card p-6 border-l-4 border-gold-500">
+                <div className="flex justify-between items-start gap-4">
                   <div>
-                    <h4 className="text-lg font-medium text-gray-100">
-                      {quest.title}
-                    </h4>
-                    <p className="text-gray-400 text-sm">{quest.description}</p>
-                    <div className="flex gap-4 text-sm mt-2">
-                      <span className={getDifficultyColor(quest.difficulty)}>
-                        {quest.difficulty}
-                      </span>
-                      <span className="text-gold-400">
-                        💰 {quest.gold_reward}
-                      </span>
-                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
-                      {formatDueDate(quest.due_date) && (
-                        <span className="text-blue-400">
-                          {formatDueDate(quest.due_date)}
-                        </span>
-                      )}
+                    <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                    <p className="text-gray-300 text-sm">{quest.description}</p>
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-300 mt-2">
+                      <span className={getDifficultyColor(quest.difficulty)}>{quest.difficulty}</span>
+                      <span>⚡ {quest.xp_reward} XP</span>
+                      <span>💰 {quest.gold_reward} Gold</span>
+                      {quest.recurrence_pattern && <span>{formatRecurrence(quest.recurrence_pattern)}</span>}
+                      {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
                     </div>
                   </div>
 
-                  {/* Quest Action Buttons */}
-                  <div className="flex flex-col gap-3 min-w-[200px]">
-                    {/* Hero Pickup Button */}
-                    {profile?.role !== "GUILD_MASTER" && (
-                      <button
-                        onClick={() => handlePickupQuest(quest.id)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                        data-testid="pick-up-quest-button"
-                      >
-                        <span>⚔️</span>
-                        Pick Up Quest
-                      </button>
-                    )}
+                  <div className="flex flex-col gap-3 min-w-[220px]">
+                    <button
+                      type="button"
+                      className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 transition"
+                      onClick={() => handlePickupQuest(quest)}
+                      data-testid="pick-up-quest-button"
+                    >
+                      Pick Up Quest
+                    </button>
 
-                    {/* Guild Master Controls */}
                     {profile?.role === "GUILD_MASTER" && (
                       <div className="space-y-2">
-                        {/* GM can also pick up quests */}
-                        <button
-                          onClick={() => handlePickupQuest(quest.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
-                          data-testid="pick-up-quest-button"
-                        >
-                          <span>⚔️</span>
-                          Pick Up Quest
-                        </button>
-
-                        {/* Assignment Section */}
                         <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
                           <label className="block text-xs font-medium text-gray-300 mb-2">
-                            👑 Assign to Hero:
+                            👑 Assign to Hero
                           </label>
                           <div className="flex gap-2">
                             <select
                               data-testid="assign-quest-dropdown"
-                              value={selectedAssignee[quest.id] || ""}
-                              onChange={(e) =>
-                                setSelectedAssignee({
-                                  ...selectedAssignee,
-                                  [quest.id]: e.target.value,
-                                })
+                              value={selectedAssignee[quest.id] ?? ""}
+                              onChange={(event) =>
+                                setSelectedAssignee((prev) => ({
+                                  ...prev,
+                                  [quest.id]: event.target.value,
+                                }))
                               }
                               className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-gold-500"
                             >
                               <option value="">Choose hero...</option>
-                              {familyMembers.map((member) => (
-                                <option key={member.id} value={member.id}>
-                                  {member.name}
-                                </option>
-                              ))}
+                              {familyMembers
+                                .filter((member) => member.role !== "GUILD_MASTER")
+                                .map((member) => (
+                                  <option key={member.id} value={member.id}>
+                                    {member.name}
+                                  </option>
+                                ))}
                             </select>
                             <button
-                              onClick={() =>
-                                handleAssignQuest(
-                                  quest.id,
-                                  selectedAssignee[quest.id],
-                                )
-                              }
+                              type="button"
+                              className="px-3 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-500 transition disabled:bg-gray-600 disabled:text-gray-300"
                               disabled={!selectedAssignee[quest.id]}
-                              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-2 rounded text-sm transition-colors"
+                              onClick={() => handleAssignQuest(quest.id, selectedAssignee[quest.id])}
                             >
                               Assign
                             </button>
                           </div>
                         </div>
 
-                        {/* Danger Zone - Cancel Quest */}
-                        <div className="bg-red-900/20 rounded-lg p-3 border border-red-800">
+                        <div className="flex gap-2">
                           <button
+                            type="button"
+                            className="flex-1 px-3 py-2 rounded-md bg-rose-700 text-white hover:bg-rose-600 transition"
                             onClick={() => handleCancelQuest(quest.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full"
                           >
-                            <span>❌</span>
                             Cancel Quest
                           </button>
-                          <p className="text-xs text-red-400 mt-1 text-center">
-                            This action cannot be undone
-                          </p>
                         </div>
                       </div>
                     )}
@@ -777,70 +926,160 @@ export default function QuestDashboard({
         </section>
       )}
 
-      {/* Other Family Quests (visible to guild masters) */}
+      {profile?.role === "GUILD_MASTER" && unassignedFamilyQuests.length > 0 && (
+        <section>
+          <h3 className="text-xl font-fantasy text-gray-200 mb-4">🏰 Family Quests (GM View)</h3>
+          <div className="space-y-4">
+            {unassignedFamilyQuests.map((quest) => (
+              <div key={quest.id} className="fantasy-card p-6 border border-purple-800/40 bg-dark-800/70 backdrop-blur-sm">
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                    <p className="text-gray-300 text-sm">{quest.description}</p>
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-300 mt-2">
+                      <span className={getDifficultyColor(quest.difficulty)}>{quest.difficulty}</span>
+                      <span>⚡ {quest.xp_reward} XP</span>
+                      <span>💰 {quest.gold_reward} Gold</span>
+                      {quest.recurrence_pattern && <span>{formatRecurrence(quest.recurrence_pattern)}</span>}
+                      {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 min-w-[200px]">
+                    <button
+                      type="button"
+                      className="px-4 py-2 rounded-md bg-rose-700 text-white hover:bg-rose-600 transition"
+                      onClick={() => handleCancelQuest(quest.id)}
+                    >
+                      Cancel Quest
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {profile?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
         <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">
-            👥 Family Quests
-          </h3>
+          <h3 className="text-xl font-fantasy text-gray-200 mb-4">👥 Family Quests</h3>
           <motion.div
             className="grid gap-4"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
           >
-            {otherQuests.map((quest) => (
-              <motion.div
-                key={quest.id}
-                variants={staggerItem}
-                className="fantasy-card p-6 opacity-75"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-100">
-                      {quest.title}
-                    </h4>
-                    <p className="text-gray-400 text-sm">{quest.description}</p>
-                    <div className="flex gap-4 text-sm mt-2">
-                      <span className={getDifficultyColor(quest.difficulty)}>
-                        {quest.difficulty}
-                      </span>
-                      <span className="text-gold-400">
-                        💰 {quest.gold_reward}
-                      </span>
-                      <span className="xp-text">⚡ {quest.xp_reward} XP</span>
-                      {formatDueDate(quest.due_date) && (
-                        <span className="text-blue-400">
-                          {formatDueDate(quest.due_date)}
-                        </span>
-                      )}
+            {otherQuests.map((quest) => {
+              const statusLabel = (quest.status ?? "PENDING").replace("_", " ");
+              return (
+                <motion.div key={quest.id} variants={staggerItem} className="fantasy-card p-6 opacity-80">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                      <p className="text-gray-300 text-sm">{quest.description}</p>
+                      <div className="flex flex-wrap gap-3 text-sm text-gray-300 mt-2">
+                        <span className={getDifficultyColor(quest.difficulty)}>{quest.difficulty}</span>
+                        <span>⚡ {quest.xp_reward} XP</span>
+                        <span>💰 {quest.gold_reward} Gold</span>
+                        {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(quest.status || 'PENDING')}`}
-                    >
-                      {(quest.status || 'PENDING').replace("_", " ")}
-                    </span>
-                    {quest.status === "COMPLETED" &&
-                      canUpdateStatus(quest, "APPROVED") && (
+                    <div className="text-right">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quest.status)}`}>
+                        {statusLabel}
+                      </span>
+                      {quest.status === "COMPLETED" && (
                         <button
-                          onClick={() =>
-                            handleStatusUpdate(quest.id, "APPROVED")
-                          }
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors mt-2 block"
-                          data-testid="approve-quest-button"
+                          type="button"
+                          className="mt-3 px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+                          onClick={() => handleApproveQuest(quest.id)}
                         >
                           Approve
                         </button>
                       )}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </motion.div>
         </section>
       )}
+
+      {myHistoricalQuests.length > 0 && (
+        <section>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 className="text-xl font-fantasy text-gray-200">📜 Quest History</h3>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-md border border-gray-700 text-sm text-gray-300 hover:bg-gray-800 transition"
+              onClick={() => setShowQuestHistory((prev) => !prev)}
+            >
+              {showQuestHistory ? "Hide History" : `Show History (${myHistoricalQuests.length})`}
+            </button>
+          </div>
+
+          {showQuestHistory && (
+            <motion.div
+              className="grid gap-4"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              {myHistoricalQuests.map((quest) => {
+                const statusLabel = (quest.status ?? "PENDING").replace("_", " ");
+                const completionTimestamp = formatDateTime(
+                  quest.completed_at ?? quest.updated_at ?? quest.created_at
+                );
+                const historyAction = (() => {
+                  switch (quest.status) {
+                    case "APPROVED":
+                      return "Approved";
+                    case "COMPLETED":
+                      return "Completed";
+                    case "EXPIRED":
+                      return "Expired";
+                    case "MISSED":
+                      return "Marked missed";
+                    default:
+                      return "Updated";
+                  }
+                })();
+
+                return (
+                  <motion.div
+                    key={quest.id}
+                    variants={staggerItem}
+                    className="fantasy-card p-6 bg-dark-800/80 border border-gray-700"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+                        <p className="text-gray-400 text-sm">{quest.description}</p>
+                        <div className="flex flex-wrap gap-3 text-xs text-gray-400 mt-2">
+                          <span className={getDifficultyColor(quest.difficulty)}>{quest.difficulty}</span>
+                          <span>⚡ {quest.xp_reward} XP</span>
+                          <span>💰 {quest.gold_reward} Gold</span>
+                          {quest.recurrence_pattern && <span>{formatRecurrence(quest.recurrence_pattern)}</span>}
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quest.status)}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    {completionTimestamp && (
+                      <p className="text-sm text-gray-400">
+                        {historyAction} on {completionTimestamp}
+                      </p>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </section>
+      )}
+
     </div>
   );
 }

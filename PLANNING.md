@@ -301,7 +301,7 @@ docker-compose up -d                           # Production deployment
 - Fantasy-themed UI with animations
 - Avatar customization system
 - Class abilities and special powers
-- Enhanced real-time features with Socket.io
+- Enhanced real-time features
 - Interactive boss battle system
 - Achievement system with celebrations
 
@@ -385,9 +385,12 @@ docker-compose up -d                           # Production deployment
 ### Year 1 Roadmap
 
 - **Q1 ✅**: Complete MVP with stable core functionality (v0.1.0)
-- **Q2**: Advanced family management with multi-GM and real-time features (v0.2.0)
-- **Q3**: Enhanced game experience with animations and interactive features (v0.3.0)
-- **Q4**: Social features, family dynamics, and Home Assistant integration (v0.4.0)
+- **Q2**: Advanced family management with multi-GM and real-time features
+  (v0.2.0)
+- **Q3**: Enhanced game experience with animations and interactive features
+  (v0.3.0)
+- **Q4**: Social features, family dynamics, and Home Assistant integration
+  (v0.4.0)
 
 ### Long-term Expansion
 

@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { QuestTemplateManager } from '@/components/quest-template-manager';
+import React from 'react';
 
 // Mock dependencies
 jest.mock('@/lib/supabase', () => ({
@@ -10,6 +11,9 @@ jest.mock('@/lib/supabase', () => ({
           order: jest.fn(() => Promise.resolve({ data: [], error: null })),
         })),
       })),
+      insert: jest.fn(() => Promise.resolve({ error: null })),
+      update: jest.fn(() => ({ eq: jest.fn(() => Promise.resolve({ error: null })) })),
+      delete: jest.fn(() => ({ eq: jest.fn(() => Promise.resolve({ error: null })) })),
     })),
   },
 }));
@@ -30,6 +34,15 @@ jest.mock('@/lib/realtime-context', () => ({
   }),
 }));
 
+jest.mock('@/lib/user-service', () => ({
+    userService: {
+      getFamilyMembers: jest.fn().mockResolvedValue([
+        { id: 'char-1', name: 'Alice' },
+        { id: 'char-2', name: 'Bob' },
+      ]),
+    },
+  }));
+
 describe('QuestTemplateManager', () => {
   it('should render without crashing', async () => {
     render(<QuestTemplateManager />);
@@ -46,21 +59,26 @@ describe('QuestTemplateManager', () => {
   it('should render main heading', async () => {
     render(<QuestTemplateManager />);
 
-    // Wait for component to load and async updates to complete
-    await waitFor(async () => {
-      expect(await screen.findByText('📜 Quest Templates')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Quest Templates')).toBeInTheDocument();
     });
   });
 
   it('should render create template button', async () => {
     render(<QuestTemplateManager />);
 
-    // Wait for component to load and async updates to complete
-    await waitFor(async () => {
-      expect(await screen.findByText('📜 Quest Templates')).toBeInTheDocument();
+    await waitFor(() => {
+        expect(screen.getByText('Create New')).toBeInTheDocument();
     });
+  });
 
-    const createButton = screen.getByRole('button', { name: /create template/i });
-    expect(createButton).toBeInTheDocument();
+  it('should open the create modal when the create button is clicked', async () => {
+    render(<QuestTemplateManager />);
+    await waitFor(() => {
+        fireEvent.click(screen.getByText('Create New'));
+    });
+    await waitFor(() => {
+        expect(screen.getByText('Create Quest Template')).toBeInTheDocument();
+    });
   });
 });

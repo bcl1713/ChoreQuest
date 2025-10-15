@@ -18,28 +18,80 @@ jest.mock("@/lib/auth-context", () => ({
   }),
 }));
 
-jest.mock("@/lib/supabase", () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(async () => {
-          // Use setTimeout to ensure async resolution happens after render
-          await new Promise(resolve => setTimeout(resolve, 0));
-          return {
+jest.mock("@/lib/supabase", () => {
+  const from = jest.fn((table: string) => {
+    if (table === "user_profiles") {
+      return {
+        select: jest.fn(() => ({
+          eq: jest.fn(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            return {
+              data: [
+                {
+                  id: "member-1",
+                  name: "Test Member",
+                  role: "HERO",
+                },
+              ],
+              error: null,
+            };
+          }),
+        })),
+      };
+    }
+
+    if (table === "characters") {
+      return {
+        select: jest.fn(() => ({
+          in: jest.fn(async () => ({
             data: [
               {
-                id: "member-1",
-                name: "Test Member",
-                role: "HERO",
+                id: "character-1",
+                user_id: "member-1",
+                name: "Sir Test",
+                class: "KNIGHT",
+                level: 1,
+                xp: 0,
+                gold: 0,
+                gems: 0,
+                honor_points: 0,
+                avatar_url: null,
+                created_at: "2025-01-01T00:00:00Z",
+                updated_at: "2025-01-01T00:00:00Z",
+                active_family_quest_id: null,
               },
             ],
             error: null,
-          };
-        }),
+          })),
+        })),
+      };
+    }
+
+    if (table === "quest_instances") {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null }),
+      };
+    }
+
+    if (table === "quest_templates") {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null }),
+      };
+    }
+
+    return {
+      select: jest.fn(() => ({
+        eq: jest.fn(async () => ({ data: null, error: null })),
       })),
-    })),
-  },
-}));
+    };
+  });
+
+  return {
+    supabase: {
+      from,
+    },
+  };
+});
 
 jest.mock("@/lib/quest-template-service");
 
