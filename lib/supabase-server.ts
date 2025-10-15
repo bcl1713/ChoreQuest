@@ -7,7 +7,7 @@
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from './types/database';
+import type { Database } from './types/database-generated';
 
 const resolveServerSupabaseUrl = (): string => {
   const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
