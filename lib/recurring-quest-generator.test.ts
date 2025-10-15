@@ -6,7 +6,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { generateRecurringQuests, expireQuests } from './recurring-quest-generator';
-import { Database } from './types/database';
+import type { Database } from './types/database-generated';
 
 // Mock Supabase client
 const createMockSupabase = () => {

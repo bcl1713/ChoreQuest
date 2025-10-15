@@ -11,7 +11,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from './types/database';
+import type { Database } from './types/database-generated';
 
 const TEST_INTERVAL_MINUTES_ENV = process.env.RECURRING_TEST_INTERVAL_MINUTES;
 const TEST_INTERVAL_MINUTES = TEST_INTERVAL_MINUTES_ENV
