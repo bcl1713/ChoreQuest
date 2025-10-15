@@ -254,6 +254,7 @@ This is a **two-step process**: First deploy Supabase, then deploy ChoreQuest.
 # In one terminal: run Supabase stack
 cd supabase-docker
 cp .env.example .env  # edit secrets before production!
+./bin/fetch-volumes.sh  # download required Supabase config + SQL assets
 docker compose up -d
 
 # In a second terminal: deploy ChoreQuest app
@@ -266,6 +267,8 @@ docker compose -f supabase-docker/docker-compose.yml ps
 docker compose --env-file .env.production -f docker-compose.prod.yml ps
 ```
 
+> Need a specific Supabase release? Run `SUPABASE_REF=<git-ref> ./bin/fetch-volumes.sh` to pin the downloaded assets to a tag or commit.
+
 **Step 1: Deploy Supabase**
 
 ```bash
@@ -274,7 +277,8 @@ cd supabase-docker
 cp .env.example .env
 # Edit .env and CHANGE DEFAULT PASSWORDS!
 
-# 2. Start Supabase
+# 2. Download Supabase assets + start services
+./bin/fetch-volumes.sh  # run again when SUPABASE_REF changes
 docker compose up -d
 
 # Wait 30-60 seconds for services to start
