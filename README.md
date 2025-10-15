@@ -250,6 +250,9 @@ npx supabase status
 # 3. Configure ChoreQuest
 cp .env.production.example .env.production
 # Edit .env.production with credentials from step 2
+# Also set:
+#   NEXTAUTH_URL=http://localhost:3000
+#   CRON_SECRET=<generate-a-strong-random-string>
 
 # 4. Build and deploy ChoreQuest
 docker compose --env-file .env.production -f docker-compose.prod.yml build
@@ -280,6 +283,9 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 # 4. Configure ChoreQuest
 cp .env.production.example .env.production
 # Edit .env.production with credentials from step 2
+# Also set:
+#   NEXTAUTH_URL=http://localhost:3000
+#   CRON_SECRET=<generate-a-strong-random-string>
 
 # 5. Build and deploy ChoreQuest
 docker compose --env-file .env.production -f docker-compose.prod.yml build
@@ -307,6 +313,11 @@ docker compose up -d
 # In a second terminal: deploy ChoreQuest app
 cd ..
 cp .env.production.example .env.production  # add Supabase credentials
+# Required edits in .env.production:
+#   - NEXT_PUBLIC_SUPABASE_URL / SUPABASE_INTERNAL_URL
+#   - NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
+#   - NEXTAUTH_URL=http://localhost:3000 (container-to-container base URL)
+#   - CRON_SECRET=<generate a strong shared secret>
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 
 # Verify both stacks
@@ -356,6 +367,8 @@ NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000  # For browser
 SUPABASE_INTERNAL_URL=http://supabase-kong:8000  # For server-side migrations
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key-from-supabase/.env>
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key-from-supabase/.env>
+NEXTAUTH_URL=http://localhost:3000  # Internal URL for cron + auth callbacks
+CRON_SECRET=<generate-a-strong-random-string>
 
 # 6. Build ChoreQuest with Supabase credentials
 docker compose --env-file .env.production -f docker-compose.prod.yml build

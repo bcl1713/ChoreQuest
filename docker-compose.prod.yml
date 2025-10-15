@@ -26,6 +26,9 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       # Internal server-side URL (for Docker-to-Docker communication)
       - SUPABASE_INTERNAL_URL=${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
+      # Cron + auth configuration
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - CRON_SECRET=${CRON_SECRET}
       # Database credentials for migrations (Option C only)
       - DB_HOST=${DB_HOST:-supabase-db}
       - DB_PORT=${DB_PORT:-5432}
@@ -42,8 +45,8 @@ services:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 180s
     networks:
       - chorequest
       - supabase_default
