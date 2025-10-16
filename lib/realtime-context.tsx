@@ -73,6 +73,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   const currentChannelRef = useRef<RealtimeChannel | null>(null);
   // Track previous family ID to prevent unnecessary reconnections
   const prevFamilyIdRef = useRef<string | null>(null);
+  // Track if we should delay realtime connection (for mobile browsers)
+  const [allowRealtimeConnection, setAllowRealtimeConnection] = useState(false);
 
   // Event listener management using refs to avoid dependency issues
   const questListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
@@ -82,8 +84,31 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   const rewardRedemptionListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const familyMemberListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
 
+  // On mobile browsers, delay realtime connection to prevent WebSocket blocking HTTP requests
+  useEffect(() => {
+    const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    if (isMobile && profile?.family_id) {
+      // Wait 5 seconds on mobile to let initial HTTP requests complete
+      console.log('[RealtimeContext] Mobile browser detected, delaying WebSocket connection for 5s');
+      const timer = setTimeout(() => {
+        console.log('[RealtimeContext] Mobile delay complete, allowing WebSocket connection');
+        setAllowRealtimeConnection(true);
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else {
+      // Desktop: connect immediately
+      setAllowRealtimeConnection(true);
+    }
+  }, [profile?.family_id]);
+
   // Setup realtime connection when user and family are available
   useEffect(() => {
+    // Skip if we're not allowed to connect yet (mobile delay)
+    if (!allowRealtimeConnection) {
+      console.log('[RealtimeContext] Waiting for connection allowance (mobile delay)');
+      return;
+    }
     const timestamp = new Date().toISOString();
 
     // Skip reconnection if family_id hasn't changed
@@ -327,7 +352,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       setConnectionError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, session?.access_token, profile?.family_id]);
+  }, [user?.id, session?.access_token, profile?.family_id, allowRealtimeConnection]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
