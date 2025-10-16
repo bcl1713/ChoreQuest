@@ -76,8 +76,13 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
     // On mobile browsers during initial load, wait for page to fully load
     // This prevents race conditions with browser lifecycle during page refresh
-    if (isMobileBrowser() && isInitialLoadRef.current && typeof window !== 'undefined' && document.readyState !== 'complete') {
-      const timestamp = new Date().toISOString();
+    const isMobile = isMobileBrowser();
+    const readyState = typeof window !== 'undefined' ? document.readyState : 'complete';
+    const timestamp = new Date().toISOString();
+
+    console.log(`[${timestamp}] CharacterContext: Mobile=${isMobile}, InitialLoad=${isInitialLoadRef.current}, ReadyState=${readyState}`);
+
+    if (isMobile && isInitialLoadRef.current && typeof window !== 'undefined' && readyState !== 'complete') {
       console.log(`[${timestamp}] CharacterContext: Mobile browser detected, waiting for page load...`);
 
       return new Promise<void>((resolve) => {
@@ -132,22 +137,37 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     try {
       // Add timeout to prevent infinite hanging
       // Use longer timeout (15s) to handle slow database queries during E2E tests
-      const fetchPromise = supabase
-        .from('characters')
-        .select('*')
-        .eq('user_id', user.id)
-        .abortSignal(abortControllerRef.current.signal)
-        .single();
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => {
+      // Create a timeout that will reject if fetch takes too long
+      let timeoutId: NodeJS.Timeout | null = null;
+      let didTimeout = false;
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          didTimeout = true;
           // Abort the request when timeout occurs
           if (abortControllerRef.current) {
             abortControllerRef.current.abort();
           }
           reject(new Error('Character fetch timeout after 15s'));
-        }, 15000)
-      );
+        }, 15000);
+      });
+
+      // Start the fetch
+      const fetchPromise = (async () => {
+        const result = await supabase
+          .from('characters')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        // Clear timeout if we finished before it fired
+        if (timeoutId && !didTimeout) {
+          clearTimeout(timeoutId);
+        }
+
+        return result;
+      })();
 
       const result = await Promise.race([fetchPromise, timeoutPromise]);
       const { data, error } = result;
@@ -182,7 +202,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         retryCountRef.current = 0; // Reset retry count on success
       }
     } catch (err) {
-      // Fix time calculation bug: guard against stale timestamp
+      // Calculate duration BEFORE clearing the timestamp
       const fetchDuration = fetchStartTimeRef.current > 0
         ? Date.now() - fetchStartTimeRef.current
         : 0;
@@ -206,13 +226,13 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
         // Clear fetch guard to allow retry
         isFetchingRef.current = false;
-        fetchStartTimeRef.current = 0; // Reset timestamp for next attempt
+        // DON'T reset timestamp yet - let the next attempt set it
         abortControllerRef.current = null;
 
         // Wait with exponential backoff before retry
         await new Promise(resolve => setTimeout(resolve, retryDelay));
 
-        // Retry the fetch
+        // Retry the fetch (will set new timestamp)
         return fetchCharacter();
       }
 
