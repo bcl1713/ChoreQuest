@@ -76,6 +76,21 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     await waitForReady();
     console.log(`[${new Date().toISOString()}] CharacterContext: Network ready, proceeding with fetch`);
 
+    // Validate session is still active before querying
+    // This prevents queries with stale/null session tokens on mobile
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession || !currentSession.user) {
+      const errorTimestamp = new Date().toISOString();
+      console.error(`[${errorTimestamp}] CharacterContext: No active session, cannot fetch character`);
+      setError('Session expired. Please log in again.');
+      setIsLoading(false);
+      updateHasLoaded(true);
+      isFetchingRef.current = false;
+      fetchStartTimeRef.current = 0;
+      return;
+    }
+    console.log(`[${new Date().toISOString()}] CharacterContext: Session validated for user:`, currentSession.user.id);
+
 
     // Safety valve: if fetch guard has been set for more than 5 seconds, force clear it
     // This prevents permanent hangs if finally block never executes

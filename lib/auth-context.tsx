@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserProfile, Family } from '@/lib/types/database';
@@ -209,6 +209,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id]);
 
   const clearError = () => setError(null);
+
+  const logout = useCallback(async () => {
+    clearError();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+  }, []);
+
+  // Add explicit session refresh on visibility change for mobile browsers
+  // This ensures session is still valid after tab resume or app backgrounding
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && user) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] AuthContext: Tab visible, validating session...`);
+
+        // Explicitly get current session (triggers auto-refresh if needed)
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error(`[${timestamp}] AuthContext: Session validation error:`, error);
+          return;
+        }
+
+        if (!currentSession) {
+          console.log(`[${timestamp}] AuthContext: Session lost, signing out...`);
+          await logout();
+        } else if (currentSession.user.id === user.id) {
+          console.log(`[${timestamp}] AuthContext: Session valid for user:`, user.id);
+          // Session is valid, onAuthStateChange will handle any updates
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, logout]);
 
   const login = async (credentials: { email: string; password: string }) => {
     clearError();
@@ -481,14 +519,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw err;
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    clearError();
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
     }
   };
 
