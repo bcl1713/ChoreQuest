@@ -56,7 +56,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     return /android|iphone|ipad|ipod/i.test(userAgent);
   }, []);
 
-  const fetchCharacter = useCallback(async () => {
+  const fetchCharacter = useCallback(async (): Promise<void> => {
     if (!user) {
       setCharacter(null);
       setIsLoading(false);
@@ -74,7 +74,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // On mobile browsers during initial load, wait for page to fully load
+    // On mobile browsers during initial load, add delay to let network stack stabilize
     // This prevents race conditions with browser lifecycle during page refresh
     const isMobile = isMobileBrowser();
     const readyState = typeof window !== 'undefined' ? document.readyState : 'complete';
@@ -82,17 +82,12 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
     console.log(`[${timestamp}] CharacterContext: Mobile=${isMobile}, InitialLoad=${isInitialLoadRef.current}, ReadyState=${readyState}`);
 
-    if (isMobile && isInitialLoadRef.current && typeof window !== 'undefined' && readyState !== 'complete') {
-      console.log(`[${timestamp}] CharacterContext: Mobile browser detected, waiting for page load...`);
-
-      return new Promise<void>((resolve) => {
-        const handler = () => {
-          console.log(`[${new Date().toISOString()}] CharacterContext: Page loaded, proceeding with fetch`);
-          window.removeEventListener('load', handler);
-          fetchCharacter().then(resolve);
-        };
-        window.addEventListener('load', handler);
-      });
+    if (isMobile && isInitialLoadRef.current) {
+      // On mobile, wait 2 seconds on initial load to let browser stabilize
+      // Android Chrome in particular has issues with immediate network requests after refresh
+      console.log(`[${timestamp}] CharacterContext: Mobile browser detected, waiting 2s for network stack stabilization...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log(`[${new Date().toISOString()}] CharacterContext: Mobile delay complete, proceeding with fetch`);
     }
 
     // Safety valve: if fetch guard has been set for more than 5 seconds, force clear it
@@ -224,22 +219,23 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         retryCountRef.current++;
         console.log(`[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current}/${MAX_RETRIES}) after ${retryDelay}ms...`);
 
-        // Clear fetch guard to allow retry
+        // Clear fetch guard to allow retry, but preserve timestamps for accurate duration logging
         isFetchingRef.current = false;
-        // DON'T reset timestamp yet - let the next attempt set it
         abortControllerRef.current = null;
 
         // Wait with exponential backoff before retry
         await new Promise(resolve => setTimeout(resolve, retryDelay));
 
         // Retry the fetch (will set new timestamp)
-        return fetchCharacter();
+        // NOTE: Return here prevents finally block from running
+        return await fetchCharacter();
       }
 
       // After all retries exhausted, set error
       setError(message);
       console.error(`[${errorTimestamp}] CharacterContext: All retry attempts exhausted`);
     } finally {
+      // Only clean up if we're not going to retry
       // Mark as loaded and clear loading state
       updateHasLoaded(true);
       setIsLoading(false);
