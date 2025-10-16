@@ -47,6 +47,14 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const retryCountRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Detect if we're on a mobile browser
+  const isMobileBrowser = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+    const userAgent = navigator.userAgent || navigator.vendor || '';
+    return /android|iphone|ipad|ipod/i.test(userAgent);
+  }, []);
 
   const fetchCharacter = useCallback(async () => {
     if (!user) {
@@ -58,7 +66,28 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       isFetchingRef.current = false;
       fetchStartTimeRef.current = 0;
       retryCountRef.current = 0;
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
       return;
+    }
+
+    // On mobile browsers during initial load, wait for page to fully load
+    // This prevents race conditions with browser lifecycle during page refresh
+    if (isMobileBrowser() && isInitialLoadRef.current && typeof window !== 'undefined' && document.readyState !== 'complete') {
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] CharacterContext: Mobile browser detected, waiting for page load...`);
+
+      return new Promise<void>((resolve) => {
+        const handler = () => {
+          console.log(`[${new Date().toISOString()}] CharacterContext: Page loaded, proceeding with fetch`);
+          window.removeEventListener('load', handler);
+          fetchCharacter().then(resolve);
+        };
+        window.addEventListener('load', handler);
+      });
     }
 
     // Safety valve: if fetch guard has been set for more than 5 seconds, force clear it
@@ -70,6 +99,11 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         const timestamp = new Date().toISOString();
         console.error(`[${timestamp}] CharacterContext: Fetch guard stuck for ${elapsed}ms, force clearing`);
         isFetchingRef.current = false;
+        // Also abort any stuck requests
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
       }
     }
 
@@ -92,6 +126,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
 
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+
     try {
       // Add timeout to prevent infinite hanging
       // Use longer timeout (15s) to handle slow database queries during E2E tests
@@ -99,10 +136,17 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         .from('characters')
         .select('*')
         .eq('user_id', user.id)
+        .abortSignal(abortControllerRef.current.signal)
         .single();
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Character fetch timeout after 15s')), 15000)
+        setTimeout(() => {
+          // Abort the request when timeout occurs
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+          reject(new Error('Character fetch timeout after 15s'));
+        }, 15000)
       );
 
       const result = await Promise.race([fetchPromise, timeoutPromise]);
@@ -138,23 +182,35 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         retryCountRef.current = 0; // Reset retry count on success
       }
     } catch (err) {
-      const fetchDuration = Date.now() - fetchStartTimeRef.current;
+      // Fix time calculation bug: guard against stale timestamp
+      const fetchDuration = fetchStartTimeRef.current > 0
+        ? Date.now() - fetchStartTimeRef.current
+        : 0;
       const errorTimestamp = new Date().toISOString();
       const message = err instanceof Error ? err.message : 'Failed to fetch character';
 
+      // Don't log errors for aborted requests (expected during cleanup)
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log(`[${errorTimestamp}] CharacterContext: Fetch aborted (expected during cleanup)`);
+        return;
+      }
+
       console.error(`[${errorTimestamp}] CharacterContext: Character fetch error after ${fetchDuration}ms for user ${user.id}:`, err);
 
-      // Retry logic: on fetch failure, wait 1 second and retry once
-      if (retryCountRef.current < 1) {
+      // Retry logic with exponential backoff: 1s, 2s, 4s (max 3 retries)
+      const MAX_RETRIES = 3;
+      if (retryCountRef.current < MAX_RETRIES) {
+        const retryDelay = Math.pow(2, retryCountRef.current) * 1000; // Exponential backoff
         retryCountRef.current++;
-        console.log(`[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current})...`);
+        console.log(`[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current}/${MAX_RETRIES}) after ${retryDelay}ms...`);
 
         // Clear fetch guard to allow retry
         isFetchingRef.current = false;
-        fetchStartTimeRef.current = 0; // Reset timestamp to fix duration calculation on retry
+        fetchStartTimeRef.current = 0; // Reset timestamp for next attempt
+        abortControllerRef.current = null;
 
-        // Wait 1 second before retry
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait with exponential backoff before retry
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
 
         // Retry the fetch
         return fetchCharacter();
@@ -170,8 +226,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       isInitialLoadRef.current = false;
       isFetchingRef.current = false;
       fetchStartTimeRef.current = 0;
+      abortControllerRef.current = null;
     }
-  }, [user, updateHasLoaded]);
+  }, [user, updateHasLoaded, isMobileBrowser]);
 
   useEffect(() => {
     fetchCharacter();
