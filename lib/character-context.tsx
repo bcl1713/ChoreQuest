@@ -150,11 +150,15 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
       // Start the fetch
       const fetchPromise = (async () => {
+        console.log(`[${new Date().toISOString()}] CharacterContext: Starting Supabase query...`);
+
         const result = await supabase
           .from('characters')
           .select('*')
           .eq('user_id', user.id)
           .single();
+
+        console.log(`[${new Date().toISOString()}] CharacterContext: Supabase query completed`);
 
         // Clear timeout if we finished before it fired
         if (timeoutId && !didTimeout) {

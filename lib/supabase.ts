@@ -46,6 +46,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     params: {
       eventsPerSecond: 10
     }
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'chorequest-web'
+    },
+    fetch: (url, options = {}) => {
+      // Add keepalive for mobile browsers to prevent connection drops
+      const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
+      return fetch(url, {
+        ...options,
+        keepalive: isMobile,
+      });
+    }
   }
 });
 
