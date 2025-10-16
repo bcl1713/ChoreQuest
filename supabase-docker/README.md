@@ -1,154 +1,85 @@
-# Supabase Self-Hosted Docker Setup
+# Supabase Self-Hosted Stack
 
-This directory contains the official Supabase self-hosting setup for running Supabase in Docker containers.
+The `supabase-docker` directory packages the official Supabase Docker stack with pinned image tags and configuration that matches the production-ready setup used for ChoreQuest. Domains and secrets in the examples use placeholders—swap them for your own values before deploying.
 
-## Quick Start
-
-### 1. Configure Environment
+## 1. Prepare the Environment
 
 ```bash
 cp .env.example .env
 ```
 
-**IMPORTANT**: Edit `.env` and update the following:
+Update `.env` before starting the stack:
 
-1. **For Development/Testing**: The default keys in `.env.example` work together and can be used as-is for local testing.
+- `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, `SECRET_KEY_BASE`, `VAULT_ENC_KEY`, `PG_META_CRYPTO_KEY` – generate fresh values for production.
+- `SUPABASE_VOLUME_ROOT` – absolute path where the Supabase SQL/config assets live (for example `/path/to/supabase/volumes`).
+- Replace every `localhost` URL (e.g. `SITE_URL`, `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`) with the public host you will expose.
 
-2. **For Production**: You MUST generate your own secure keys:
-   - Generate a new `JWT_SECRET` (40+ random characters)
-   - Generate matching `ANON_KEY` and `SERVICE_ROLE_KEY` using that JWT secret
-   - See [Supabase API Keys Generator](https://supabase.com/docs/guides/self-hosting/docker) for tools
-   - Change `POSTGRES_PASSWORD`, `DASHBOARD_PASSWORD`, and other secrets
+The anon/service-role keys must be re-signed if you change `JWT_SECRET`.
 
-⚠️ **Why all three keys?** The `JWT_SECRET` is used to sign the `ANON_KEY` and `SERVICE_ROLE_KEY` tokens. If you change the JWT secret, you must regenerate the other keys or they won't work!
+## 2. Populate Volumes
 
-### 2. Start Supabase
+The compose file expects the official Supabase `volumes/` directory structure. Download the matching release and copy the following directories into `SUPABASE_VOLUME_ROOT`:
+
+- `db/` – SQL migrations (`jwt.sql`, `roles.sql`, `_supabase.sql`, etc.) and `data/` volume.
+- `api/kong.yml` – Kong declarative config.
+- `pooler/pooler.exs` – Supavisor pool definition.
+- `storage/`, `functions/`, `logs/vector.yml`.
+
+The repo keeps placeholders for reference; you must supply the full assets prior to boot.
+
+## 3. Start Supabase
 
 ```bash
 docker compose up -d
 ```
 
-Wait 30-60 seconds for all services to start and become healthy.
+Docker creates a `supabase_default` network that the ChoreQuest app joins for internal traffic.
 
-### 3. Verify Services
+## 4. Verify Health
 
 ```bash
 docker compose ps
+docker compose logs -f kong
 ```
 
-All services should show as "healthy" or "running".
+Services become healthy once Postgres finishes applying migrations (usually < 60 seconds).
 
-### 4. Access Supabase Studio
+## 5. Connectivity Reference
 
-Open your browser to: `http://localhost:8000`
+| Service | Host Port | Notes |
+| --- | --- | --- |
+| Kong Gateway / Supabase API | `5550` (HTTP), `5551` (HTTPS) | Reverse proxy to all Supabase services |
+| Supabase Studio | `5550/studio` (proxied via Kong) | Configure DNS/SSL via your reverse proxy |
+| Logflare (analytics) | `5552` | Useful for piping logs elsewhere |
+| Postgres | `5553` | Connect as `postgres` using `POSTGRES_PASSWORD` |
+| Supavisor (transaction pool) | `5554` | Use for pooled client connections |
 
-**Default credentials:**
-- Username: `supabase`
-- Password: `this_password_is_insecure_and_should_be_updated`
+When fronting the stack with Nginx/Traefik/Caddy, terminate TLS there and forward to `kong:8000` inside the Docker network.
 
-⚠️ **IMPORTANT**: Change these credentials in production!
+## 6. Retrieve API Credentials
 
-## Getting API Credentials
+1. Open Supabase Studio (`https://<your-host>/project/<project-id>/settings/api`).
+2. Copy the **Project URL**, **anon** key, and **service_role** key.
+3. Mirror the values into the ChoreQuest `.env*` files (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`).
 
-Once Supabase Studio is running, you can find your API credentials:
+⚠️ Do **not** use the publishable key – the app requires the JWT-based anon key.
 
-1. Open Supabase Studio: `http://localhost:8000`
-2. Log in with default credentials
-3. Go to **Project Settings** → **API**
-4. Copy the following:
-   - **API URL**: `http://localhost:8000` (or your server's IP/domain)
-   - **anon/public key**: Starts with `eyJh...` (this is a JWT token)
-   - **service_role key**: Also starts with `eyJh...` (this is a JWT token)
+## 7. Maintenance
 
-⚠️ **Important**: Use the "anon key" or "service_role key", NOT the "publishable key". The correct keys are JWT tokens (3 parts separated by dots, starting with `eyJ`).
+- **Update images**: `docker compose pull && docker compose up -d`.
+- **Rotate secrets**: regenerate keys, update `.env`, and restart the affected services.
+- **Backups**: run `pg_dump` against `supabase-db:5553` or enable WAL archiving.
+- **Logs**: tail `docker compose logs -f <service>` or forward Logflare events.
 
-## Using These Credentials with ChoreQuest
+## 8. Troubleshooting
 
-After Supabase is running and you have your credentials:
+- `docker compose logs -f db` – Postgres init issues (permissions, missing SQL files).
+- `docker compose logs -f kong` – API routing and auth errors.
+- `curl -I http://localhost:5550/health` – quickly test Kong.
+- If health checks fail, confirm file permissions on everything under `SUPABASE_VOLUME_ROOT`.
 
-1. Go back to the ChoreQuest project root directory
-2. Create `.env.production` from the template:
-   ```bash
-   cd ..
-   cp .env.production.example .env.production
-   ```
-3. Edit `.env.production` and add your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key-from-studio>
-   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key-from-studio>
-   ```
-4. Build and deploy ChoreQuest (see main README.md)
+## References
 
-## Service Endpoints
-
-With default configuration:
-
-- **Supabase Studio**: http://localhost:8000
-- **Database**: localhost:5432 (PostgreSQL)
-- **API Gateway**: http://localhost:8000
-- **REST API**: http://localhost:8000/rest/v1/
-- **Auth API**: http://localhost:8000/auth/v1/
-- **Storage API**: http://localhost:8000/storage/v1/
-- **Realtime**: http://localhost:8000/realtime/v1/
-
-## Security Checklist (Production)
-
-Before using in production, you MUST:
-
-- [ ] **Generate new JWT_SECRET** (40+ characters) and matching ANON_KEY/SERVICE_ROLE_KEY
-- [ ] Change default Studio username and password (`DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD`)
-- [ ] Change database password (`POSTGRES_PASSWORD`)
-- [ ] Update all other secret keys (`SECRET_KEY_BASE`, `VAULT_ENC_KEY`)
-- [ ] Configure SSL/TLS certificates for HTTPS
-- [ ] Set up regular database backups
-- [ ] Configure proper SMTP settings for email (if using email auth)
-- [ ] Restrict network access to necessary ports only
-- [ ] Keep Docker images updated regularly
-
-⚠️ **Never use the default keys from `.env.example` in production!** They are publicly known and insecure.
-
-## Stopping Supabase
-
-```bash
-docker compose down
-```
-
-To remove all data volumes (⚠️ THIS DELETES ALL DATA):
-
-```bash
-docker compose down -v
-```
-
-## Updating Supabase
-
-```bash
-docker compose pull
-docker compose up -d
-```
-
-## Troubleshooting
-
-### Services won't start
-
-Check logs:
-```bash
-docker compose logs -f
-```
-
-### Can't connect to Supabase Studio
-
-1. Verify all services are healthy: `docker compose ps`
-2. Check Kong gateway logs: `docker compose logs kong`
-3. Ensure port 8000 is not in use by another application
-
-### Database connection errors
-
-1. Check database logs: `docker compose logs db`
-2. Verify database is healthy: `docker compose ps db`
-3. Wait a bit longer - database initialization can take time
-
-## Resources
-
-- [Supabase Self-Hosting Documentation](https://supabase.com/docs/guides/self-hosting)
-- [Supabase Docker Setup](https://supabase.com/docs/guides/self-hosting/docker)
+- [Supabase Self-Hosting Docs](https://supabase.com/docs/guides/self-hosting)
+- [Supabase Docker Repository](https://github.com/supabase/supabase/tree/master/docker)
+- [ChoreQuest README](../README.md) – application deployment guide.

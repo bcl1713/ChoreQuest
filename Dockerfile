@@ -61,27 +61,24 @@ RUN addgroup --system --gid 1001 nodejs && \
 WORKDIR /app
 
 # Copy production dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Copy built application from builder stage
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Copy package.json for scripts
-COPY --from=builder /app/package*.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
 
 # Copy Supabase migrations and seed data for database initialization
-COPY --from=builder /app/supabase ./supabase
+COPY --from=builder --chown=nextjs:nodejs /app/supabase ./supabase
 
 # Create entrypoint script for database initialization
-COPY --from=builder /app/scripts/docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Make entrypoint executable
 RUN chmod +x ./docker-entrypoint.sh
-
-# Set ownership to non-root user
-RUN chown -R nextjs:nodejs /app
 
 # Switch to non-root user
 USER nextjs

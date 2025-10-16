@@ -9,10 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceSupabaseClient } from '@/lib/supabase-server';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const cronSecret = process.env.CRON_SECRET;
 
 export async function POST(request: NextRequest) {
@@ -42,12 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Supabase client with service role for admin access
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+    const supabase = createServiceSupabaseClient();
 
     // Import and run quest expiration
     const { expireQuests } = await import('@/lib/recurring-quest-generator');

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { questTemplateService } from '@/lib/quest-template-service';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { TemplateFormData } from '@/lib/types/quest-templates';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function POST(
   request: NextRequest,
@@ -23,9 +20,7 @@ export async function POST(
     }
 
     const token = authHeader.substring(7);
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
+    const supabase = createServerSupabaseClient(token);
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {

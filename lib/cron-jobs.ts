@@ -8,7 +8,7 @@
 import cron from 'node-cron';
 
 const CRON_SECRET = process.env.CRON_SECRET;
-const BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+const BASE_URL = process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000';
 
 /**
  * Call a cron endpoint with authentication

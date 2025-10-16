@@ -5,8 +5,24 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+// Use internal URL when running on the server (Docker-to-Docker communication)
+const resolveSupabaseUrl = () => {
+  const isServer = typeof window === 'undefined';
+  const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+
+  if (isServer) {
+    if (!isTest && process.env.SUPABASE_INTERNAL_URL) {
+      return process.env.SUPABASE_INTERNAL_URL;
+    }
+
+    return process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  }
+
+  return process.env.NEXT_PUBLIC_SUPABASE_URL;
+};
+
 // Supabase configuration from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = resolveSupabaseUrl();
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl) {

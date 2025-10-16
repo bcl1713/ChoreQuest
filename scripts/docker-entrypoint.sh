@@ -21,6 +21,16 @@ echo "✓ Supabase configuration detected: $NEXT_PUBLIC_SUPABASE_URL"
 SUPABASE_API_URL="${SUPABASE_INTERNAL_URL:-$NEXT_PUBLIC_SUPABASE_URL}"
 echo "✓ Using internal API URL for migrations: $SUPABASE_API_URL"
 
+# Allow skipping database bootstrap when Supabase runs in a separate stack
+BOOTSTRAP_ENABLED="${ENABLE_DB_BOOTSTRAP:-false}"
+if [ "$BOOTSTRAP_ENABLED" != "true" ]; then
+    echo "✓ Database bootstrap disabled (ENABLE_DB_BOOTSTRAP=$BOOTSTRAP_ENABLED)"
+    echo "=================================================="
+    echo "Starting ChoreQuest Application"
+    echo "=================================================="
+    exec "$@"
+fi
+
 # Function to check if database is initialized
 check_database_initialized() {
     echo "Checking if database is initialized..."
@@ -69,13 +79,12 @@ run_migrations() {
             echo "→ Applying migration: $filename"
 
             # Execute migration directly with psql
-            PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration" > /dev/null 2>&1
-
-            if [ $? -eq 0 ]; then
+            if PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$migration"; then
                 migration_count=$((migration_count + 1))
                 echo "  ✓ Applied: $filename"
             else
                 echo "  ✗ Failed: $filename"
+                return 1
             fi
         fi
     done
@@ -97,12 +106,11 @@ seed_database() {
     echo "→ Running seed data..."
 
     # Execute seed SQL directly with psql
-    PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "./supabase/seed.sql" > /dev/null 2>&1
-
-    if [ $? -eq 0 ]; then
+    if PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "./supabase/seed.sql"; then
         echo "✓ Database seeded successfully"
     else
         echo "✗ Database seeding failed"
+        return 1
     fi
 }
 
