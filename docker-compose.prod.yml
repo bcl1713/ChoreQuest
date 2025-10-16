@@ -25,9 +25,10 @@ services:
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       # Internal server-side URL (for Docker-to-Docker communication)
-      - SUPABASE_INTERNAL_URL=${SUPABASE_INTERNAL_URL:-http://supabase-kong:8000}
+      - SUPABASE_INTERNAL_URL=${SUPABASE_INTERNAL_URL:-https://supabase.example.com}
+      - SUPABASE_URL=${SUPABASE_URL:-https://supabase.example.com}
       # Cron + auth configuration
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://127.0.0.1:3000}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://app.example.com}
       - CRON_SECRET=${CRON_SECRET}
       - HOSTNAME=${HOSTNAME_OVERRIDE:-0.0.0.0}
       - HOST=0.0.0.0
