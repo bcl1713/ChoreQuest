@@ -1,22 +1,15 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with
-code in this repository.
-
-IMPORTANT: Always read PLANNING.md at the start of every new conversation, check
-TASKS.md before starting your work, mark completed tasks to TASKS.md
-immediately, and add newly discovered tasks to TASKS.md as soon as they are
-found.
-
-IMPORTANT: You should never make edits to the main branch directly. Always
-create a feature branch for any changes, no matter how small. Always create a
-branch for new features and commit often. When a feature is complete create a PR
-and merge to main
+IMPORTANT: You should never make edits to the main branch directly. Always check
+your branch before starting work and never work directly on main. We are
+following a Gitflow style workflow. New features should branch from develop, and
+hotfixes should branch from main. When hotfixes are merged, they should be
+tagged with a new semantic version number, making appropriate changes to local
+files with version numbers. They should also be merged back into develop.
 
 ## Development Workflow
 
 1. Check what branch you are on. We NEVER actively develop on main
-2. Create a branch if you are on main.
 
 - Naming Conventions
   - `feature/quest-system-implementation`
@@ -74,32 +67,11 @@ npm run test         # Run unit tests
 npm run test:watch   # Watch mode for TDD cycles
 npm run build        # Verify compilation
 npm run lint         # Check code quality
-
-# Database Operations
-npx prisma generate  # After schema changes
-npx prisma migrate dev # Apply migrations
 ```
 
 **Remember: The goal is quality software through disciplined TDD practice.**
 
 ## Extra Notes
 
-- Run the dev server when necessary, but keep in mind:
-  - The server should run on port 3000. If it starts on another port, there is
-    already a dev server running. Stop it and restart on port 3000.
-  - If you run `npm run build`, the dev server will need restarted. Running a
-    build breaks any existing dev server.
-
-## Critical Supabase Configuration
-
-⚠️ **IMPORTANT**: The `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env` MUST be a valid
-JWT token, not the "Publishable key" shown in `supabase status`.
-
-- **Wrong**: `sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH` (causes "Expected
-  3 parts in JWT; got 1" errors)
-- **Correct**:
-  `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvY2FsaG9zdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzU5MTA2NjMxLCJleHAiOjE3OTA2NDI2MzF9.NkngKkUpeZJRgEwsTAOQFzauIXVPgHsx7M6afIk3iZ8`
-
-If family joining shows "Invalid family code" for ALL codes (even valid ones),
-check that the anon key is a proper JWT token. Generate using the default
-Supabase local secret: `super-secret-jwt-token-with-at-least-32-characters-long`
+- Do not run the dev server. If you need it to be running, ask the user to run
+  it.

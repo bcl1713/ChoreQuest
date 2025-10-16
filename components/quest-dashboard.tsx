@@ -932,8 +932,8 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
           <div className="space-y-4">
             {unassignedFamilyQuests.map((quest) => (
               <div key={quest.id} className="fantasy-card p-6 border border-purple-800/40 bg-dark-800/70 backdrop-blur-sm">
-                <div className="flex justify-between items-start gap-4">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                  <div className="flex-1">
                     <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
                     <p className="text-gray-300 text-sm">{quest.description}</p>
                     <div className="flex flex-wrap gap-3 text-sm text-gray-300 mt-2">
@@ -944,10 +944,10 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
                       {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 min-w-[200px]">
+                  <div className="flex flex-col gap-2 sm:min-w-[140px] w-full sm:w-auto">
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-md bg-rose-700 text-white hover:bg-rose-600 transition"
+                      className="px-4 py-2 rounded-md bg-rose-700 text-white hover:bg-rose-600 transition min-h-[44px]"
                       onClick={() => handleCancelQuest(quest.id)}
                     >
                       Cancel Quest

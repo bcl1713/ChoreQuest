@@ -9,10 +9,10 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
       {/* Header */}
       <header className="p-6 text-center border-b border-dark-600">
-        <h1 className="text-6xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold">
           ChoreQuest
         </h1>
-        <p className="text-xl text-gray-300 mt-2 font-game">
+        <p className="text-base sm:text-lg md:text-xl text-gray-300 mt-2 font-game">
           Transform Chores into Epic Adventures
         </p>
       </header>
