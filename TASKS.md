@@ -211,6 +211,11 @@ Critical mobile responsiveness issues affecting user experience:
   - Changed from flex-1 min-w-[120px] to flex-shrink-0 for proper scrolling
   - Reduced padding on mobile screens (px-3 sm:px-4)
   - Added scrollbar styling for better UX
+- [x] #43 - Claim Quest buttons too large on mobile
+  - Changed layout from flex-row to flex-col on mobile (sm:flex-row)
+  - Button takes full-width on mobile (w-full sm:w-auto)
+  - Added 44px min-height for proper touch targets
+  - Added gap-3 for proper spacing between content and button
 - [x] #44 - Family quests (GM view) not responsive on mobile
   - Changed layout from flex-row to flex-col on mobile (sm:flex-row)
   - Button container now full-width on mobile (w-full sm:w-auto)

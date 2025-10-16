@@ -30,8 +30,8 @@ const FamilyQuestClaiming: React.FC<FamilyQuestClaimingProps> = ({ quests, chara
       <div className="space-y-4">
         {quests.map((quest) => (
           <div key={quest.id} className={`p-4 rounded-lg ${quest.assigned_to_id || heroHasActiveFamilyQuest ? 'bg-gray-700 opacity-50' : 'bg-gray-900'}`}>
-            <div className="flex justify-between items-start">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+              <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <Repeat className="h-5 w-5 text-blue-400" />
                   <span className="font-bold text-xl">{quest.title}</span>
@@ -47,11 +47,11 @@ const FamilyQuestClaiming: React.FC<FamilyQuestClaimingProps> = ({ quests, chara
                 {quest.assigned_to_id && <p className="text-sm text-yellow-400">Assigned to another hero.</p>}
               </div>
               {!quest.assigned_to_id && (
-                <button 
-                  onClick={() => onClaimQuest(quest.id)} 
-                  className={`flex items-center font-bold py-2 px-4 rounded-lg transition duration-300 ${
-                    heroHasActiveFamilyQuest 
-                      ? 'bg-gray-600 cursor-not-allowed' 
+                <button
+                  onClick={() => onClaimQuest(quest.id)}
+                  className={`flex items-center justify-center font-bold py-2 px-4 rounded-lg transition duration-300 min-h-[44px] w-full sm:w-auto ${
+                    heroHasActiveFamilyQuest
+                      ? 'bg-gray-600 cursor-not-allowed'
                       : 'bg-green-600 hover:bg-green-700'
                   }`}
                   disabled={heroHasActiveFamilyQuest}
