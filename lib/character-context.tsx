@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './auth-context';
 import { useRealtime } from './realtime-context';
+import { useNetworkReady } from './network-ready-context';
 import { supabase } from './supabase';
 import { Character } from '@/lib/types/database';
 
@@ -30,6 +31,7 @@ const CharacterContext = createContext<CharacterContextType | undefined>(undefin
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { onCharacterUpdate } = useRealtime();
+  const { waitForReady } = useNetworkReady();
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
@@ -49,13 +51,6 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const retryCountRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Detect if we're on a mobile browser
-  const isMobileBrowser = useCallback(() => {
-    if (typeof window === 'undefined') return false;
-    const userAgent = navigator.userAgent || navigator.vendor || '';
-    return /android|iphone|ipad|ipod/i.test(userAgent);
-  }, []);
-
   const fetchCharacter = useCallback(async (): Promise<void> => {
     if (!user) {
       setCharacter(null);
@@ -74,21 +69,13 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // On mobile browsers during initial load, add delay to let network stack stabilize
-    // This prevents race conditions with browser lifecycle during page refresh
-    const isMobile = isMobileBrowser();
-    const readyState = typeof window !== 'undefined' ? document.readyState : 'complete';
+    // Wait for network to be ready before making any Supabase calls
+    // This prevents HTTP request hangs on mobile browsers during page reload
     const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] CharacterContext: Waiting for network ready...`);
+    await waitForReady();
+    console.log(`[${new Date().toISOString()}] CharacterContext: Network ready, proceeding with fetch`);
 
-    console.log(`[${timestamp}] CharacterContext: Mobile=${isMobile}, InitialLoad=${isInitialLoadRef.current}, ReadyState=${readyState}`);
-
-    if (isMobile && isInitialLoadRef.current) {
-      // On mobile, wait 2 seconds on initial load to let browser stabilize
-      // Android Chrome in particular has issues with immediate network requests after refresh
-      console.log(`[${timestamp}] CharacterContext: Mobile browser detected, waiting 2s for network stack stabilization...`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log(`[${new Date().toISOString()}] CharacterContext: Mobile delay complete, proceeding with fetch`);
-    }
 
     // Safety valve: if fetch guard has been set for more than 5 seconds, force clear it
     // This prevents permanent hangs if finally block never executes
@@ -248,7 +235,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       fetchStartTimeRef.current = 0;
       abortControllerRef.current = null;
     }
-  }, [user, updateHasLoaded, isMobileBrowser]);
+  }, [user, updateHasLoaded, waitForReady]);
 
   useEffect(() => {
     fetchCharacter();

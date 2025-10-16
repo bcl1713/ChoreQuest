@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel, Orbitron } from "next/font/google";
+import { NetworkReadyProvider } from "@/lib/network-ready-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { CharacterProvider } from "@/lib/character-context";
 import { RealtimeProvider } from "@/lib/realtime-context";
@@ -42,13 +43,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${orbitron.variable} antialiased`}
       >
-        <AuthProvider>
-          <RealtimeProvider>
-            <CharacterProvider>
-              {children}
-            </CharacterProvider>
-          </RealtimeProvider>
-        </AuthProvider>
+        <NetworkReadyProvider>
+          <AuthProvider>
+            <RealtimeProvider>
+              <CharacterProvider>
+                {children}
+              </CharacterProvider>
+            </RealtimeProvider>
+          </AuthProvider>
+        </NetworkReadyProvider>
       </body>
     </html>
   );

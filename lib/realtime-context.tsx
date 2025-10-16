@@ -13,6 +13,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { useAuth } from './auth-context';
+import { useNetworkReady } from './network-ready-context';
 
 // Event types for realtime updates
 export type RealtimeEventType =
@@ -65,16 +66,15 @@ interface RealtimeProviderProps {
 
 export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) => {
   const { user, session, profile } = useAuth();
+  const { waitForReady } = useNetworkReady();
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [lastEvent, setLastEvent] = useState<RealtimeEvent | null>(null);
-  
+
   // Use ref to store current channel without causing re-renders
   const currentChannelRef = useRef<RealtimeChannel | null>(null);
   // Track previous family ID to prevent unnecessary reconnections
   const prevFamilyIdRef = useRef<string | null>(null);
-  // Track if we should delay realtime connection (for mobile browsers)
-  const [allowRealtimeConnection, setAllowRealtimeConnection] = useState(false);
 
   // Event listener management using refs to avoid dependency issues
   const questListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
@@ -84,84 +84,68 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   const rewardRedemptionListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const familyMemberListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
 
-  // On mobile browsers, delay realtime connection to prevent WebSocket blocking HTTP requests
-  useEffect(() => {
-    const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
-    if (isMobile && profile?.family_id) {
-      // Wait 5 seconds on mobile to let initial HTTP requests complete
-      console.log('[RealtimeContext] Mobile browser detected, delaying WebSocket connection for 5s');
-      const timer = setTimeout(() => {
-        console.log('[RealtimeContext] Mobile delay complete, allowing WebSocket connection');
-        setAllowRealtimeConnection(true);
-      }, 5000);
-      return () => clearTimeout(timer);
-    } else {
-      // Desktop: connect immediately
-      setAllowRealtimeConnection(true);
-    }
-  }, [profile?.family_id]);
-
   // Setup realtime connection when user and family are available
   useEffect(() => {
-    // Skip if we're not allowed to connect yet (mobile delay)
-    if (!allowRealtimeConnection) {
-      console.log('[RealtimeContext] Waiting for connection allowance (mobile delay)');
-      return;
-    }
-    const timestamp = new Date().toISOString();
+    const setupRealtime = async () => {
+      // Wait for network to be ready before establishing WebSocket connection
+      const readyTimestamp = new Date().toISOString();
+      console.log(`[${readyTimestamp}] RealtimeContext: Waiting for network ready...`);
+      await waitForReady();
+      console.log(`[${new Date().toISOString()}] RealtimeContext: Network ready, proceeding with connection`);
 
-    // Skip reconnection if family_id hasn't changed
-    if (profile?.family_id && prevFamilyIdRef.current === profile.family_id && currentChannelRef.current) {
-      console.log(`[${timestamp}] RealtimeContext: Skipping realtime reconnection - family unchanged:`, profile.family_id);
-      return;
-    }
+      const timestamp = new Date().toISOString();
 
-    // Clean up any existing connection first
-    if (currentChannelRef.current) {
-      const cleanupTimestamp = new Date().toISOString();
-      console.log(`[${cleanupTimestamp}] RealtimeContext: Cleaning up realtime connection`);
-      supabase.removeChannel(currentChannelRef.current);
-      currentChannelRef.current = null;
-      setIsConnected(false);
-    }
+      // Skip reconnection if family_id hasn't changed
+      if (profile?.family_id && prevFamilyIdRef.current === profile.family_id && currentChannelRef.current) {
+        console.log(`[${timestamp}] RealtimeContext: Skipping realtime reconnection - family unchanged:`, profile.family_id);
+        return;
+      }
 
-    if (!user || !session || !profile?.family_id) {
-      setConnectionError('Authentication required for realtime connection');
-      prevFamilyIdRef.current = null;
-      return;
-    }
+      // Clean up any existing connection first
+      if (currentChannelRef.current) {
+        const cleanupTimestamp = new Date().toISOString();
+        console.log(`[${cleanupTimestamp}] RealtimeContext: Cleaning up realtime connection`);
+        supabase.removeChannel(currentChannelRef.current);
+        currentChannelRef.current = null;
+        setIsConnected(false);
+      }
 
-    // Ensure session is valid and token is available
-    if (!session.access_token) {
-      setConnectionError('Valid authentication token required');
-      return;
-    }
+      if (!user || !session || !profile?.family_id) {
+        setConnectionError('Authentication required for realtime connection');
+        prevFamilyIdRef.current = null;
+        return;
+      }
 
-    const familyId = profile.family_id;
-    const channelName = `family_${familyId}`;
+      // Ensure session is valid and token is available
+      if (!session.access_token) {
+        setConnectionError('Valid authentication token required');
+        return;
+      }
 
-    const setupTimestamp = new Date().toISOString();
-    console.log(`[${setupTimestamp}] RealtimeContext: Setting up realtime connection for family:`, familyId);
-    console.log(`[${setupTimestamp}] RealtimeContext: User ID:`, user.id);
-    console.log(`[${setupTimestamp}] RealtimeContext: Session access token exists:`, !!session.access_token);
+      const familyId = profile.family_id;
+      const channelName = `family_${familyId}`;
 
-    // Update prevFamilyIdRef when family changes
-    prevFamilyIdRef.current = familyId;
+      const setupTimestamp = new Date().toISOString();
+      console.log(`[${setupTimestamp}] RealtimeContext: Setting up realtime connection for family:`, familyId);
+      console.log(`[${setupTimestamp}] RealtimeContext: User ID:`, user.id);
+      console.log(`[${setupTimestamp}] RealtimeContext: Session access token exists:`, !!session.access_token);
 
-    // Clear any previous error
-    setConnectionError(null);
+      // Update prevFamilyIdRef when family changes
+      prevFamilyIdRef.current = familyId;
 
-    // For local development, provide fallback if realtime fails
-    const isLocalDevelopment = process.env.NODE_ENV === 'development' &&
-                               process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1');
+      // Clear any previous error
+      setConnectionError(null);
 
-    if (isLocalDevelopment) {
-      console.log('RealtimeContext: Local development detected, setting up authenticated realtime');
-    }
+      // For local development, provide fallback if realtime fails
+      const isLocalDevelopment = process.env.NODE_ENV === 'development' &&
+                                 process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1');
 
-    // Create a family-scoped channel with authentication
-    const realtimeChannel = supabase
+      if (isLocalDevelopment) {
+        console.log('RealtimeContext: Local development detected, setting up authenticated realtime');
+      }
+
+      // Create a family-scoped channel with authentication
+      const realtimeChannel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
@@ -337,13 +321,17 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
         }
       });
 
-    // Store the channel in ref for cleanup
-    currentChannelRef.current = realtimeChannel;
+      // Store the channel in ref for cleanup
+      currentChannelRef.current = realtimeChannel;
+    };
+
+    // Start the async setup
+    setupRealtime();
 
     // Cleanup function
     return () => {
       const cleanupTimestamp = new Date().toISOString();
-      console.log(`[${cleanupTimestamp}] RealtimeContext: Cleaning up realtime connection for family:`, familyId);
+      console.log(`[${cleanupTimestamp}] RealtimeContext: Cleaning up realtime connection`);
       if (currentChannelRef.current) {
         supabase.removeChannel(currentChannelRef.current);
         currentChannelRef.current = null;
@@ -352,7 +340,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       setConnectionError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, session?.access_token, profile?.family_id, allowRealtimeConnection]);
+  }, [user?.id, session?.access_token, profile?.family_id, waitForReady]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
