@@ -358,12 +358,12 @@ describe("AdminDashboard", () => {
       expect(tabList?.className).toContain("overflow-x-auto");
     });
 
-    it("should set minimum width for tabs", () => {
+    it("should prevent tabs from shrinking for proper scrolling", () => {
       render(<AdminDashboard />);
 
       const tabs = screen.getAllByRole("tab");
       tabs.forEach((tab) => {
-        expect(tab.className).toContain("min-w-[120px]");
+        expect(tab.className).toContain("flex-shrink-0");
       });
     });
 

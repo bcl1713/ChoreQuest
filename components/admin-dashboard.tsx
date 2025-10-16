@@ -52,13 +52,13 @@ export function AdminDashboard() {
     <div className="w-full" data-testid="admin-dashboard">
       <TabGroup selectedIndex={selectedIndex} onChange={handleTabChange}>
         {/* Tab Navigation */}
-        <TabList className="flex space-x-1 bg-dark-800 p-1 rounded-lg mb-6 overflow-x-auto">
+        <TabList className="flex space-x-1 bg-dark-800 p-1 rounded-lg mb-6 overflow-x-auto scrollbar-thin scrollbar-thumb-dark-600">
           {tabs.map((tab) => (
             <Tab
               key={tab.name}
               data-testid={`tab-${tab.name}`}
               className={({ selected }) =>
-                `flex-1 min-w-[120px] py-3 px-4 rounded-lg font-medium transition-colors text-sm sm:text-base whitespace-nowrap ${
+                `flex-shrink-0 py-3 px-3 sm:px-4 rounded-lg font-medium transition-colors text-sm sm:text-base whitespace-nowrap ${
                   selected
                     ? 'bg-gold-600 text-white'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'

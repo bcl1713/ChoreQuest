@@ -37,16 +37,6 @@ transforms household tasks into epic adventures.
 
 ### Visual & UI Enhancement - COMPLETED 2025-10-10
 
-- [x] Fantasy theme implementation with RPG-styled UI design
-- [x] Animation system with Framer Motion integration
-- [x] Quest completion animations
-- [x] Level up celebrations
-- [x] Progress bars and visual feedback
-- [x] Fantasy-themed icon library integration (Lucide React)
-- [x] Loading animations with reduced motion support
-- [x] Particle effects for celebrations
-- [x] Comprehensive E2E tests for animations and accessibility
-
 ### Avatar & Customization System
 
 - [ ] Avatar display system
@@ -209,3 +199,31 @@ transforms household tasks into epic adventures.
 ### Development Infrastructure - COMPLETED
 
 ### Docker Production Deployment - COMPLETED 2025-09-25
+
+## Hotfix 0.2.1 - Mobile Responsiveness & UI Polish - IN PROGRESS 2025-10-16
+
+Critical mobile responsiveness issues and UI consistency improvements:
+
+- [x] #40 - Landing page logo overflow on mobile (shows "ChoreQue")
+  - Implemented responsive text sizing: text-4xl sm:text-5xl md:text-6xl
+  - Also fixed subtitle text sizing
+- [x] #41 - Reward store cards should match admin panel style
+  - Updated to use fantasy-card styling with dark theme
+  - Added gold-text for pricing consistency
+  - Updated button styling to match admin panel gradient buttons
+  - Added status badges with consistent dark theme colors
+  - Improved visual hierarchy and readability
+- [x] #42 - Admin dashboard tabs overlap on small screens
+  - Changed from flex-1 min-w-[120px] to flex-shrink-0 for proper scrolling
+  - Reduced padding on mobile screens (px-3 sm:px-4)
+  - Added scrollbar styling for better UX
+- [x] #43 - Claim Quest buttons too large on mobile
+  - Changed layout from flex-row to flex-col on mobile (sm:flex-row)
+  - Button takes full-width on mobile (w-full sm:w-auto)
+  - Added 44px min-height for proper touch targets
+  - Added gap-3 for proper spacing between content and button
+- [x] #44 - Family quests (GM view) not responsive on mobile
+  - Changed layout from flex-row to flex-col on mobile (sm:flex-row)
+  - Button container now full-width on mobile (w-full sm:w-auto)
+  - Removed restrictive min-w-[200px] on mobile
+  - Added 44px min-height for proper touch targets

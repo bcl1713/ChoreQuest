@@ -384,50 +384,47 @@ export default function RewardStore({ onError }: RewardStoreProps) {
               data-testid={`reward-store-card-${reward.id}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`border rounded-lg p-4 ${
-                affordable && !redemptionStatus
-                  ? 'border-green-200 bg-green-50 hover:bg-green-100'
-                  : 'border-gray-200 bg-gray-50'
-              } transition-colors`}
+              className={`fantasy-card p-6 hover:border-gold-500/50 transition-all ${
+                !affordable && !redemptionStatus ? 'opacity-60' : ''
+              }`}
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">{REWARD_TYPE_ICONS[reward.type]}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{reward.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-fantasy text-lg text-gray-100">{reward.name}</h3>
+                    <p className="text-sm text-gray-400">
                       {REWARD_TYPE_LABELS[reward.type]}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center space-x-1">
-                    <span className="text-lg">🪙</span>
-                    <span className="font-bold text-yellow-600">{reward.cost}</span>
-                  </div>
-                </div>
+                {redemptionStatus && (
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    redemptionStatus === 'PENDING'
+                      ? 'bg-yellow-900/30 text-yellow-300 border border-yellow-600/50'
+                      : 'bg-green-900/30 text-green-300 border border-green-600/50'
+                  }`}>
+                    {redemptionStatus === 'PENDING' ? 'Pending' : 'Approved'}
+                  </span>
+                )}
               </div>
 
-              <p className="text-sm text-gray-600 mb-4">{reward.description}</p>
+              <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
 
-              {redemptionStatus && (
-                <div className={`mb-3 px-2 py-1 rounded text-xs font-medium ${
-                  redemptionStatus === 'PENDING'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-green-100 text-green-800'
-                }`}>
-                  {redemptionStatus === 'PENDING' ? 'Awaiting Approval' : 'Approved'}
-                </div>
-              )}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xl font-bold gold-text">
+                  💰 {reward.cost} gold
+                </span>
+              </div>
 
               <button
                 data-testid="reward-store-redeem-button"
                 onClick={() => handleRedeem(reward)}
                 disabled={!affordable || !!redemptionStatus || isRedeeming}
-                className={`w-full py-2 px-4 rounded font-medium transition-colors ${
+                className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
                   affordable && !redemptionStatus && !isRedeeming
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white shadow-md'
+                    : 'bg-dark-600 text-gray-400 border border-dark-500 cursor-not-allowed'
                 }`}
               >
                 {isRedeeming ? (
@@ -436,11 +433,11 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                     <span>Redeeming...</span>
                   </div>
                 ) : redemptionStatus ? (
-                  redemptionStatus === 'PENDING' ? 'Request Pending' : 'Approved'
+                  redemptionStatus === 'PENDING' ? '⏳ Request Pending' : '✓ Approved'
                 ) : !affordable ? (
-                  'Insufficient Gold'
+                  '🔒 Insufficient Gold'
                 ) : (
-                  'Redeem Reward'
+                  '⚡ Redeem Reward'
                 )}
               </button>
             </motion.div>
