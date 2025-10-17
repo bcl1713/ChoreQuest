@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserProfile, Family } from '@/lib/types/database';
 import { useNetworkReady } from './network-ready-context';
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoadingUserDataRef = useRef(false);
 
   // Load user profile and family data
-  const loadUserData = useCallback(async (userId: string) => {
+  const loadUserData = useCallback(async (userId: string, authSession?: Session | null) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] AuthContext: loadUserData called for userId:`, userId);
 
@@ -65,32 +65,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoadingUserDataRef.current = true;
     console.log(`[${timestamp}] AuthContext: Starting data load for user:`, userId);
     try {
-      // Get user profile
-      console.log('AuthContext: Fetching user profile...');
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const accessToken = authSession?.access_token ?? session?.access_token ?? null;
 
-      if (profileError) {
-        console.error('AuthContext: Error loading user profile:', profileError);
+      if (!accessToken) {
+        console.warn('AuthContext: No access token available for loadUserData, skipping fetch');
+        return;
+      }
+
+      const baseHeaders: Record<string, string> = {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
+      };
+
+      // Fetch user profile via REST to avoid Supabase client hangs
+      const profileUrl = new URL('/rest/v1/user_profiles', SUPABASE_URL);
+      profileUrl.searchParams.set('select', '*');
+      profileUrl.searchParams.set('id', `eq.${userId}`);
+
+      console.log(`[${new Date().toISOString()}] AuthContext: REST fetch (profile) ${profileUrl.pathname}${profileUrl.search}`);
+      const profileResponse = await fetch(profileUrl.toString(), {
+        headers: baseHeaders,
+        cache: 'no-store'
+      });
+
+      if (profileResponse.status === 406 || profileResponse.status === 404) {
+        console.warn('AuthContext: Profile not found for user, clearing state');
+        setProfile(null);
+        setFamily(null);
+        return;
+      }
+
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text().catch(() => '');
+        throw new Error(`Profile fetch failed (${profileResponse.status}): ${errorText}`);
+      }
+
+      const profileRows = await profileResponse.json();
+      const profileData = Array.isArray(profileRows) ? profileRows[0] ?? null : profileRows;
+
+      if (!profileData) {
+        console.warn('AuthContext: Profile response empty for user, clearing state');
+        setProfile(null);
+        setFamily(null);
         return;
       }
 
       console.log('AuthContext: Profile data loaded:', profileData);
       setProfile(profileData);
 
-      // Get family data
-      console.log('AuthContext: Fetching family data for family_id:', profileData.family_id);
-      const { data: familyData, error: familyError } = await supabase
-        .from('families')
-        .select('*')
-        .eq('id', profileData.family_id)
-        .single();
+      // Fetch family data
+      const familyUrl = new URL('/rest/v1/families', SUPABASE_URL);
+      familyUrl.searchParams.set('select', '*');
+      familyUrl.searchParams.set('id', `eq.${profileData.family_id}`);
 
-      if (familyError) {
-        console.error('AuthContext: Error loading family:', familyError);
+      console.log(`[${new Date().toISOString()}] AuthContext: REST fetch (family) ${familyUrl.pathname}${familyUrl.search}`);
+      const familyResponse = await fetch(familyUrl.toString(), {
+        headers: baseHeaders,
+        cache: 'no-store'
+      });
+
+      if (!familyResponse.ok) {
+        const errorText = await familyResponse.text().catch(() => '');
+        throw new Error(`Family fetch failed (${familyResponse.status}): ${errorText}`);
+      }
+
+      const familyRows = await familyResponse.json();
+      const familyData = Array.isArray(familyRows) ? familyRows[0] ?? null : familyRows;
+
+      if (!familyData) {
+        console.warn('AuthContext: Family response empty, clearing state');
+        setFamily(null);
         return;
       }
 
@@ -109,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log(`[${new Date().toISOString()}] AuthContext: loadUserData finished, setting isLoading=false`);
       setIsLoading(false);
     }
-  }, [waitForReady]);
+  }, [waitForReady, session?.access_token]);
 
   // Initialize auth state
   useEffect(() => {
@@ -128,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await loadUserData(session.user.id);
+        await loadUserData(session.user.id, session);
       } else {
         setProfile(null);
         setFamily(null);
@@ -183,7 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         async (payload) => {
           console.log('AuthContext: Detected profile update via realtime', payload);
-          await loadUserData(user.id);
+          await loadUserData(user.id, session);
         },
       )
       .subscribe((status) => {
@@ -195,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Unsubscribing from profile updates');
       channel.unsubscribe();
     };
-  }, [user?.id, loadUserData]);
+  }, [user?.id, session, loadUserData]);
 
   const clearError = () => setError(null);
 
@@ -500,7 +547,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (finalSession) {
         setSession(finalSession);
         setUser(finalSession.user);
-        await loadUserData(finalSession.user.id);
+        await loadUserData(finalSession.user.id, finalSession);
         // Set loading to false immediately after setting user state
         setIsLoading(false);
       }
