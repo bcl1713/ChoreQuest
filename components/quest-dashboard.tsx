@@ -510,7 +510,11 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     (quest) => !quest.assigned_to_id && quest.quest_type !== "FAMILY"
   );
   const unassignedFamilyQuests = questInstances.filter(
-    (quest) => quest.quest_type === "FAMILY" && !quest.assigned_to_id
+    (quest) =>
+      quest.quest_type === "FAMILY" &&
+      !quest.assigned_to_id &&
+      quest.status !== "MISSED" &&
+      quest.status !== "EXPIRED"
   );
   const questsAwaitingApproval = questInstances.filter((quest) => quest.status === "COMPLETED");
   const otherQuests = profile?.role === "GUILD_MASTER"

@@ -363,6 +363,25 @@ export async function expireQuests(
       return result;
     }
 
+    // Clear active_family_quest_id for any CLAIMED family quests that expired
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const claimedFamilyQuestIds = expiredQuests
+      .filter((q: any) => q.quest_type === 'FAMILY' && q.status === 'CLAIMED')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((q: any) => q.id);
+
+    if (claimedFamilyQuestIds.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: clearError } = await (supabase as any)
+        .from('characters')
+        .update({ active_family_quest_id: null })
+        .in('active_family_quest_id', claimedFamilyQuestIds);
+
+      if (clearError) {
+        result.errors.push(`Failed to clear active_family_quest_id: ${clearError.message}`);
+      }
+    }
+
     // Count by type
     for (const quest of expiredQuests) {
       if (quest.quest_type === 'INDIVIDUAL') {
