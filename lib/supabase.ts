@@ -33,6 +33,9 @@ if (!supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
 }
 
+export const SUPABASE_URL = supabaseUrl;
+export const SUPABASE_ANON_KEY = supabaseAnonKey;
+
 // Create Supabase client with typed database schema
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -45,6 +48,23 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
       eventsPerSecond: 10
+    }
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'chorequest-web'
+    },
+    fetch: (input, init = {}) => {
+      const requestInit: RequestInit = {
+        ...init,
+      };
+
+      // keepalive appears to cause fetch hangs on some Chromium builds; disable it for now.
+      if (typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
+        delete requestInit.keepalive;
+      }
+
+      return fetch(input, requestInit);
     }
   }
 });

@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from './auth-context';
 import { useRealtime } from './realtime-context';
-import { supabase } from './supabase';
+import { useNetworkReady } from './network-ready-context';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
 import { Character } from '@/lib/types/database';
 
 // Using Character type from @/lib/types/database
@@ -28,8 +29,9 @@ interface CharacterContextType {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { onCharacterUpdate } = useRealtime();
+  const { waitForReady } = useNetworkReady();
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
@@ -47,8 +49,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const retryCountRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchCharacter = useCallback(async () => {
+  const fetchCharacter = useCallback(async (): Promise<void> => {
     if (!user) {
       setCharacter(null);
       setIsLoading(false);
@@ -58,8 +61,34 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       isFetchingRef.current = false;
       fetchStartTimeRef.current = 0;
       retryCountRef.current = 0;
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
       return;
     }
+
+    // Wait for network to be ready before making any Supabase calls
+    // This prevents HTTP request hangs on mobile browsers during page reload
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] CharacterContext: Waiting for network ready...`);
+    await waitForReady();
+    console.log(`[${new Date().toISOString()}] CharacterContext: Network ready, proceeding with fetch`);
+
+    // Validate session via AuthContext to avoid hanging on Supabase auth.getSession()
+    if (!session || !session.user) {
+      const errorTimestamp = new Date().toISOString();
+      console.error(`[${errorTimestamp}] CharacterContext: No active session from AuthContext, cannot fetch character`);
+      setError('Session expired. Please log in again.');
+      setIsLoading(false);
+      updateHasLoaded(true);
+      isFetchingRef.current = false;
+      fetchStartTimeRef.current = 0;
+      return;
+    }
+    console.log(`[${new Date().toISOString()}] CharacterContext: Session validated for user:`, session.user.id);
+
 
     // Safety valve: if fetch guard has been set for more than 5 seconds, force clear it
     // This prevents permanent hangs if finally block never executes
@@ -70,6 +99,11 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         const timestamp = new Date().toISOString();
         console.error(`[${timestamp}] CharacterContext: Fetch guard stuck for ${elapsed}ms, force clearing`);
         isFetchingRef.current = false;
+        // Also abort any stuck requests
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
       }
     }
 
@@ -92,86 +126,153 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
 
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+
     try {
       // Add timeout to prevent infinite hanging
       // Use longer timeout (15s) to handle slow database queries during E2E tests
-      const fetchPromise = supabase
-        .from('characters')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Character fetch timeout after 15s')), 15000)
-      );
+      // Create a timeout that will reject if fetch takes too long
+      let timeoutId: NodeJS.Timeout | null = null;
+      let didTimeout = false;
 
-      const result = await Promise.race([fetchPromise, timeoutPromise]);
-      const { data, error } = result;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          didTimeout = true;
+          // Abort the request when timeout occurs
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
+          reject(new Error('Character fetch timeout after 15s'));
+        }, 15000);
+      });
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No character found - this is not an error, just no character created yet
-          console.log('CharacterContext: No character found for user');
-          setCharacter(null);
-        } else {
-          throw error;
+      // Start the fetch
+      const fetchPromise = (async () => {
+        const restUrl = new URL('/rest/v1/characters', SUPABASE_URL);
+        restUrl.searchParams.set('select', '*');
+        restUrl.searchParams.set('user_id', `eq.${user.id}`);
+
+        const requestInit: RequestInit = {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${session.access_token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          },
+          cache: 'no-store',
+          signal: abortControllerRef.current?.signal,
+        };
+
+        const logLabel = `${restUrl.pathname}${restUrl.search}`;
+        console.log(`[${new Date().toISOString()}] CharacterContext: REST fetch start ${logLabel}`);
+
+        const response = await fetch(restUrl.toString(), requestInit);
+
+        console.log(`[${new Date().toISOString()}] CharacterContext: REST fetch status ${response.status} for ${logLabel}`);
+
+        if (timeoutId && !didTimeout) {
+          clearTimeout(timeoutId);
         }
+
+        if (response.status === 404 || response.status === 406) {
+          return { data: null as Character | null };
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          throw new Error(`Supabase REST error ${response.status}: ${errorText}`);
+        }
+
+        const rows = await response.json();
+        const record = Array.isArray(rows) ? rows[0] ?? null : rows;
+        return { data: record as Character | null };
+      })();
+
+      const { data } = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (!data) {
+        console.log('CharacterContext: No character found for user');
+        setCharacter(null);
+        previousLevelRef.current = null;
       } else {
-        // Use Supabase data directly
         console.log('CharacterContext: Character fetched successfully:', data);
 
-        // Check for level up
-        if (previousLevelRef.current !== null && data.level > previousLevelRef.current) {
-          console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${data.level}`);
+        const currentLevel = typeof (data as { level?: number | string | null }).level === 'number'
+          ? (data as { level: number }).level
+          : Number((data as { level?: number | string | null }).level ?? 0);
+
+        if (previousLevelRef.current !== null && currentLevel > previousLevelRef.current) {
+          console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${currentLevel}`);
           setLevelUpEvent({
             oldLevel: previousLevelRef.current,
-            newLevel: data.level,
-            characterName: data.name,
-            characterClass: data.class || 'Adventurer',
+            newLevel: currentLevel,
+            characterName: (data as { name?: string }).name ?? 'Adventurer',
+            characterClass: (data as { class?: string }).class || 'Adventurer',
           });
         }
 
-        // Update previous level reference
-        previousLevelRef.current = data.level;
+        previousLevelRef.current = currentLevel;
 
-        setCharacter(data);
-        retryCountRef.current = 0; // Reset retry count on success
+        const nextCharacter: Character = {
+          ...(data as Character),
+          level: currentLevel,
+        };
+
+        setCharacter(nextCharacter);
+        retryCountRef.current = 0;
       }
     } catch (err) {
-      const fetchDuration = Date.now() - fetchStartTimeRef.current;
+      // Calculate duration BEFORE clearing the timestamp
+      const fetchDuration = fetchStartTimeRef.current > 0
+        ? Date.now() - fetchStartTimeRef.current
+        : 0;
       const errorTimestamp = new Date().toISOString();
       const message = err instanceof Error ? err.message : 'Failed to fetch character';
 
+      // Don't log errors for aborted requests (expected during cleanup)
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log(`[${errorTimestamp}] CharacterContext: Fetch aborted (expected during cleanup)`);
+        return;
+      }
+
       console.error(`[${errorTimestamp}] CharacterContext: Character fetch error after ${fetchDuration}ms for user ${user.id}:`, err);
 
-      // Retry logic: on fetch failure, wait 1 second and retry once
-      if (retryCountRef.current < 1) {
+      // Retry logic with exponential backoff: 1s, 2s, 4s (max 3 retries)
+      const MAX_RETRIES = 3;
+      if (retryCountRef.current < MAX_RETRIES) {
+        const retryDelay = Math.pow(2, retryCountRef.current) * 1000; // Exponential backoff
         retryCountRef.current++;
-        console.log(`[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current})...`);
+        console.log(`[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current}/${MAX_RETRIES}) after ${retryDelay}ms...`);
 
-        // Clear fetch guard to allow retry
+        // Clear fetch guard to allow retry, but preserve timestamps for accurate duration logging
         isFetchingRef.current = false;
-        fetchStartTimeRef.current = 0; // Reset timestamp to fix duration calculation on retry
+        abortControllerRef.current = null;
 
-        // Wait 1 second before retry
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait with exponential backoff before retry
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
 
-        // Retry the fetch
-        return fetchCharacter();
+        // Retry the fetch (will set new timestamp)
+        // NOTE: Return here prevents finally block from running
+        return await fetchCharacter();
       }
 
       // After all retries exhausted, set error
       setError(message);
       console.error(`[${errorTimestamp}] CharacterContext: All retry attempts exhausted`);
     } finally {
+      // Only clean up if we're not going to retry
       // Mark as loaded and clear loading state
       updateHasLoaded(true);
       setIsLoading(false);
       isInitialLoadRef.current = false;
       isFetchingRef.current = false;
       fetchStartTimeRef.current = 0;
+      abortControllerRef.current = null;
     }
-  }, [user, updateHasLoaded]);
+  }, [user, session, updateHasLoaded, waitForReady]);
 
   useEffect(() => {
     fetchCharacter();

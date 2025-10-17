@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserProfile, Family } from '@/lib/types/database';
+import { useNetworkReady } from './network-ready-context';
 
 // Using types from @/lib/types/database
 
@@ -25,6 +26,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { waitForReady } = useNetworkReady();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
@@ -39,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoadingUserDataRef = useRef(false);
 
   // Load user profile and family data
-  const loadUserData = async (userId: string) => {
+  const loadUserData = useCallback(async (userId: string, authSession?: Session | null) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] AuthContext: loadUserData called for userId:`, userId);
 
@@ -55,126 +57,150 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    isLoadingUserDataRef.current = true;
-    console.log(`[${timestamp}] AuthContext: Starting data load for user:`, userId);
-    try {
-      // Get user profile
-      console.log('AuthContext: Fetching user profile...');
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+    // Wait for network to be ready before making any Supabase calls
+    await waitForReady();
 
-      if (profileError) {
-        console.error('AuthContext: Error loading user profile:', profileError);
+    isLoadingUserDataRef.current = true;
+    try {
+      const accessToken = authSession?.access_token ?? session?.access_token ?? null;
+
+      if (!accessToken) {
+        console.warn('AuthContext: No access token available for loadUserData, skipping fetch');
         return;
       }
 
-      console.log('AuthContext: Profile data loaded:', profileData);
+      const baseHeaders: Record<string, string> = {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store'
+      };
+
+      // Fetch user profile via REST to avoid Supabase client hangs
+      const profileUrl = new URL('/rest/v1/user_profiles', SUPABASE_URL);
+      profileUrl.searchParams.set('select', '*');
+      profileUrl.searchParams.set('id', `eq.${userId}`);
+
+      const profileResponse = await fetch(profileUrl.toString(), {
+        headers: baseHeaders,
+        cache: 'no-store'
+      });
+
+      if (profileResponse.status === 406 || profileResponse.status === 404) {
+        console.warn('AuthContext: Profile not found for user, clearing state');
+        setProfile(null);
+        setFamily(null);
+        return;
+      }
+
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text().catch(() => '');
+        throw new Error(`Profile fetch failed (${profileResponse.status}): ${errorText}`);
+      }
+
+      const profileRows = await profileResponse.json();
+      const profileData = Array.isArray(profileRows) ? profileRows[0] ?? null : profileRows;
+
+      if (!profileData) {
+        console.warn('AuthContext: Profile response empty for user, clearing state');
+        setProfile(null);
+        setFamily(null);
+        return;
+      }
+
       setProfile(profileData);
 
-      // Get family data
-      console.log('AuthContext: Fetching family data for family_id:', profileData.family_id);
-      const { data: familyData, error: familyError } = await supabase
-        .from('families')
-        .select('*')
-        .eq('id', profileData.family_id)
-        .single();
+      // Fetch family data
+      const familyUrl = new URL('/rest/v1/families', SUPABASE_URL);
+      familyUrl.searchParams.set('select', '*');
+      familyUrl.searchParams.set('id', `eq.${profileData.family_id}`);
 
-      if (familyError) {
-        console.error('AuthContext: Error loading family:', familyError);
+      const familyResponse = await fetch(familyUrl.toString(), {
+        headers: baseHeaders,
+        cache: 'no-store'
+      });
+
+      if (!familyResponse.ok) {
+        const errorText = await familyResponse.text().catch(() => '');
+        throw new Error(`Family fetch failed (${familyResponse.status}): ${errorText}`);
+      }
+
+      const familyRows = await familyResponse.json();
+      const familyData = Array.isArray(familyRows) ? familyRows[0] ?? null : familyRows;
+
+      if (!familyData) {
+        console.warn('AuthContext: Family response empty, clearing state');
+        setFamily(null);
         return;
       }
 
-      console.log('AuthContext: Family data loaded:', familyData);
       setFamily(familyData);
 
       // Update refs after successful load
       prevUserIdRef.current = userId;
-      const successTimestamp = new Date().toISOString();
-      console.log(`[${successTimestamp}] AuthContext: Data load completed successfully for user:`, userId);
+      setIsLoading(false);
+
     } catch (err) {
       console.error('AuthContext: Error loading user data:', err);
     } finally {
       isLoadingUserDataRef.current = false;
+      setIsLoading(false);
     }
-  };
+  }, [waitForReady, session?.access_token]);
 
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
+    const handleAuthStateChange = async (event: string, session: Session | null) => {
+      if (!mounted) return;
 
-    const initAuth = async () => {
-      console.log('AuthContext: Starting auth initialization...');
-      try {
-        // Get initial session
-        console.log('AuthContext: Getting initial session...');
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log('AuthContext: Initial session result:', initialSession ? 'Session found' : 'No session');
+      console.log('Auth state changed:', event, session?.user?.id, 'Creating family:', isCreatingFamily);
 
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
+      if (isCreatingFamily) {
+        console.log('Ignoring auth state change during family creation');
+        return;
+      }
 
-          if (initialSession?.user) {
-            console.log('AuthContext: Loading user data for user:', initialSession.user.id);
-            await loadUserData(initialSession.user.id);
-            console.log('AuthContext: User data loaded successfully');
-          } else {
-            console.log('AuthContext: No user session, skipping user data load');
-          }
-        }
-      } catch (err) {
-        console.error('AuthContext: Error initializing auth:', err);
-      } finally {
-        if (mounted) {
-          console.log('AuthContext: Setting isLoading to false');
-          setIsLoading(false);
-        }
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        await loadUserData(session.user.id, session);
+      } else {
+        setProfile(null);
+        setFamily(null);
+        prevUserIdRef.current = null;
+        isLoadingUserDataRef.current = false;
+      }
+
+      setIsLoading(false);
+
+      if (event === 'SIGNED_OUT') {
+        setError(null);
       }
     };
 
-    initAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log('Auth state changed:', event, session?.user?.id, 'Creating family:', isCreatingFamily);
-
-        // If we're in the middle of creating a family, ignore auth state changes
-        // to prevent premature navigation before profile creation completes
-        if (isCreatingFamily) {
-          console.log('Ignoring auth state change during family creation');
-          return;
-        }
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await loadUserData(session.user.id);
-        } else {
-          setProfile(null);
-          setFamily(null);
-          // Reset refs when user logs out
-          prevUserIdRef.current = null;
-          isLoadingUserDataRef.current = false;
-        }
-
-        if (event === 'SIGNED_OUT') {
-          setError(null);
-        }
+    (async () => {
+      console.log('AuthContext: Starting auth initialization...');
+      try {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] AuthContext: Waiting for network ready...`);
+        await waitForReady();
+        console.log(`[${new Date().toISOString()}] AuthContext: Network ready, awaiting auth events`);
+      } catch (err) {
+        console.error('AuthContext: Error during initialization:', err);
+        setIsLoading(false);
       }
-    );
+    })();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [isCreatingFamily]);
+  }, [isCreatingFamily, waitForReady, loadUserData]);
 
   // Subscribe to profile updates so role changes propagate in real time
   useEffect(() => {
@@ -194,7 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         async (payload) => {
           console.log('AuthContext: Detected profile update via realtime', payload);
-          await loadUserData(user.id);
+          await loadUserData(user.id, session);
         },
       )
       .subscribe((status) => {
@@ -206,9 +232,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Unsubscribing from profile updates');
       channel.unsubscribe();
     };
-  }, [user?.id]);
+  }, [user?.id, session, loadUserData]);
 
   const clearError = () => setError(null);
+
+  const logout = useCallback(async () => {
+    clearError();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+  }, []);
+
+  // Add explicit session refresh on visibility change for mobile browsers
+  // This ensures session is still valid after tab resume or app backgrounding
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && user) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] AuthContext: Tab visible, validating session...`);
+
+        // Explicitly get current session (triggers auto-refresh if needed)
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error(`[${timestamp}] AuthContext: Session validation error:`, error);
+          return;
+        }
+
+        if (!currentSession) {
+          console.log(`[${timestamp}] AuthContext: Session lost, signing out...`);
+          await logout();
+        } else if (currentSession.user.id === user.id) {
+          console.log(`[${timestamp}] AuthContext: Session valid for user:`, user.id);
+          // Session is valid, onAuthStateChange will handle any updates
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, logout]);
 
   const login = async (credentials: { email: string; password: string }) => {
     clearError();
@@ -469,7 +533,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (finalSession) {
         setSession(finalSession);
         setUser(finalSession.user);
-        await loadUserData(finalSession.user.id);
+        await loadUserData(finalSession.user.id, finalSession);
         // Set loading to false immediately after setting user state
         setIsLoading(false);
       }
@@ -481,14 +545,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw err;
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    clearError();
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
     }
   };
 
