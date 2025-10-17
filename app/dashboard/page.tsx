@@ -68,6 +68,10 @@ function DashboardContent() {
   }, [user, isLoading, router]);
 
   useEffect(() => {
+    console.log('[Dashboard] loading flags', { authLoading: isLoading, characterLoading, userPresent: !!user, characterPresent: !!character, characterHasLoaded, characterError });
+  }, [isLoading, characterLoading, user, character, characterHasLoaded, characterError]);
+
+  useEffect(() => {
     // Only redirect to character creation if:
     // 1. Auth is not loading
     // 2. User exists

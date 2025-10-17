@@ -51,6 +51,14 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const retryCountRef = useRef(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    console.log(`[${new Date().toISOString()}] CharacterContext: isLoading state ->`, isLoading);
+  }, [isLoading]);
+
+  useEffect(() => {
+    console.log(`[${new Date().toISOString()}] CharacterContext: hasLoaded state ->`, hasLoaded);
+  }, [hasLoaded]);
+
   const fetchCharacter = useCallback(async (): Promise<void> => {
     if (!user) {
       setCharacter(null);
