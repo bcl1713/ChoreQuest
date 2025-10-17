@@ -55,48 +55,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       'X-Client-Info': 'chorequest-web'
     },
     fetch: (input, init = {}) => {
-      // Add keepalive for mobile browsers to prevent connection drops
-      const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-      const requestUrl = (() => {
-        if (typeof input === 'string') return input;
-        if (typeof Request !== 'undefined' && input instanceof Request) return input.url;
-        if (typeof (input as { url?: string })?.url === 'string') return (input as { url: string }).url;
-        return String(input);
-      })();
       const requestInit: RequestInit = {
         ...init,
       };
+
       // keepalive appears to cause fetch hangs on some Chromium builds; disable it for now.
-      if (isMobile) {
+      if (typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
         delete requestInit.keepalive;
       }
 
-      const getLogLabel = () => {
-        const { method = 'GET' } = requestInit;
-        try {
-          const parsed = new URL(requestUrl);
-          return `${method} ${parsed.pathname}${parsed.search}`;
-        } catch {
-          return `${method} ${requestUrl}`;
-        }
-      };
-
-      const logLabel = getLogLabel();
-      const start = Date.now();
-
-      console.log(`[${new Date().toISOString()}] Supabase fetch start: ${logLabel} keepalive=${requestInit.keepalive ? 'true' : 'false'}`);
-
-      return fetch(input, requestInit)
-        .then((response) => {
-          const duration = Date.now() - start;
-          console.log(`[${new Date().toISOString()}] Supabase fetch complete: ${logLabel} status=${response.status} duration=${duration}ms`);
-          return response;
-        })
-        .catch((error) => {
-          const duration = Date.now() - start;
-          console.error(`[${new Date().toISOString()}] Supabase fetch error: ${logLabel} duration=${duration}ms`, error);
-          throw error;
-        });
+      return fetch(input, requestInit);
     }
   }
 });

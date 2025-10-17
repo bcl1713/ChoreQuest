@@ -58,12 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Wait for network to be ready before making any Supabase calls
-    console.log(`[${timestamp}] AuthContext: Waiting for network ready before loading user data...`);
     await waitForReady();
-    console.log(`[${new Date().toISOString()}] AuthContext: Network ready, proceeding with user data load`);
 
     isLoadingUserDataRef.current = true;
-    console.log(`[${timestamp}] AuthContext: Starting data load for user:`, userId);
     try {
       const accessToken = authSession?.access_token ?? session?.access_token ?? null;
 
@@ -85,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profileUrl.searchParams.set('select', '*');
       profileUrl.searchParams.set('id', `eq.${userId}`);
 
-      console.log(`[${new Date().toISOString()}] AuthContext: REST fetch (profile) ${profileUrl.pathname}${profileUrl.search}`);
       const profileResponse = await fetch(profileUrl.toString(), {
         headers: baseHeaders,
         cache: 'no-store'
@@ -113,7 +109,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('AuthContext: Profile data loaded:', profileData);
       setProfile(profileData);
 
       // Fetch family data
@@ -121,7 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       familyUrl.searchParams.set('select', '*');
       familyUrl.searchParams.set('id', `eq.${profileData.family_id}`);
 
-      console.log(`[${new Date().toISOString()}] AuthContext: REST fetch (family) ${familyUrl.pathname}${familyUrl.search}`);
       const familyResponse = await fetch(familyUrl.toString(), {
         headers: baseHeaders,
         cache: 'no-store'
@@ -141,19 +135,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('AuthContext: Family data loaded:', familyData);
       setFamily(familyData);
 
       // Update refs after successful load
       prevUserIdRef.current = userId;
-      const successTimestamp = new Date().toISOString();
-      console.log(`[${successTimestamp}] AuthContext: Data load completed successfully for user:`, userId);
+      setIsLoading(false);
 
     } catch (err) {
       console.error('AuthContext: Error loading user data:', err);
     } finally {
       isLoadingUserDataRef.current = false;
-      console.log(`[${new Date().toISOString()}] AuthContext: loadUserData finished, setting isLoading=false`);
       setIsLoading(false);
     }
   }, [waitForReady, session?.access_token]);
@@ -183,7 +174,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoadingUserDataRef.current = false;
       }
 
-      console.log('AuthContext: Auth state processing complete, clearing loading flag');
       setIsLoading(false);
 
       if (event === 'SIGNED_OUT') {
@@ -253,10 +243,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error signing out:', error);
     }
   }, []);
-
-  useEffect(() => {
-    console.log(`[${new Date().toISOString()}] AuthContext: isLoading state ->`, isLoading);
-  }, [isLoading]);
 
   // Add explicit session refresh on visibility change for mobile browsers
   // This ensures session is still valid after tab resume or app backgrounding
