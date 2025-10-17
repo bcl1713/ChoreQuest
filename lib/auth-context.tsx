@@ -425,6 +425,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
 
+      // Detect browser timezone for family default
+      const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      console.log('Detected browser timezone:', detectedTimezone);
+
       // Create the family
       console.log('Creating family with name:', data.name);
       const { data: familyData, error: familyError } = await supabase
@@ -432,6 +436,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .insert({
           name: data.name,
           code: familyCode,
+          timezone: detectedTimezone,
         })
         .select()
         .single();
