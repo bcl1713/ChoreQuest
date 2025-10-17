@@ -106,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('AuthContext: Error loading user data:', err);
     } finally {
       isLoadingUserDataRef.current = false;
+      console.log(`[${new Date().toISOString()}] AuthContext: loadUserData finished, setting isLoading=false`);
       setIsLoading(false);
     }
   }, [waitForReady]);
