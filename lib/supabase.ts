@@ -65,41 +65,30 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         keepalive: isMobile,
       };
 
-      const logDetails = () => {
-        if (process.env.NODE_ENV !== 'development') {
-          return null;
-        }
-
+      const getLogLabel = () => {
         const { method = 'GET' } = requestInit;
         try {
           const parsed = new URL(requestUrl);
-          // Only include path/query to avoid logging credentials
           return `${method} ${parsed.pathname}${parsed.search}`;
         } catch {
           return `${method} ${requestUrl}`;
         }
       };
 
-      const logLabel = logDetails();
-      const start = logLabel ? Date.now() : 0;
+      const logLabel = getLogLabel();
+      const start = Date.now();
 
-      if (logLabel) {
-        console.log(`[${new Date().toISOString()}] Supabase fetch start: ${logLabel} keepalive=${requestInit.keepalive ? 'true' : 'false'}`);
-      }
+      console.log(`[${new Date().toISOString()}] Supabase fetch start: ${logLabel} keepalive=${requestInit.keepalive ? 'true' : 'false'}`);
 
       return fetch(input, requestInit)
         .then((response) => {
-          if (logLabel) {
-            const duration = Date.now() - start;
-            console.log(`[${new Date().toISOString()}] Supabase fetch complete: ${logLabel} status=${response.status} duration=${duration}ms`);
-          }
+          const duration = Date.now() - start;
+          console.log(`[${new Date().toISOString()}] Supabase fetch complete: ${logLabel} status=${response.status} duration=${duration}ms`);
           return response;
         })
         .catch((error) => {
-          if (logLabel) {
-            const duration = Date.now() - start;
-            console.error(`[${new Date().toISOString()}] Supabase fetch error: ${logLabel} duration=${duration}ms`, error);
-          }
+          const duration = Date.now() - start;
+          console.error(`[${new Date().toISOString()}] Supabase fetch error: ${logLabel} duration=${duration}ms`, error);
           throw error;
         });
     }
