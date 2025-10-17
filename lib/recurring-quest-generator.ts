@@ -12,6 +12,12 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types/database-generated';
+import {
+  getStartOfDayInTimezone,
+  getEndOfDayInTimezone,
+  getStartOfWeekInTimezone,
+  getEndOfWeekInTimezone,
+} from './timezone-utils';
 
 const TEST_INTERVAL_MINUTES_ENV = process.env.RECURRING_TEST_INTERVAL_MINUTES;
 const TEST_INTERVAL_MINUTES = TEST_INTERVAL_MINUTES_ENV
@@ -31,10 +37,11 @@ interface GenerationResult {
 }
 
 /**
- * Calculate cycle dates based on recurrence pattern
+ * Calculate cycle dates based on recurrence pattern in a specific timezone
  */
 function calculateCycleDates(
   recurrencePattern: string,
+  timezone: string = 'UTC',
   weekStartDay: number = 0
 ): { cycleStart: Date; cycleEnd: Date } {
   const now = new Date();
@@ -54,34 +61,22 @@ function calculateCycleDates(
   }
 
   if (recurrencePattern === 'DAILY') {
-    // Daily: midnight to midnight
-    const cycleStart = new Date(now);
-    cycleStart.setHours(0, 0, 0, 0);
-
-    const cycleEnd = new Date(cycleStart);
-    cycleEnd.setDate(cycleEnd.getDate() + 1);
-    cycleEnd.setMilliseconds(cycleEnd.getMilliseconds() - 1);
+    // Daily: midnight to midnight in family's timezone
+    const cycleStart = getStartOfDayInTimezone(now, timezone);
+    const cycleEnd = getEndOfDayInTimezone(now, timezone);
 
     return { cycleStart, cycleEnd };
   } else if (recurrencePattern === 'WEEKLY') {
-    // Weekly: start of week to end of week
-    const dayOfWeek = now.getDay();
-    const daysUntilWeekStart = (dayOfWeek - weekStartDay + 7) % 7;
-
-    const cycleStart = new Date(now);
-    cycleStart.setDate(cycleStart.getDate() - daysUntilWeekStart);
-    cycleStart.setHours(0, 0, 0, 0);
-
-    const cycleEnd = new Date(cycleStart);
-    cycleEnd.setDate(cycleEnd.getDate() + 7);
-    cycleEnd.setMilliseconds(cycleEnd.getMilliseconds() - 1);
+    // Weekly: start of week to end of week in family's timezone
+    const cycleStart = getStartOfWeekInTimezone(now, timezone, weekStartDay as 0 | 1 | 2 | 3 | 4 | 5 | 6);
+    const cycleEnd = getEndOfWeekInTimezone(now, timezone, weekStartDay as 0 | 1 | 2 | 3 | 4 | 5 | 6);
 
     return { cycleStart, cycleEnd };
   }
 
   // CUSTOM: default to daily for now
   // TODO: Implement custom patterns in future
-  return calculateCycleDates('DAILY', weekStartDay);
+  return calculateCycleDates('DAILY', timezone, weekStartDay);
 }
 
 /**
@@ -449,7 +444,7 @@ export async function generateRecurringQuests(
       return result;
     }
 
-    // Get family week_start_day settings
+    // Get family timezone and week_start_day settings
     const familyIds = [...new Set(templates.map(t => t.family_id).filter(Boolean))] as string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: families } = await (supabase as any)
@@ -460,6 +455,11 @@ export async function generateRecurringQuests(
     const familyWeekStartMap = new Map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (families || []).map((f: any) => [f.id, f.week_start_day ?? 0])
+    );
+
+    const familyTimezoneMap = new Map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (families || []).map((f: any) => [f.id, f.timezone ?? 'UTC'])
     );
 
     // Get a GM user_id for created_by_id (use first GM found)
@@ -476,9 +476,11 @@ export async function generateRecurringQuests(
     // Generate quests for each template
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const template of templates as any[]) {
+      const timezone = (familyTimezoneMap.get(template.family_id || '') ?? 'UTC') as string;
       const weekStartDay = (familyWeekStartMap.get(template.family_id || '') ?? 0) as number;
       const { cycleStart, cycleEnd } = calculateCycleDates(
         template.recurrence_pattern || 'DAILY',
+        timezone,
         weekStartDay
       );
 
