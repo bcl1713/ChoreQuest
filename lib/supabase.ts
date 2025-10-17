@@ -33,6 +33,9 @@ if (!supabaseAnonKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
 }
 
+export const SUPABASE_URL = supabaseUrl;
+export const SUPABASE_ANON_KEY = supabaseAnonKey;
+
 // Create Supabase client with typed database schema
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

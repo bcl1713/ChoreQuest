@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { useAuth } from './auth-context';
 import { useRealtime } from './realtime-context';
 import { useNetworkReady } from './network-ready-context';
-import { supabase } from './supabase';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
 import { Character } from '@/lib/types/database';
 
 // Using Character type from @/lib/types/database
@@ -150,55 +150,79 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
       // Start the fetch
       const fetchPromise = (async () => {
-        console.log(`[${new Date().toISOString()}] CharacterContext: Starting Supabase query...`);
+        const restUrl = new URL('/rest/v1/characters', SUPABASE_URL);
+        restUrl.searchParams.set('select', '*');
+        restUrl.searchParams.set('user_id', `eq.${user.id}`);
 
-      const result = await supabase
-          .from('characters')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        const requestInit: RequestInit = {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${session.access_token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          },
+          cache: 'no-store',
+          signal: abortControllerRef.current?.signal,
+        };
 
-        console.log(`[${new Date().toISOString()}] CharacterContext: Supabase query completed`);
+        const logLabel = `${restUrl.pathname}${restUrl.search}`;
+        console.log(`[${new Date().toISOString()}] CharacterContext: REST fetch start ${logLabel}`);
 
-        // Clear timeout if we finished before it fired
+        const response = await fetch(restUrl.toString(), requestInit);
+
+        console.log(`[${new Date().toISOString()}] CharacterContext: REST fetch status ${response.status} for ${logLabel}`);
+
         if (timeoutId && !didTimeout) {
           clearTimeout(timeoutId);
         }
 
-        return result;
+        if (response.status === 404 || response.status === 406) {
+          return { data: null as Character | null };
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          throw new Error(`Supabase REST error ${response.status}: ${errorText}`);
+        }
+
+        const rows = await response.json();
+        const record = Array.isArray(rows) ? rows[0] ?? null : rows;
+        return { data: record as Character | null };
       })();
 
-      const result = await Promise.race([fetchPromise, timeoutPromise]);
-      const { data, error } = result;
+      const { data } = await Promise.race([fetchPromise, timeoutPromise]);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No character found - this is not an error, just no character created yet
-          console.log('CharacterContext: No character found for user');
-          setCharacter(null);
-        } else {
-          throw error;
-        }
+      if (!data) {
+        console.log('CharacterContext: No character found for user');
+        setCharacter(null);
+        previousLevelRef.current = null;
       } else {
-        // Use Supabase data directly
         console.log('CharacterContext: Character fetched successfully:', data);
 
-        // Check for level up
-        if (previousLevelRef.current !== null && data.level > previousLevelRef.current) {
-          console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${data.level}`);
+        const currentLevel = typeof (data as { level?: number | string | null }).level === 'number'
+          ? (data as { level: number }).level
+          : Number((data as { level?: number | string | null }).level ?? 0);
+
+        if (previousLevelRef.current !== null && currentLevel > previousLevelRef.current) {
+          console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${currentLevel}`);
           setLevelUpEvent({
             oldLevel: previousLevelRef.current,
-            newLevel: data.level,
-            characterName: data.name,
-            characterClass: data.class || 'Adventurer',
+            newLevel: currentLevel,
+            characterName: (data as { name?: string }).name ?? 'Adventurer',
+            characterClass: (data as { class?: string }).class || 'Adventurer',
           });
         }
 
-        // Update previous level reference
-        previousLevelRef.current = data.level;
+        previousLevelRef.current = currentLevel;
 
-        setCharacter(data);
-        retryCountRef.current = 0; // Reset retry count on success
+        const nextCharacter: Character = {
+          ...(data as Character),
+          level: currentLevel,
+        };
+
+        setCharacter(nextCharacter);
+        retryCountRef.current = 0;
       }
     } catch (err) {
       // Calculate duration BEFORE clearing the timestamp
