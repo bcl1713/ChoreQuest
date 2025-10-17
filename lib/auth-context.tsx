@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Refs to prevent duplicate loadUserData calls
   const prevUserIdRef = useRef<string | null>(null);
   const isLoadingUserDataRef = useRef(false);
+  const hasHandledInitialAuthEvent = useRef(false);
 
   // Load user profile and family data
   const loadUserData = useCallback(async (userId: string) => {
@@ -111,123 +112,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
+    hasHandledInitialAuthEvent.current = false;
+
+    const handleAuthStateChange = async (event: string, session: Session | null) => {
+      if (!mounted) return;
+
+      console.log('Auth state changed:', event, session?.user?.id, 'Creating family:', isCreatingFamily);
+
+      if (isCreatingFamily) {
+        console.log('Ignoring auth state change during family creation');
+        return;
+      }
+
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        await loadUserData(session.user.id);
+      } else {
+        setProfile(null);
+        setFamily(null);
+        prevUserIdRef.current = null;
+        isLoadingUserDataRef.current = false;
+      }
+
+      if (!hasHandledInitialAuthEvent.current) {
+        hasHandledInitialAuthEvent.current = true;
+        console.log('AuthContext: Initial auth event handled, clearing loading state');
+        setIsLoading(false);
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setError(null);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     const initAuth = async () => {
-      const getSessionWithTimeout = async (timeoutMs: number) => {
-        let timeoutId: NodeJS.Timeout | null = null;
-        let settled = false;
-
-        return new Promise<{
-          session: Session | null;
-          error: Error | null;
-          timedOut: boolean;
-        }>(async (resolve) => {
-          timeoutId = setTimeout(() => {
-            if (!settled) {
-              settled = true;
-              console.warn(`[${new Date().toISOString()}] AuthContext: getSession timed out after ${timeoutMs}ms - relying on auth state change event`);
-              resolve({ session: null, error: null, timedOut: true });
-            }
-          }, timeoutMs);
-
-          try {
-            const { data, error } = await supabase.auth.getSession();
-
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-            }
-
-            if (!settled) {
-              settled = true;
-              if (error) {
-                console.error('AuthContext: getSession returned error:', error);
-                resolve({ session: null, error, timedOut: false });
-              } else {
-                resolve({ session: data.session ?? null, error: null, timedOut: false });
-              }
-            }
-          } catch (err) {
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-            }
-            if (!settled) {
-              settled = true;
-              console.error('AuthContext: getSession threw error:', err);
-              resolve({ session: null, error: err instanceof Error ? err : new Error('Unknown getSession error'), timedOut: false });
-            }
-          }
-        });
-      };
-
       console.log('AuthContext: Starting auth initialization...');
       try {
-        // Wait for network to be ready before making any Supabase calls
         const timestamp = new Date().toISOString();
         console.log(`[${timestamp}] AuthContext: Waiting for network ready...`);
         await waitForReady();
-        console.log(`[${new Date().toISOString()}] AuthContext: Network ready, proceeding with auth`);
-
-        // Get initial session
-        console.log('AuthContext: Getting initial session...');
-        const { session: initialSession } = await getSessionWithTimeout(2500);
-        console.log('AuthContext: Initial session result:', initialSession ? 'Session found' : 'No session (or timed out)');
-
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-
-          if (initialSession?.user) {
-            console.log('AuthContext: Loading user data for user:', initialSession.user.id);
-            await loadUserData(initialSession.user.id);
-            console.log('AuthContext: User data loaded successfully');
-          } else {
-            console.log('AuthContext: No user session, skipping user data load');
-          }
-        }
+        console.log(`[${new Date().toISOString()}] AuthContext: Network ready, awaiting auth events`);
       } catch (err) {
-        console.error('AuthContext: Error initializing auth:', err);
-      } finally {
-        if (mounted) {
-          console.log('AuthContext: Setting isLoading to false');
+        console.error('AuthContext: Error during initialization:', err);
+        if (!hasHandledInitialAuthEvent.current) {
+          hasHandledInitialAuthEvent.current = true;
           setIsLoading(false);
         }
       }
     };
 
     initAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log('Auth state changed:', event, session?.user?.id, 'Creating family:', isCreatingFamily);
-
-        // If we're in the middle of creating a family, ignore auth state changes
-        // to prevent premature navigation before profile creation completes
-        if (isCreatingFamily) {
-          console.log('Ignoring auth state change during family creation');
-          return;
-        }
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await loadUserData(session.user.id);
-        } else {
-          setProfile(null);
-          setFamily(null);
-          // Reset refs when user logs out
-          prevUserIdRef.current = null;
-          isLoadingUserDataRef.current = false;
-        }
-
-        if (event === 'SIGNED_OUT') {
-          setError(null);
-        }
-      }
-    );
 
     return () => {
       mounted = false;

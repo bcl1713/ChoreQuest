@@ -62,8 +62,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       })();
       const requestInit: RequestInit = {
         ...init,
-        keepalive: isMobile,
       };
+      // keepalive appears to cause fetch hangs on some Chromium builds; disable it for now.
+      if (isMobile) {
+        delete requestInit.keepalive;
+      }
 
       const getLogLabel = () => {
         const { method = 'GET' } = requestInit;
