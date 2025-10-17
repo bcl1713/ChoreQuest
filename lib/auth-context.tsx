@@ -102,6 +102,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       prevUserIdRef.current = userId;
       const successTimestamp = new Date().toISOString();
       console.log(`[${successTimestamp}] AuthContext: Data load completed successfully for user:`, userId);
+
+      if (!hasHandledInitialAuthEvent.current) {
+        hasHandledInitialAuthEvent.current = true;
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
+      }
     } catch (err) {
       console.error('AuthContext: Error loading user data:', err);
     } finally {
@@ -214,6 +221,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error signing out:', error);
     }
   }, []);
+
+  useEffect(() => {
+    console.log(`[${new Date().toISOString()}] AuthContext: isLoading state ->`, isLoading);
+  }, [isLoading]);
 
   // Add explicit session refresh on visibility change for mobile browsers
   // This ensures session is still valid after tab resume or app backgrounding
