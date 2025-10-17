@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback } f
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { UserProfile, Family } from '@/lib/types/database';
+import { useNetworkReady } from './network-ready-context';
 
 // Using types from @/lib/types/database
 
@@ -25,6 +26,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { waitForReady } = useNetworkReady();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
@@ -39,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoadingUserDataRef = useRef(false);
 
   // Load user profile and family data
-  const loadUserData = async (userId: string) => {
+  const loadUserData = useCallback(async (userId: string) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] AuthContext: loadUserData called for userId:`, userId);
 
@@ -54,6 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log(`[${timestamp}] AuthContext: loadUserData skipped - data already loaded for user:`, userId);
       return;
     }
+
+    // Wait for network to be ready before making any Supabase calls
+    console.log(`[${timestamp}] AuthContext: Waiting for network ready before loading user data...`);
+    await waitForReady();
+    console.log(`[${new Date().toISOString()}] AuthContext: Network ready, proceeding with user data load`);
 
     isLoadingUserDataRef.current = true;
     console.log(`[${timestamp}] AuthContext: Starting data load for user:`, userId);
@@ -99,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       isLoadingUserDataRef.current = false;
     }
-  };
+  }, [waitForReady]);
 
   // Initialize auth state
   useEffect(() => {
@@ -108,6 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       console.log('AuthContext: Starting auth initialization...');
       try {
+        // Wait for network to be ready before making any Supabase calls
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] AuthContext: Waiting for network ready...`);
+        await waitForReady();
+        console.log(`[${new Date().toISOString()}] AuthContext: Network ready, proceeding with auth`);
+
         // Get initial session
         console.log('AuthContext: Getting initial session...');
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -174,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [isCreatingFamily]);
+  }, [isCreatingFamily, waitForReady, loadUserData]);
 
   // Subscribe to profile updates so role changes propagate in real time
   useEffect(() => {
@@ -206,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Unsubscribing from profile updates');
       channel.unsubscribe();
     };
-  }, [user?.id]);
+  }, [user?.id, loadUserData]);
 
   const clearError = () => setError(null);
 

@@ -227,3 +227,9 @@ Critical mobile responsiveness issues and UI consistency improvements:
   - Button container now full-width on mobile (w-full sm:w-auto)
   - Removed restrictive min-w-[200px] on mobile
   - Added 44px min-height for proper touch targets
+- [x] Loading spinner stuck on mobile and Chrome desktop refresh
+  - Memoized `waitForReady` function with useCallback to prevent infinite re-renders
+  - Added network ready wait to AuthContext before all Supabase calls
+  - Fixed dependency arrays to include stable memoized functions
+  - Prevented race condition where AuthContext made requests before network ready
+  - Eliminated infinite re-render loop in RealtimeContext and CharacterContext

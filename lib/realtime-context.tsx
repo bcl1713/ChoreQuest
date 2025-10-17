@@ -340,7 +340,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       setConnectionError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, session?.access_token, profile?.family_id, waitForReady]);
+  }, [user?.id, session?.access_token, profile?.family_id]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {

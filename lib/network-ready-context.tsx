@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 
 interface NetworkReadyContextType {
   isReady: boolean;
@@ -83,14 +83,14 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
     initializeNetwork();
   }, []);
 
-  const waitForReady = async () => {
+  const waitForReady = useCallback(async () => {
     if (isReady) {
       return;
     }
     if (readyPromiseRef.current) {
       await readyPromiseRef.current;
     }
-  };
+  }, [isReady]);
 
   return (
     <NetworkReadyContext.Provider value={{ isReady, waitForReady }}>
