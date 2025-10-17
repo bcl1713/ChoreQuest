@@ -27,6 +27,7 @@ const NetworkReadyContext = createContext<NetworkReadyContextType | undefined>(u
  */
 export function NetworkReadyProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
+  const isReadyRef = useRef(false);
   const readyPromiseRef = useRef<Promise<void> | null>(null);
   const resolveReadyRef = useRef<(() => void) | null>(null);
 
@@ -81,6 +82,10 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
       // Mark network as ready
       if (!cancelled) {
         setIsReady(true);
+        isReadyRef.current = true;
+      } else {
+        // In case we were cancelled, still resolve any waiters so they don't hang
+        isReadyRef.current = true;
       }
       if (resolveReadyRef.current) {
         resolveReadyRef.current();
@@ -95,8 +100,12 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
     };
   }, []);
 
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
+
   const waitForReady = useCallback(async () => {
-    if (isReady) {
+    if (isReadyRef.current) {
       return;
     }
     // readyPromiseRef.current is guaranteed to exist from the initial render,
@@ -105,7 +114,7 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
       readyPromiseRef.current = Promise.resolve();
     }
     await readyPromiseRef.current;
-  }, [isReady]);
+  }, []);
 
   return (
     <NetworkReadyContext.Provider value={{ isReady, waitForReady }}>
