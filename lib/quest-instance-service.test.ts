@@ -438,6 +438,18 @@ describe("QuestInstanceService", () => {
         }),
       };
 
+      const familyMaybeSingle = jest.fn().mockResolvedValue({
+        data: { timezone: 'America/Chicago' },
+        error: null,
+      });
+      const familyBuilder = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            maybeSingle: familyMaybeSingle,
+          }),
+        }),
+      };
+
       const questInstanceBuilders = [questSelectBuilder, questUpdateBuilder];
       const characterBuilders = [characterSelectBuilder, characterUpdateBuilder];
 
@@ -454,6 +466,9 @@ describe("QuestInstanceService", () => {
         }
         if (table === "quest_templates") {
           return templateBuilder;
+        }
+        if (table === "families") {
+          return familyBuilder;
         }
         throw new Error(`Unexpected table: ${table}`);
       });

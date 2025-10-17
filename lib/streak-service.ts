@@ -239,15 +239,13 @@ export class StreakService {
    * @param recurrencePattern - The quest recurrence pattern (DAILY or WEEKLY)
    * @param currentDate - The current completion date
    * @param timezone - The family's IANA timezone string (e.g., 'America/Chicago')
-   * @param weekStartDay - Day of week for weekly recurrence (0=Sunday, 1=Monday, etc.)
    * @returns True if consecutive, false if there's a gap
    */
   validateConsecutiveCompletion(
     lastCompletedDate: string | null,
     recurrencePattern: "DAILY" | "WEEKLY" | "CUSTOM",
     currentDate: Date,
-    timezone: string = 'UTC',
-    _weekStartDay: number = 0
+    timezone: string = 'UTC'
   ): boolean {
     if (!lastCompletedDate) {
       // First completion is always valid
@@ -260,9 +258,9 @@ export class StreakService {
     if (recurrencePattern === "DAILY") {
       const daysBetween = getDaysBetweenInTimezone(lastDate, currentDate, timezone);
 
-      // Allow same day (re-completion edge case) or next day (consecutive)
-      // Also allow 2-day gap to account for timezone edge cases
-      return daysBetween <= 2;
+      // Allow same day (0 days = re-completion) or next day (1 day = consecutive)
+      // daysBetween uses calendar days in the family's timezone, so this is correct
+      return daysBetween <= 1;
     }
 
     // For WEEKLY quests: allow completion this week or last week in the family's timezone

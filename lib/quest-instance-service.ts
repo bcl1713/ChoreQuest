@@ -365,17 +365,15 @@ export class QuestInstanceService {
 
     // Fetch family timezone for streak validation
     let familyTimezone = 'UTC';
-    let weekStartDay = 0;
     if (quest.family_id) {
       const { data: family } = await this.client
         .from("families")
-        .select("timezone, week_start_day")
+        .select("timezone")
         .eq("id", quest.family_id)
         .maybeSingle();
 
       if (family) {
         familyTimezone = family.timezone ?? 'UTC';
-        weekStartDay = family.week_start_day ?? 0;
       }
     }
 
@@ -385,8 +383,7 @@ export class QuestInstanceService {
         streak.last_completed_date,
         recurrencePattern,
         completionDate,
-        familyTimezone,
-        weekStartDay
+        familyTimezone
       );
 
       if (isConsecutive) {
