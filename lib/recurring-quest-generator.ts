@@ -127,7 +127,7 @@ async function generateIndividualQuests(
   const characterIds = template.assigned_character_ids || [];
 
   if (characterIds.length === 0) {
-    errors.push(`Template ${template.id} has no assigned characters`);
+    // Silently skip templates with no assigned characters - this is a valid state
     return { count, errors };
   }
 
@@ -158,7 +158,7 @@ async function generateIndividualQuests(
     );
 
     if (exists) {
-      console.log(`Quest already exists for template ${template.id}, character ${character.id}`);
+      // Quest already exists (idempotency)
       continue;
     }
 
@@ -222,7 +222,7 @@ async function generateFamilyQuest(
   );
 
   if (exists) {
-    console.log(`Family quest already exists for template ${template.id}`);
+    // Quest already exists (idempotency)
     return { count: 0, errors };
   }
 
@@ -331,7 +331,6 @@ export async function expireQuests(
     }
 
     if (!expiredQuests || expiredQuests.length === 0) {
-      console.log('No expired quests found');
       return result;
     }
 
@@ -440,7 +439,6 @@ export async function generateRecurringQuests(
     }
 
     if (!templates || templates.length === 0) {
-      console.log('No active recurring quest templates found');
       return result;
     }
 
