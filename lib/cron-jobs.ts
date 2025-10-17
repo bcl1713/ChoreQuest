@@ -48,21 +48,24 @@ export function initializeCronJobs(): void {
 
   console.log('[CRON] Initializing cron jobs...');
 
-  // Generate recurring quests every 5 minutes
-  // Cron expression: */5 * * * * (every 5 minutes)
-  cron.schedule('*/5 * * * *', () => {
+  // In development, run more frequently for faster testing
+  const isDev = process.env.NODE_ENV === 'development';
+  const cronSchedule = isDev ? '* * * * *' : '*/5 * * * *'; // Every 1 min in dev, 5 min in prod
+  const scheduleDesc = isDev ? 'every 1 minute' : 'every 5 minutes';
+
+  // Generate recurring quests
+  cron.schedule(cronSchedule, () => {
     callCronEndpoint('generate-quests', 'Generate Recurring Quests');
   });
 
-  // Expire quests every 5 minutes
-  // Cron expression: */5 * * * * (every 5 minutes)
-  cron.schedule('*/5 * * * *', () => {
+  // Expire quests
+  cron.schedule(cronSchedule, () => {
     callCronEndpoint('expire-quests', 'Expire Quests');
   });
 
   console.log('[CRON] Cron jobs initialized successfully');
-  console.log('[CRON] - Generate quests: every 5 minutes');
-  console.log('[CRON] - Expire quests: every 5 minutes');
+  console.log(`[CRON] - Generate quests: ${scheduleDesc}`);
+  console.log(`[CRON] - Expire quests: ${scheduleDesc}`);
 }
 
 /**
