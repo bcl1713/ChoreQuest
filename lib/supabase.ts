@@ -51,14 +51,57 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       'X-Client-Info': 'chorequest-web'
     },
-    fetch: (url, options = {}) => {
+    fetch: (input, init = {}) => {
       // Add keepalive for mobile browsers to prevent connection drops
       const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
-      return fetch(url, {
-        ...options,
+      const requestUrl = (() => {
+        if (typeof input === 'string') return input;
+        if (typeof Request !== 'undefined' && input instanceof Request) return input.url;
+        if (typeof (input as { url?: string })?.url === 'string') return (input as { url: string }).url;
+        return String(input);
+      })();
+      const requestInit: RequestInit = {
+        ...init,
         keepalive: isMobile,
-      });
+      };
+
+      const logDetails = () => {
+        if (process.env.NODE_ENV !== 'development') {
+          return null;
+        }
+
+        const { method = 'GET' } = requestInit;
+        try {
+          const parsed = new URL(requestUrl);
+          // Only include path/query to avoid logging credentials
+          return `${method} ${parsed.pathname}${parsed.search}`;
+        } catch {
+          return `${method} ${requestUrl}`;
+        }
+      };
+
+      const logLabel = logDetails();
+      const start = logLabel ? Date.now() : 0;
+
+      if (logLabel) {
+        console.log(`[${new Date().toISOString()}] Supabase fetch start: ${logLabel} keepalive=${requestInit.keepalive ? 'true' : 'false'}`);
+      }
+
+      return fetch(input, requestInit)
+        .then((response) => {
+          if (logLabel) {
+            const duration = Date.now() - start;
+            console.log(`[${new Date().toISOString()}] Supabase fetch complete: ${logLabel} status=${response.status} duration=${duration}ms`);
+          }
+          return response;
+        })
+        .catch((error) => {
+          if (logLabel) {
+            const duration = Date.now() - start;
+            console.error(`[${new Date().toISOString()}] Supabase fetch error: ${logLabel} duration=${duration}ms`, error);
+          }
+          throw error;
+        });
     }
   }
 });
