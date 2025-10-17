@@ -204,6 +204,12 @@ transforms household tasks into epic adventures.
 
 Critical mobile responsiveness issues and UI consistency improvements:
 
+- [ ] #58 - Chrome/Chromium mobile reload hangs on "Loading your realm"
+  - [ ] Review prior fixes to network/auth/character realtime startup flow
+  - [ ] Reproduce spinner hang locally in Chromium user agent emulation
+  - [ ] Trace auth + realtime initialization to locate deadlock/infinite loop
+  - [ ] Implement targeted fix and verify Chrome/Chromium resume works
+  - [ ] Ensure no regressions in Firefox/Safari and update automated tests
 - [x] #40 - Landing page logo overflow on mobile (shows "ChoreQue")
   - Implemented responsive text sizing: text-4xl sm:text-5xl md:text-6xl
   - Also fixed subtitle text sizing

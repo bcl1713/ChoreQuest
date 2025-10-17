@@ -30,11 +30,17 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
   const readyPromiseRef = useRef<Promise<void> | null>(null);
   const resolveReadyRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
-    // Create the ready promise immediately
+  // Ensure the ready promise exists during the initial render so any consumers
+  // calling waitForReady() before our effects run will still receive a pending
+  // promise that resolves once initialization completes.
+  if (readyPromiseRef.current === null) {
     readyPromiseRef.current = new Promise<void>((resolve) => {
       resolveReadyRef.current = resolve;
     });
+  }
+
+  useEffect(() => {
+    let cancelled = false;
 
     // Detect if we're on a mobile browser
     const isMobile = typeof window !== 'undefined' &&
@@ -73,7 +79,9 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
       }
 
       // Mark network as ready
-      setIsReady(true);
+      if (!cancelled) {
+        setIsReady(true);
+      }
       if (resolveReadyRef.current) {
         resolveReadyRef.current();
       }
@@ -81,15 +89,22 @@ export function NetworkReadyProvider({ children }: { children: React.ReactNode }
     };
 
     initializeNetwork();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const waitForReady = useCallback(async () => {
     if (isReady) {
       return;
     }
-    if (readyPromiseRef.current) {
-      await readyPromiseRef.current;
+    // readyPromiseRef.current is guaranteed to exist from the initial render,
+    // but we guard just in case to prevent unhandled rejections.
+    if (!readyPromiseRef.current) {
+      readyPromiseRef.current = Promise.resolve();
     }
+    await readyPromiseRef.current;
   }, [isReady]);
 
   return (
