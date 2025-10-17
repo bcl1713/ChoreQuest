@@ -25,6 +25,7 @@ jest.mock("lucide-react", () => ({
   Calendar: () => <span>Calendar Icon</span>,
   Shield: () => <span>Shield Icon</span>,
   User: () => <span>User Icon</span>,
+  Globe: () => <span>Globe Icon</span>,
 }));
 
 // Mock auth context
@@ -59,6 +60,7 @@ describe("FamilySettings", () => {
   const mockFamilyInfo = {
     name: "Smith Family",
     code: "ABC123DEF",
+    timezone: "America/Chicago",
     members: [
       {
         userId: "user-1",
@@ -580,6 +582,7 @@ describe("FamilySettings", () => {
       mockGetFamilyInfo.mockResolvedValue({
         name: "Empty Family",
         code: "EMPTY123",
+        timezone: "UTC",
         members: [],
       });
 
