@@ -29,7 +29,7 @@ interface CharacterContextType {
 const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { onCharacterUpdate } = useRealtime();
   const { waitForReady } = useNetworkReady();
   const [character, setCharacter] = useState<Character | null>(null);
@@ -76,12 +76,10 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     await waitForReady();
     console.log(`[${new Date().toISOString()}] CharacterContext: Network ready, proceeding with fetch`);
 
-    // Validate session is still active before querying
-    // This prevents queries with stale/null session tokens on mobile
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    if (!currentSession || !currentSession.user) {
+    // Validate session via AuthContext to avoid hanging on Supabase auth.getSession()
+    if (!session || !session.user) {
       const errorTimestamp = new Date().toISOString();
-      console.error(`[${errorTimestamp}] CharacterContext: No active session, cannot fetch character`);
+      console.error(`[${errorTimestamp}] CharacterContext: No active session from AuthContext, cannot fetch character`);
       setError('Session expired. Please log in again.');
       setIsLoading(false);
       updateHasLoaded(true);
@@ -89,7 +87,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       fetchStartTimeRef.current = 0;
       return;
     }
-    console.log(`[${new Date().toISOString()}] CharacterContext: Session validated for user:`, currentSession.user.id);
+    console.log(`[${new Date().toISOString()}] CharacterContext: Session validated for user:`, session.user.id);
 
 
     // Safety valve: if fetch guard has been set for more than 5 seconds, force clear it
@@ -154,7 +152,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       const fetchPromise = (async () => {
         console.log(`[${new Date().toISOString()}] CharacterContext: Starting Supabase query...`);
 
-        const result = await supabase
+      const result = await supabase
           .from('characters')
           .select('*')
           .eq('user_id', user.id)
@@ -250,7 +248,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       fetchStartTimeRef.current = 0;
       abortControllerRef.current = null;
     }
-  }, [user, updateHasLoaded, waitForReady]);
+  }, [user, session, updateHasLoaded, waitForReady]);
 
   useEffect(() => {
     fetchCharacter();

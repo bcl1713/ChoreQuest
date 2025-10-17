@@ -113,6 +113,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const initAuth = async () => {
+      const getSessionWithTimeout = async (timeoutMs: number) => {
+        let timeoutId: NodeJS.Timeout | null = null;
+        let settled = false;
+
+        return new Promise<{
+          session: Session | null;
+          error: Error | null;
+          timedOut: boolean;
+        }>(async (resolve) => {
+          timeoutId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              console.warn(`[${new Date().toISOString()}] AuthContext: getSession timed out after ${timeoutMs}ms - relying on auth state change event`);
+              resolve({ session: null, error: null, timedOut: true });
+            }
+          }, timeoutMs);
+
+          try {
+            const { data, error } = await supabase.auth.getSession();
+
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+
+            if (!settled) {
+              settled = true;
+              if (error) {
+                console.error('AuthContext: getSession returned error:', error);
+                resolve({ session: null, error, timedOut: false });
+              } else {
+                resolve({ session: data.session ?? null, error: null, timedOut: false });
+              }
+            }
+          } catch (err) {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+            if (!settled) {
+              settled = true;
+              console.error('AuthContext: getSession threw error:', err);
+              resolve({ session: null, error: err instanceof Error ? err : new Error('Unknown getSession error'), timedOut: false });
+            }
+          }
+        });
+      };
+
       console.log('AuthContext: Starting auth initialization...');
       try {
         // Wait for network to be ready before making any Supabase calls
@@ -123,8 +169,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Get initial session
         console.log('AuthContext: Getting initial session...');
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log('AuthContext: Initial session result:', initialSession ? 'Session found' : 'No session');
+        const { session: initialSession } = await getSessionWithTimeout(2500);
+        console.log('AuthContext: Initial session result:', initialSession ? 'Session found' : 'No session (or timed out)');
 
         if (mounted) {
           setSession(initialSession);
