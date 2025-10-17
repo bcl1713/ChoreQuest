@@ -363,12 +363,27 @@ export class QuestInstanceService {
       | "CUSTOM"
       | null;
 
+    // Fetch family timezone for streak validation
+    let familyTimezone = 'UTC';
+    if (quest.family_id) {
+      const { data: family } = await this.client
+        .from("families")
+        .select("timezone")
+        .eq("id", quest.family_id)
+        .maybeSingle();
+
+      if (family) {
+        familyTimezone = family.timezone ?? 'UTC';
+      }
+    }
+
     if (templateIdForStreaks && recurrencePattern) {
       const streak = await this.streakService.getStreak(character.id, templateIdForStreaks);
       const isConsecutive = this.streakService.validateConsecutiveCompletion(
         streak.last_completed_date,
         recurrencePattern,
-        completionDate
+        completionDate,
+        familyTimezone
       );
 
       if (isConsecutive) {

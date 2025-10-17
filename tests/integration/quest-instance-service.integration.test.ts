@@ -112,7 +112,7 @@ describe("QuestInstanceService Integration Tests", () => {
 
     if (questError) throw new Error(`Failed to create test quest: ${questError.message}`);
     testFamilyQuestId = quest.id;
-  });
+  }, 30000);
 
   afterAll(async () => {
     // Clean up test data
@@ -127,7 +127,7 @@ describe("QuestInstanceService Integration Tests", () => {
       await supabase.from("user_profiles").delete().eq("family_id", testFamilyId);
       await supabase.from("families").delete().eq("id", testFamilyId);
     }
-  });
+  }, 30000);
 
   describe("claimQuest", () => {
     it("should successfully claim a family quest", async () => {
@@ -238,7 +238,7 @@ describe("QuestInstanceService Integration Tests", () => {
       if (activeQuestError) {
         throw new Error(`Failed to set active family quest: ${activeQuestError.message}`);
       }
-    });
+    }, 30000);
 
     it("should allow GM to approve an ad-hoc family quest", async () => {
       await supabase.auth.signInWithPassword({

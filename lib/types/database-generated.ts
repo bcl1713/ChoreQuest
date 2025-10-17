@@ -285,6 +285,7 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          timezone: string
           updated_at: string | null
           week_start_day: number | null
         }
@@ -293,6 +294,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          timezone?: string
           updated_at?: string | null
           week_start_day?: number | null
         }
@@ -301,6 +303,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          timezone?: string
           updated_at?: string | null
           week_start_day?: number | null
         }
@@ -322,8 +325,10 @@ export type Database = {
           family_id: string | null
           gold_reward: number
           id: string
-          recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern"] | null
           quest_type: Database["public"]["Enums"]["quest_type"] | null
+          recurrence_pattern:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null
           status: Database["public"]["Enums"]["quest_status"] | null
           streak_bonus: number | null
           streak_count: number | null
@@ -349,8 +354,10 @@ export type Database = {
           family_id?: string | null
           gold_reward: number
           id?: string
-          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
           quest_type?: Database["public"]["Enums"]["quest_type"] | null
+          recurrence_pattern?:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null
           status?: Database["public"]["Enums"]["quest_status"] | null
           streak_bonus?: number | null
           streak_count?: number | null
@@ -376,8 +383,10 @@ export type Database = {
           family_id?: string | null
           gold_reward?: number
           id?: string
-          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
           quest_type?: Database["public"]["Enums"]["quest_type"] | null
+          recurrence_pattern?:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null
           status?: Database["public"]["Enums"]["quest_status"] | null
           streak_bonus?: number | null
           streak_count?: number | null
@@ -781,9 +790,30 @@ export type Database = {
         Args: { test_user_id: string }
         Returns: Json
       }
+      get_completion_rate_by_template: {
+        Args: { p_family_id: string }
+        Returns: {
+          completion_rate: number
+          template_id: string
+        }[]
+      }
+      get_most_missed_quests: {
+        Args: { p_family_id: string }
+        Returns: {
+          missed_count: number
+          template_id: string
+        }[]
+      }
       get_user_family_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_volunteer_patterns: {
+        Args: { p_family_id: string }
+        Returns: {
+          character_id: string
+          volunteer_count: number
+        }[]
       }
       test_user_profile_insert: {
         Args: {
@@ -979,3 +1009,4 @@ export const Constants = {
     },
   },
 } as const
+

@@ -190,11 +190,8 @@ describe('StreakService', () => {
     it('should return false for a daily quest with a missed day', () => {
       const twoDaysAgo = new Date('2025-10-11T12:00:00.000Z').toISOString();
       const result = streakService.validateConsecutiveCompletion(twoDaysAgo, 'DAILY', today);
-      // This is currently incorrect in the implementation, it should be false
-      // Let's assume the implementation is fixed to be strict
-      // expect(result).toBe(false);
-      // Current implementation allows up to 2 days gap, so this will pass
-      expect(result).toBe(true);
+      // Two calendar days gap (Oct 11 to Oct 13) means Oct 12 was missed
+      expect(result).toBe(false);
     });
 
     it('should return true for a weekly quest completed within the same week', () => {
@@ -222,12 +219,12 @@ describe('StreakService', () => {
       expect(result).toBe(false);
     });
 
-    it('should pass for a daily quest completed just under 48 hours apart but missing one calendar day', () => {
+    it('should fail for a daily quest completed just under 48 hours apart but missing one calendar day', () => {
         const lastCompleted = new Date('2025-10-10T23:00:00.000Z').toISOString(); // Friday 23:00
         const current = new Date('2025-10-12T22:00:00.000Z'); // Sunday 22:00 (missed Saturday)
-        // diffInDays is < 2, so this will incorrectly pass with the current logic.
+        // Calendar days: Oct 10 to Oct 12 = 2 days apart, so Saturday was missed
         const result = streakService.validateConsecutiveCompletion(lastCompleted, 'DAILY', current);
-        expect(result).toBe(true); // This should ideally be false
+        expect(result).toBe(false); // Correctly fails because a calendar day was skipped
     });
 
     it('should handle completions across a timezone boundary correctly', () => {
