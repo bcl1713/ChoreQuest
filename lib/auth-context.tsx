@@ -39,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Refs to prevent duplicate loadUserData calls
   const prevUserIdRef = useRef<string | null>(null);
   const isLoadingUserDataRef = useRef(false);
-  const hasHandledInitialAuthEvent = useRef(false);
 
   // Load user profile and family data
   const loadUserData = useCallback(async (userId: string) => {
@@ -103,24 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const successTimestamp = new Date().toISOString();
       console.log(`[${successTimestamp}] AuthContext: Data load completed successfully for user:`, userId);
 
-      if (!hasHandledInitialAuthEvent.current) {
-        hasHandledInitialAuthEvent.current = true;
-        setIsLoading(false);
-      } else {
-        setIsLoading(false);
-      }
     } catch (err) {
       console.error('AuthContext: Error loading user data:', err);
     } finally {
       isLoadingUserDataRef.current = false;
+      setIsLoading(false);
     }
   }, [waitForReady]);
 
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
-    hasHandledInitialAuthEvent.current = false;
-
     const handleAuthStateChange = async (event: string, session: Session | null) => {
       if (!mounted) return;
 
@@ -143,11 +135,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoadingUserDataRef.current = false;
       }
 
-      if (!hasHandledInitialAuthEvent.current) {
-        hasHandledInitialAuthEvent.current = true;
-        console.log('AuthContext: Initial auth event handled, clearing loading state');
-        setIsLoading(false);
-      }
+      console.log('AuthContext: Auth state processing complete, clearing loading flag');
+      setIsLoading(false);
 
       if (event === 'SIGNED_OUT') {
         setError(null);
@@ -156,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    const initAuth = async () => {
+    (async () => {
       console.log('AuthContext: Starting auth initialization...');
       try {
         const timestamp = new Date().toISOString();
@@ -165,14 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log(`[${new Date().toISOString()}] AuthContext: Network ready, awaiting auth events`);
       } catch (err) {
         console.error('AuthContext: Error during initialization:', err);
-        if (!hasHandledInitialAuthEvent.current) {
-          hasHandledInitialAuthEvent.current = true;
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    };
-
-    initAuth();
+    })();
 
     return () => {
       mounted = false;
