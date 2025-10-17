@@ -4,16 +4,15 @@ import '@testing-library/jest-dom'
 // Only setup fetch polyfills for Node.js environment tests
 if (typeof global !== 'undefined' && !global.fetch) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { fetch, Request, Response } = require('undici')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { TextEncoder, TextDecoder } = require('util')
+    // Using require is necessary here for Jest setup - dynamic imports don't work in this context
+    const undici = require('undici')
+    const util = require('util')
 
-    global.fetch = fetch
-    global.Request = Request
-    global.Response = Response
-    global.TextEncoder = TextEncoder
-    global.TextDecoder = TextDecoder
+    global.fetch = undici.fetch
+    global.Request = undici.Request
+    global.Response = undici.Response
+    global.TextEncoder = util.TextEncoder
+    global.TextDecoder = util.TextDecoder
   } catch {
     // Silently ignore if undici is not available
   }

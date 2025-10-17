@@ -16,13 +16,18 @@ export default function CreateFamilyPage() {
     }
   }, [user, isLoading, router]);
 
-  const handleCreateFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
+  const handleCreateFamily = async (data: Record<string, string>) => {
     try {
-      await createFamily(data);
+      // Extract and validate required fields (already validated by Zod in AuthForm)
+      const { name, email, password, userName } = data;
+      if (!name || !email || !password || !userName) {
+        throw new Error('Missing required fields for family creation');
+      }
+      await createFamily({ name, email, password, userName });
       // Store character name for pre-filling in character creation
-      setCharacterName(data.userName);
+      setCharacterName(userName);
       // Also persist to sessionStorage since we're doing a full page navigation
-      sessionStorage.setItem('pendingCharacterName', data.userName);
+      sessionStorage.setItem('pendingCharacterName', userName);
       // Navigate to character creation after successful family creation
       // New Guild Masters need to create their character before accessing dashboard
       window.location.href = '/character/create';

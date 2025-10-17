@@ -339,8 +339,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       setIsConnected(false);
       setConnectionError(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, session?.access_token, profile?.family_id]);
+    // Only re-run when the specific properties we use change, not when the objects themselves change
+  }, [user?.id, session?.access_token, profile?.family_id, waitForReady]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {

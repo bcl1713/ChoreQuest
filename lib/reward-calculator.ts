@@ -6,8 +6,6 @@ export class RewardCalculator {
     baseRewards: QuestRewards,
     difficulty: QuestDifficulty,
     characterClass: CharacterClass,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    currentLevel: number,
   ): CalculatedRewards {
     const classBonus = this.getClassBonus(characterClass);
     const difficultyMultiplier = this.getDifficultyMultiplier(difficulty);

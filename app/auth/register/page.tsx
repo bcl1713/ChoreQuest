@@ -27,13 +27,17 @@ export default function RegisterPage() {
     );
   }
 
-  const handleRegister = async (data: { name: string; email: string; password: string; familyCode: string }) => {
+  const handleRegister = async (data: Record<string, string>) => {
     try {
-      await register(data);
+      const { name, email, password, familyCode } = data;
+      if (!name || !email || !password || !familyCode) {
+        throw new Error('All fields are required for registration');
+      }
+      await register({ name, email, password, familyCode });
       // Store character name for pre-filling in character creation
-      setCharacterName(data.name);
+      setCharacterName(name);
       // Also persist to sessionStorage for page navigation
-      sessionStorage.setItem('pendingCharacterName', data.name);
+      sessionStorage.setItem('pendingCharacterName', name);
       // Navigation will be handled by auth state change
     } catch (err) {
       // Error will be handled by register function
