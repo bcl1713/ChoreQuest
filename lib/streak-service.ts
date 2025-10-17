@@ -7,6 +7,7 @@
 import { supabase } from "@/lib/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database-generated";
+import { getDaysBetweenInTimezone } from "@/lib/timezone-utils";
 
 type CharacterQuestStreak = Tables<"character_quest_streaks">;
 type CharacterQuestStreakInsert = TablesInsert<"character_quest_streaks">;
@@ -233,16 +234,20 @@ export class StreakService {
 
   /**
    * Validate if a quest completion is consecutive (no gaps in the streak)
-   * Checks if the last completion was within the expected timeframe
+   * Checks if the last completion was within the expected timeframe in the family's timezone
    * @param lastCompletedDate - The last completion date (ISO string or null)
    * @param recurrencePattern - The quest recurrence pattern (DAILY or WEEKLY)
    * @param currentDate - The current completion date
+   * @param timezone - The family's IANA timezone string (e.g., 'America/Chicago')
+   * @param weekStartDay - Day of week for weekly recurrence (0=Sunday, 1=Monday, etc.)
    * @returns True if consecutive, false if there's a gap
    */
   validateConsecutiveCompletion(
     lastCompletedDate: string | null,
     recurrencePattern: "DAILY" | "WEEKLY" | "CUSTOM",
-    currentDate: Date
+    currentDate: Date,
+    timezone: string = 'UTC',
+    _weekStartDay: number = 0
   ): boolean {
     if (!lastCompletedDate) {
       // First completion is always valid
@@ -250,15 +255,23 @@ export class StreakService {
     }
 
     const lastDate = new Date(lastCompletedDate);
-    const diffInMs = currentDate.getTime() - lastDate.getTime();
-    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
-    // For DAILY quests, allow up to 2 days gap (today or yesterday)
-    // For WEEKLY quests, allow up to 8 days gap (this week or last week)
+    // For DAILY quests: allow completion today or yesterday in the family's timezone
     if (recurrencePattern === "DAILY") {
-      return diffInDays <= 2;
-    } else if (recurrencePattern === "WEEKLY") {
-      return diffInDays < 8;
+      const daysBetween = getDaysBetweenInTimezone(lastDate, currentDate, timezone);
+
+      // Allow same day (re-completion edge case) or next day (consecutive)
+      // Also allow 2-day gap to account for timezone edge cases
+      return daysBetween <= 2;
+    }
+
+    // For WEEKLY quests: allow completion this week or last week in the family's timezone
+    if (recurrencePattern === "WEEKLY") {
+      const daysBetween = getDaysBetweenInTimezone(lastDate, currentDate, timezone);
+
+      // Allow up to 8 days (same week or previous week)
+      // This accounts for completing at the start of one week and end of next
+      return daysBetween < 8;
     }
 
     // For CUSTOM, we can't validate without more info, so allow it
