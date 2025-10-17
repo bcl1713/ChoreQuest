@@ -18,6 +18,7 @@ export interface FamilyInfo {
   id: string;
   name: string;
   code: string;
+  timezone: string;
   createdAt: string;
   members: FamilyMember[];
 }
@@ -32,7 +33,7 @@ export class FamilyService {
     // Fetch family basic info
     const { data: family, error: familyError } = await supabase
       .from("families")
-      .select("id, name, code, created_at")
+      .select("id, name, code, timezone, created_at")
       .eq("id", familyId)
       .single();
 
@@ -84,9 +85,35 @@ export class FamilyService {
       id: family.id,
       name: family.name,
       code: family.code,
+      timezone: family.timezone,
       createdAt: family.created_at,
       members: familyMembers,
     };
+  }
+
+  /**
+   * Update the family timezone
+   * @param familyId - The family ID to update
+   * @param timezone - The IANA timezone string (e.g., 'America/Chicago')
+   * @returns The updated timezone
+   */
+  async updateTimezone(familyId: string, timezone: string): Promise<string> {
+    const { data, error } = await supabase
+      .from("families")
+      .update({ timezone })
+      .eq("id", familyId)
+      .select("timezone")
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update timezone: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error("Failed to retrieve updated timezone");
+    }
+
+    return data.timezone;
   }
 
   /**

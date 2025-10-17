@@ -4,7 +4,36 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { FamilyService, FamilyInfo } from "@/lib/family-service";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, RefreshCw, Users, Calendar, Shield, User } from "lucide-react";
+import { Copy, RefreshCw, Users, Calendar, Shield, User, Globe } from "lucide-react";
+
+// Common timezones organized by region
+const COMMON_TIMEZONES = [
+  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+  { value: "America/New_York", label: "Eastern Time (US & Canada)" },
+  { value: "America/Chicago", label: "Central Time (US & Canada)" },
+  { value: "America/Denver", label: "Mountain Time (US & Canada)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (US & Canada)" },
+  { value: "America/Anchorage", label: "Alaska" },
+  { value: "Pacific/Honolulu", label: "Hawaii" },
+  { value: "America/Phoenix", label: "Arizona" },
+  { value: "America/Toronto", label: "Toronto" },
+  { value: "America/Vancouver", label: "Vancouver" },
+  { value: "Europe/London", label: "London" },
+  { value: "Europe/Paris", label: "Paris / Central European Time" },
+  { value: "Europe/Berlin", label: "Berlin" },
+  { value: "Europe/Rome", label: "Rome" },
+  { value: "Europe/Madrid", label: "Madrid" },
+  { value: "Europe/Moscow", label: "Moscow" },
+  { value: "Asia/Dubai", label: "Dubai" },
+  { value: "Asia/Kolkata", label: "India" },
+  { value: "Asia/Shanghai", label: "China" },
+  { value: "Asia/Tokyo", label: "Tokyo" },
+  { value: "Asia/Seoul", label: "Seoul" },
+  { value: "Asia/Singapore", label: "Singapore" },
+  { value: "Australia/Sydney", label: "Sydney" },
+  { value: "Australia/Melbourne", label: "Melbourne" },
+  { value: "Pacific/Auckland", label: "Auckland" },
+];
 
 export default function FamilySettings() {
   const { profile } = useAuth();
@@ -13,6 +42,8 @@ export default function FamilySettings() {
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedTimezone, setSelectedTimezone] = useState<string>("");
+  const [updatingTimezone, setUpdatingTimezone] = useState(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
     message: string;
@@ -41,6 +72,13 @@ export default function FamilySettings() {
   useEffect(() => {
     loadFamilyInfo();
   }, [loadFamilyInfo]);
+
+  // Set selected timezone when family info loads
+  useEffect(() => {
+    if (familyInfo) {
+      setSelectedTimezone(familyInfo.timezone);
+    }
+  }, [familyInfo]);
 
   // Copy invite code to clipboard
   const handleCopyCode = async () => {
@@ -75,6 +113,34 @@ export default function FamilySettings() {
       showNotification("error", "Failed to regenerate invite code");
     } finally {
       setRegenerating(false);
+    }
+  };
+
+  // Update timezone
+  const handleTimezoneUpdate = async () => {
+    if (!profile?.family_id || !selectedTimezone) return;
+
+    // Don't update if timezone hasn't changed
+    if (selectedTimezone === familyInfo?.timezone) {
+      showNotification("success", "Timezone is already up to date");
+      return;
+    }
+
+    try {
+      setUpdatingTimezone(true);
+      await familyService.updateTimezone(profile.family_id, selectedTimezone);
+
+      // Update local state
+      if (familyInfo) {
+        setFamilyInfo({ ...familyInfo, timezone: selectedTimezone });
+      }
+
+      showNotification("success", "Timezone updated successfully!");
+    } catch (err) {
+      console.error("Failed to update timezone:", err);
+      showNotification("error", "Failed to update timezone");
+    } finally {
+      setUpdatingTimezone(false);
     }
   };
 
@@ -180,6 +246,37 @@ export default function FamilySettings() {
                 <span className="hidden sm:inline">Copy</span>
               </button>
             </div>
+          </div>
+
+          {/* Timezone Setting */}
+          <div className="pt-2 border-t border-dark-600">
+            <label className="text-sm font-medium text-gray-400 mb-2 block flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              Family Timezone
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value={selectedTimezone}
+                onChange={(e) => setSelectedTimezone(e.target.value)}
+                className="flex-1 bg-dark-700 border border-dark-600 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500"
+              >
+                {COMMON_TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleTimezoneUpdate}
+                disabled={updatingTimezone || selectedTimezone === familyInfo?.timezone}
+                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {updatingTimezone ? "Updating..." : "Update Timezone"}
+              </button>
+            </div>
+            <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
+              <span className="text-blue-400 font-medium">ℹ️ Info:</span> Quest recurrence (daily/weekly resets) will align to this timezone. This ensures quests reset at midnight in your local time, not server time.
+            </p>
           </div>
 
           {/* Regenerate Button */}
