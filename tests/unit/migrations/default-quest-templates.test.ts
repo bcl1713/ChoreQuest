@@ -33,13 +33,13 @@ describe("Default Quest Templates Migration (013)", () => {
       expect(familyCount).toBeGreaterThan(0);
     });
 
-    it("should have at least 2 FAMILY quest templates", () => {
+    it("should have at least 6 FAMILY quest templates to showcase the feature", () => {
       // Count INSERT statements with quest_type = 'FAMILY'
       const familyInserts = migrationContent.match(
         /INSERT INTO quest_templates.*?VALUES.*?'FAMILY'\s*\)/gs
       );
       expect(familyInserts).toBeTruthy();
-      expect(familyInserts!.length).toBeGreaterThanOrEqual(2);
+      expect(familyInserts!.length).toBeGreaterThanOrEqual(6);
     });
   });
 
@@ -49,12 +49,12 @@ describe("Default Quest Templates Migration (013)", () => {
       expect(migrationContent).toContain("'WEEKLY'");
     });
 
-    it("should have at least 5 WEEKLY quests for better diversity", () => {
-      // Count how many times category = 'WEEKLY' appears in INSERT statements
+    it("should have more WEEKLY quests than DAILY for realistic household chores", () => {
+      const dailyMatches = migrationContent.match(/'DAILY'/g);
       const weeklyMatches = migrationContent.match(/'WEEKLY'/g);
       expect(weeklyMatches).toBeTruthy();
-      // We should have at least 5 WEEKLY quests
-      expect(weeklyMatches!.length).toBeGreaterThanOrEqual(5);
+      expect(dailyMatches).toBeTruthy();
+      expect(weeklyMatches!.length).toBeGreaterThan(dailyMatches!.length);
     });
   });
 
@@ -74,25 +74,106 @@ describe("Default Quest Templates Migration (013)", () => {
       expect(vacuumSection).toBeTruthy();
       expect(vacuumSection![1]).toBe("WEEKLY");
     });
-  });
 
-  describe("Family Quest Examples", () => {
-    it("should include Family Grocery Shopping as a FAMILY quest", () => {
-      expect(migrationContent).toContain("Family Grocery Shopping");
-      // Find the INSERT statement containing Family Grocery Shopping
-      const groceryInsert = migrationContent.match(
-        /INSERT INTO quest_templates[\s\S]*?'Family Grocery Shopping'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+    it("Laundry Duty should be WEEKLY not DAILY", () => {
+      const laundrySection = migrationContent.match(
+        /--\s*\d+\.\s*Laundry Duty\s*-\s*\w+,\s*(\w+)/i
       );
-      expect(groceryInsert).toBeTruthy();
+      expect(laundrySection).toBeTruthy();
+      expect(laundrySection![1]).toBe("WEEKLY");
     });
 
-    it("should include Family Garage Organization as a FAMILY quest", () => {
-      expect(migrationContent).toContain("Family Garage Organization");
-      // Find the INSERT statement containing Family Garage Organization
-      const garageInsert = migrationContent.match(
-        /INSERT INTO quest_templates[\s\S]*?'Family Garage Organization'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+    it("Clean Your Room should be WEEKLY not DAILY", () => {
+      const cleanRoomSection = migrationContent.match(
+        /--\s*\d+\.\s*Clean Your Room\s*-\s*\w+,\s*(\w+)/i
       );
-      expect(garageInsert).toBeTruthy();
+      expect(cleanRoomSection).toBeTruthy();
+      expect(cleanRoomSection![1]).toBe("WEEKLY");
+    });
+  });
+
+  describe("Family vs Individual Quest Logic", () => {
+    it("Clean Your Room should be INDIVIDUAL (everyone does their own)", () => {
+      expect(migrationContent).toContain("Clean Your Room");
+      const cleanRoomInsert = migrationContent.match(
+        /INSERT INTO quest_templates[\s\S]*?'Clean Your Room'[\s\S]*?'INDIVIDUAL'[\s\S]*?\);/i
+      );
+      expect(cleanRoomInsert).toBeTruthy();
+    });
+
+    it("Unload the Dishwasher should be FAMILY (someone does it)", () => {
+      expect(migrationContent).toContain("Unload the Dishwasher");
+      const dishwasherInsert = migrationContent.match(
+        /INSERT INTO quest_templates[\s\S]*?'Unload the Dishwasher'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+      );
+      expect(dishwasherInsert).toBeTruthy();
+    });
+
+    it("Take Out the Trash should be FAMILY (someone does it)", () => {
+      expect(migrationContent).toContain("Take Out the Trash");
+      const trashInsert = migrationContent.match(
+        /INSERT INTO quest_templates[\s\S]*?'Take Out the Trash'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+      );
+      expect(trashInsert).toBeTruthy();
+    });
+
+    it("Vacuum the House should be FAMILY (someone does it)", () => {
+      expect(migrationContent).toContain("Vacuum the House");
+      const vacuumInsert = migrationContent.match(
+        /INSERT INTO quest_templates[\s\S]*?'Vacuum the House'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+      );
+      expect(vacuumInsert).toBeTruthy();
+    });
+
+    it("Mow the Lawn should be FAMILY (someone does it)", () => {
+      expect(migrationContent).toContain("Mow the Lawn");
+      const mowInsert = migrationContent.match(
+        /INSERT INTO quest_templates[\s\S]*?'Mow the Lawn'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+      );
+      expect(mowInsert).toBeTruthy();
+    });
+
+    it("Clean the Bathroom should be FAMILY (someone does it)", () => {
+      expect(migrationContent).toContain("Clean the Bathroom");
+      const bathroomInsert = migrationContent.match(
+        /INSERT INTO quest_templates[\s\S]*?'Clean the Bathroom'[\s\S]*?'FAMILY'[\s\S]*?\);/i
+      );
+      expect(bathroomInsert).toBeTruthy();
+    });
+  });
+
+  describe("Daily Kitchen Cleanup Quests", () => {
+    it("should include Unload the Dishwasher as a DAILY quest", () => {
+      expect(migrationContent).toContain("Unload the Dishwasher");
+      const dishwasherMatch = migrationContent.match(
+        /--\s*\d+\.\s*Unload the Dishwasher\s*-\s*\w+,\s*(\w+)/i
+      );
+      expect(dishwasherMatch![1]).toBe("DAILY");
+    });
+
+    it("should include Clear & Load Dishwasher After Dinner as a DAILY quest", () => {
+      expect(migrationContent).toContain("Clear & Load Dishwasher After Dinner");
+      const loadDishwasherMatch = migrationContent.match(
+        /--\s*\d+\.\s*Clear & Load Dishwasher After Dinner\s*-\s*\w+,\s*(\w+)/i
+      );
+      expect(loadDishwasherMatch![1]).toBe("DAILY");
+    });
+
+    it("should include Wipe Counters & Sweep Floor as a DAILY quest", () => {
+      expect(migrationContent).toContain("Wipe Counters & Sweep Floor");
+      const cleanKitchenMatch = migrationContent.match(
+        /--\s*\d+\.\s*Wipe Counters & Sweep Floor\s*-\s*\w+,\s*(\w+)/i
+      );
+      expect(cleanKitchenMatch![1]).toBe("DAILY");
+    });
+  });
+
+  describe("Default Templates Should Be Inactive", () => {
+    it("all default templates should have is_active = false", () => {
+      // Count INSERT statements with is_active set to false
+      const falseMatches = migrationContent.match(/NULL,\s*false,/g);
+      expect(falseMatches).toBeTruthy();
+      expect(falseMatches!.length).toBe(10); // All 10 templates should be inactive
     });
   });
 

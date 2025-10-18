@@ -5,39 +5,39 @@
 -- Insert default quest templates (family_id = NULL indicates global defaults)
 -- Each template includes class_bonuses for character-specific multipliers
 
--- 1. Clean Your Room - EASY, DAILY, INDIVIDUAL
+-- 1. Clean Your Room - EASY, WEEKLY, INDIVIDUAL
 INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   'Clean Your Room',
   'Tidy up your bedroom: make the bed, put away clothes, and organize your desk.',
-  50,
-  25,
+  60,
+  30,
   'EASY',
-  'DAILY',
+  'WEEKLY',
   NULL,
-  true,
+  false,
   '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
   'INDIVIDUAL'
 );
 
--- 2. Do the Dishes - EASY, DAILY, INDIVIDUAL
+-- 2. Unload the Dishwasher - EASY, DAILY, FAMILY
 INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000002',
-  'Do the Dishes',
-  'Wash, dry, and put away all dishes, utensils, and cookware.',
+  'Unload the Dishwasher',
+  'Unload clean dishes from the dishwasher and put them away.',
   50,
   25,
   'EASY',
   'DAILY',
   NULL,
-  true,
+  false,
   '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
-  'INDIVIDUAL'
+  'FAMILY'
 );
 
--- 3. Take Out the Trash - EASY, DAILY, INDIVIDUAL
+-- 3. Take Out the Trash - EASY, DAILY, FAMILY
 INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000003',
@@ -48,15 +48,79 @@ VALUES (
   'EASY',
   'DAILY',
   NULL,
-  true,
+  false,
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'FAMILY'
+);
+
+-- 4. Clear & Load Dishwasher After Dinner - EASY, DAILY, FAMILY
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
+VALUES (
+  '00000000-0000-0000-0000-000000000004',
+  'Clear & Load Dishwasher After Dinner',
+  'Clear the table and load dirty dishes into the dishwasher after dinner.',
+  50,
+  25,
+  'EASY',
+  'DAILY',
+  NULL,
+  false,
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'FAMILY'
+);
+
+-- 5. Wipe Counters & Sweep Floor - EASY, DAILY, FAMILY
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
+VALUES (
+  '00000000-0000-0000-0000-000000000005',
+  'Wipe Counters & Sweep Floor',
+  'Wipe down kitchen counters and sweep the floor after dinner.',
+  50,
+  25,
+  'EASY',
+  'DAILY',
+  NULL,
+  false,
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'FAMILY'
+);
+
+-- 6. Laundry Duty - MEDIUM, WEEKLY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
+VALUES (
+  '00000000-0000-0000-0000-000000000006',
+  'Laundry Duty',
+  'Wash, dry, fold, and put away a full load of laundry.',
+  120,
+  60,
+  'MEDIUM',
+  'WEEKLY',
+  NULL,
+  false,
   '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
   'INDIVIDUAL'
 );
 
--- 4. Vacuum the House - MEDIUM, WEEKLY
+-- 7. Walk the Dog - EASY, WEEKLY, INDIVIDUAL
 INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
-  '00000000-0000-0000-0000-000000000004',
+  '00000000-0000-0000-0000-000000000007',
+  'Walk the Dog',
+  'Take the dog for a 20-30 minute walk around the neighborhood.',
+  50,
+  25,
+  'EASY',
+  'WEEKLY',
+  NULL,
+  false,
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
+);
+
+-- 8. Vacuum the House - MEDIUM, WEEKLY, FAMILY
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
+VALUES (
+  '00000000-0000-0000-0000-000000000008',
   'Vacuum the House',
   'Vacuum all carpeted areas and floors throughout the entire house.',
   120,
@@ -64,31 +128,15 @@ VALUES (
   'MEDIUM',
   'WEEKLY',
   NULL,
-  true,
+  false,
   '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
-  'INDIVIDUAL'
+  'FAMILY'
 );
 
--- 5. Laundry Duty - MEDIUM, DAILY, INDIVIDUAL
+-- 9. Mow the Lawn - HARD, WEEKLY, FAMILY
 INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
-  '00000000-0000-0000-0000-000000000005',
-  'Laundry Duty',
-  'Wash, dry, fold, and put away a full load of laundry.',
-  100,
-  50,
-  'MEDIUM',
-  'DAILY',
-  NULL,
-  true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
-  'INDIVIDUAL'
-);
-
--- 6. Mow the Lawn - HARD, WEEKLY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
-VALUES (
-  '00000000-0000-0000-0000-000000000006',
+  '00000000-0000-0000-0000-000000000009',
   'Mow the Lawn',
   'Mow the entire lawn, trim edges, and clean up grass clippings.',
   200,
@@ -96,73 +144,25 @@ VALUES (
   'HARD',
   'WEEKLY',
   NULL,
-  true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
-  'INDIVIDUAL'
-);
-
--- 7. Weekly Room Deep Clean - HARD, WEEKLY, INDIVIDUAL
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
-VALUES (
-  '00000000-0000-0000-0000-000000000007',
-  'Weekly Room Deep Clean',
-  'Deep clean your room: dust all surfaces, organize closet, clean windows, and vacuum under furniture.',
-  200,
-  100,
-  'HARD',
-  'WEEKLY',
-  NULL,
-  true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
-  'INDIVIDUAL'
-);
-
--- 8. Family Garage Organization - HARD, WEEKLY, FAMILY QUEST
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
-VALUES (
-  '00000000-0000-0000-0000-000000000008',
-  'Family Garage Organization',
-  'Work together to organize the garage: sort items, sweep the floor, and arrange tools and equipment neatly.',
-  200,
-  100,
-  'HARD',
-  'WEEKLY',
-  NULL,
-  true,
+  false,
   '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
   'FAMILY'
 );
 
--- 9. Family Grocery Shopping - MEDIUM, WEEKLY, FAMILY QUEST
+-- 10. Clean the Bathroom - MEDIUM, WEEKLY, FAMILY
 INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
-  '00000000-0000-0000-0000-000000000009',
-  'Family Grocery Shopping',
-  'Family grocery shopping trip: help make the list, carry bags, and put groceries away.',
+  '00000000-0000-0000-0000-000000000010',
+  'Clean the Bathroom',
+  'Clean the bathroom: scrub toilet, sink, and tub/shower, wipe mirrors, and mop the floor.',
   120,
   60,
   'MEDIUM',
   'WEEKLY',
   NULL,
-  true,
+  false,
   '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
   'FAMILY'
-);
-
--- 10. Walk the Dog - EASY, DAILY, INDIVIDUAL
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
-VALUES (
-  '00000000-0000-0000-0000-000000000010',
-  'Walk the Dog',
-  'Take the dog for a 20-30 minute walk around the neighborhood.',
-  40,
-  20,
-  'EASY',
-  'DAILY',
-  NULL,
-  true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
-  'INDIVIDUAL'
 );
 
 -- Create function to copy default templates to new families
