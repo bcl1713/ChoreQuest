@@ -22,8 +22,8 @@
 ### Custom Hooks to Create
 - ✅ `hooks/useQuests.ts` - Quest data fetching and management with realtime (21 tests passing)
 - ✅ `hooks/useQuests.test.ts` - Tests for useQuests hook
-- `hooks/useRewards.ts` - Reward data fetching and management
-- `hooks/useRewards.test.ts` - Tests for useRewards hook
+- ✅ `hooks/useRewards.ts` - Reward/redemption data fetching with realtime (23 tests passing)
+- ✅ `hooks/useRewards.test.ts` - Tests for useRewards hook
 - ✅ `hooks/useFamilyMembers.ts` - Family member data fetching with realtime subscriptions (19 tests passing)
 - ✅ `hooks/useFamilyMembers.test.ts` - Tests for useFamilyMembers hook
 - ✅ `hooks/useCharacter.ts` - Character data and stats (17 tests passing)
@@ -170,11 +170,12 @@ components/
     - [x] Deduplicate quests to ensure data consistency
     - [x] Return `{ quests, loading, error, reload }`
     - [x] Write comprehensive tests in `hooks/useQuests.test.ts` (21 tests passing)
-  - [ ] 2.4 Create `hooks/useRewards.ts` for reward data management
-    - Extract reward loading logic from reward-manager.tsx
-    - Include realtime subscription logic for rewards and redemptions
-    - Return `{ rewards, redemptions, loading, error, reload, createReward, updateReward, deleteReward }`
-    - Write comprehensive tests in `hooks/useRewards.test.ts`
+  - [x] 2.4 Create `hooks/useRewards.ts` for reward data management
+    - [x] Extract reward loading logic from reward-manager.tsx
+    - [x] Include realtime subscription logic for rewards (INSERT/UPDATE/DELETE) and redemptions (reload on change)
+    - [x] Load rewards and redemptions in parallel using Promise.all
+    - [x] Return `{ rewards, redemptions, loading, error, reload }`
+    - [x] Write comprehensive tests in `hooks/useRewards.test.ts` (23 tests passing)
   - [ ] 2.5 Create `hooks/useQuestFilters.ts` for quest filtering logic
     - Extract filtering/sorting logic from quest-dashboard.tsx
     - Manage filter state (status, assignee, search term)
