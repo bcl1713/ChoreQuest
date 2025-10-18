@@ -339,8 +339,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
       setIsConnected(false);
       setConnectionError(null);
     };
-    // Only re-run when the specific properties we use change, not when the objects themselves change
-  }, [user?.id, session?.access_token, profile?.family_id, waitForReady]);
+  }, [user, session, profile, waitForReady]);
 
   // Event listener registration functions
   const onQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
