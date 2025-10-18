@@ -16,10 +16,8 @@
 - `lib/utils/formatting.test.ts` - ✅ Tests for formatting utilities (39 tests passing)
 - `lib/utils/data.ts` - ✅ Data manipulation utilities (deduplicate, deduplicateQuests, getQuestTimestamp, sortBy, sortByKey, filterByAll, filterByAny, groupBy)
 - `lib/utils/data.test.ts` - ✅ Tests for data utilities (47 tests passing)
-
-### Utilities to Create
-- `lib/utils/validation.ts` - Form validation helpers
-- `lib/utils/validation.test.ts` - Tests for validation utilities
+- `lib/utils/validation.ts` - ✅ Form validation helpers (validateRequired, validateLength, validateMaxLength, validateNumberRange, validateMinNumber, validateFutureDate, validateQuestTitle, validateQuestDescription, validateQuestReward, validateRewardName, validateRewardDescription, validateRewardCost, combineValidations)
+- `lib/utils/validation.test.ts` - ✅ Tests for validation utilities (58 tests passing)
 
 ### Custom Hooks to Create
 - `hooks/useQuests.ts` - Quest data fetching and management
@@ -138,7 +136,7 @@ components/
     - Add generic `deduplicate` function for any array
     - Add sorting utility functions
     - Write comprehensive unit tests in `lib/utils/data.test.ts`
-  - [ ] 1.4 Create `lib/utils/validation.ts` for form validation helpers
+  - [x] 1.4 Create `lib/utils/validation.ts` for form validation helpers
     - Extract common validation patterns from quest-create-modal and reward-manager
     - Add validators for quest forms (title, description, rewards)
     - Add validators for reward forms
