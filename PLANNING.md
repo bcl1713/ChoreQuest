@@ -309,16 +309,28 @@ docker-compose up -d                           # Production deployment
 
 **The "Clean, Polished, Professional" Release** - v0.4.0
 
+**Priority Order for v0.4.0:**
+
+1. **#55** - Remove old E2E testing suite (cleanup)
+2. **#89** - Component Architecture Best Practices (epic refactor)
+   - Includes #86 - Unified quest management dashboard
+   - Includes #51 - Shared button component library
+   - Includes #48 - Refactored admin dashboard component
+   - Component decomposition (<400 LOC per file)
+   - Feature-based folder organization
+   - Custom hooks for shared logic
+   - Performance optimization (memo, useCallback)
+3. **#56** - Build new E2E testing suite (against clean architecture)
+4. **#82** - XP progress bar showing current level progress
+5. **#88** - Character creation class selection visual indicator
+
+**Additional v0.4.0 Goals:**
 - Unified state management approach (resolve #53/#52)
-- Shared button component library (#51)
-- Refactored admin dashboard component (#48)
 - Consistent error handling patterns (#47)
 - Optimized data fetching on dashboard (#49)
-- XP progress bar showing current level progress (#82)
 - Mobile-responsive quest buttons (#43)
 - Comprehensive accessibility improvements (#50)
 - Increased test coverage (#54)
-- Rebuilt E2E testing suite (#55, #56)
 - Git branch/tag display in footer (#61)
 
 #### Phase 4: Social Features (3-4 weeks)
