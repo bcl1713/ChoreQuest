@@ -14,12 +14,12 @@
 - `lib/utils/colors.test.ts` - ✅ Tests for color utilities (18 tests passing)
 - `lib/utils/formatting.ts` - ✅ Date/time/number formatting functions (formatNumber, formatXP, formatGold, formatPoints, formatPercent, formatDateTime, formatDueDate)
 - `lib/utils/formatting.test.ts` - ✅ Tests for formatting utilities (39 tests passing)
+- `lib/utils/data.ts` - ✅ Data manipulation utilities (deduplicate, deduplicateQuests, getQuestTimestamp, sortBy, sortByKey, filterByAll, filterByAny, groupBy)
+- `lib/utils/data.test.ts` - ✅ Tests for data utilities (47 tests passing)
 
 ### Utilities to Create
 - `lib/utils/validation.ts` - Form validation helpers
 - `lib/utils/validation.test.ts` - Tests for validation utilities
-- `lib/utils/data.ts` - Data manipulation utilities (deduplication, sorting, filtering)
-- `lib/utils/data.test.ts` - Tests for data utilities
 
 ### Custom Hooks to Create
 - `hooks/useQuests.ts` - Quest data fetching and management
@@ -132,7 +132,7 @@ components/
     - Consolidate with existing `formatXP`, `formatGold`, `formatNumber` from lib/format-utils.ts
     - Add `formatPoints` function for quest points
     - Write comprehensive unit tests in `lib/utils/formatting.test.ts`
-  - [ ] 1.3 Create `lib/utils/data.ts` with data manipulation utilities
+  - [x] 1.3 Create `lib/utils/data.ts` with data manipulation utilities
     - Extract `deduplicateQuests` from quest-dashboard.tsx
     - Extract `getQuestTimestamp` from quest-dashboard.tsx
     - Add generic `deduplicate` function for any array
