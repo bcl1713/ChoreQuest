@@ -2,6 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useFamilyMembers } from "./useFamilyMembers";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/lib/realtime-context";
 import type { Tables } from "@/lib/types/database";
 
 // Mock dependencies
@@ -15,7 +16,12 @@ jest.mock("@/lib/auth-context", () => ({
   useAuth: jest.fn(),
 }));
 
+jest.mock("@/lib/realtime-context", () => ({
+  useRealtime: jest.fn(),
+}));
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+const mockUseRealtime = useRealtime as jest.MockedFunction<typeof useRealtime>;
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 describe("useFamilyMembers", () => {
@@ -94,6 +100,14 @@ describe("useFamilyMembers", () => {
       signUp: jest.fn(),
       signOut: jest.fn(),
       signInWithGoogle: jest.fn(),
+    });
+
+    // Default mock implementation for useRealtime
+    mockUseRealtime.mockReturnValue({
+      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
+      onQuestUpdate: jest.fn(() => jest.fn()),
+      onRewardUpdate: jest.fn(() => jest.fn()),
+      onRedemptionUpdate: jest.fn(() => jest.fn()),
     });
   });
 
@@ -607,6 +621,304 @@ describe("useFamilyMembers", () => {
 
       await waitFor(() => {
         expect(result.current.familyMembers).toEqual(newFamilyMembers);
+      });
+    });
+  });
+
+  describe("realtime subscriptions", () => {
+    it("should subscribe to family member updates", async () => {
+      const mockUnsubscribe = jest.fn();
+      const mockOnFamilyMemberUpdate = jest.fn(() => mockUnsubscribe);
+
+      mockUseRealtime.mockReturnValue({
+        onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
+        onQuestUpdate: jest.fn(() => jest.fn()),
+        onRewardUpdate: jest.fn(() => jest.fn()),
+        onRedemptionUpdate: jest.fn(() => jest.fn()),
+      });
+
+      const mockUserProfilesQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({
+          data: mockFamilyMembers,
+          error: null,
+        }),
+      };
+
+      const mockCharactersQuery = {
+        select: jest.fn().mockReturnThis(),
+        in: jest.fn().mockResolvedValue({
+          data: mockCharacters,
+          error: null,
+        }),
+      };
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === "user_profiles") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockUserProfilesQuery as any;
+        }
+        if (table === "characters") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockCharactersQuery as any;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return {} as any;
+      });
+
+      const { unmount } = renderHook(() => useFamilyMembers());
+
+      await waitFor(() => {
+        expect(mockOnFamilyMemberUpdate).toHaveBeenCalled();
+      });
+
+      // Unmount to trigger cleanup
+      unmount();
+
+      // Verify unsubscribe was called
+      expect(mockUnsubscribe).toHaveBeenCalled();
+    });
+
+    it("should reload data when family member is updated", async () => {
+      let updateCallback: (event: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const mockOnFamilyMemberUpdate = jest.fn((callback) => {
+        updateCallback = callback;
+        return jest.fn();
+      });
+
+      mockUseRealtime.mockReturnValue({
+        onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
+        onQuestUpdate: jest.fn(() => jest.fn()),
+        onRewardUpdate: jest.fn(() => jest.fn()),
+        onRedemptionUpdate: jest.fn(() => jest.fn()),
+      });
+
+      const mockUserProfilesQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({
+          data: mockFamilyMembers,
+          error: null,
+        }),
+      };
+
+      const mockCharactersQuery = {
+        select: jest.fn().mockReturnThis(),
+        in: jest.fn().mockResolvedValue({
+          data: mockCharacters,
+          error: null,
+        }),
+      };
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === "user_profiles") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockUserProfilesQuery as any;
+        }
+        if (table === "characters") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockCharactersQuery as any;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return {} as any;
+      });
+
+      const { result } = renderHook(() => useFamilyMembers());
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      // Clear call history
+      jest.clearAllMocks();
+
+      // Trigger update event
+      const updatedMembers = [
+        ...mockFamilyMembers,
+        {
+          id: "user-3",
+          family_id: "family-1",
+          role: "YOUNG_HERO" as const,
+          name: "Charlie",
+          email: "charlie@example.com",
+          created_at: "2024-01-02T00:00:00Z",
+          updated_at: "2024-01-02T00:00:00Z",
+        },
+      ];
+
+      mockUserProfilesQuery.eq.mockResolvedValue({
+        data: updatedMembers,
+        error: null,
+      });
+
+      updateCallback!({
+        action: "UPDATE",
+        record: { id: "user-1", role: "GUILD_MASTER" },
+      });
+
+      // Wait for reload to complete
+      await waitFor(() => {
+        expect(result.current.familyMembers).toEqual(updatedMembers);
+      });
+
+      // Verify Supabase was called again
+      expect(mockSupabase.from).toHaveBeenCalledWith("user_profiles");
+    });
+
+    it("should reload on INSERT events", async () => {
+      let updateCallback: (event: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const mockOnFamilyMemberUpdate = jest.fn((callback) => {
+        updateCallback = callback;
+        return jest.fn();
+      });
+
+      mockUseRealtime.mockReturnValue({
+        onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
+        onQuestUpdate: jest.fn(() => jest.fn()),
+        onRewardUpdate: jest.fn(() => jest.fn()),
+        onRedemptionUpdate: jest.fn(() => jest.fn()),
+      });
+
+      const mockUserProfilesQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({
+          data: mockFamilyMembers,
+          error: null,
+        }),
+      };
+
+      const mockCharactersQuery = {
+        select: jest.fn().mockReturnThis(),
+        in: jest.fn().mockResolvedValue({
+          data: mockCharacters,
+          error: null,
+        }),
+      };
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === "user_profiles") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockUserProfilesQuery as any;
+        }
+        if (table === "characters") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockCharactersQuery as any;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return {} as any;
+      });
+
+      renderHook(() => useFamilyMembers());
+
+      await waitFor(() => {
+        expect(mockOnFamilyMemberUpdate).toHaveBeenCalled();
+      });
+
+      jest.clearAllMocks();
+
+      // Trigger INSERT event
+      updateCallback!({
+        action: "INSERT",
+        record: { id: "user-3", name: "New Member" },
+      });
+
+      // Verify reload was triggered
+      await waitFor(() => {
+        expect(mockSupabase.from).toHaveBeenCalledWith("user_profiles");
+      });
+    });
+
+    it("should reload on DELETE events", async () => {
+      let updateCallback: (event: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const mockOnFamilyMemberUpdate = jest.fn((callback) => {
+        updateCallback = callback;
+        return jest.fn();
+      });
+
+      mockUseRealtime.mockReturnValue({
+        onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
+        onQuestUpdate: jest.fn(() => jest.fn()),
+        onRewardUpdate: jest.fn(() => jest.fn()),
+        onRedemptionUpdate: jest.fn(() => jest.fn()),
+      });
+
+      const mockUserProfilesQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({
+          data: mockFamilyMembers,
+          error: null,
+        }),
+      };
+
+      const mockCharactersQuery = {
+        select: jest.fn().mockReturnThis(),
+        in: jest.fn().mockResolvedValue({
+          data: mockCharacters,
+          error: null,
+        }),
+      };
+
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === "user_profiles") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockUserProfilesQuery as any;
+        }
+        if (table === "characters") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return mockCharactersQuery as any;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return {} as any;
+      });
+
+      renderHook(() => useFamilyMembers());
+
+      await waitFor(() => {
+        expect(mockOnFamilyMemberUpdate).toHaveBeenCalled();
+      });
+
+      jest.clearAllMocks();
+
+      // Trigger DELETE event
+      updateCallback!({
+        action: "DELETE",
+        old_record: { id: "user-1" },
+      });
+
+      // Verify reload was triggered
+      await waitFor(() => {
+        expect(mockSupabase.from).toHaveBeenCalledWith("user_profiles");
+      });
+    });
+
+    it("should not subscribe when profile has no family_id", async () => {
+      const mockOnFamilyMemberUpdate = jest.fn(() => jest.fn());
+
+      mockUseRealtime.mockReturnValue({
+        onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
+        onQuestUpdate: jest.fn(() => jest.fn()),
+        onRewardUpdate: jest.fn(() => jest.fn()),
+        onRedemptionUpdate: jest.fn(() => jest.fn()),
+      });
+
+      mockUseAuth.mockReturnValue({
+        profile: null,
+        user: null,
+        session: null,
+        loading: false,
+        signIn: jest.fn(),
+        signUp: jest.fn(),
+        signOut: jest.fn(),
+        signInWithGoogle: jest.fn(),
+      });
+
+      renderHook(() => useFamilyMembers());
+
+      await waitFor(() => {
+        // Should not subscribe when no profile
+        expect(mockOnFamilyMemberUpdate).not.toHaveBeenCalled();
       });
     });
   });

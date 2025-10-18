@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/lib/realtime-context";
 import type { Tables } from "@/lib/types/database";
 
 type UserProfile = Tables<"user_profiles">;
@@ -17,11 +18,12 @@ interface UseFamilyMembersReturn {
 }
 
 /**
- * Custom hook for fetching and managing family member data.
+ * Custom hook for fetching and managing family member data with realtime updates.
  *
  * This hook consolidates the family member loading logic used across multiple components.
  * It fetches both user profiles and their associated characters for all members of the
- * current user's family.
+ * current user's family, and automatically updates when family member data changes via
+ * realtime subscriptions.
  *
  * @returns {UseFamilyMembersReturn} Object containing:
  *   - familyMembers: Array of user profile objects for all family members
@@ -40,6 +42,7 @@ interface UseFamilyMembersReturn {
  */
 export function useFamilyMembers(): UseFamilyMembersReturn {
   const { profile } = useAuth();
+  const { onFamilyMemberUpdate } = useRealtime();
   const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
   const [familyCharacters, setFamilyCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +103,20 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
   useEffect(() => {
     void loadFamilyMembers();
   }, [loadFamilyMembers]);
+
+  // Realtime subscription for family member updates
+  useEffect(() => {
+    if (!profile?.family_id) return;
+
+    const unsubscribe = onFamilyMemberUpdate((event) => {
+      if (event.action === "UPDATE" || event.action === "INSERT" || event.action === "DELETE") {
+        // Reload family members when any member data changes
+        void loadFamilyMembers();
+      }
+    });
+
+    return unsubscribe;
+  }, [onFamilyMemberUpdate, loadFamilyMembers, profile?.family_id]);
 
   return {
     familyMembers,

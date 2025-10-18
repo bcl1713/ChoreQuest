@@ -24,7 +24,7 @@
 - `hooks/useQuests.test.ts` - Tests for useQuests hook
 - `hooks/useRewards.ts` - Reward data fetching and management
 - `hooks/useRewards.test.ts` - Tests for useRewards hook
-- ✅ `hooks/useFamilyMembers.ts` - Family member data fetching (14 tests passing)
+- ✅ `hooks/useFamilyMembers.ts` - Family member data fetching with realtime subscriptions (19 tests passing)
 - ✅ `hooks/useFamilyMembers.test.ts` - Tests for useFamilyMembers hook
 - ✅ `hooks/useCharacter.ts` - Character data and stats (17 tests passing)
 - ✅ `hooks/useCharacter.test.ts` - Tests for useCharacter hook
