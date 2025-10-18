@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, waitFor, screen } from '@testing-library/react';
-import QuestDashboard from '../quest-dashboard';
+import QuestDashboard from '../quests/quest-dashboard';
 import { useAuth } from '@/lib/auth-context';
 import { useRealtime } from '@/lib/realtime-context';
 import { supabase } from '@/lib/supabase';

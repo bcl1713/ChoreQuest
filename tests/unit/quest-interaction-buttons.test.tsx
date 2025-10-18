@@ -10,7 +10,7 @@
 
 
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
-import QuestDashboard from "../../components/quest-dashboard";
+import QuestDashboard from "../../components/quests/quest-dashboard";
 import React from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useRealtime } from "../../lib/realtime-context";
@@ -190,6 +190,18 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
         name: "Guild Master",
         role: "GUILD_MASTER"
       },
+    });
+
+    // Add family members so assignment dropdown appears
+    (useFamilyMembers as jest.Mock).mockReturnValue({
+      familyMembers: [
+        { id: 'hero-123', name: 'Hero User', role: 'HERO' },
+        { id: 'hero-456', name: 'Another Hero', role: 'HERO' },
+      ],
+      familyCharacters: [],
+      loading: false,
+      error: null,
+      reload: jest.fn(),
     });
 
     render(<QuestDashboard onError={jest.fn()} />);

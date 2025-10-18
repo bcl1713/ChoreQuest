@@ -6,7 +6,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import QuestCreateModal from "@/components/quest-create-modal";
+import QuestCreateModal from "@/components/quests/quest-create-modal";
 import { questTemplateService } from "@/lib/quest-template-service";
 import { QuestTemplate } from "@/lib/types/database";
 
