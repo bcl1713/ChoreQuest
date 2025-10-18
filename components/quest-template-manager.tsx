@@ -126,6 +126,19 @@ export function QuestTemplateManager() {
     }
   };
 
+  const handleTogglePause = async (template: QuestTemplate) => {
+    try {
+      const { error } = await supabase
+        .from('quest_templates')
+        .update({ is_paused: !template.is_paused })
+        .eq('id', template.id);
+
+      if (error) throw error;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to toggle pause state');
+    }
+  };
+
   if (loading) return <p>Loading templates...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -146,7 +159,7 @@ export function QuestTemplateManager() {
                 <h3 className="text-xl font-semibold mb-3 flex items-center"><UserIcon className="mr-2 h-6 w-6 text-purple-400"/> Individual Quests</h3>
                 <div className="space-y-4">
                     {individualQuests.map((template) => (
-                        <QuestTemplateCard key={template.id} template={template} onEdit={openEditModal} onDelete={setDeleteTarget} />
+                        <QuestTemplateCard key={template.id} template={template} onEdit={openEditModal} onDelete={setDeleteTarget} onTogglePause={handleTogglePause} />
                     ))}
                 </div>
             </div>
@@ -155,7 +168,7 @@ export function QuestTemplateManager() {
                 <h3 className="text-xl font-semibold mb-3 flex items-center"><Users className="mr-2 h-6 w-6 text-green-400"/> Family Quests</h3>
                 <div className="space-y-4">
                     {familyQuests.map((template) => (
-                        <QuestTemplateCard key={template.id} template={template} onEdit={openEditModal} onDelete={setDeleteTarget} />
+                        <QuestTemplateCard key={template.id} template={template} onEdit={openEditModal} onDelete={setDeleteTarget} onTogglePause={handleTogglePause} />
                     ))}
                 </div>
             </div>
@@ -180,7 +193,12 @@ export function QuestTemplateManager() {
   );
 }
 
-const QuestTemplateCard: React.FC<{ template: QuestTemplate, onEdit: (template: QuestTemplate) => void, onDelete: (template: QuestTemplate) => void }> = ({ template, onEdit, onDelete }) => (
+const QuestTemplateCard: React.FC<{
+  template: QuestTemplate;
+  onEdit: (template: QuestTemplate) => void;
+  onDelete: (template: QuestTemplate) => void;
+  onTogglePause: (template: QuestTemplate) => void;
+}> = ({ template, onEdit, onDelete, onTogglePause }) => (
     <div className={`p-4 rounded-lg ${template.is_paused ? 'bg-gray-700 opacity-60' : 'bg-gray-900'}`}>
         <div className="flex justify-between items-start">
             <div>
@@ -202,7 +220,7 @@ const QuestTemplateCard: React.FC<{ template: QuestTemplate, onEdit: (template: 
         </div>
         <div className="mt-4 flex space-x-2">
             <button onClick={() => onEdit(template)} className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-md">Edit</button>
-            <button className={`text-sm text-white py-1 px-3 rounded-md ${template.is_paused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'}`}>{template.is_paused ? 'Resume' : 'Pause'}</button>
+            <button onClick={() => onTogglePause(template)} className={`text-sm text-white py-1 px-3 rounded-md ${template.is_paused ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'}`}>{template.is_paused ? 'Resume' : 'Pause'}</button>
             <button onClick={() => onDelete(template)} className="text-sm bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded-md flex items-center"><Trash2 className="h-4 w-4 mr-1"/> Delete</button>
         </div>
     </div>
