@@ -13,7 +13,7 @@ transforms household tasks into epic adventures.
 - [x] Quest system with templates, instances, and approval workflow
 - [x] Reward store with redemption and approval system
 - [x] Frontend dashboard with Next.js 15 and React 19
-- [x] Testing infrastructure with Jest and Playwright
+- [x] Testing infrastructure with Jest
 - [x] Docker development environment
 - [x] Mobile-responsive UI with Tailwind CSS
 
