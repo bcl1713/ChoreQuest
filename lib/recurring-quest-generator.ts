@@ -3,11 +3,6 @@
  *
  * Handles the core logic for generating recurring quest instances
  * from quest templates.
- *
- * NOTE: This file uses `any` type assertions because the generated database types
- * are not yet fully updated with the new recurring quest schema. After running
- * migrations in production, regenerate types with:
- * `npx supabase gen types typescript --local > lib/types/database-generated.ts`
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -25,6 +20,34 @@ const TEST_INTERVAL_MINUTES = TEST_INTERVAL_MINUTES_ENV
   : null;
 
 type QuestTemplate = Database['public']['Tables']['quest_templates']['Row'];
+
+// Type definitions for database queries that may not yet be in generated types
+interface ExpiredQuest {
+  id: string;
+  template_id: string | null;
+  assigned_to_id: string | null;
+  quest_type: 'INDIVIDUAL' | 'FAMILY';
+  status: string;
+}
+
+interface FamilyRow {
+  id: string;
+  week_start_day: number | null;
+  timezone: string | null;
+}
+
+interface TemplateRow {
+  id: string;
+  is_paused: boolean;
+}
+
+interface QuestTemplateWithAssignments extends QuestTemplate {
+  assigned_character_ids: string[];
+  quest_type: 'INDIVIDUAL' | 'FAMILY';
+  recurrence_pattern: 'DAILY' | 'WEEKLY' | 'CUSTOM';
+  family_id: string;
+  created_at: string;
+}
 
 interface GenerationResult {
   success: boolean;
@@ -127,7 +150,7 @@ async function generateIndividualQuests(
   const characterIds = template.assigned_character_ids || [];
 
   if (characterIds.length === 0) {
-    errors.push(`Template ${template.id} has no assigned characters`);
+    // Silently skip templates with no assigned characters - this is a valid state
     return { count, errors };
   }
 
@@ -158,7 +181,7 @@ async function generateIndividualQuests(
     );
 
     if (exists) {
-      console.log(`Quest already exists for template ${template.id}, character ${character.id}`);
+      // Quest already exists (idempotency)
       continue;
     }
 
@@ -186,8 +209,7 @@ async function generateIndividualQuests(
 
     const { error: insertError } = await supabase
       .from('quest_instances')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .insert(questInstance as any);
+      .insert(questInstance);
 
     if (insertError) {
       errors.push(
@@ -222,7 +244,7 @@ async function generateFamilyQuest(
   );
 
   if (exists) {
-    console.log(`Family quest already exists for template ${template.id}`);
+    // Quest already exists (idempotency)
     return { count: 0, errors };
   }
 
@@ -250,8 +272,7 @@ async function generateFamilyQuest(
 
   const { error: insertError } = await supabase
     .from('quest_instances')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert(questInstance as any);
+    .insert(questInstance);
 
   if (insertError) {
     errors.push(`Failed to create family quest: ${insertError.message}`);
@@ -269,8 +290,7 @@ async function resetStreak(
   characterId: string,
   templateId: string
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('character_quest_streaks')
     .update({ current_streak: 0 })
     .eq('character_id', characterId)
@@ -316,13 +336,12 @@ export async function expireQuests(
     const now = new Date().toISOString();
 
     // Find all quests past their cycle_end_date that are not completed/approved
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: expiredQuests, error: fetchError } = await (supabase as any)
+    const { data: expiredQuests, error: fetchError } = await supabase
       .from('quest_instances')
       .select('id, template_id, assigned_to_id, quest_type, status')
       .not('template_id', 'is', null)
       .lt('cycle_end_date', now)
-      .in('status', ['PENDING', 'IN_PROGRESS', 'AVAILABLE', 'CLAIMED']);
+      .in('status', ['PENDING', 'IN_PROGRESS', 'AVAILABLE', 'CLAIMED']) as { data: ExpiredQuest[] | null; error: { message: string } | null };
 
     if (fetchError) {
       result.success = false;
@@ -331,29 +350,23 @@ export async function expireQuests(
     }
 
     if (!expiredQuests || expiredQuests.length === 0) {
-      console.log('No expired quests found');
       return result;
     }
 
     // Get templates to check if they're paused
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const templateIds = [...new Set(expiredQuests.map((q: any) => q.template_id).filter(Boolean))] as string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: templates } = await (supabase as any)
+    const templateIds = [...new Set(expiredQuests.map((q) => q.template_id).filter(Boolean))] as string[];
+    const { data: templates } = await supabase
       .from('quest_templates')
       .select('*')
-      .in('id', templateIds);
+      .in('id', templateIds) as { data: TemplateRow[] | null };
 
     const pausedTemplateIds = new Set(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (templates || []).filter((t: any) => t.is_paused).map((t: any) => t.id)
+      (templates || []).filter((t) => t.is_paused).map((t) => t.id)
     );
 
     // Mark quests as MISSED
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const questIds = expiredQuests.map((q: any) => q.id);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateError } = await (supabase as any)
+    const questIds = expiredQuests.map((q) => q.id);
+    const { error: updateError } = await supabase
       .from('quest_instances')
       .update({ status: 'MISSED' })
       .in('id', questIds);
@@ -362,6 +375,22 @@ export async function expireQuests(
       result.success = false;
       result.errors.push(`Failed to mark quests as MISSED: ${updateError.message}`);
       return result;
+    }
+
+    // Clear active_family_quest_id for any CLAIMED family quests that expired
+    const claimedFamilyQuestIds = expiredQuests
+      .filter((q) => q.quest_type === 'FAMILY' && q.status === 'CLAIMED')
+      .map((q) => q.id);
+
+    if (claimedFamilyQuestIds.length > 0) {
+      const { error: clearError } = await supabase
+        .from('characters')
+        .update({ active_family_quest_id: null })
+        .in('active_family_quest_id', claimedFamilyQuestIds);
+
+      if (clearError) {
+        result.errors.push(`Failed to clear active_family_quest_id: ${clearError.message}`);
+      }
     }
 
     // Count by type
@@ -440,26 +469,22 @@ export async function generateRecurringQuests(
     }
 
     if (!templates || templates.length === 0) {
-      console.log('No active recurring quest templates found');
       return result;
     }
 
     // Get family timezone and week_start_day settings
     const familyIds = [...new Set(templates.map(t => t.family_id).filter(Boolean))] as string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: families } = await (supabase as any)
+    const { data: families } = await supabase
       .from('families')
       .select('*')
-      .in('id', familyIds);
+      .in('id', familyIds) as { data: FamilyRow[] | null };
 
     const familyWeekStartMap = new Map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (families || []).map((f: any) => [f.id, f.week_start_day ?? 0])
+      (families || []).map((f) => [f.id, f.week_start_day ?? 0])
     );
 
     const familyTimezoneMap = new Map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (families || []).map((f: any) => [f.id, f.timezone ?? 'UTC'])
+      (families || []).map((f) => [f.id, f.timezone ?? 'UTC'])
     );
 
     // Get a GM user_id for created_by_id (use first GM found)
@@ -470,12 +495,10 @@ export async function generateRecurringQuests(
       .limit(1)
       .single();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const gmUserId = gmProfile?.id || (templates[0] as any).created_at || 'system'; // Fallback to template creator
+    const gmUserId = gmProfile?.id || (templates[0] as QuestTemplateWithAssignments).created_at || 'system'; // Fallback to template creator
 
     // Generate quests for each template
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const template of templates as any[]) {
+    for (const template of templates as QuestTemplateWithAssignments[]) {
       const timezone = (familyTimezoneMap.get(template.family_id || '') ?? 'UTC') as string;
       const weekStartDay = (familyWeekStartMap.get(template.family_id || '') ?? 0) as number;
       const { cycleStart, cycleEnd } = calculateCycleDates(

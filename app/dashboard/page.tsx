@@ -194,8 +194,7 @@ function DashboardContent() {
           const calculatedRewards = RewardCalculator.calculateQuestRewards(
             baseRewards,
             (updatedQuest.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-            character.class as 'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER',
-            character.level || 1
+            character.class as 'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER'
           );
 
           // Show congratulations modal with calculated rewards

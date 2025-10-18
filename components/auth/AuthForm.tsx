@@ -3,14 +3,6 @@
 import { useState } from 'react';
 import { z } from 'zod';
 
-interface AuthFormProps {
-  type: 'login' | 'register' | 'create-family';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit: (data: any) => Promise<void>;
-  isLoading?: boolean;
-  error?: string | null;
-}
-
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required')
@@ -29,6 +21,13 @@ const createFamilySchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   userName: z.string().min(2, 'Your name must be at least 2 characters')
 });
+
+interface AuthFormProps {
+  type: 'login' | 'register' | 'create-family';
+  onSubmit: (data: Record<string, string>) => Promise<void>;
+  isLoading?: boolean;
+  error?: string | null;
+}
 
 export default function AuthForm({ type, onSubmit, isLoading = false, error }: AuthFormProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});

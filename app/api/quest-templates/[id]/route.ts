@@ -8,6 +8,8 @@ import { z } from 'zod';
 import { questTemplateService } from '@/lib/quest-template-service';
 import { QuestTemplate } from '@/lib/types/database';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/types/database-generated';
 
 // Zod schema for updating quest templates
 const updateQuestTemplateSchema = z.object({
@@ -32,8 +34,7 @@ const updateQuestTemplateSchema = z.object({
  * Helper function to verify Guild Master authorization for a template
  */
 async function verifyGuildMasterAccess(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   userId: string,
   templateId: string
 ): Promise<{ authorized: boolean; error?: string; template?: QuestTemplate }> {

@@ -125,8 +125,7 @@ export interface StoragePaths {
  * The fixture setup runs ONCE per worker (not per test), and the teardown
  * runs ONCE when the worker finishes all its tests.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export const test = base.extend<{}, { workerFamily: WorkerFamily }>({
+export const test = base.extend<Record<string, never>, { workerFamily: WorkerFamily }>({
   workerFamily: [
     async ({ browser }, use, workerInfo) => {
       // SETUP PHASE: Create the persistent GM user and family for this worker

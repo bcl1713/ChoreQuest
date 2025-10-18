@@ -2,7 +2,7 @@
 
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import StatisticsPanel from '@/components/statistics-panel';
 import ActivityFeed from '@/components/activity-feed';
 import GuildMasterManager from '@/components/guild-master-manager';
@@ -19,13 +19,13 @@ export function AdminDashboard() {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Tab configuration
-  const tabs: { name: TabName; label: string; icon: string }[] = [
+  const tabs: { name: TabName; label: string; icon: string }[] = useMemo(() => [
     { name: 'overview', label: 'Overview', icon: '📊' },
     { name: 'quest-templates', label: 'Quest Templates', icon: '📜' },
     { name: 'rewards', label: 'Rewards', icon: '🏆' },
     { name: 'guild-masters', label: 'Guild Masters', icon: '👑' },
     { name: 'family-settings', label: 'Family Settings', icon: '⚙️' },
-  ];
+  ], []);
 
   // Sync selected tab with URL query params
   useEffect(() => {
@@ -36,8 +36,7 @@ export function AdminDashboard() {
         setSelectedIndex(tabIndex);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, tabs]);
 
   // Update URL when tab changes
   const handleTabChange = (index: number) => {

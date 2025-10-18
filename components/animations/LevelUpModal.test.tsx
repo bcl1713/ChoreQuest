@@ -12,13 +12,10 @@ jest.mock('./ParticleEffect', () => ({
 }));
 
 jest.mock('framer-motion', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const React = require('react');
-
   // Filter out framer-motion specific props
-  const filterProps = (props: Record<string, unknown>) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { whileHover, whileTap, animate, initial, exit, variants, transition, ...rest } = props;
+  const filterProps = ({ whileHover, whileTap, animate, initial, exit, variants, transition, ...rest }: Record<string, unknown>): Record<string, unknown> => {
+    // Void the unused variables to satisfy linter
+    void whileHover; void whileTap; void animate; void initial; void exit; void variants; void transition;
     return rest;
   };
 

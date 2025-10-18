@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       duration: Date.now() - startTime,
     };
 
-    console.log('Quest generation completed:', result);
+    // Don't log here - let the cron job caller handle logging to avoid duplicates
 
     return NextResponse.json(result, {
       status: generationResult.success ? 200 : 500

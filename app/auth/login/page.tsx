@@ -16,6 +16,14 @@ export default function LoginPage() {
     }
   }, [user, isLoading, router]);
 
+  const handleLogin = async (data: Record<string, string>) => {
+    const { email, password } = data;
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+    await login({ email, password });
+  };
+
   if (user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
@@ -32,7 +40,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <AuthForm
           type="login"
-          onSubmit={login}
+          onSubmit={handleLogin}
           isLoading={isLoading}
           error={error}
         />
