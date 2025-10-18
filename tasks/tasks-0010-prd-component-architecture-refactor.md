@@ -20,8 +20,8 @@
 - `lib/utils/validation.test.ts` - ✅ Tests for validation utilities (58 tests passing)
 
 ### Custom Hooks to Create
-- `hooks/useQuests.ts` - Quest data fetching and management
-- `hooks/useQuests.test.ts` - Tests for useQuests hook
+- ✅ `hooks/useQuests.ts` - Quest data fetching and management with realtime (21 tests passing)
+- ✅ `hooks/useQuests.test.ts` - Tests for useQuests hook
 - `hooks/useRewards.ts` - Reward data fetching and management
 - `hooks/useRewards.test.ts` - Tests for useRewards hook
 - ✅ `hooks/useFamilyMembers.ts` - Family member data fetching with realtime subscriptions (19 tests passing)
@@ -164,11 +164,12 @@ components/
     - [x] Handle character fetch with proper error handling (PGRST116 treated as no character, not error)
     - [x] Return `{ character, loading, error, reload }`
     - [x] Write comprehensive tests in `hooks/useCharacter.test.ts` (17 tests passing)
-  - [ ] 2.3 Create `hooks/useQuests.ts` for quest data management
-    - Extract quest loading logic from quest-dashboard.tsx
-    - Include realtime subscription logic
-    - Return `{ quests, loading, error, reload, createQuest, updateQuest, deleteQuest }`
-    - Write comprehensive tests in `hooks/useQuests.test.ts`
+  - [x] 2.3 Create `hooks/useQuests.ts` for quest data management
+    - [x] Extract quest loading logic from quest-dashboard.tsx
+    - [x] Include realtime subscription logic with optimistic updates (INSERT/UPDATE/DELETE)
+    - [x] Deduplicate quests to ensure data consistency
+    - [x] Return `{ quests, loading, error, reload }`
+    - [x] Write comprehensive tests in `hooks/useQuests.test.ts` (21 tests passing)
   - [ ] 2.4 Create `hooks/useRewards.ts` for reward data management
     - Extract reward loading logic from reward-manager.tsx
     - Include realtime subscription logic for rewards and redemptions
