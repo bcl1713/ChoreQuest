@@ -180,6 +180,21 @@ beforeAll(() => {
       return
     }
 
+    // Framer-motion prop warnings from mocked components
+    // These are expected when using the mock and don't indicate real problems
+    if (
+      errorString.includes('React does not recognize') &&
+      (errorString.includes('whileHover') ||
+       errorString.includes('whileTap') ||
+       errorString.includes('animate') ||
+       errorString.includes('initial') ||
+       errorString.includes('exit') ||
+       errorString.includes('variants') ||
+       errorString.includes('transition'))
+    ) {
+      return
+    }
+
     // Show all other errors - these indicate real problems
     originalError.call(console, ...args)
   }
