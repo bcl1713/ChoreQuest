@@ -26,8 +26,8 @@
 - `hooks/useRewards.test.ts` - Tests for useRewards hook
 - ✅ `hooks/useFamilyMembers.ts` - Family member data fetching (14 tests passing)
 - ✅ `hooks/useFamilyMembers.test.ts` - Tests for useFamilyMembers hook
-- `hooks/useCharacter.ts` - Character data and stats
-- `hooks/useCharacter.test.ts` - Tests for useCharacter hook
+- ✅ `hooks/useCharacter.ts` - Character data and stats (17 tests passing)
+- ✅ `hooks/useCharacter.test.ts` - Tests for useCharacter hook
 - `hooks/useQuestFilters.ts` - Quest filtering logic
 - `hooks/useQuestFilters.test.ts` - Tests for useQuestFilters hook
 - `hooks/useTabNavigation.ts` - Tab navigation state management
@@ -159,11 +159,11 @@ components/
     - [x] Extract family member loading logic from family-management.tsx
     - [x] Return `{ familyMembers, familyCharacters, loading, error, reload }`
     - [x] Write comprehensive tests in `hooks/useFamilyMembers.test.ts` (14 tests passing)
-  - [ ] 2.2 Create `hooks/useCharacter.ts` for character data
-    - Extract character loading logic from quest-dashboard.tsx
-    - Handle character fetch with proper error handling
-    - Return `{ character, loading, error, reload }`
-    - Write comprehensive tests in `hooks/useCharacter.test.ts`
+  - [x] 2.2 Create `hooks/useCharacter.ts` for character data
+    - [x] Extract character loading logic from quest-dashboard.tsx
+    - [x] Handle character fetch with proper error handling (PGRST116 treated as no character, not error)
+    - [x] Return `{ character, loading, error, reload }`
+    - [x] Write comprehensive tests in `hooks/useCharacter.test.ts` (17 tests passing)
   - [ ] 2.3 Create `hooks/useQuests.ts` for quest data management
     - Extract quest loading logic from quest-dashboard.tsx
     - Include realtime subscription logic
