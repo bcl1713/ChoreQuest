@@ -7,7 +7,6 @@ import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import {
   QuestInstance,
-  QuestDifficulty,
   QuestStatus,
   UserProfile,
   Tables,
@@ -16,6 +15,9 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import FamilyQuestClaiming from "./family-quest-claiming";
 import { questInstanceApiService } from "@/lib/quest-instance-api-service";
 import { staggerContainer, staggerItem } from "@/lib/animations/variants";
+import { getDifficultyColor, getStatusColor } from "@/lib/utils/colors";
+import { formatDueDate, formatPercent, formatDateTime } from "@/lib/utils/formatting";
+import { deduplicateQuests, getQuestTimestamp } from "@/lib/utils/data";
 
 type QuestDashboardProps = {
   onError: (error: string) => void;
@@ -24,116 +26,6 @@ type QuestDashboardProps = {
 
 type LoadDataOptions = {
   useSpinner?: boolean;
-};
-
-const deduplicateQuests = (quests: QuestInstance[]): QuestInstance[] => {
-  const seen = new Set<string>();
-  return quests.filter((quest) => {
-    if (seen.has(quest.id)) {
-      return false;
-    }
-    seen.add(quest.id);
-    return true;
-  });
-};
-
-const getDifficultyColor = (difficulty: QuestDifficulty) => {
-  switch (difficulty) {
-    case "EASY":
-      return "text-green-400";
-    case "MEDIUM":
-      return "text-yellow-400";
-    case "HARD":
-      return "text-red-400";
-    default:
-      return "text-gray-400";
-  }
-};
-
-const getStatusColor = (status: QuestStatus | null | undefined) => {
-  switch (status) {
-    case "PENDING":
-      return "bg-gray-600 text-gray-200";
-    case "IN_PROGRESS":
-      return "bg-blue-600 text-blue-100";
-    case "COMPLETED":
-      return "bg-yellow-600 text-yellow-100";
-    case "APPROVED":
-      return "bg-green-600 text-green-100";
-    case "EXPIRED":
-    case "MISSED":
-      return "bg-red-600 text-red-100";
-    case "AVAILABLE":
-      return "bg-emerald-700 text-emerald-100";
-    case "CLAIMED":
-      return "bg-purple-700 text-purple-100";
-    default:
-      return "bg-gray-600 text-gray-200";
-  }
-};
-
-const formatDueDate = (dueDate: string | null) => {
-  if (!dueDate) return null;
-
-  const date = new Date(dueDate);
-  const now = new Date();
-  const diffTime = date.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
-  const formattedTime = date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  if (diffDays < 0) {
-    return `🚨 Overdue (${formattedDate})`;
-  }
-  if (diffDays === 0) {
-    return `⏰ Due Today ${formattedTime}`;
-  }
-  if (diffDays === 1) {
-    return `📅 Due Tomorrow ${formattedTime}`;
-  }
-  return `📅 Due ${formattedDate} ${formattedTime}`;
-};
-
-const formatPercent = (value: number | null | undefined) => {
-  if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) {
-    return null;
-  }
-  const normalized = value <= 1 ? value * 100 : value;
-  if (normalized <= 0) return null;
-  return `${Math.round(normalized)}%`;
-};
-
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const getQuestTimestamp = (quest: QuestInstance) => {
-  const toTime = (timestamp: string | null | undefined) => {
-    if (!timestamp) return 0;
-    const value = new Date(timestamp).getTime();
-    return Number.isFinite(value) ? value : 0;
-  };
-
-  return (
-    toTime(quest.completed_at) ||
-    toTime(quest.updated_at) ||
-    toTime(quest.created_at)
-  );
 };
 
 export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashboardProps) {
