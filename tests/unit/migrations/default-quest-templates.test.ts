@@ -9,10 +9,10 @@ import { describe, it, expect } from "@jest/globals";
 import * as fs from "fs";
 import * as path from "path";
 
-describe("Default Quest Templates Migration (013)", () => {
+describe("Default Quest Templates Migration (20251019000002)", () => {
   const migrationPath = path.join(
     __dirname,
-    "../../../supabase/migrations/013_create_default_quest_templates.sql"
+    "../../../supabase/migrations/20251019000002_diversify_default_quest_templates.sql"
   );
   const migrationContent = fs.readFileSync(migrationPath, "utf-8");
 
@@ -168,12 +168,27 @@ describe("Default Quest Templates Migration (013)", () => {
     });
   });
 
-  describe("Default Templates Should Be Inactive", () => {
-    it("all default templates should have is_active = false", () => {
-      // Count INSERT statements with is_active set to false
-      const falseMatches = migrationContent.match(/NULL,\s*false,/g);
-      expect(falseMatches).toBeTruthy();
-      expect(falseMatches!.length).toBe(10); // All 10 templates should be inactive
+  describe("Default Templates Should Be Active But Paused", () => {
+    it("all default templates should have is_active = true", () => {
+      // Count INSERT statements with is_active set to true
+      const activeMatches = migrationContent.match(/NULL,\s*true,\s*true,/g);
+      expect(activeMatches).toBeTruthy();
+      expect(activeMatches!.length).toBe(10); // All 10 templates should be active
+    });
+
+    it("all default templates should have is_paused = true", () => {
+      // Verify templates start paused so users can review before activation
+      const insertPattern = /INSERT INTO quest_templates.*?VALUES.*?\);/gs;
+      const inserts = migrationContent.match(insertPattern);
+      expect(inserts).toBeTruthy();
+      expect(inserts!.length).toBe(10);
+
+      // Each insert should have is_paused in the column list
+      inserts!.forEach(insert => {
+        expect(insert).toContain('is_paused');
+        // Check that the VALUES section has true for is_paused (appears after is_active)
+        expect(insert).toMatch(/NULL,\s*true,\s*true,/);
+      });
     });
   });
 
@@ -188,19 +203,31 @@ describe("Default Quest Templates Migration (013)", () => {
       expect(functionBody).toContain("quest_type");
     });
 
-    it("should select quest_type in the INSERT SELECT statement", () => {
+    it("should include is_paused in the copy function", () => {
+      const copyFunctionMatch = migrationContent.match(
+        /CREATE OR REPLACE FUNCTION copy_default_quest_templates_to_new_family\(\)[\s\S]*?END;/i
+      );
+      expect(copyFunctionMatch).toBeTruthy();
+
+      const functionBody = copyFunctionMatch![0];
+      expect(functionBody).toContain("is_paused");
+    });
+
+    it("should select quest_type and is_paused in the INSERT SELECT statement", () => {
       const insertSelectMatch = migrationContent.match(
         /INSERT INTO quest_templates[\s\S]*?SELECT[\s\S]*?FROM quest_templates[\s\S]*?WHERE family_id IS NULL/i
       );
       expect(insertSelectMatch).toBeTruthy();
 
       const insertSelect = insertSelectMatch![0];
-      // Check that quest_type appears in both the column list and SELECT list
+      // Check that quest_type and is_paused appear in both the column list and SELECT list
       const columnList = insertSelect.match(/INSERT INTO quest_templates\s*\(([\s\S]*?)\)/i);
       const selectList = insertSelect.match(/SELECT([\s\S]*?)FROM/i);
 
       expect(columnList![1]).toContain("quest_type");
       expect(selectList![1]).toContain("quest_type");
+      expect(columnList![1]).toContain("is_paused");
+      expect(selectList![1]).toContain("is_paused");
     });
   });
 
