@@ -200,7 +200,27 @@ transforms household tasks into epic adventures.
 
 ### Docker Production Deployment - COMPLETED 2025-09-25
 
-## Hotfix 0.2.1 - Mobile Responsiveness & UI Polish - IN PROGRESS 2025-10-16
+## Hotfix 0.2.5 - Enable Real-time Quest Deletion Events - IN PROGRESS 2025-10-17
+
+Quest cancellation UI was not updating in real-time due to missing database configuration:
+
+- [x] #64 - UI does not update in real-time after cancelling a Family Quest
+  - [x] Root cause: quest_instances table missing REPLICA IDENTITY FULL setting
+  - [x] Created migration 20251017000002_set_quest_instances_replica_identity.sql
+  - [x] Added ALTER TABLE quest_instances REPLICA IDENTITY FULL
+  - [x] Enables Postgres to include full old row data in DELETE events
+  - [x] Allows Supabase Realtime to evaluate RLS policies and filters on DELETE
+  - [x] Wrote comprehensive tests for real-time DELETE event handling
+  - [x] Verified real-time subscription now receives DELETE events with old_record
+  - [x] Quest cards now disappear immediately when GM cancels them
+
+Technical details:
+- Without REPLICA IDENTITY FULL, Postgres only sends primary key in DELETE events
+- Supabase Realtime couldn't evaluate family_id filter without full old row
+- DELETE events were silently dropped, requiring manual page refresh
+- Solution matches existing pattern for quest_templates and rewards tables
+
+## Hotfix 0.2.1 - Mobile Responsiveness & UI Polish - COMPLETED 2025-10-16
 
 Critical mobile responsiveness issues and UI consistency improvements:
 
