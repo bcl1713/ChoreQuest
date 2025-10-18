@@ -28,8 +28,8 @@
 - ✅ `hooks/useFamilyMembers.test.ts` - Tests for useFamilyMembers hook
 - ✅ `hooks/useCharacter.ts` - Character data and stats (17 tests passing)
 - ✅ `hooks/useCharacter.test.ts` - Tests for useCharacter hook
-- `hooks/useQuestFilters.ts` - Quest filtering logic
-- `hooks/useQuestFilters.test.ts` - Tests for useQuestFilters hook
+- ✅ `hooks/useQuestFilters.ts` - Quest filtering logic with memoization (34 tests passing)
+- ✅ `hooks/useQuestFilters.test.ts` - Tests for useQuestFilters hook
 - `hooks/useTabNavigation.ts` - Tab navigation state management
 - `hooks/useTabNavigation.test.ts` - Tests for useTabNavigation hook
 
@@ -176,11 +176,12 @@ components/
     - [x] Load rewards and redemptions in parallel using Promise.all
     - [x] Return `{ rewards, redemptions, loading, error, reload }`
     - [x] Write comprehensive tests in `hooks/useRewards.test.ts` (23 tests passing)
-  - [ ] 2.5 Create `hooks/useQuestFilters.ts` for quest filtering logic
-    - Extract filtering/sorting logic from quest-dashboard.tsx
-    - Manage filter state (status, assignee, search term)
-    - Return `{ filters, setFilters, filteredQuests, resetFilters }`
-    - Write comprehensive tests in `hooks/useQuestFilters.test.ts`
+  - [x] 2.5 Create `hooks/useQuestFilters.ts` for quest filtering logic
+    - [x] Create flexible filtering system for quest lists (status, assignee, search term)
+    - [x] Manage filter state with partial updates support
+    - [x] Use memoization (useMemo) for optimal performance
+    - [x] Return `{ filters, setFilters, filteredQuests, resetFilters }`
+    - [x] Write comprehensive tests in `hooks/useQuestFilters.test.ts` (34 tests passing)
   - [ ] 2.6 Create `hooks/useTabNavigation.ts` for tab state management
     - Extract tab navigation pattern from admin-dashboard.tsx
     - Sync with URL query parameters
