@@ -30,8 +30,8 @@
 - ✅ `hooks/useCharacter.test.ts` - Tests for useCharacter hook
 - ✅ `hooks/useQuestFilters.ts` - Quest filtering logic with memoization (34 tests passing)
 - ✅ `hooks/useQuestFilters.test.ts` - Tests for useQuestFilters hook
-- `hooks/useTabNavigation.ts` - Tab navigation state management
-- `hooks/useTabNavigation.test.ts` - Tests for useTabNavigation hook
+- ✅ `hooks/useTabNavigation.ts` - Tab navigation state with URL sync (27 tests passing)
+- ✅ `hooks/useTabNavigation.test.ts` - Tests for useTabNavigation hook
 
 ### Large Components to Decompose
 - `components/quest-dashboard.tsx` (1,100 LOC) - Will be broken into multiple sub-components
@@ -152,7 +152,7 @@ components/
     - [x] Run `npm run lint` - verify zero linting warnings
     - [x] Run `npm run test` - verify all tests pass (837/837 passing)
 
-- [ ] 2.0 Create Custom Hooks for Common Patterns
+- [x] 2.0 Create Custom Hooks for Common Patterns
   - [x] 2.1 Create `hooks/useFamilyMembers.ts` for family member data fetching
     - [x] Extract family member loading logic from quest-dashboard.tsx
     - [x] Extract family member loading logic from quest-create-modal.tsx
@@ -182,11 +182,14 @@ components/
     - [x] Use memoization (useMemo) for optimal performance
     - [x] Return `{ filters, setFilters, filteredQuests, resetFilters }`
     - [x] Write comprehensive tests in `hooks/useQuestFilters.test.ts` (34 tests passing)
-  - [ ] 2.6 Create `hooks/useTabNavigation.ts` for tab state management
-    - Extract tab navigation pattern from admin-dashboard.tsx
-    - Sync with URL query parameters
-    - Return `{ selectedIndex, handleTabChange, tabs }`
-    - Write comprehensive tests in `hooks/useTabNavigation.test.ts`
+  - [x] 2.6 Create `hooks/useTabNavigation.ts` for tab state management
+    - [x] Extract tab navigation pattern from admin-dashboard.tsx
+    - [x] Sync selected tab with URL query parameters (reads on mount, updates on change)
+    - [x] Support custom query parameter names
+    - [x] Preserve existing URL parameters when changing tabs
+    - [x] Use memoization and useCallback for performance
+    - [x] Return `{ selectedIndex, handleTabChange, tabs }`
+    - [x] Write comprehensive tests in `hooks/useTabNavigation.test.ts` (27 tests passing)
   - [ ] 2.7 Update components to use new custom hooks
     - Update quest-dashboard.tsx to use useFamilyMembers, useCharacter, useQuests, useQuestFilters
     - Update quest-create-modal.tsx to use useFamilyMembers
