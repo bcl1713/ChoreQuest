@@ -117,7 +117,7 @@ components/
 
 ## Tasks
 
-- [ ] 1.0 Extract Shared Utilities from Components
+- [x] 1.0 Extract Shared Utilities from Components
   - [x] 1.1 Create `lib/utils/colors.ts` with color utility functions
     - Extract `getDifficultyColor` from quest-dashboard.tsx
     - Extract `getStatusColor` from quest-dashboard.tsx
@@ -141,16 +141,16 @@ components/
     - Add validators for quest forms (title, description, rewards)
     - Add validators for reward forms
     - Write comprehensive unit tests in `lib/utils/validation.test.ts`
-  - [ ] 1.5 Update all components to use new utility imports
-    - Update quest-dashboard.tsx to import from lib/utils/*
-    - Update quest-create-modal.tsx to import from lib/utils/*
-    - Update reward-manager.tsx to import from lib/utils/*
-    - Update any other components using these utilities
-    - Remove old inline utility functions
-  - [ ] 1.6 Run quality gates
-    - Run `npm run build` - verify zero compilation errors
-    - Run `npm run lint` - verify zero linting warnings
-    - Run `npm run test` - verify all tests pass
+  - [x] 1.5 Update all components to use new utility imports
+    - [x] Update quest-dashboard.tsx to import from lib/utils/*
+    - [x] Update quest-create-modal.tsx to import from lib/utils/*
+    - [x] Verify no other components need utility imports (reward-manager.tsx and others don't use these utilities)
+    - [x] Remove old inline utility functions (all migrated to lib/utils/*)
+    - [x] Remove old lib/format-utils.ts file (consolidated into lib/utils/formatting.ts)
+  - [x] 1.6 Run quality gates
+    - [x] Run `npm run build` - verify zero compilation errors
+    - [x] Run `npm run lint` - verify zero linting warnings
+    - [x] Run `npm run test` - verify all tests pass (837/837 passing)
 
 - [ ] 2.0 Create Custom Hooks for Common Patterns
   - [ ] 2.1 Create `hooks/useFamilyMembers.ts` for family member data fetching

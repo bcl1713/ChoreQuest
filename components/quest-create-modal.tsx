@@ -12,6 +12,7 @@ import {
 import type { TemplateFormData } from "@/lib/types/quest-templates";
 import { questTemplateService } from "@/lib/quest-template-service";
 import { motion, AnimatePresence } from "framer-motion";
+import { validateFutureDate } from "@/lib/utils/validation";
 
 interface QuestCreateModalProps {
   isOpen: boolean;
@@ -116,15 +117,6 @@ export default function QuestCreateModal({
     setRecurringForm(defaultRecurringForm);
   };
 
-  const validateDueDate = (dueDate: string): boolean => {
-    if (!dueDate) return true; // Optional field
-
-    const selectedDate = new Date(dueDate);
-    const now = new Date();
-
-    return selectedDate > now;
-  };
-
   const updateRecurringForm = (updates: Partial<TemplateFormData>) => {
     setRecurringForm((prev) => {
       const next = { ...prev, ...updates } as TemplateFormData;
@@ -185,8 +177,9 @@ export default function QuestCreateModal({
 
     try {
       if (mode === "existing") {
-        if (dueDate && !validateDueDate(dueDate)) {
-          setError("Due date must be in the future");
+        const dueDateValidation = validateFutureDate(dueDate, "Due date");
+        if (!dueDateValidation.isValid) {
+          setError(dueDateValidation.error ?? "Due date must be in the future");
           return;
         }
 
@@ -240,8 +233,9 @@ export default function QuestCreateModal({
           throw templateError;
         }
       } else {
-        if (dueDate && !validateDueDate(dueDate)) {
-          setError("Due date must be in the future");
+        const dueDateValidation = validateFutureDate(dueDate, "Due date");
+        if (!dueDateValidation.isValid) {
+          setError(dueDateValidation.error ?? "Due date must be in the future");
           return;
         }
 
