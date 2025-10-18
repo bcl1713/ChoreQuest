@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QuestCompleteOverlay, QuestReward } from './QuestCompleteOverlay';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import React from 'react';
 
 // Mock dependencies
 jest.mock('@/hooks/useReducedMotion');
@@ -10,46 +9,6 @@ jest.mock('./ParticleEffect', () => ({
   ParticleEffect: ({ active }: { active: boolean }) =>
     active ? <div data-testid="particle-effect" /> : null,
 }));
-
-jest.mock('framer-motion', () => {
-  // Filter out framer-motion specific props
-  const filterProps = ({ whileHover, whileTap, animate, initial, exit, variants, transition, ...rest }: Record<string, unknown>): Record<string, unknown> => {
-    // Void the unused variables to satisfy linter
-    void whileHover; void whileTap; void animate; void initial; void exit; void variants; void transition;
-    return rest;
-  };
-
-  const MockMotionDiv = ({ children, className, onClick, ...props }: Record<string, unknown>) => (
-    <div
-      className={className as string}
-      onClick={onClick as React.MouseEventHandler<HTMLDivElement> | undefined}
-      {...filterProps(props)}
-    >
-      {children as React.ReactNode}
-    </div>
-  );
-  MockMotionDiv.displayName = 'motion.div';
-
-  const MockMotionButton = React.forwardRef<HTMLButtonElement, Record<string, unknown>>(
-    ({ children, className, ...props }: Record<string, unknown>, ref: React.Ref<HTMLButtonElement>) => (
-      <button ref={ref} className={className as string} {...filterProps(props)}>
-        {children as React.ReactNode}
-      </button>
-    )
-  );
-  MockMotionButton.displayName = 'motion.button';
-
-  const MockAnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-  MockAnimatePresence.displayName = 'AnimatePresence';
-
-  return {
-    motion: {
-      div: MockMotionDiv,
-      button: MockMotionButton,
-    },
-    AnimatePresence: MockAnimatePresence,
-  };
-});
 
 describe('QuestCompleteOverlay', () => {
   const mockOnDismiss = jest.fn();

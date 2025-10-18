@@ -1,4 +1,5 @@
 // This file uses require() because it's a standalone CommonJS script for generating JWT tokens
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const jwt = require("jsonwebtoken");
 
 // Replace with your actual JWT secret from supabase/config.toml

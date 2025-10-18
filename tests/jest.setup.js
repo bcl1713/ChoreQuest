@@ -5,7 +5,9 @@ import '@testing-library/jest-dom'
 if (typeof global !== 'undefined' && !global.fetch) {
   try {
     // Using require is necessary here for Jest setup - dynamic imports don't work in this context
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const undici = require('undici')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const util = require('util')
 
     global.fetch = undici.fetch
