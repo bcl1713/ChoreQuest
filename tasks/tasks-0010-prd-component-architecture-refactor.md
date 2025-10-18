@@ -190,17 +190,17 @@ components/
     - [x] Use memoization and useCallback for performance
     - [x] Return `{ selectedIndex, handleTabChange, tabs }`
     - [x] Write comprehensive tests in `hooks/useTabNavigation.test.ts` (27 tests passing)
-  - [ ] 2.7 Update components to use new custom hooks
-    - Update quest-dashboard.tsx to use useFamilyMembers, useCharacter, useQuests, useQuestFilters
-    - Update quest-create-modal.tsx to use useFamilyMembers
-    - Update reward-manager.tsx to use useRewards
-    - Update admin-dashboard.tsx to use useTabNavigation
-    - Update family-management.tsx to use useFamilyMembers
-    - Remove old inline hook logic from components
-  - [ ] 2.8 Run quality gates
-    - Run `npm run build` - verify zero compilation errors
-    - Run `npm run lint` - verify zero linting warnings
-    - Run `npm run test` - verify all tests pass
+  - [x] 2.7 Update components to use new custom hooks
+    - [x] Update quest-dashboard.tsx to use useFamilyMembers, useCharacter, useQuests, useQuestFilters
+    - [x] Update quest-create-modal.tsx to use useFamilyMembers
+    - [x] Update reward-manager.tsx to use useRewards
+    - [x] Update admin-dashboard.tsx to use useTabNavigation
+    - [x] Update family-management.tsx to use useFamilyMembers
+    - [x] Remove old inline hook logic from components (completed during refactoring)
+  - [x] 2.8 Run quality gates
+    - [x] Run `npm run build` - verify zero compilation errors ✅
+    - [x] Run `npm run lint` - verify zero linting warnings ✅
+    - [x] Run `npm run test` - verify all tests pass (978/978 tests passing) ✅
 
 - [ ] 3.0 Decompose Large Components into Smaller Units
   - [ ] 3.1 Decompose quest-dashboard.tsx (1,100 LOC → multiple < 400 LOC components)

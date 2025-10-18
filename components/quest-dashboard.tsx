@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
-import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import {
   QuestInstance,
   QuestStatus,
-  UserProfile,
-  Tables,
 } from "@/lib/types/database";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import FamilyQuestClaiming from "./family-quest-claiming";
@@ -17,188 +14,78 @@ import { questInstanceApiService } from "@/lib/quest-instance-api-service";
 import { staggerContainer, staggerItem } from "@/lib/animations/variants";
 import { getDifficultyColor, getStatusColor } from "@/lib/utils/colors";
 import { formatDueDate, formatPercent, formatDateTime } from "@/lib/utils/formatting";
-import { deduplicateQuests, getQuestTimestamp } from "@/lib/utils/data";
+import { getQuestTimestamp } from "@/lib/utils/data";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useCharacter } from "@/hooks/useCharacter";
+import { useQuests } from "@/hooks/useQuests";
 
 type QuestDashboardProps = {
   onError: (error: string) => void;
   onLoadQuestsRef?: (reload: () => Promise<void>) => void;
 };
 
-type LoadDataOptions = {
-  useSpinner?: boolean;
-};
-
 export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashboardProps) {
-  const { user, session, profile } = useAuth();
-  const { onQuestUpdate } = useRealtime();
-  const [questInstances, setQuestInstances] = useState<QuestInstance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [familyMembers, setFamilyMembers] = useState<UserProfile[]>([]);
-  const [familyCharacters, setFamilyCharacters] = useState<Tables<"characters">[]>([]);
-  const [character, setCharacter] = useState<Tables<"characters"> | null>(null);
+  const { user, profile } = useAuth();
+
+  // Use custom hooks for data fetching
+  const {
+    familyMembers,
+    familyCharacters,
+    loading: familyLoading,
+    error: familyError,
+    reload: reloadFamily
+  } = useFamilyMembers();
+
+  const {
+    character,
+    loading: characterLoading,
+    error: characterError,
+    reload: reloadCharacter
+  } = useCharacter();
+
+  const {
+    quests: questInstances,
+    loading: questsLoading,
+    error: questsError,
+    reload: reloadQuests
+  } = useQuests();
+
+  // Local state
   const [selectedAssignee, setSelectedAssignee] = useState<Record<string, string>>({});
   const [selectedFamilyAssignments, setSelectedFamilyAssignments] = useState<Record<string, string>>({});
   const [showQuestHistory, setShowQuestHistory] = useState(false);
-  const hasInitialized = useRef(false);
-  const hasLoadedOnceRef = useRef(false);
 
-  const loadQuests = useCallback(
-    async (familyId: string) => {
-      const { data, error: fetchError } = await supabase
-        .from("quest_instances")
-        .select("*")
-        .eq("family_id", familyId)
-        .order("created_at", { ascending: false });
+  // Combine loading and error states
+  const loading = familyLoading || characterLoading || questsLoading;
+  const error = familyError || characterError || questsError;
 
-      if (fetchError) {
-        throw new Error(`Failed to fetch quest instances: ${fetchError.message}`);
-      }
+  // Combined reload function
+  const loadData = useCallback(async () => {
+    await Promise.all([
+      reloadFamily(),
+      reloadCharacter(),
+      reloadQuests()
+    ]);
+  }, [reloadFamily, reloadCharacter, reloadQuests]);
 
-      setQuestInstances(deduplicateQuests((data as QuestInstance[]) ?? []));
-    },
-    []
-  );
-
-  const loadData = useCallback(async (options: LoadDataOptions = {}) => {
-    const shouldUseSpinner = options.useSpinner ?? !hasLoadedOnceRef.current;
-
-    if (!user || !session || !profile) {
-      setError("User not authenticated");
-      setLoading(false);
-      setIsRefreshing(false);
-      return;
-    }
-
-    if (shouldUseSpinner) {
-      setLoading(true);
-    } else {
-      setIsRefreshing(true);
-    }
-
-    setError(null);
-    let loadSucceeded = false;
-
-    try {
-      // Load hero character (if any)
-      const { data: characterData, error: characterError } = await supabase
-        .from("characters")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!characterError) {
-        setCharacter(characterData);
-      } else if (characterError.code !== "PGRST116") {
-        throw new Error(`Failed to fetch character: ${characterError.message}`);
-      } else {
-        setCharacter(null);
-      }
-
-      // Load family members for assignment
-      const { data: familyMembersData, error: familyMembersError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("family_id", profile.family_id);
-
-      if (familyMembersError) {
-        throw new Error(`Failed to fetch family members: ${familyMembersError.message}`);
-      }
-
-      setFamilyMembers(familyMembersData || []);
-
-      const memberIds = (familyMembersData || []).map((member) => member.id);
-      if (memberIds.length > 0) {
-        const { data: charactersData, error: charactersError } = await supabase
-          .from("characters")
-          .select("*")
-          .in("user_id", memberIds);
-
-        if (charactersError) {
-          throw new Error(`Failed to fetch family characters: ${charactersError.message}`);
-        }
-
-        setFamilyCharacters(charactersData || []);
-        setSelectedFamilyAssignments({});
-      } else {
-        setFamilyCharacters([]);
-        setSelectedFamilyAssignments({});
-      }
-
-      if (profile.family_id) {
-        await loadQuests(profile.family_id);
-      } else {
-        setQuestInstances([]);
-      }
-      loadSucceeded = true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      setError(message);
-      onError(message);
-    } finally {
-      if (shouldUseSpinner) {
-        setLoading(false);
-      } else {
-        setIsRefreshing(false);
-      }
-
-      if (loadSucceeded) {
-        hasLoadedOnceRef.current = true;
-      }
-    }
-  }, [loadQuests, onError, profile, session, user]);
-
+  // Expose reload function to parent component
   useEffect(() => {
     if (!onLoadQuestsRef) return;
-    onLoadQuestsRef(() => loadData({ useSpinner: false }));
+    onLoadQuestsRef(loadData);
   }, [loadData, onLoadQuestsRef]);
 
+  // Show errors via the onError callback
   useEffect(() => {
-    const isFirstRun = !hasInitialized.current;
-    hasInitialized.current = true;
-    void loadData({ useSpinner: isFirstRun });
-  }, [loadData]);
-
-  useEffect(() => {
-    if (!profile?.family_id) return;
-
-    const unsubscribe = onQuestUpdate((event) => {
-      setQuestInstances((current) => {
-        if (!event?.action) return current;
-        const record = (event.record ?? {}) as Partial<QuestInstance>;
-        const oldRecord = (event.old_record ?? {}) as Partial<QuestInstance>;
-
-        if (event.action === "INSERT" && record.id) {
-          return deduplicateQuests([record as QuestInstance, ...current]);
-        }
-
-        if (event.action === "UPDATE" && record.id) {
-          return deduplicateQuests(
-            current.map((quest) =>
-              quest.id === record.id
-                ? { ...quest, ...record }
-                : quest
-            )
-          );
-        }
-
-        if (event.action === "DELETE" && oldRecord.id) {
-          return current.filter((quest) => quest.id !== oldRecord.id);
-        }
-
-        return current;
-      });
-    });
-
-    return unsubscribe;
-  }, [onQuestUpdate, profile?.family_id]);
+    if (error) {
+      onError(error);
+    }
+  }, [error, onError]);
 
   const handleStatusUpdate = async (questId: string, status: QuestStatus) => {
     try {
       if (status === "APPROVED") {
         await questInstanceApiService.approveQuest(questId);
-        await loadData({ useSpinner: false });
+        await loadData();
         return;
       }
 
@@ -210,12 +97,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
         updateData.completed_at = new Date().toISOString();
       }
 
-      setQuestInstances((current) =>
-        current.map((quest) =>
-          quest.id === questId ? { ...quest, ...updateData } : quest
-        )
-      );
-
       const { error: updateError } = await supabase
         .from("quest_instances")
         .update(updateData)
@@ -226,16 +107,14 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update quest";
-      setError(message);
       onError(message);
-      await loadData({ useSpinner: false });
+      await loadData();
     }
   };
 
   const handlePickupQuest = async (quest: QuestInstance) => {
     if (!user) {
       const message = "You must be signed in to pick up quests.";
-      setError(message);
       onError(message);
       return;
     }
@@ -246,14 +125,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     }
 
     try {
-      setQuestInstances((current) =>
-        current.map((existing) =>
-          existing.id === quest.id
-            ? { ...existing, assigned_to_id: user.id, status: "PENDING" }
-            : existing
-        )
-      );
-
       const { error: updateError } = await supabase
         .from("quest_instances")
         .update({
@@ -267,9 +138,8 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to pick up quest";
-      setError(message);
       onError(message);
-      await loadData({ useSpinner: false });
+      await loadData();
     }
   };
 
@@ -277,14 +147,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     if (!assigneeId) return;
 
     try {
-      setQuestInstances((current) =>
-        current.map((quest) =>
-          quest.id === questId
-            ? { ...quest, assigned_to_id: assigneeId, status: "PENDING" }
-            : quest
-        )
-      );
-
       const { error: updateError } = await supabase
         .from("quest_instances")
         .update({
@@ -303,9 +165,8 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       }));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to assign quest";
-      setError(message);
       onError(message);
-      await loadData({ useSpinner: false });
+      await loadData();
     }
   };
 
@@ -320,12 +181,11 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
         delete updated[questId];
         return updated;
       });
-      await loadData({ useSpinner: false });
+      await loadData();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to assign family quest";
-      setError(message);
       onError(message);
-      await loadData({ useSpinner: false });
+      await loadData();
     }
   };
 
@@ -344,19 +204,17 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to cancel quest";
-      setError(message);
       onError(message);
-      await loadData({ useSpinner: false });
+      await loadData();
     }
   };
 
   const handleClaimQuest = async (questId: string) => {
     try {
       await questInstanceApiService.claimQuest(questId);
-      await loadData({ useSpinner: false });
+      await loadData();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to claim quest";
-      setError(message);
       onError(message);
     }
   };
@@ -364,10 +222,9 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const handleReleaseQuest = async (questId: string) => {
     try {
       await questInstanceApiService.releaseQuest(questId);
-      await loadData({ useSpinner: false });
+      await loadData();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to release quest";
-      setError(message);
       onError(message);
     }
   };
@@ -375,10 +232,9 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const handleApproveQuest = async (questId: string) => {
     try {
       await questInstanceApiService.approveQuest(questId);
-      await loadData({ useSpinner: false });
+      await loadData();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to approve quest";
-      setError(message);
       onError(message);
     }
   };
@@ -458,8 +314,7 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
           type="button"
           className="mt-4 px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
           onClick={() => {
-            setError(null);
-            void loadData({ useSpinner: true });
+            void loadData();
           }}
         >
           Try Again
@@ -475,12 +330,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
           <h2 className="text-3xl font-fantasy text-gray-100">Quest Dashboard</h2>
           <p className="text-gray-400 text-sm">Manage active quests, approvals, and family challenges.</p>
         </div>
-        {isRefreshing && (
-          <span className="inline-flex items-center gap-2 text-sm text-gray-400">
-            <LoadingSpinner size="sm" aria-label="Refreshing quest data" />
-            Refreshing...
-          </span>
-        )}
       </div>
 
       <section>

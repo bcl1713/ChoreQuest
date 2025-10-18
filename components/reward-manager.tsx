@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { useRealtime } from "@/lib/realtime-context";
-import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
+import { RewardService } from "@/lib/reward-service";
 import { Reward, RewardType } from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRewards } from "@/hooks/useRewards";
 
 const REWARD_TYPE_ICONS = {
   SCREEN_TIME: "📱",
@@ -25,11 +25,10 @@ const rewardService = new RewardService();
 
 export default function RewardManager() {
   const { profile, user } = useAuth();
-  const { onRewardUpdate, onRewardRedemptionUpdate } = useRealtime();
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [redemptions, setRedemptions] = useState<RewardRedemptionWithUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Use custom hook for rewards and redemptions
+  const { rewards, redemptions, loading, error } = useRewards();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -44,67 +43,6 @@ export default function RewardManager() {
     type: "SCREEN_TIME" as RewardType,
     cost: "",
   });
-
-  // Load rewards and redemptions on mount
-  useEffect(() => {
-    if (!profile?.family_id) return;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [rewardsData, redemptionsData] = await Promise.all([
-          rewardService.getRewardsForFamily(profile.family_id!),
-          rewardService.getRedemptionsForFamily(profile.family_id!)
-        ]);
-        setRewards(rewardsData);
-        setRedemptions(redemptionsData);
-      } catch (err) {
-        console.error("Failed to load data:", err);
-        setError("Failed to load rewards and redemptions");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [profile?.family_id]);
-
-  // Subscribe to realtime reward updates
-  useEffect(() => {
-    const unsubscribe = onRewardUpdate((event) => {
-      if (event.action === "INSERT") {
-        const newReward = event.record as Reward;
-        setRewards((prev) => [newReward, ...prev]);
-      } else if (event.action === "UPDATE") {
-        const updatedReward = event.record as Reward;
-        setRewards((prev) =>
-          prev.map((r) => (r.id === updatedReward.id ? updatedReward : r))
-        );
-      } else if (event.action === "DELETE") {
-        const deletedId = event.old_record?.id as string;
-        setRewards((prev) => prev.filter((r) => r.id !== deletedId));
-      }
-    });
-
-    return unsubscribe;
-  }, [onRewardUpdate]);
-
-  // Subscribe to realtime redemption updates
-  useEffect(() => {
-    if (!profile?.family_id) return;
-
-    const unsubscribe = onRewardRedemptionUpdate(async () => {
-      // Reload all redemptions when any change occurs
-      try {
-        const redemptionsData = await rewardService.getRedemptionsForFamily(profile.family_id!);
-        setRedemptions(redemptionsData);
-      } catch (err) {
-        console.error("Failed to reload redemptions:", err);
-      }
-    });
-
-    return unsubscribe;
-  }, [profile?.family_id, onRewardRedemptionUpdate]);
 
   const resetForm = () => {
     setFormData({
@@ -145,7 +83,7 @@ export default function RewardManager() {
       });
     } catch (err) {
       console.error("Failed to toggle reward status:", err);
-      setError("Failed to update reward status");
+      // Error will be shown via the hook's error state
     }
   };
 
@@ -167,7 +105,7 @@ export default function RewardManager() {
       resetForm();
     } catch (err) {
       console.error("Failed to create reward:", err);
-      setError("Failed to create reward");
+      // Error will be shown via the hook's error state
     }
   };
 
@@ -188,7 +126,7 @@ export default function RewardManager() {
       resetForm();
     } catch (err) {
       console.error("Failed to update reward:", err);
-      setError("Failed to update reward");
+      // Error will be shown via the hook's error state
     }
   };
 
@@ -206,7 +144,7 @@ export default function RewardManager() {
       });
     } catch (err) {
       console.error("Failed to delete reward:", err);
-      setError("Failed to delete reward");
+      // Error will be shown via the hook's error state
     } finally {
       setDeleteLoading(false);
     }
@@ -219,7 +157,7 @@ export default function RewardManager() {
       await rewardService.updateRedemptionStatus(redemptionId, "APPROVED", user.id);
     } catch (err) {
       console.error("Failed to approve redemption:", err);
-      setError("Failed to approve redemption");
+      // Error will be shown via the hook's error state
     }
   };
 
@@ -234,7 +172,7 @@ export default function RewardManager() {
       await rewardService.refundGold(redemption.user_id, redemption.cost);
     } catch (err) {
       console.error("Failed to deny redemption:", err);
-      setError("Failed to deny redemption");
+      // Error will be shown via the hook's error state
     }
   };
 
@@ -243,7 +181,7 @@ export default function RewardManager() {
       await rewardService.updateRedemptionStatus(redemptionId, "FULFILLED");
     } catch (err) {
       console.error("Failed to fulfill redemption:", err);
-      setError("Failed to fulfill redemption");
+      // Error will be shown via the hook's error state
     }
   };
 

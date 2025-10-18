@@ -1,64 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useRealtime } from '@/lib/realtime-context';
 import { userService } from '@/lib/user-service';
-import type { User } from '@/types';
+import { useFamilyMembers } from '@/hooks/useFamilyMembers';
+import type { Tables } from '@/lib/types/database';
+
+type UserProfile = Tables<'user_profiles'>;
 
 export function FamilyManagement() {
-  const { profile, user } = useAuth();
-  const { onFamilyMemberUpdate } = useRealtime();
+  const { user } = useAuth();
 
-  const [familyMembers, setFamilyMembers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use custom hook for family members
+  const { familyMembers, loading, error: hookError } = useFamilyMembers();
+
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
   const [isDemoteModalOpen, setIsDemoteModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
-  // Load family members
-  const loadFamilyMembers = useCallback(async () => {
-    if (!profile?.family_id) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const members = await userService.getFamilyMembers(profile.family_id);
-      setFamilyMembers(members);
-    } catch (err) {
-      setError('Failed to load family members');
-      console.error('Error loading family members:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [profile?.family_id]);
-
-  useEffect(() => {
-    loadFamilyMembers();
-  }, [loadFamilyMembers]);
-
-  // Realtime subscription for user role updates
-  useEffect(() => {
-    const unsubscribe = onFamilyMemberUpdate((event) => {
-      if (event.action === 'UPDATE') {
-        // Reload family members to get updated roles
-        loadFamilyMembers();
-      }
-    });
-
-    return unsubscribe;
-  }, [onFamilyMemberUpdate, loadFamilyMembers]);
-
-  const openPromoteModal = (member: User) => {
+  const openPromoteModal = (member: UserProfile) => {
     setSelectedUser(member);
     setIsPromoteModalOpen(true);
   };
 
-  const openDemoteModal = (member: User) => {
+  const openDemoteModal = (member: UserProfile) => {
     setSelectedUser(member);
     setIsDemoteModalOpen(true);
   };
@@ -101,7 +69,7 @@ export function FamilyManagement() {
     }
   };
 
-  const getRoleBadge = (role: User['role']) => {
+  const getRoleBadge = (role: UserProfile['role']) => {
     switch (role) {
       case 'GUILD_MASTER':
         return (
@@ -135,15 +103,18 @@ export function FamilyManagement() {
     );
   }
 
+  // Combine errors from hook and local state
+  const displayError = hookError || error;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-yellow-400">Family Management</h2>
       </div>
 
-      {error && (
+      {displayError && (
         <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded">
-          {error}
+          {displayError}
         </div>
       )}
 

@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import {
   QuestDifficulty,
   QuestCategory,
   QuestTemplate,
-  Tables,
 } from "@/lib/types/database";
 import type { TemplateFormData } from "@/lib/types/quest-templates";
 import { questTemplateService } from "@/lib/quest-template-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { validateFutureDate } from "@/lib/utils/validation";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 
 interface QuestCreateModalProps {
   isOpen: boolean;
@@ -28,6 +28,10 @@ export default function QuestCreateModal({
   templates,
 }: QuestCreateModalProps) {
   const { user, profile } = useAuth();
+
+  // Use custom hook for family members
+  const { familyMembers, familyCharacters } = useFamilyMembers();
+
   const [mode, setMode] = useState<"adhoc" | "existing" | "recurring">("adhoc");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
@@ -54,53 +58,9 @@ export default function QuestCreateModal({
     class_bonuses: null,
   };
 
-  const [familyMembers, setFamilyMembers] = useState<Tables<"user_profiles">[]>([]);
-  const [familyCharacters, setFamilyCharacters] = useState<Tables<"characters">[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recurringForm, setRecurringForm] = useState<TemplateFormData>(defaultRecurringForm);
-
-  const loadFamilyMembers = useCallback(async () => {
-    if (!profile) return;
-
-    try {
-      const { data: membersData, error: membersError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('family_id', profile.family_id);
-
-      if (membersError) {
-        throw membersError;
-      }
-
-      const members = membersData ?? [];
-      setFamilyMembers(members);
-
-      const memberIds = members.map((member) => member.id);
-      if (memberIds.length > 0) {
-        const { data: charactersData, error: charactersError } = await supabase
-          .from("characters")
-          .select("*")
-          .in("user_id", memberIds);
-
-        if (charactersError) {
-          throw charactersError;
-        }
-
-        setFamilyCharacters(charactersData || []);
-      } else {
-        setFamilyCharacters([]);
-      }
-    } catch {
-      setError("Failed to load family members");
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadFamilyMembers();
-    }
-  }, [isOpen, loadFamilyMembers]);
 
   const resetForm = () => {
     setMode("adhoc");
