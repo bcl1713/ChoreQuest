@@ -992,15 +992,26 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quest.status)}`}>
                         {statusLabel}
                       </span>
-                      {quest.status === "COMPLETED" && (
-                        <button
-                          type="button"
-                          className="mt-3 px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
-                          onClick={() => handleApproveQuest(quest.id)}
-                        >
-                          Approve
-                        </button>
-                      )}
+                      <div className="flex flex-col gap-2 mt-3">
+                        {quest.status === "COMPLETED" && (
+                          <button
+                            type="button"
+                            className="px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+                            onClick={() => handleApproveQuest(quest.id)}
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {quest.status !== "COMPLETED" && quest.status !== "APPROVED" && (
+                          <button
+                            type="button"
+                            className="px-4 py-2 rounded-md bg-rose-700 text-white hover:bg-rose-600 transition"
+                            onClick={() => handleCancelQuest(quest.id)}
+                          >
+                            Cancel Quest
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
