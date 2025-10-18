@@ -24,8 +24,8 @@
 - `hooks/useQuests.test.ts` - Tests for useQuests hook
 - `hooks/useRewards.ts` - Reward data fetching and management
 - `hooks/useRewards.test.ts` - Tests for useRewards hook
-- `hooks/useFamilyMembers.ts` - Family member data fetching
-- `hooks/useFamilyMembers.test.ts` - Tests for useFamilyMembers hook
+- ✅ `hooks/useFamilyMembers.ts` - Family member data fetching (14 tests passing)
+- ✅ `hooks/useFamilyMembers.test.ts` - Tests for useFamilyMembers hook
 - `hooks/useCharacter.ts` - Character data and stats
 - `hooks/useCharacter.test.ts` - Tests for useCharacter hook
 - `hooks/useQuestFilters.ts` - Quest filtering logic
@@ -153,12 +153,12 @@ components/
     - [x] Run `npm run test` - verify all tests pass (837/837 passing)
 
 - [ ] 2.0 Create Custom Hooks for Common Patterns
-  - [ ] 2.1 Create `hooks/useFamilyMembers.ts` for family member data fetching
-    - Extract family member loading logic from quest-dashboard.tsx
-    - Extract family member loading logic from quest-create-modal.tsx
-    - Extract family member loading logic from family-management.tsx
-    - Return `{ familyMembers, familyCharacters, loading, error, reload }`
-    - Write comprehensive tests in `hooks/useFamilyMembers.test.ts`
+  - [x] 2.1 Create `hooks/useFamilyMembers.ts` for family member data fetching
+    - [x] Extract family member loading logic from quest-dashboard.tsx
+    - [x] Extract family member loading logic from quest-create-modal.tsx
+    - [x] Extract family member loading logic from family-management.tsx
+    - [x] Return `{ familyMembers, familyCharacters, loading, error, reload }`
+    - [x] Write comprehensive tests in `hooks/useFamilyMembers.test.ts` (14 tests passing)
   - [ ] 2.2 Create `hooks/useCharacter.ts` for character data
     - Extract character loading logic from quest-dashboard.tsx
     - Handle character fetch with proper error handling
