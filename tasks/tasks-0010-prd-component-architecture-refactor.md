@@ -12,10 +12,10 @@
 ### Utilities Created
 - `lib/utils/colors.ts` - ✅ Color utility functions (getDifficultyColor, getStatusColor)
 - `lib/utils/colors.test.ts` - ✅ Tests for color utilities (18 tests passing)
+- `lib/utils/formatting.ts` - ✅ Date/time/number formatting functions (formatNumber, formatXP, formatGold, formatPoints, formatPercent, formatDateTime, formatDueDate)
+- `lib/utils/formatting.test.ts` - ✅ Tests for formatting utilities (39 tests passing)
 
 ### Utilities to Create
-- `lib/utils/formatting.ts` - Date/time/number formatting functions
-- `lib/utils/formatting.test.ts` - Tests for formatting utilities
 - `lib/utils/validation.ts` - Form validation helpers
 - `lib/utils/validation.test.ts` - Tests for validation utilities
 - `lib/utils/data.ts` - Data manipulation utilities (deduplication, sorting, filtering)
@@ -125,7 +125,7 @@ components/
     - Extract `getStatusColor` from quest-dashboard.tsx
     - Add TypeScript types for all color functions
     - Write comprehensive unit tests in `lib/utils/colors.test.ts`
-  - [ ] 1.2 Create `lib/utils/formatting.ts` with formatting functions
+  - [x] 1.2 Create `lib/utils/formatting.ts` with formatting functions
     - Extract `formatDueDate` from quest-dashboard.tsx
     - Extract `formatPercent` from quest-dashboard.tsx
     - Extract `formatDateTime` from quest-dashboard.tsx
