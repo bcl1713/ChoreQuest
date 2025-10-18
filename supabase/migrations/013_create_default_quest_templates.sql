@@ -5,8 +5,8 @@
 -- Insert default quest templates (family_id = NULL indicates global defaults)
 -- Each template includes class_bonuses for character-specific multipliers
 
--- 1. Clean Your Room - EASY, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 1. Clean Your Room - EASY, DAILY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   'Clean Your Room',
@@ -17,11 +17,12 @@ VALUES (
   'DAILY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 2. Do the Dishes - EASY, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 2. Do the Dishes - EASY, DAILY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000002',
   'Do the Dishes',
@@ -32,11 +33,12 @@ VALUES (
   'DAILY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 3. Take Out the Trash - EASY, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 3. Take Out the Trash - EASY, DAILY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000003',
   'Take Out the Trash',
@@ -47,26 +49,28 @@ VALUES (
   'DAILY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 4. Vacuum the House - MEDIUM, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 4. Vacuum the House - MEDIUM, WEEKLY
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000004',
   'Vacuum the House',
   'Vacuum all carpeted areas and floors throughout the entire house.',
-  100,
-  50,
+  120,
+  60,
   'MEDIUM',
-  'DAILY',
+  'WEEKLY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 5. Laundry Duty - MEDIUM, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 5. Laundry Duty - MEDIUM, DAILY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000005',
   'Laundry Duty',
@@ -77,26 +81,28 @@ VALUES (
   'DAILY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 6. Mow the Lawn - HARD, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 6. Mow the Lawn - HARD, WEEKLY
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000006',
   'Mow the Lawn',
   'Mow the entire lawn, trim edges, and clean up grass clippings.',
-  150,
-  75,
+  200,
+  100,
   'HARD',
-  'DAILY',
+  'WEEKLY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 7. Weekly Room Deep Clean - HARD, WEEKLY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 7. Weekly Room Deep Clean - HARD, WEEKLY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000007',
   'Weekly Room Deep Clean',
@@ -107,41 +113,44 @@ VALUES (
   'WEEKLY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
--- 8. Organize the Garage - HARD, WEEKLY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 8. Family Garage Organization - HARD, WEEKLY, FAMILY QUEST
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000008',
-  'Organize the Garage',
-  'Sort items in the garage, sweep the floor, and arrange tools and equipment neatly.',
+  'Family Garage Organization',
+  'Work together to organize the garage: sort items, sweep the floor, and arrange tools and equipment neatly.',
   200,
   100,
   'HARD',
   'WEEKLY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'FAMILY'
 );
 
--- 9. Help with Grocery Shopping - MEDIUM, WEEKLY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 9. Family Grocery Shopping - MEDIUM, WEEKLY, FAMILY QUEST
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000009',
-  'Help with Grocery Shopping',
-  'Assist with grocery shopping: help make the list, carry bags, and put groceries away.',
+  'Family Grocery Shopping',
+  'Family grocery shopping trip: help make the list, carry bags, and put groceries away.',
   120,
   60,
   'MEDIUM',
   'WEEKLY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'FAMILY'
 );
 
--- 10. Walk the Dog - EASY, DAILY
-INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses)
+-- 10. Walk the Dog - EASY, DAILY, INDIVIDUAL
+INSERT INTO quest_templates (id, title, description, xp_reward, gold_reward, difficulty, category, family_id, is_active, class_bonuses, quest_type)
 VALUES (
   '00000000-0000-0000-0000-000000000010',
   'Walk the Dog',
@@ -152,7 +161,8 @@ VALUES (
   'DAILY',
   NULL,
   true,
-  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb
+  '{"KNIGHT": {"xp": 1.05, "gold": 1.05}, "MAGE": {"xp": 1.2, "gold": 1.0}, "ROGUE": {"xp": 1.0, "gold": 1.15}, "HEALER": {"xp": 1.1, "gold": 1.0, "honor": 1.25}, "RANGER": {"xp": 1.0, "gold": 1.0, "gems": 1.3}}'::jsonb,
+  'INDIVIDUAL'
 );
 
 -- Create function to copy default templates to new families
@@ -169,7 +179,8 @@ BEGIN
     category,
     family_id,
     is_active,
-    class_bonuses
+    class_bonuses,
+    quest_type
   )
   SELECT
     title,
@@ -180,7 +191,8 @@ BEGIN
     category,
     NEW.id, -- Assign to the new family
     is_active,
-    class_bonuses
+    class_bonuses,
+    quest_type
   FROM quest_templates
   WHERE family_id IS NULL;
 
