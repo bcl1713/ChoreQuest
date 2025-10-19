@@ -78,9 +78,10 @@ describe('quest-card-helpers', () => {
     });
 
     describe('GM Mode', () => {
-      it('shows Approve button only for COMPLETED quest', () => {
+      it('shows Approve and Deny buttons for COMPLETED quest', () => {
         const result = getButtonVisibility('COMPLETED' as QuestStatus, 'gm');
         expect(result.canApprove).toBe(true);
+        expect(result.canDeny).toBe(true);
         expect(result.canCancel).toBe(false);
       });
 

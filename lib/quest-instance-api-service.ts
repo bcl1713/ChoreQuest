@@ -118,6 +118,26 @@ class QuestInstanceApiService {
       throw new Error(errorData.error || 'Failed to release quest');
     }
   }
+
+  async denyQuest(questId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/deny`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to deny quest' }));
+      throw new Error(errorData.error || 'Failed to deny quest');
+    }
+  }
 }
 
 export const questInstanceApiService = new QuestInstanceApiService();

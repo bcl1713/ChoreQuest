@@ -15,6 +15,7 @@ export interface QuestCardProps {
   // GM action callbacks
   onAssign?: (questId: string, assigneeId: string) => void;
   onApprove?: (questId: string) => void;
+  onDeny?: (questId: string) => void;
   onCancel?: (questId: string) => void;
   onRelease?: (questId: string) => void;
 
@@ -37,6 +38,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   viewMode,
   onAssign,
   onApprove,
+  onDeny,
   onCancel,
   onRelease,
   onStart,
@@ -199,6 +201,17 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               </button>
             )}
 
+            {buttonVis.canDeny && onDeny && (
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-orange-700 text-white hover:bg-orange-600 transition"
+                onClick={() => onDeny(quest.id)}
+                data-testid="gm-deny-quest"
+              >
+                Deny Quest
+              </button>
+            )}
+
             {buttonVis.canCancel && onCancel && (
               <button
                 type="button"
@@ -210,7 +223,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               </button>
             )}
 
-            {onRelease && quest.assigned_to_id && (
+            {onRelease && quest.assigned_to_id && quest.status !== 'COMPLETED' && (
               <button
                 type="button"
                 className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition"

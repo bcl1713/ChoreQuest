@@ -19,6 +19,7 @@ export const getButtonVisibility = (
 
     // GM mode buttons
     canApprove: false,
+    canDeny: false,
     canCancel: false,
     canTogglePause: false,
     showAssignment: false,
@@ -36,6 +37,9 @@ export const getButtonVisibility = (
   } else if (viewMode === 'gm') {
     // GM can approve completed quests
     buttonVis.canApprove = status === 'COMPLETED';
+
+    // GM can deny completed quests to send them back to PENDING
+    buttonVis.canDeny = status === 'COMPLETED';
 
     // GM can cancel quests that are not yet approved or expired
     buttonVis.canCancel =

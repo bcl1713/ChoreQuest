@@ -59,6 +59,22 @@ export function QuestManagementTab() {
     [reload]
   );
 
+  const handleDenyQuest = useCallback(
+    async (questId: string) => {
+      if (!window.confirm('Send this quest back to PENDING status? The hero can then work on it or abandon it.')) {
+        return;
+      }
+      try {
+        await questInstanceApiService.denyQuest(questId);
+        await reload();
+      } catch (err) {
+        console.error('Failed to deny quest:', err);
+        alert('Failed to deny quest. Please try again.');
+      }
+    },
+    [reload]
+  );
+
   const handleCancelQuest = useCallback(
     async (questId: string) => {
       if (!window.confirm('Are you sure you want to cancel this quest?')) {
@@ -197,6 +213,7 @@ export function QuestManagementTab() {
                 onAssigneeChange={handleAssigneeChange}
                 onAssign={handleAssignQuest}
                 onApprove={handleApproveQuest}
+                onDeny={handleDenyQuest}
                 onCancel={handleCancelQuest}
                 onRelease={handleReleaseQuest}
               />
