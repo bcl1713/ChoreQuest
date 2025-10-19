@@ -144,7 +144,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               onClick={() => onRelease(quest.id)}
               data-testid="hero-release-quest"
             >
-              Release to Pool
+              Abandon Quest
             </button>
           )}
         </div>
@@ -217,7 +217,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
                 onClick={() => onRelease(quest.id)}
                 data-testid="gm-release-quest"
               >
-                Release to Pool
+                Unassign Quest
               </button>
             )}
           </div>
