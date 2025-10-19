@@ -6,11 +6,11 @@ This folder contains all quest-related components for the ChoreQuest application
 
 ```
 quests/
-├── quest-dashboard/        # Main quest viewing and management interface
-├── quest-create-modal/     # Quest creation and editing interface
-├── quest-conversion-wizard.tsx
-├── quest-template-manager.tsx
-└── index.ts               # Barrel export
+├── quest-dashboard/            # Main quest viewing and management interface
+├── quest-create-modal/         # Quest creation and editing interface
+├── quest-template-manager/     # Quest template management interface
+├── quest-conversion-wizard.tsx # One-time to recurring quest conversion
+└── index.ts                   # Barrel export
 ```
 
 ## Components
@@ -99,10 +99,53 @@ Modal interface for creating and editing quests, supporting multiple quest types
 - Difficulty-based reward suggestions
 - Performance optimized with memoization
 
+### Quest Template Manager (`quest-template-manager/`)
+
+The quest template manager is the interface for creating and managing quest templates used for recurring quests. It's decomposed into focused, single-responsibility components:
+
+- **`index.tsx`** (198 LOC) - Main orchestrator component that:
+  - Loads quest templates with realtime updates via Supabase subscriptions
+  - Manages template CRUD operations (create, read, update, delete)
+  - Composes sub-components (TemplateList, TemplateForm, DeleteModal)
+  - Handles template state management
+
+- **`template-list.tsx`** (77 LOC) - List of quest templates
+  - Displays templates in separate sections (Individual Quests, Family Quests)
+  - Shows template type, difficulty, and recurrence pattern
+  - Provides edit/delete/pause actions for each template
+  - Uses `React.memo` and `useMemo` for performance
+
+- **`template-item.tsx`** (92 LOC) - Individual template card
+  - Displays template details (title, type, difficulty, rewards)
+  - Shows recurrence pattern for recurring templates
+  - Provides action buttons (Edit, Delete, Pause/Resume)
+  - Uses `React.memo` and `useMemo` for performance
+  - Memoizes computed values (containerClasses, pauseButtonClasses, assignmentText)
+
+- **`template-form.tsx`** (327 LOC) - Template creation/edit form
+  - Fields: title, description, type, difficulty
+  - Recurrence pattern settings for recurring templates
+  - Reward configuration (XP, gold)
+  - Character assignment for individual quests
+  - Form validation with helpful error messages
+  - Uses `React.memo`, `useMemo`, and `useCallback` for performance
+
+- **`delete-modal.tsx`** (66 LOC) - Delete confirmation modal
+  - Confirms template deletion
+  - Optional cleanup of existing quest instances
+  - Prevents accidental deletions
+
+**Key Features:**
+- Realtime template updates via Supabase subscriptions
+- Support for both individual and family quest templates
+- Recurrence pattern configuration (daily, weekly, monthly)
+- Template pause/resume functionality
+- Performance optimized with memoization
+- Comprehensive form validation
+
 ### Other Quest Components
 
 - **`quest-conversion-wizard.tsx`** - Converts one-time quests to recurring templates
-- **`quest-template-manager.tsx`** - Manages quest templates for recurring quests
 
 ## Related Hooks
 
@@ -145,13 +188,23 @@ function QuestsPage() {
 ## Testing
 
 All components have comprehensive unit tests located in `__tests__/` subdirectories:
+
+**Quest Dashboard:**
 - Quest item rendering and interactions (25 tests)
 - Quest list display and empty states (15 tests)
 - Quest filters and search (23 tests)
 - Quest statistics calculations (21 tests)
+
+**Quest Create Modal:**
 - Adhoc quest form validation (20 tests)
 - Recurring quest form (26 tests)
 - Template quest form (21 tests)
+
+**Quest Template Manager:**
+- Template list display and filtering (8 tests)
+- Template item rendering and actions (17 tests)
+- Template form validation and submission (27 tests)
+- Delete modal confirmation (10 tests)
 
 Run tests: `npm test -- quests`
 

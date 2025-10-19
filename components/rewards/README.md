@@ -6,7 +6,7 @@ This folder contains all reward-related components for the ChoreQuest applicatio
 
 ```
 rewards/
-├── reward-manager/         # Reward and redemption management interface
+├── reward-manager/         # Reward and redemption management interface (Guild Master)
 ├── reward-store/          # Player-facing reward redemption store
 └── index.ts              # Barrel export
 ```
