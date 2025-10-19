@@ -13,6 +13,7 @@
 - `components/quests/quest-card/__tests__/quest-card-helpers.test.ts` - Unit tests for helpers (26 tests) ✅
 - `components/admin/quest-management-tab.tsx` - New Quest Management tab component ✅
 - `components/admin/__tests__/quest-management-tab.test.tsx` - Unit tests for Quest Management tab (16 tests) ✅
+- `components/quests/quest-dashboard/__tests__/quest-helpers.test.ts` - Unit tests for filter helpers (23 tests) ✅
 
 ### Files to Modify
 - `components/admin/admin-dashboard.tsx` - Add new Quest Management tab to tab list and panels ✅
@@ -87,18 +88,18 @@
   - [x] 2.18 Test count badges display correct numbers
   - [x] 2.19 Run tests with `npx jest components/admin/quest-management-tab` and ensure all pass
 
-- [ ] 3.0 Implement quest grouping and filtering logic
-  - [ ] 3.1 Open `components/quests/quest-dashboard/quest-helpers.ts`
-  - [ ] 3.2 Create `filterPendingApprovalQuests()` function (status === "COMPLETED")
-  - [ ] 3.3 Create `filterUnassignedActiveQuests()` function (no assigned_to_id, active statuses, exclude completed/missed)
-  - [ ] 3.4 Create `filterInProgressQuests()` function (assigned_to_id exists, status IN_PROGRESS or CLAIMED)
-  - [ ] 3.5 Create `filterActiveQuestsExcludingCompleted()` helper (exclude COMPLETED, APPROVED, EXPIRED, MISSED)
-  - [ ] 3.6 Add unit tests for new filter functions in `quest-helpers.test.ts`
-  - [ ] 3.7 Import and use these filter functions in `quest-management-tab.tsx`
-  - [ ] 3.8 Use `useMemo` to memoize filtered quest lists for performance
-  - [ ] 3.9 Ensure paused quests (is_paused: true) are included in filtered lists
-  - [ ] 3.10 Verify quests are grouped correctly in each section
-  - [ ] 3.11 Run tests with `npx jest quest-helpers` and ensure all pass
+- [x] 3.0 Implement quest grouping and filtering logic
+  - [x] 3.1 Open `components/quests/quest-dashboard/quest-helpers.ts`
+  - [x] 3.2 Create `filterPendingApprovalQuests()` function (status === "COMPLETED")
+  - [x] 3.3 Create `filterUnassignedActiveQuests()` function (no assigned_to_id, active statuses, exclude completed/missed)
+  - [x] 3.4 Create `filterInProgressQuests()` function (assigned_to_id exists, status IN_PROGRESS or CLAIMED)
+  - [x] 3.5 Create `filterActiveQuestsExcludingCompleted()` helper (exclude COMPLETED, APPROVED, EXPIRED, MISSED)
+  - [x] 3.6 Add unit tests for new filter functions in `quest-helpers.test.ts`
+  - [x] 3.7 Import and use these filter functions in `quest-management-tab.tsx`
+  - [x] 3.8 Use `useMemo` to memoize filtered quest lists for performance
+  - [x] 3.9 Ensure paused quests (is_paused: true) are included in filtered lists
+  - [x] 3.10 Verify quests are grouped correctly in each section
+  - [x] 3.11 Run tests with `npx jest quest-helpers` and ensure all pass
 
 - [ ] 4.0 Wire up GM action handlers (assign, approve, cancel, pause)
   - [ ] 4.1 In `quest-management-tab.tsx`, import questInstanceApiService
