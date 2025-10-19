@@ -54,7 +54,7 @@ describe('QuestDashboard - Realtime DELETE Events', () => {
     xp_reward: 100,
     gold_reward: 50,
     status: 'AVAILABLE' as const,
-    quest_type: 'FAMILY' as const,
+    quest_type: 'INDIVIDUAL' as const,
     family_id: 'family-456',
     assigned_to_id: null,
     created_at: new Date().toISOString(),

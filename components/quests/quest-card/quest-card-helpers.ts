@@ -31,7 +31,7 @@ export const getButtonVisibility = (
     // Hero can complete quests that are IN_PROGRESS or CLAIMED
     buttonVis.canComplete = status === 'IN_PROGRESS' || status === 'CLAIMED';
 
-    // Hero can pick up AVAILABLE quests
+    // Hero can pick up AVAILABLE quests (unassigned quests)
     buttonVis.canPickup = status === 'AVAILABLE';
   } else if (viewMode === 'gm') {
     // GM can approve completed quests

@@ -37,27 +37,6 @@ class QuestInstanceApiService {
     }
   }
 
-  async releaseQuest(questId: string): Promise<void> {
-    const token = await this.getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`/api/quests/${questId}/release`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to release quest');
-    }
-  }
-
   async approveQuest(questId: string): Promise<void> {
     const token = await this.getAuthToken();
     if (!token) {
@@ -119,45 +98,24 @@ class QuestInstanceApiService {
     }
   }
 
-  async togglePauseQuest(questId: string, isPaused: boolean): Promise<void> {
+  async releaseQuest(questId: string, characterId?: string): Promise<void> {
     const token = await this.getAuthToken();
     if (!token) {
       throw new Error('Authentication required');
     }
 
-    const response = await fetch(`/api/quest-instances/${questId}/pause`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ is_paused: isPaused }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Failed to toggle pause' }));
-      throw new Error(errorData.error || 'Failed to toggle pause');
-    }
-  }
-
-  async assignQuest(questId: string, userId: string): Promise<void> {
-    const token = await this.getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`/api/quest-instances/${questId}/assign-user`, {
+    const response = await fetch(`/api/quest-instances/${questId}/release`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ characterId }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Failed to assign quest' }));
-      throw new Error(errorData.error || 'Failed to assign quest');
+      const errorData = await response.json().catch(() => ({ error: 'Failed to release quest' }));
+      throw new Error(errorData.error || 'Failed to release quest');
     }
   }
 }

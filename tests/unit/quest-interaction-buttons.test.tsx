@@ -9,12 +9,11 @@
 
 
 
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import QuestDashboard from "../../components/quests/quest-dashboard";
 import React from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useRealtime } from "../../lib/realtime-context";
-import { questInstanceApiService } from "../../lib/quest-instance-api-service";
 import { supabase } from "../../lib/supabase";
 import { useFamilyMembers } from "../../hooks/useFamilyMembers";
 import { useCharacter } from "../../hooks/useCharacter";
@@ -61,7 +60,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     id: "quest-123",
     title: "Clean the Kitchen",
     description: "Deep clean kitchen counters and dishes",
-    status: "PENDING",
+    status: "AVAILABLE", // Unassigned quests have AVAILABLE status
     difficulty: "MEDIUM",
     xp_reward: 50,
     gold_reward: 25,
@@ -73,27 +72,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     updated_at: new Date().toISOString(),
   };
 
-  const mockCompletedQuest = {
-    id: "quest-789",
-    title: "Tidy the Living Room",
-    description: "Reset the living room before dinner",
-    status: "COMPLETED",
-    difficulty: "EASY",
-    xp_reward: 40,
-    gold_reward: 15,
-    assigned_to_id: "hero-123",
-    template_id: "template-001",
-    quest_type: "FAMILY",
-    volunteered_by: "char-123",
-    volunteer_bonus: 0.2,
-    streak_bonus: 0.02,
-    streak_count: 3,
-    recurrence_pattern: "DAILY",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  type QuestInstanceMock = typeof mockUnassignedQuest | typeof mockCompletedQuest;
+  type QuestInstanceMock = typeof mockUnassignedQuest;
 
   let questInstancesMock: QuestInstanceMock[] = [];
 
@@ -180,7 +159,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     expect(within(questCard).getByText("Pick Up Quest")).toBeInTheDocument();
   });
 
-  test("Guild Master sees both Pick Up and Management controls on unassigned quests", async () => {
+  test("Guild Master sees hero view on quest dashboard (GM-specific features moved to Quest Management tab)", async () => {
     (useAuth as jest.Mock).mockReturnValue({
       user: mockGMUser,
       session: { user: { id: mockGMUser.id } },
@@ -192,12 +171,8 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       },
     });
 
-    // Add family members so assignment dropdown appears
     (useFamilyMembers as jest.Mock).mockReturnValue({
-      familyMembers: [
-        { id: 'hero-123', name: 'Hero User', role: 'HERO' },
-        { id: 'hero-456', name: 'Another Hero', role: 'HERO' },
-      ],
+      familyMembers: [],
       familyCharacters: [],
       loading: false,
       error: null,
@@ -217,47 +192,10 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
 
     const questCard = screen.getByText("Clean the Kitchen").closest(".fantasy-card");
+    // Quest Dashboard shows hero view for all users (including GMs)
+    // GM-specific features like assignment and approval are in the Quest Management tab
     expect(within(questCard).getByText("Pick Up Quest")).toBeInTheDocument();
-    expect(within(questCard).getByTestId("assign-quest-dropdown")).toBeInTheDocument();
-    expect(within(questCard).getByText("Cancel Quest")).toBeInTheDocument();
-  });
-
-  test("Guild Master can approve completed quests", async () => {
-    questInstancesMock = [mockCompletedQuest];
-
-    (useAuth as jest.Mock).mockReturnValue({
-      user: mockGMUser,
-      session: { user: { id: mockGMUser.id } },
-      profile: {
-        id: mockGMUser.id,
-        family_id: "00000000-0000-4000-8000-000000000001",
-        name: "Guild Master",
-        role: "GUILD_MASTER"
-      },
-    });
-
-    // Update the quests hook to return the completed quest
-    (useQuests as jest.Mock).mockReturnValue({
-      quests: questInstancesMock,
-      loading: false,
-      error: null,
-      reload: jest.fn(),
-    });
-
-    render(<QuestDashboard onError={jest.fn()} />);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
-    });
-
-    const approveButton = await screen.findByRole("button", { name: /approve quest/i });
-    expect(approveButton).toBeInTheDocument();
-
-    fireEvent.click(approveButton);
-
-    await waitFor(() => {
-      expect(questInstanceApiService.approveQuest).toHaveBeenCalledWith(mockCompletedQuest.id);
-    });
+    expect(within(questCard).queryByTestId("gm-assign-dropdown")).not.toBeInTheDocument();
   });
 
   test("Unassigned quests display without interaction buttons when no user", async () => {

@@ -31,10 +31,10 @@ export function QuestManagementTab() {
 
   // Action handlers with error handling
   const handleAssignQuest = useCallback(
-    async (questId: string, userId: string) => {
-      if (!userId) return;
+    async (questId: string, characterId: string) => {
+      if (!characterId) return;
       try {
-        await questInstanceApiService.assignQuest(questId, userId);
+        await questInstanceApiService.assignFamilyQuest(questId, characterId);
         setSelectedAssignee((prev) => ({ ...prev, [questId]: '' }));
         await reload();
       } catch (err) {
@@ -74,14 +74,17 @@ export function QuestManagementTab() {
     [reload]
   );
 
-  const handleTogglePause = useCallback(
-    async (questId: string, isPaused: boolean) => {
+  const handleReleaseQuest = useCallback(
+    async (questId: string) => {
+      if (!window.confirm('Release this quest back to available quests?')) {
+        return;
+      }
       try {
-        await questInstanceApiService.togglePauseQuest(questId, isPaused);
+        await questInstanceApiService.releaseQuest(questId);
         await reload();
       } catch (err) {
-        console.error('Failed to toggle pause:', err);
-        alert('Failed to toggle pause. Please try again.');
+        console.error('Failed to release quest:', err);
+        alert('Failed to release quest. Please try again.');
       }
     },
     [reload]
@@ -182,7 +185,7 @@ export function QuestManagementTab() {
                 onAssign={handleAssignQuest}
                 onApprove={handleApproveQuest}
                 onCancel={handleCancelQuest}
-                onTogglePause={handleTogglePause}
+                onRelease={handleReleaseQuest}
               />
             ))}
           </motion.div>

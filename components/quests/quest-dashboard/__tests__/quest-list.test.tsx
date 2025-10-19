@@ -10,6 +10,13 @@ jest.mock('../quest-item', () => {
   };
 });
 
+// Mock the QuestCard component
+jest.mock('../../quest-card', () => {
+  return function MockQuestCard({ quest }: { quest: QuestInstance }) {
+    return <div data-testid={`quest-card-${quest.id}`}>{quest.title}</div>;
+  };
+});
+
 // Mock framer-motion
 jest.mock('framer-motion', () => ({
   motion: {
@@ -219,6 +226,46 @@ describe('QuestList', () => {
       // Should render valid quests
       expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
       expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+    });
+  });
+
+  describe('QuestCard integration', () => {
+    it('should render QuestCard when useQuestCard is true', () => {
+      render(<QuestList quests={mockQuests} useQuestCard={true} />);
+
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
+    });
+
+    it('should render QuestItem when useQuestCard is false', () => {
+      render(<QuestList quests={mockQuests} useQuestCard={false} />);
+
+      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+    });
+
+    it('should render QuestItem by default (useQuestCard not specified)', () => {
+      render(<QuestList quests={mockQuests} />);
+
+      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+    });
+
+    it('should accept familyMembers prop for QuestCard', () => {
+      const familyMembers = [
+        { id: 'member-1', name: 'John' },
+        { id: 'member-2', name: 'Jane' },
+      ];
+
+      render(
+        <QuestList
+          quests={mockQuests}
+          useQuestCard={true}
+          familyMembers={familyMembers}
+        />
+      );
+
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
     });
   });
 });

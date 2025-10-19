@@ -302,21 +302,6 @@ describe('QuestCard Component', () => {
         expect(screen.getByText('Wash dishes and wipe counters')).toBeInTheDocument();
       });
 
-      it('displays pause icon when quest is paused', () => {
-        const quest = createMockQuest({
-          ...({
-            is_paused: true,
-          } as Partial<QuestInstance> & { is_paused: boolean }),
-        });
-        render(
-          <QuestCard
-            quest={quest}
-            viewMode="gm"
-          />
-        );
-
-        expect(screen.getByText('⏸️')).toBeInTheDocument();
-      });
     });
 
     describe('GM Action Buttons', () => {
@@ -350,40 +335,6 @@ describe('QuestCard Component', () => {
         expect(screen.getByTestId('gm-cancel-quest')).toBeInTheDocument();
       });
 
-      it('shows Pause button for active quests', () => {
-        const quest = createMockQuest({ status: 'IN_PROGRESS' as QuestStatus });
-        const onTogglePause = jest.fn();
-
-        render(
-          <QuestCard
-            quest={quest}
-            viewMode="gm"
-            onTogglePause={onTogglePause}
-          />
-        );
-
-        expect(screen.getByTestId('gm-toggle-pause')).toBeInTheDocument();
-      });
-
-      it('shows Resume button when quest is paused', () => {
-        const quest = createMockQuest({
-          status: 'IN_PROGRESS' as QuestStatus,
-          ...({
-            is_paused: true,
-          } as Partial<QuestInstance> & { is_paused: boolean }),
-        });
-        const onTogglePause = jest.fn();
-
-        render(
-          <QuestCard
-            quest={quest}
-            viewMode="gm"
-            onTogglePause={onTogglePause}
-          />
-        );
-
-        expect(screen.getByText('Resume')).toBeInTheDocument();
-      });
 
       it('calls onApprove when Approve button clicked', () => {
         const quest = createMockQuest({ status: 'COMPLETED' as QuestStatus });
@@ -415,43 +366,6 @@ describe('QuestCard Component', () => {
 
         fireEvent.click(screen.getByTestId('gm-cancel-quest'));
         expect(onCancel).toHaveBeenCalledWith('quest-1');
-      });
-
-      it('calls onTogglePause with correct pause state when Pause button clicked', () => {
-        const quest = createMockQuest({ status: 'IN_PROGRESS' as QuestStatus });
-        const onTogglePause = jest.fn();
-
-        render(
-          <QuestCard
-            quest={quest}
-            viewMode="gm"
-            onTogglePause={onTogglePause}
-          />
-        );
-
-        fireEvent.click(screen.getByTestId('gm-toggle-pause'));
-        expect(onTogglePause).toHaveBeenCalledWith('quest-1', true);
-      });
-
-      it('calls onTogglePause with correct resume state when Resume button clicked', () => {
-        const quest = createMockQuest({
-          status: 'IN_PROGRESS' as QuestStatus,
-          ...({
-            is_paused: true,
-          } as Partial<QuestInstance> & { is_paused: boolean }),
-        });
-        const onTogglePause = jest.fn();
-
-        render(
-          <QuestCard
-            quest={quest}
-            viewMode="gm"
-            onTogglePause={onTogglePause}
-          />
-        );
-
-        fireEvent.click(screen.getByTestId('gm-toggle-pause'));
-        expect(onTogglePause).toHaveBeenCalledWith('quest-1', false);
       });
     });
 

@@ -16,7 +16,7 @@ export interface QuestCardProps {
   onAssign?: (questId: string, assigneeId: string) => void;
   onApprove?: (questId: string) => void;
   onCancel?: (questId: string) => void;
-  onTogglePause?: (questId: string, isPaused: boolean) => void;
+  onRelease?: (questId: string) => void;
 
   // Hero action callbacks
   onStart?: (questId: string) => void;
@@ -38,7 +38,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   onAssign,
   onApprove,
   onCancel,
-  onTogglePause,
+  onRelease,
   onStart,
   onComplete,
   onPickup,
@@ -47,10 +47,6 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   selectedAssignee = '',
   onAssigneeChange,
 }) => {
-  // Determine if quest is paused
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isPaused = 'is_paused' in quest && (quest as any).is_paused === true;
-
   // Get button visibility based on quest status
   const buttonVis = getButtonVisibility(quest.status, viewMode);
 
@@ -63,10 +59,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   const recurrenceLabel = getRecurrenceLabel(quest.recurrence_pattern);
 
   // Determine card classes based on quest state
-  const cardClasses = `
-    fantasy-card p-6 transition-opacity duration-200
-    ${isPaused ? 'opacity-60' : 'opacity-100'}
-  `;
+  const cardClasses = 'fantasy-card p-6 transition-opacity duration-200';
 
   return (
     <motion.div
@@ -75,12 +68,9 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
-          <div className="flex items-start gap-2">
-            {isPaused && <span className="text-2xl">⏸️</span>}
-            <div className="flex-1">
-              <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
-              <p className="text-gray-300 text-sm">{quest.description}</p>
-            </div>
+          <div>
+            <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+            <p className="text-gray-300 text-sm">{quest.description}</p>
           </div>
 
           {/* Quest metadata */}
@@ -208,18 +198,14 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               </button>
             )}
 
-            {buttonVis.canTogglePause && onTogglePause && (
+            {onRelease && quest.assigned_to_id && (
               <button
                 type="button"
-                className={`px-4 py-2 rounded-md transition ${
-                  isPaused
-                    ? 'bg-amber-600 hover:bg-amber-500 text-white'
-                    : 'bg-gray-700 hover:bg-gray-600 text-gray-100'
-                }`}
-                onClick={() => onTogglePause(quest.id, !isPaused)}
-                data-testid="gm-toggle-pause"
+                className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition"
+                onClick={() => onRelease(quest.id)}
+                data-testid="gm-release-quest"
               >
-                {isPaused ? 'Resume' : 'Pause'}
+                Release to Pool
               </button>
             )}
           </div>
