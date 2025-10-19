@@ -7,7 +7,7 @@ import ActivityFeed from '@/components/activity-feed';
 import GuildMasterManager from '@/components/guild-master-manager';
 import FamilySettings from '@/components/family-settings';
 import { QuestTemplateManager } from '@/components/quest-template-manager';
-import RewardManager from '@/components/reward-manager';
+import RewardManager from '@/components/rewards/reward-manager';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 
 type TabName = 'overview' | 'quest-templates' | 'rewards' | 'guild-masters' | 'family-settings';

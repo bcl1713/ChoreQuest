@@ -48,7 +48,7 @@ jest.mock("@/components/quest-template-manager", () => ({
   },
 }));
 
-jest.mock("@/components/reward-manager", () => {
+jest.mock("@/components/rewards/reward-manager", () => {
   return function RewardManager() {
     return <div data-testid="reward-manager">Reward Manager</div>;
   };
