@@ -110,9 +110,13 @@ export function canUpdateStatus(
 
 /**
  * Get assigned hero name for a quest
+ * Works with both characters and user profiles
  */
-export function getAssignedHeroName(quest: QuestInstance, familyMembers: UserProfile[]): string | undefined {
-  const assignedHero = familyMembers.find((member) => member.id === quest.assigned_to_id);
+export function getAssignedHeroName(
+  quest: QuestInstance,
+  assignmentOptions: Array<{ id: string; name: string }>
+): string | undefined {
+  const assignedHero = assignmentOptions.find((option) => option.id === quest.assigned_to_id);
   return assignedHero?.name;
 }
 

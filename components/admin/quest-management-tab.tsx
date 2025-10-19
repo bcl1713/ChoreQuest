@@ -25,7 +25,7 @@ interface QuestSection {
 
 export function QuestManagementTab() {
   const { quests, loading, error, reload } = useQuests();
-  const { familyMembers } = useFamilyMembers();
+  const { familyCharacters } = useFamilyMembers();
   useAuth();
   const [selectedAssignee, setSelectedAssignee] = useState<Record<string, string>>({});
 
@@ -93,6 +93,14 @@ export function QuestManagementTab() {
   const handleAssigneeChange = useCallback((questId: string, userId: string) => {
     setSelectedAssignee((prev) => ({ ...prev, [questId]: userId }));
   }, []);
+
+  // Memoized characters for assignment (map to { id, name } format)
+  const assignableCharacters = useMemo(() => {
+    return familyCharacters.map((char) => ({
+      id: char.id,
+      name: char.name,
+    }));
+  }, [familyCharacters]);
 
   // Memoized quest grouping
   const questSections = useMemo(() => {
@@ -178,8 +186,8 @@ export function QuestManagementTab() {
                 key={quest!.id}
                 quest={quest!}
                 viewMode="gm"
-                familyMembers={familyMembers}
-                assignedHeroName={getAssignedHeroName(quest!, familyMembers)}
+                familyMembers={assignableCharacters}
+                assignedHeroName={getAssignedHeroName(quest!, assignableCharacters)}
                 selectedAssignee={selectedAssignee[quest!.id] || ''}
                 onAssigneeChange={handleAssigneeChange}
                 onAssign={handleAssignQuest}
