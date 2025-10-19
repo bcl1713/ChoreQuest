@@ -6,7 +6,8 @@ import { QuestInstance, QuestStatus } from '@/lib/types/database';
 // Mock framer-motion to avoid animation issues in tests
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    div: ({ children, ...props }: Record<string, unknown>) => <div {...(props as any)}>{children}</div>,
   },
 }));
 
@@ -305,7 +306,7 @@ describe('QuestCard Component', () => {
         const quest = createMockQuest({
           ...({
             is_paused: true,
-          } as any),
+          } as Partial<QuestInstance> & { is_paused: boolean }),
         });
         render(
           <QuestCard
@@ -369,7 +370,7 @@ describe('QuestCard Component', () => {
           status: 'IN_PROGRESS' as QuestStatus,
           ...({
             is_paused: true,
-          } as any),
+          } as Partial<QuestInstance> & { is_paused: boolean }),
         });
         const onTogglePause = jest.fn();
 
@@ -437,7 +438,7 @@ describe('QuestCard Component', () => {
           status: 'IN_PROGRESS' as QuestStatus,
           ...({
             is_paused: true,
-          } as any),
+          } as Partial<QuestInstance> & { is_paused: boolean }),
         });
         const onTogglePause = jest.fn();
 

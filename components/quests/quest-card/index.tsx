@@ -48,7 +48,8 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   onAssigneeChange,
 }) => {
   // Determine if quest is paused
-  const isPaused = 'is_paused' in quest && quest.is_paused;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isPaused = 'is_paused' in quest && (quest as any).is_paused === true;
 
   // Get button visibility based on quest status
   const buttonVis = getButtonVisibility(quest.status, viewMode);
