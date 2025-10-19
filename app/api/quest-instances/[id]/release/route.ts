@@ -62,13 +62,14 @@ export async function POST(
       return NextResponse.json({ error: "Quest not found" }, { status: 404 });
     }
 
-    // Check authorization: GM or hero who claimed the quest
+    // Check authorization: GM or hero who claimed the quest or is assigned to it
     const isGM = requesterProfile.role === "GUILD_MASTER";
+    const isQuestAssignedToUser = quest.assigned_to_id === user.id;
     const isQuestClaimer = characterId && quest.volunteered_by === characterId;
 
-    if (!isGM && !isQuestClaimer) {
+    if (!isGM && !isQuestAssignedToUser && !isQuestClaimer) {
       return NextResponse.json(
-        { error: "You can only release your own claimed quests" },
+        { error: "You can only release your own quests" },
         { status: 403 }
       );
     }
@@ -82,11 +83,33 @@ export async function POST(
     }
 
     // For family quests, use the service to properly handle character updates
-    if (quest.quest_type === "FAMILY" && characterId) {
+    if (quest.quest_type === "FAMILY") {
       const questService = new QuestInstanceService(supabase);
-      await questService.releaseQuest(questId, characterId);
+      // Use characterId if provided, otherwise try to find the character via volunteered_by
+      const charIdToRelease = characterId || quest.volunteered_by;
+      if (charIdToRelease) {
+        await questService.releaseQuest(questId, charIdToRelease);
+      } else {
+        // Fallback: just unassign if we can't find character
+        const { error: updateError } = await supabase
+          .from("quest_instances")
+          .update({
+            assigned_to_id: null,
+            volunteered_by: null,
+            volunteer_bonus: null,
+            status: "AVAILABLE",
+          })
+          .eq("id", questId);
+
+        if (updateError) {
+          return NextResponse.json(
+            { error: `Failed to update quest: ${updateError.message}` },
+            { status: 500 }
+          );
+        }
+      }
     } else {
-      // For individual quests or when characterId not provided, just unassign
+      // For individual quests, just unassign
       const updateData: Record<string, null | string> = {
         assigned_to_id: null,
         status: "AVAILABLE",

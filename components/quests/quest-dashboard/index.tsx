@@ -106,12 +106,13 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       return;
     }
     try {
-      await questInstanceApiService.releaseQuest(questId);
+      // Pass character ID for family quests so the character's active_family_quest_id is cleared
+      await questInstanceApiService.releaseQuest(questId, character?.id);
       await loadData();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed to release quest");
     }
-  }, [loadData, onError]);
+  }, [loadData, onError, character?.id]);
 
   // Quest filtering using helpers (memoized for performance)
   const myQuests = useMemo(
