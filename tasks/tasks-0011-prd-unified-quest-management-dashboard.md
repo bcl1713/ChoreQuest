@@ -11,15 +11,15 @@
 - `components/quests/quest-card/__tests__/index.test.tsx` - Unit tests for quest card component (75 tests) ✅
 - `components/quests/quest-card/quest-card-helpers.ts` - Helper functions for quest card logic ✅
 - `components/quests/quest-card/__tests__/quest-card-helpers.test.ts` - Unit tests for helpers (26 tests) ✅
-- `components/admin/quest-management-tab.tsx` - New Quest Management tab component
-- `components/admin/__tests__/quest-management-tab.test.tsx` - Unit tests for Quest Management tab
+- `components/admin/quest-management-tab.tsx` - New Quest Management tab component ✅
+- `components/admin/__tests__/quest-management-tab.test.tsx` - Unit tests for Quest Management tab (16 tests) ✅
 
 ### Files to Modify
-- `components/admin/admin-dashboard.tsx` - Add new Quest Management tab to tab list and panels
+- `components/admin/admin-dashboard.tsx` - Add new Quest Management tab to tab list and panels ✅
+- `components/quests/quest-dashboard/quest-helpers.ts` - Add helper functions for quest grouping ✅
 - `components/quests/quest-dashboard/index.tsx` - Refactor to use new QuestCard component
 - `components/quests/quest-dashboard/quest-list.tsx` - Update to use new QuestCard component
 - `components/quests/quest-dashboard/__tests__/quest-list.test.tsx` - Update tests for refactored component
-- `components/quests/quest-dashboard/quest-helpers.ts` - May need to add helper functions for quest grouping
 
 ### Files to Reference (Existing)
 - `components/quests/quest-dashboard/quest-item.tsx` - Current quest item implementation (will be largely replaced)
@@ -66,26 +66,26 @@
   - [x] 1.22 Test action button callbacks fire correctly
   - [x] 1.23 Run tests with `npx jest components/quests/quest-card` and ensure all pass
 
-- [ ] 2.0 Add Quest Management tab to Admin Dashboard
-  - [ ] 2.1 Create `components/admin/quest-management-tab.tsx` file
-  - [ ] 2.2 Import necessary hooks (useQuests, useFamilyMembers, useAuth)
-  - [ ] 2.3 Set up component structure with loading and error states
-  - [ ] 2.4 Create empty state messages for each section (when no quests in that category)
-  - [ ] 2.5 Create three section headers: "Pending Approval", "Unassigned", "In Progress"
-  - [ ] 2.6 Add count badges to each section header (e.g., "Pending Approval (3)")
-  - [ ] 2.7 Implement responsive layout (stack sections vertically, or use grid on larger screens)
-  - [ ] 2.8 Import and map QuestCard components for each section
-  - [ ] 2.9 Pass appropriate props to QuestCard (quest data, viewMode="gm", callbacks)
-  - [ ] 2.10 Open `components/admin/admin-dashboard.tsx` for editing
-  - [ ] 2.11 Add "Quest Management" to the tabs array with icon and label (e.g., icon: '⚔️', label: 'Quest Management')
-  - [ ] 2.12 Import QuestManagementTab component
-  - [ ] 2.13 Add new TabPanel for Quest Management after existing tabs
-  - [ ] 2.14 Verify tab navigation works and new tab appears in UI
-  - [ ] 2.15 Write unit tests for quest-management-tab in `__tests__/quest-management-tab.test.tsx`
-  - [ ] 2.16 Test rendering with mock quest data
-  - [ ] 2.17 Test empty states for each section
-  - [ ] 2.18 Test count badges display correct numbers
-  - [ ] 2.19 Run tests with `npx jest components/admin/quest-management-tab` and ensure all pass
+- [x] 2.0 Add Quest Management tab to Admin Dashboard
+  - [x] 2.1 Create `components/admin/quest-management-tab.tsx` file
+  - [x] 2.2 Import necessary hooks (useQuests, useFamilyMembers, useAuth)
+  - [x] 2.3 Set up component structure with loading and error states
+  - [x] 2.4 Create empty state messages for each section (when no quests in that category)
+  - [x] 2.5 Create three section headers: "Pending Approval", "Unassigned", "In Progress"
+  - [x] 2.6 Add count badges to each section header (e.g., "Pending Approval (3)")
+  - [x] 2.7 Implement responsive layout (stack sections vertically, or use grid on larger screens)
+  - [x] 2.8 Import and map QuestCard components for each section
+  - [x] 2.9 Pass appropriate props to QuestCard (quest data, viewMode="gm", callbacks)
+  - [x] 2.10 Open `components/admin/admin-dashboard.tsx` for editing
+  - [x] 2.11 Add "Quest Management" to the tabs array with icon and label (e.g., icon: '⚔️', label: 'Quest Management')
+  - [x] 2.12 Import QuestManagementTab component
+  - [x] 2.13 Add new TabPanel for Quest Management after existing tabs
+  - [x] 2.14 Verify tab navigation works and new tab appears in UI
+  - [x] 2.15 Write unit tests for quest-management-tab in `__tests__/quest-management-tab.test.tsx`
+  - [x] 2.16 Test rendering with mock quest data
+  - [x] 2.17 Test empty states for each section
+  - [x] 2.18 Test count badges display correct numbers
+  - [x] 2.19 Run tests with `npx jest components/admin/quest-management-tab` and ensure all pass
 
 - [ ] 3.0 Implement quest grouping and filtering logic
   - [ ] 3.1 Open `components/quests/quest-dashboard/quest-helpers.ts`
