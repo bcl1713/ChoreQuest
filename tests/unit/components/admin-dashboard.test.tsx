@@ -54,11 +54,11 @@ jest.mock("@/components/rewards/reward-manager", () => {
   };
 });
 
-jest.mock("@/components/admin/quest-management-tab", () => {
-  return function QuestManagementTab() {
+jest.mock("@/components/admin/quest-management-tab", () => ({
+  QuestManagementTab: function QuestManagementTab() {
     return <div data-testid="quest-management-tab">Quest Management Tab</div>;
-  };
-});
+  },
+}));
 
 // NOW import the component (after all mocks are set up)
 import { AdminDashboard } from "@/components/admin/admin-dashboard";

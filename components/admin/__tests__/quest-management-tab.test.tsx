@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import QuestManagementTab from '../quest-management-tab';
+import { QuestManagementTab } from '../quest-management-tab';
 import { QuestInstance, QuestStatus, UserProfile } from '@/lib/types/database';
 
 // Mock the hooks
@@ -45,11 +45,11 @@ jest.mock('framer-motion', () => ({
 }));
 
 // Mock LoadingSpinner
-jest.mock('@/components/ui/LoadingSpinner', () => {
-  return function MockLoadingSpinner() {
+jest.mock('@/components/ui/LoadingSpinner', () => ({
+  LoadingSpinner: function MockLoadingSpinner() {
     return <div data-testid="loading-spinner">Loading...</div>;
-  };
-});
+  },
+}));
 
 // Mock variants
 jest.mock('@/lib/animations/variants', () => ({

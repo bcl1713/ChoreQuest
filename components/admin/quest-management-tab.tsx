@@ -141,4 +141,3 @@ export function QuestManagementTab() {
   );
 }
 
-export default QuestManagementTab;
