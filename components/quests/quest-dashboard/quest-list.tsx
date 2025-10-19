@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { QuestInstance } from '@/lib/types/database';
 import { staggerContainer } from '@/lib/animations/variants';
@@ -39,7 +39,7 @@ export interface QuestListProps {
   showAssignment?: (quest: QuestInstance) => boolean;
 }
 
-const QuestList: React.FC<QuestListProps> = ({
+const QuestList: React.FC<QuestListProps> = memo(({
   quests,
   variant = 'default',
   emptyMessage = 'No quests available.',
@@ -63,8 +63,11 @@ const QuestList: React.FC<QuestListProps> = ({
   onAssigneeChange,
   showAssignment,
 }) => {
-  // Handle null/undefined quest arrays
-  const validQuests = (quests || []).filter((quest) => quest && quest.id);
+  // Handle null/undefined quest arrays (memoized to prevent re-filtering on every render)
+  const validQuests = useMemo(
+    () => (quests || []).filter((quest) => quest && quest.id),
+    [quests]
+  );
 
   // Empty state
   if (validQuests.length === 0) {
@@ -114,6 +117,8 @@ const QuestList: React.FC<QuestListProps> = ({
       ))}
     </motion.div>
   );
-};
+});
+
+QuestList.displayName = 'QuestList';
 
 export default QuestList;

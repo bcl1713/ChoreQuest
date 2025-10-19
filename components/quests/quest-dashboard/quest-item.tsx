@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { QuestInstance } from '@/lib/types/database';
 import { getDifficultyColor, getStatusColor } from '@/lib/utils/colors';
@@ -64,16 +64,32 @@ const QuestItem: React.FC<QuestItemProps> = memo(({
   onAssign,
   assignedHeroName,
 }) => {
-  const statusLabel = (quest.status ?? 'PENDING').replace('_', ' ');
-  const volunteerBonusPercent = formatPercent(quest.volunteer_bonus);
-  const streakBonusPercent = formatPercent(quest.streak_bonus);
-  const recurrenceLabel = quest.recurrence_pattern
-    ? quest.recurrence_pattern.toLowerCase().charAt(0).toUpperCase() +
-      quest.recurrence_pattern.toLowerCase().slice(1)
-    : null;
+  // Memoize computed values to prevent recalculation on every render
+  const statusLabel = useMemo(
+    () => (quest.status ?? 'PENDING').replace('_', ' '),
+    [quest.status]
+  );
 
-  // Determine card styling based on variant
-  const getCardClasses = () => {
+  const volunteerBonusPercent = useMemo(
+    () => formatPercent(quest.volunteer_bonus),
+    [quest.volunteer_bonus]
+  );
+
+  const streakBonusPercent = useMemo(
+    () => formatPercent(quest.streak_bonus),
+    [quest.streak_bonus]
+  );
+
+  const recurrenceLabel = useMemo(
+    () => quest.recurrence_pattern
+      ? quest.recurrence_pattern.toLowerCase().charAt(0).toUpperCase() +
+        quest.recurrence_pattern.toLowerCase().slice(1)
+      : null,
+    [quest.recurrence_pattern]
+  );
+
+  // Determine card styling based on variant (memoized)
+  const cardClasses = useMemo(() => {
     const baseClasses = 'fantasy-card p-6';
     switch (variant) {
       case 'historical':
@@ -87,10 +103,10 @@ const QuestItem: React.FC<QuestItemProps> = memo(({
       default:
         return baseClasses;
     }
-  };
+  }, [variant]);
 
-  // Get completion timestamp for historical quests
-  const getHistoryAction = () => {
+  // Get completion timestamp for historical quests (memoized)
+  const historyAction = useMemo(() => {
     switch (quest.status) {
       case 'APPROVED':
         return 'Approved';
@@ -103,14 +119,15 @@ const QuestItem: React.FC<QuestItemProps> = memo(({
       default:
         return 'Updated';
     }
-  };
+  }, [quest.status]);
 
-  const completionTimestamp = formatDateTime(
-    quest.completed_at ?? quest.updated_at ?? quest.created_at
+  const completionTimestamp = useMemo(
+    () => formatDateTime(quest.completed_at ?? quest.updated_at ?? quest.created_at),
+    [quest.completed_at, quest.updated_at, quest.created_at]
   );
 
   return (
-    <motion.div variants={staggerItem} className={getCardClasses()}>
+    <motion.div variants={staggerItem} className={cardClasses}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
@@ -152,7 +169,7 @@ const QuestItem: React.FC<QuestItemProps> = memo(({
       {/* Historical quest completion info */}
       {variant === 'historical' && completionTimestamp && (
         <p className="text-sm text-gray-400 mb-3">
-          {getHistoryAction()} on {completionTimestamp}
+          {historyAction} on {completionTimestamp}
         </p>
       )}
 

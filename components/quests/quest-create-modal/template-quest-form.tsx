@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { QuestTemplate } from "@/lib/types/database";
 
 export interface TemplateQuestFormProps {
@@ -14,7 +14,11 @@ const TemplateQuestForm = React.memo(function TemplateQuestForm({
   selectedTemplateId,
   onTemplateSelect,
 }: TemplateQuestFormProps) {
-  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+  // Memoize template lookup to avoid re-finding on every render
+  const selectedTemplate = useMemo(
+    () => templates.find((t) => t.id === selectedTemplateId),
+    [templates, selectedTemplateId]
+  );
 
   return (
     <>

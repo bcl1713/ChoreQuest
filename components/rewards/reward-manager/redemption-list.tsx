@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { RewardRedemptionWithUser } from "@/lib/reward-service";
 
 interface RedemptionListProps {
@@ -16,9 +16,21 @@ export const RedemptionList = React.memo(function RedemptionList({
   onDeny,
   onFulfill,
 }: RedemptionListProps) {
-  const pendingRedemptions = redemptions.filter(r => r.status === 'PENDING');
-  const approvedRedemptions = redemptions.filter(r => r.status === 'APPROVED');
-  const completedRedemptions = redemptions.filter(r => ['DENIED', 'FULFILLED'].includes(r.status || ''));
+  // Memoize filtered redemptions to prevent re-filtering on every render
+  const pendingRedemptions = useMemo(
+    () => redemptions.filter(r => r.status === 'PENDING'),
+    [redemptions]
+  );
+
+  const approvedRedemptions = useMemo(
+    () => redemptions.filter(r => r.status === 'APPROVED'),
+    [redemptions]
+  );
+
+  const completedRedemptions = useMemo(
+    () => redemptions.filter(r => ['DENIED', 'FULFILLED'].includes(r.status || '')),
+    [redemptions]
+  );
 
   return (
     <>

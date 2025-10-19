@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { RewardService } from "@/lib/reward-service";
 import { Reward } from "@/lib/types/database";
@@ -32,21 +32,22 @@ export default function RewardManager() {
     cost: "",
   });
 
-  const resetForm = () => {
+  // Memoized handlers for stable references
+  const resetForm = useCallback(() => {
     setFormData({
       name: "",
       description: "",
       type: "SCREEN_TIME",
       cost: "",
     });
-  };
+  }, []);
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     resetForm();
     setShowCreateModal(true);
-  };
+  }, [resetForm]);
 
-  const handleEdit = (reward: Reward) => {
+  const handleEdit = useCallback((reward: Reward) => {
     setSelectedReward(reward);
     setFormData({
       name: reward.name,
@@ -55,15 +56,15 @@ export default function RewardManager() {
       cost: reward.cost.toString(),
     });
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleDelete = (reward: Reward) => {
+  const handleDelete = useCallback((reward: Reward) => {
     setSelectedReward(reward);
     setDeleteTarget(reward);
     setShowDeleteConfirm(true);
-  };
+  }, []);
 
-  const handleToggleActive = async (reward: Reward) => {
+  const handleToggleActive = useCallback(async (reward: Reward) => {
     try {
       // Toggle is_active field directly (like templates)
       await rewardService.updateReward(reward.id, {
@@ -73,13 +74,13 @@ export default function RewardManager() {
       console.error("Failed to toggle reward status:", err);
       // Error will be shown via the hook's error state
     }
-  };
+  }, []);
 
-  const handleFormChange = (field: keyof RewardFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  const handleFormChange = useCallback((field: keyof RewardFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
-  const handleSubmitCreate = async (e: React.FormEvent) => {
+  const handleSubmitCreate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.family_id) return;
 
@@ -99,9 +100,9 @@ export default function RewardManager() {
       console.error("Failed to create reward:", err);
       // Error will be shown via the hook's error state
     }
-  };
+  }, [profile?.family_id, formData, resetForm]);
 
-  const handleSubmitEdit = async (e: React.FormEvent) => {
+  const handleSubmitEdit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedReward) return;
 
@@ -120,20 +121,20 @@ export default function RewardManager() {
       console.error("Failed to update reward:", err);
       // Error will be shown via the hook's error state
     }
-  };
+  }, [selectedReward, formData, resetForm]);
 
-  const handleCancelCreate = () => {
+  const handleCancelCreate = useCallback(() => {
     setShowCreateModal(false);
     resetForm();
-  };
+  }, [resetForm]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setShowEditModal(false);
     setSelectedReward(null);
     resetForm();
-  };
+  }, [resetForm]);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget || deleteLoading) return;
 
     setDeleteLoading(true);
@@ -151,9 +152,9 @@ export default function RewardManager() {
     } finally {
       setDeleteLoading(false);
     }
-  };
+  }, [deleteTarget, deleteLoading]);
 
-  const handleApproveRedemption = async (redemptionId: string) => {
+  const handleApproveRedemption = useCallback(async (redemptionId: string) => {
     if (!user) return;
 
     try {
@@ -162,9 +163,9 @@ export default function RewardManager() {
       console.error("Failed to approve redemption:", err);
       // Error will be shown via the hook's error state
     }
-  };
+  }, [user]);
 
-  const handleDenyRedemption = async (redemptionId: string) => {
+  const handleDenyRedemption = useCallback(async (redemptionId: string) => {
     if (!user) return;
 
     try {
@@ -177,16 +178,16 @@ export default function RewardManager() {
       console.error("Failed to deny redemption:", err);
       // Error will be shown via the hook's error state
     }
-  };
+  }, [user, redemptions]);
 
-  const handleFulfillRedemption = async (redemptionId: string) => {
+  const handleFulfillRedemption = useCallback(async (redemptionId: string) => {
     try {
       await rewardService.updateRedemptionStatus(redemptionId, "FULFILLED");
     } catch (err) {
       console.error("Failed to fulfill redemption:", err);
       // Error will be shown via the hook's error state
     }
-  };
+  }, []);
 
   if (loading) {
     return <div className="text-center py-8">Loading rewards...</div>;

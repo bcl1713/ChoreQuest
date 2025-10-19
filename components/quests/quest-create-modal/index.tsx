@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import {
   QuestDifficulty,
@@ -137,7 +137,12 @@ export default function QuestCreateModal({
     });
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleClose = useCallback(() => {
+    resetForm();
+    onClose();
+  }, [resetForm, onClose]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user || !profile) {
@@ -207,12 +212,19 @@ export default function QuestCreateModal({
         resetForm();
       }
     }
-  };
+  }, [user, profile, mode, dueDate, selectedTemplateId, assignedToId, recurringForm, title, description, xpReward, goldReward, difficulty, category, handleClose, onQuestCreated, isOpen, resetForm]);
 
-  const handleClose = useCallback(() => {
-    resetForm();
-    onClose();
-  }, [resetForm, onClose]);
+  // Memoize assignee options to prevent re-processing on every render
+  const assigneeOptions = useMemo(() => {
+    return familyMembers.map((member) => {
+      const roleLabel = member.role ? member.role.replace("_", " ") : "Member";
+      const displayName = member.name || member.email;
+      return {
+        id: member.id,
+        label: `${displayName} (${roleLabel})`,
+      };
+    });
+  }, [familyMembers]);
 
   return (
     <AnimatePresence>
@@ -330,15 +342,11 @@ export default function QuestCreateModal({
                       className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
                     >
                       <option value="">Leave unassigned</option>
-                      {familyMembers.map((member) => {
-                        const roleLabel = member.role ? member.role.replace("_", " ") : "Member";
-                        const displayName = member.name || member.email;
-                        return (
-                          <option key={member.id} value={member.id}>
-                            {displayName} ({roleLabel})
-                          </option>
-                        );
-                      })}
+                      {assigneeOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestStatus } from "@/lib/types/database";
@@ -51,8 +51,8 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     if (error) onError(error);
   }, [error, onError]);
 
-  // Quest action handlers
-  const handleStatusUpdate = async (questId: string, status: QuestStatus) => {
+  // Quest action handlers (memoized with useCallback for stable references)
+  const handleStatusUpdate = useCallback(async (questId: string, status: QuestStatus) => {
     try {
       if (status === "APPROVED") {
         await questInstanceApiService.approveQuest(questId);
@@ -69,9 +69,18 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       onError(err instanceof Error ? err.message : "Failed to update quest");
       await loadData();
     }
-  };
+  }, [loadData, onError]);
 
-  const handlePickupQuest = async (quest: QuestInstance) => {
+  const handleClaimQuest = useCallback(async (questId: string) => {
+    try {
+      await questInstanceApiService.claimQuest(questId);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to claim quest");
+    }
+  }, [loadData, onError]);
+
+  const handlePickupQuest = useCallback(async (quest: QuestInstance) => {
     if (!user) {
       onError("You must be signed in to pick up quests.");
       return;
@@ -92,9 +101,9 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       onError(err instanceof Error ? err.message : "Failed to pick up quest");
       await loadData();
     }
-  };
+  }, [user, loadData, onError, handleClaimQuest]);
 
-  const handleAssignQuest = async (questId: string, assigneeId: string) => {
+  const handleAssignQuest = useCallback(async (questId: string, assigneeId: string) => {
     if (!assigneeId) return;
     try {
       const { error: updateError } = await supabase
@@ -107,9 +116,9 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       onError(err instanceof Error ? err.message : "Failed to assign quest");
       await loadData();
     }
-  };
+  }, [loadData, onError]);
 
-  const handleAssignFamilyQuest = async (questId: string, characterId: string) => {
+  const handleAssignFamilyQuest = useCallback(async (questId: string, characterId: string) => {
     if (!characterId) return;
     try {
       await questInstanceApiService.assignFamilyQuest(questId, characterId);
@@ -123,9 +132,9 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       onError(err instanceof Error ? err.message : "Failed to assign family quest");
       await loadData();
     }
-  };
+  }, [loadData, onError]);
 
-  const handleCancelQuest = async (questId: string) => {
+  const handleCancelQuest = useCallback(async (questId: string) => {
     const confirmed = typeof window === "undefined" ? true : window.confirm("Are you sure you want to cancel this quest?");
     if (!confirmed) return;
     try {
@@ -135,47 +144,69 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       onError(err instanceof Error ? err.message : "Failed to cancel quest");
       await loadData();
     }
-  };
+  }, [loadData, onError]);
 
-  const handleClaimQuest = async (questId: string) => {
-    try {
-      await questInstanceApiService.claimQuest(questId);
-      await loadData();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to claim quest");
-    }
-  };
-
-  const handleReleaseQuest = async (questId: string) => {
+  const handleReleaseQuest = useCallback(async (questId: string) => {
     try {
       await questInstanceApiService.releaseQuest(questId);
       await loadData();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed to release quest");
     }
-  };
+  }, [loadData, onError]);
 
-  const handleApproveQuest = async (questId: string) => {
+  const handleApproveQuest = useCallback(async (questId: string) => {
     try {
       await questInstanceApiService.approveQuest(questId);
       await loadData();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed to approve quest");
     }
-  };
+  }, [loadData, onError]);
 
-  // Quest filtering using helpers
-  const myQuests = QuestHelpers.filterQuestsByUser(questInstances, user?.id);
-  const myActiveQuests = QuestHelpers.filterActiveQuests(myQuests);
-  const myHistoricalQuests = QuestHelpers.filterHistoricalQuests(myQuests);
-  const unassignedIndividualQuests = QuestHelpers.filterUnassignedIndividualQuests(questInstances);
-  const unassignedFamilyQuests = QuestHelpers.filterUnassignedFamilyQuests(questInstances);
-  const questsAwaitingApproval = QuestHelpers.filterQuestsAwaitingApproval(questInstances);
+  // Quest filtering using helpers (memoized for performance)
+  const myQuests = useMemo(
+    () => QuestHelpers.filterQuestsByUser(questInstances, user?.id),
+    [questInstances, user?.id]
+  );
+
+  const myActiveQuests = useMemo(
+    () => QuestHelpers.filterActiveQuests(myQuests),
+    [myQuests]
+  );
+
+  const myHistoricalQuests = useMemo(
+    () => QuestHelpers.filterHistoricalQuests(myQuests),
+    [myQuests]
+  );
+
+  const unassignedIndividualQuests = useMemo(
+    () => QuestHelpers.filterUnassignedIndividualQuests(questInstances),
+    [questInstances]
+  );
+
+  const unassignedFamilyQuests = useMemo(
+    () => QuestHelpers.filterUnassignedFamilyQuests(questInstances),
+    [questInstances]
+  );
+
+  const questsAwaitingApproval = useMemo(
+    () => QuestHelpers.filterQuestsAwaitingApproval(questInstances),
+    [questInstances]
+  );
+
   // Filter out quests that are already in the awaiting approval section
-  const otherQuests = profile?.role === "GUILD_MASTER"
-    ? QuestHelpers.filterOtherQuests(questInstances, user?.id).filter(q => q.status !== "COMPLETED")
-    : [];
-  const claimableFamilyQuests = QuestHelpers.filterClaimableFamilyQuests(questInstances);
+  const otherQuests = useMemo(
+    () => profile?.role === "GUILD_MASTER"
+      ? QuestHelpers.filterOtherQuests(questInstances, user?.id).filter(q => q.status !== "COMPLETED")
+      : [],
+    [profile?.role, questInstances, user?.id]
+  );
+
+  const claimableFamilyQuests = useMemo(
+    () => QuestHelpers.filterClaimableFamilyQuests(questInstances),
+    [questInstances]
+  );
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { RewardType } from "@/lib/types/database";
 
 export const REWARD_TYPE_ICONS = {
@@ -39,8 +39,16 @@ export const RewardForm = React.memo(function RewardForm({
   onCancel,
   onChange,
 }: RewardFormProps) {
-  const title = mode === "create" ? "⚡ Create New Reward" : "✏️ Edit Reward";
-  const submitButtonText = mode === "create" ? "💾 Create Reward" : "💾 Save Changes";
+  // Memoize computed values to prevent recalculation on every render
+  const title = useMemo(
+    () => mode === "create" ? "⚡ Create New Reward" : "✏️ Edit Reward",
+    [mode]
+  );
+
+  const submitButtonText = useMemo(
+    () => mode === "create" ? "💾 Create Reward" : "💾 Save Changes",
+    [mode]
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
