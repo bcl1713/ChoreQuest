@@ -83,7 +83,7 @@ export class QuestInstanceService {
         assigned_to_id: character.user_id, // Assign to the user, not character
         volunteered_by: characterId,
         volunteer_bonus: VOLUNTEER_BONUS_PERCENT, // Store as decimal (0.2 = 20%)
-        status: "CLAIMED",
+        status: "PENDING",
       })
       .eq("id", questId)
       .select()
@@ -138,8 +138,8 @@ export class QuestInstanceService {
       throw new Error(`Failed to fetch quest: ${fetchError?.message || "Quest not found"}`);
     }
 
-    // Validate quest is CLAIMED or AVAILABLE status
-    if (quest.status !== "CLAIMED" && quest.status !== "AVAILABLE") {
+    // Validate quest is PENDING, CLAIMED, IN_PROGRESS, or AVAILABLE status
+    if (quest.status !== "PENDING" && quest.status !== "CLAIMED" && quest.status !== "IN_PROGRESS" && quest.status !== "AVAILABLE") {
       throw new Error(`Quest cannot be released (status: ${quest.status})`);
     }
 
@@ -243,7 +243,7 @@ export class QuestInstanceService {
         assigned_to_id: character.user_id, // Assign to the user
         volunteered_by: characterId, // Store the specific character being assigned
         volunteer_bonus: null, // No volunteer bonus for GM assignments
-        status: "CLAIMED",
+        status: "PENDING",
       })
       .eq("id", questId)
       .select()
@@ -299,7 +299,7 @@ export class QuestInstanceService {
       throw new Error(`Failed to fetch quest: ${fetchError?.message || "Quest not found"}`);
     }
 
-    if (quest.status !== "CLAIMED" && quest.status !== "COMPLETED") {
+    if (quest.status !== "CLAIMED" && quest.status !== "IN_PROGRESS" && quest.status !== "COMPLETED") {
       throw new Error(`Quest cannot be approved (status: ${quest.status})`);
     }
 

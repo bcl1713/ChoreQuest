@@ -17,9 +17,10 @@ describe('quest-card-helpers', () => {
         expect(result.canPickup).toBe(true);
       });
 
-      it('shows Start button for CLAIMED quest', () => {
+      it('does NOT show Start button for CLAIMED quest', () => {
         const result = getButtonVisibility('CLAIMED' as QuestStatus, 'hero');
-        expect(result.canStart).toBe(true);
+        expect(result.canStart).toBe(false);
+        expect(result.canComplete).toBe(false);
       });
 
       it('shows Complete button for IN_PROGRESS quest', () => {
@@ -28,9 +29,9 @@ describe('quest-card-helpers', () => {
         expect(result.canStart).toBe(false);
       });
 
-      it('shows Complete button for CLAIMED quest', () => {
+      it('does NOT show Complete button for CLAIMED quest', () => {
         const result = getButtonVisibility('CLAIMED' as QuestStatus, 'hero');
-        expect(result.canComplete).toBe(true);
+        expect(result.canComplete).toBe(false);
       });
 
       it('hides all buttons for COMPLETED quest', () => {

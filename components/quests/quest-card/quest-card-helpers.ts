@@ -25,11 +25,11 @@ export const getButtonVisibility = (
   };
 
   if (viewMode === 'hero') {
-    // Hero can start quests that are PENDING or AVAILABLE
-    buttonVis.canStart = status === 'PENDING' || status === 'AVAILABLE' || status === 'CLAIMED';
+    // Hero can start quests that are PENDING or AVAILABLE (AVAILABLE for unassigned individual quests)
+    buttonVis.canStart = status === 'PENDING' || status === 'AVAILABLE';
 
-    // Hero can complete quests that are IN_PROGRESS or CLAIMED
-    buttonVis.canComplete = status === 'IN_PROGRESS' || status === 'CLAIMED';
+    // Hero can complete quests that are IN_PROGRESS
+    buttonVis.canComplete = status === 'IN_PROGRESS';
 
     // Hero can pick up AVAILABLE quests (unassigned quests)
     buttonVis.canPickup = status === 'AVAILABLE';
