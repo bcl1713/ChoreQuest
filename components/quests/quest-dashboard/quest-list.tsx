@@ -115,6 +115,7 @@ const QuestList: React.FC<QuestListProps> = memo(({
               onApprove={onApproveQuest}
               onPickup={onPickupQuest}
               onCancel={onCancelQuest}
+              onRelease={onReleaseQuest}
               onAssign={onAssignQuest}
               familyMembers={familyMembers}
               assignedHeroName={getAssignedHeroName?.(quest)}

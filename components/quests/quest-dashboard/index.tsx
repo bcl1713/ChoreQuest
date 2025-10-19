@@ -101,6 +101,18 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     }
   }, [user, loadData, onError, handleClaimQuest]);
 
+  const handleReleaseQuest = useCallback(async (questId: string) => {
+    if (!window.confirm("Release this quest back to available quests?")) {
+      return;
+    }
+    try {
+      await questInstanceApiService.releaseQuest(questId);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to release quest");
+    }
+  }, [loadData, onError]);
+
   // Quest filtering using helpers (memoized for performance)
   const myQuests = useMemo(
     () => QuestHelpers.filterQuestsByUser(questInstances, user?.id),
@@ -174,6 +186,7 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
           emptyHint={myHistoricalQuests.length > 0 ? "Check Quest History to revisit your completed quests." : undefined}
           onStartQuest={(id) => handleStatusUpdate(id, "IN_PROGRESS")}
           onCompleteQuest={(id) => handleStatusUpdate(id, "COMPLETED")}
+          onReleaseQuest={handleReleaseQuest}
           familyMembers={familyMembers}
         />
       </section>

@@ -135,6 +135,18 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               Pick Up Quest
             </button>
           )}
+
+          {/* Release button for family quests */}
+          {quest.quest_type === 'FAMILY' && onRelease && (
+            <button
+              type="button"
+              className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition"
+              onClick={() => onRelease(quest.id)}
+              data-testid="hero-release-quest"
+            >
+              Release to Pool
+            </button>
+          )}
         </div>
       )}
 

@@ -38,8 +38,9 @@ export function QuestManagementTab() {
         setSelectedAssignee((prev) => ({ ...prev, [questId]: '' }));
         await reload();
       } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to assign quest. Please try again.';
         console.error('Failed to assign quest:', err);
-        alert('Failed to assign quest. Please try again.');
+        alert(errorMessage);
       }
     },
     [reload]
