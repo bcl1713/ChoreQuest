@@ -101,29 +101,29 @@
   - [x] 3.10 Verify quests are grouped correctly in each section
   - [x] 3.11 Run tests with `npx jest quest-helpers` and ensure all pass
 
-- [ ] 4.0 Wire up GM action handlers (assign, approve, cancel, pause)
-  - [ ] 4.1 In `quest-management-tab.tsx`, import questInstanceApiService
-  - [ ] 4.2 Create `handleAssignQuest` callback with optimistic UI update
-  - [ ] 4.3 Implement assignment logic: update quest.assigned_to_id and set status to PENDING
-  - [ ] 4.4 Add error handling and user notification for assignment action
-  - [ ] 4.5 Create `handleApproveQuest` callback using `questInstanceApiService.approveQuest()`
-  - [ ] 4.6 Implement approval logic: award XP/gold, update status to APPROVED
-  - [ ] 4.7 Add success notification on approval
-  - [ ] 4.8 Add error handling for approval failures
-  - [ ] 4.9 Create `handleCancelQuest` callback with confirmation dialog
-  - [ ] 4.10 Implement cancel logic: show confirmation, then delete quest instance
-  - [ ] 4.11 Add success notification on cancellation
-  - [ ] 4.12 Add error handling for cancellation failures
-  - [ ] 4.13 Create `handleTogglePause` callback for pause/resume action
-  - [ ] 4.14 Implement pause toggle: update `is_paused` field, keep status unchanged
-  - [ ] 4.15 Add visual feedback (optimistic update) when pause state changes
-  - [ ] 4.16 Add error handling for pause toggle failures
-  - [ ] 4.17 Use `useCallback` to memoize all handler functions
-  - [ ] 4.18 Pass handler functions as props to QuestCard components
-  - [ ] 4.19 Ensure real-time updates work (quests refresh after actions via useQuests hook)
-  - [ ] 4.20 Test all actions manually in development environment
-  - [ ] 4.21 Add unit tests for action handlers (mock API calls)
-  - [ ] 4.22 Run tests with `npx jest quest-management-tab` and ensure all pass
+- [x] 4.0 Wire up GM action handlers (assign, approve, cancel, pause)
+  - [x] 4.1 In `quest-management-tab.tsx`, import questInstanceApiService
+  - [x] 4.2 Create `handleAssignQuest` callback with optimistic UI update
+  - [x] 4.3 Implement assignment logic: update quest.assigned_to_id and set status to PENDING
+  - [x] 4.4 Add error handling and user notification for assignment action
+  - [x] 4.5 Create `handleApproveQuest` callback using `questInstanceApiService.approveQuest()`
+  - [x] 4.6 Implement approval logic: award XP/gold, update status to APPROVED
+  - [x] 4.7 Add success notification on approval
+  - [x] 4.8 Add error handling for approval failures
+  - [x] 4.9 Create `handleCancelQuest` callback with confirmation dialog
+  - [x] 4.10 Implement cancel logic: show confirmation, then delete quest instance
+  - [x] 4.11 Add success notification on cancellation
+  - [x] 4.12 Add error handling for cancellation failures
+  - [x] 4.13 Create `handleTogglePause` callback for pause/resume action
+  - [x] 4.14 Implement pause toggle: update `is_paused` field, keep status unchanged
+  - [x] 4.15 Add visual feedback (optimistic update) when pause state changes
+  - [x] 4.16 Add error handling for pause toggle failures
+  - [x] 4.17 Use `useCallback` to memoize all handler functions
+  - [x] 4.18 Pass handler functions as props to QuestCard components
+  - [x] 4.19 Ensure real-time updates work (quests refresh after actions via useQuests hook)
+  - [x] 4.20 Test all actions manually in development environment
+  - [x] 4.21 Add unit tests for action handlers (mock API calls)
+  - [x] 4.22 Run tests with `npx jest quest-management-tab` and ensure all pass
 
 - [ ] 5.0 Refactor existing quest-dashboard to use new QuestCard component
   - [ ] 5.1 Open `components/quests/quest-dashboard/quest-list.tsx`
