@@ -207,7 +207,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
             quests={unassignedIndividualQuests}
             useQuestCard={true}
             onPickupQuest={handlePickupQuest}
-            onReleaseQuest={handleReleaseQuest}
             familyMembers={familyMembers}
           />
         </section>

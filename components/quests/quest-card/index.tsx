@@ -136,8 +136,8 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
             </button>
           )}
 
-          {/* Release button for unassigned quests (family or individual) */}
-          {!quest.assigned_to_id && onRelease && (
+          {/* Release button for unassigned family quests */}
+          {quest.quest_type === 'FAMILY' && !quest.assigned_to_id && onRelease && (
             <button
               type="button"
               className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition"

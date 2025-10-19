@@ -41,7 +41,8 @@ export function filterHistoricalQuests(quests: QuestInstance[]): QuestInstance[]
 }
 
 /**
- * Filter unassigned individual quests
+ * Filter unassigned individual quests - these should only appear if they were created manually
+ * and not auto-assigned by the cron job. In most cases, this list should be empty.
  */
 export function filterUnassignedIndividualQuests(quests: QuestInstance[]): QuestInstance[] {
   return quests.filter((quest) => !quest.assigned_to_id && quest.quest_type !== "FAMILY");
