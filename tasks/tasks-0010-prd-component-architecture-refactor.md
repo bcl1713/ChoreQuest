@@ -405,34 +405,136 @@ components/
     - ✅ No performance regressions detected
 
 - [ ] 6.0 Documentation and Quality Verification
-  - [ ] 6.1 Add JSDoc comments to all utilities
-    - Document all functions in lib/utils/colors.ts
-    - Document all functions in lib/utils/formatting.ts
-    - Document all functions in lib/utils/validation.ts
-    - Document all functions in lib/utils/data.ts
-  - [ ] 6.2 Add JSDoc comments to all custom hooks
-    - Document hooks/useFamilyMembers.ts
-    - Document hooks/useCharacter.ts
-    - Document hooks/useQuests.ts
-    - Document hooks/useRewards.ts
-    - Document hooks/useQuestFilters.ts
-    - Document hooks/useTabNavigation.ts
-  - [ ] 6.3 Create README files for feature folders
-    - Create `components/quests/README.md` explaining quest components
-    - Create `components/rewards/README.md` explaining reward components
-    - Create `components/family/README.md` explaining family components
-    - Create `components/admin/README.md` explaining admin components
-  - [ ] 6.4 Verify architectural goals met
-    - Verify no component exceeds 400 LOC (use `find components -name "*.tsx" -exec wc -l {} + | sort -rn | head -20`)
-    - Verify all shared utilities are in lib/utils/
-    - Verify custom hooks are created and used
-    - Verify feature-based organization is complete
-  - [ ] 6.5 Run comprehensive quality gates
+  - [x] 6.1 Add JSDoc comments to all utilities
+    - ✅ Document all functions in lib/utils/colors.ts (already documented)
+    - ✅ Document all functions in lib/utils/formatting.ts (already documented)
+    - ✅ Document all functions in lib/utils/validation.ts (already documented)
+    - ✅ Document all functions in lib/utils/data.ts (already documented)
+  - [x] 6.2 Add JSDoc comments to all custom hooks
+    - ✅ Document hooks/useFamilyMembers.ts (already documented)
+    - ✅ Document hooks/useCharacter.ts (already documented)
+    - ✅ Document hooks/useQuests.ts (already documented)
+    - ✅ Document hooks/useRewards.ts (already documented)
+    - ✅ Document hooks/useQuestFilters.ts (already documented)
+    - ✅ Document hooks/useTabNavigation.ts (already documented)
+  - [x] 6.3 Create README files for feature folders
+    - ✅ Create `components/quests/README.md` explaining quest components
+    - ✅ Create `components/rewards/README.md` explaining reward components
+    - ✅ Create `components/family/README.md` explaining family components
+    - ✅ Create `components/admin/README.md` explaining admin components
+  - [x] 6.4 Verify architectural goals met
+    - ✅ Verify no component exceeds 400 LOC - **MOSTLY MET** (Quest dashboard: 368 LOC, Quest create modal: 399 LOC, Reward manager: 296 LOC, Admin components all under 400 LOC. Exceptions: reward-store.tsx at 617 LOC and quest-template-manager.tsx at 452 LOC - these were not part of the decomposition tasks)
+    - ✅ Verify all shared utilities are in lib/utils/ - **MET** (colors.ts, data.ts, formatting.ts, validation.ts all in lib/utils/)
+    - ✅ Verify custom hooks are created and used - **MET** (useQuests, useFamilyMembers, useCharacter, useRewards, useQuestFilters, useTabNavigation all created and actively used across components)
+    - ✅ Verify feature-based organization is complete - **MET** (Components organized into quests/, rewards/, family/, admin/, ui/, animations/, auth/, character/, icons/, migration/)
+
+- [ ] 7.0 Additional Component Decomposition (Identified during verification)
+  - [x] 7.1 Decompose reward-store.tsx (617 LOC → 608 LOC across 4 components, all < 400 LOC)
+    - [x] 7.1.1 Create `components/rewards/reward-store/` directory
+    - [x] 7.1.2 Create `reward-catalog.tsx` - Grid display of available rewards (7 tests passing)
+      - Accept rewards array as prop
+      - Render reward cards in grid layout
+      - Handle empty state when no rewards available
+      - Apply React.memo for performance
+      - Create tests in `__tests__/reward-catalog.test.tsx`
+    - [x] 7.1.3 Create `reward-card.tsx` - Individual reward display card (22 tests passing)
+      - Display reward icon, name, description, cost
+      - Show redemption button with gold validation
+      - Handle disabled state for insufficient gold
+      - Apply React.memo for performance
+      - Create tests in `__tests__/reward-card.test.tsx`
+    - [x] 7.1.4 Create `redemption-history.tsx` - User's redemption history (21 tests passing)
+      - Display user's past and pending redemptions
+      - Show redemption status (pending, approved, rejected, completed)
+      - Filter redemptions by status
+      - Create tests in `__tests__/redemption-history.test.tsx`
+    - [x] 7.1.5 Create `index.tsx` - Main reward store orchestrator (299 LOC)
+      - Use useRewards hook for data fetching
+      - Use useCharacter hook for gold balance
+      - Manage redemption state
+      - Compose sub-components (RewardCatalog, RedemptionHistory)
+      - Handle redemption success/error messaging
+      - Keep under 400 LOC by extracting helpers if needed
+    - [x] 7.1.6 Move old reward-store.tsx to reward-store/index.tsx
+      - Use `git rm components/rewards/reward-store.tsx` ✅
+      - Update imports in app pages (no changes needed - barrel export handles it) ✅
+      - Update README.md documentation ✅
+    - [x] 7.1.7 Run quality gates
+      - Run `npm run build` - verify zero compilation errors ✅
+      - Run `npm run lint` - verify zero linting warnings ✅
+      - Run `npm run test` - verify all tests pass (1278/1278 passing) ✅
+      - Verify all components under 400 LOC (largest is 299 LOC) ✅
+
+  - [ ] 7.2 Decompose quest-template-manager.tsx (452 LOC → multiple < 400 LOC components)
+    - [ ] 7.2.1 Create `components/quests/quest-template-manager/` directory
+    - [ ] 7.2.2 Create `template-list.tsx` - List of quest templates
+      - Display templates in a list/grid
+      - Show template type (personal, recurring)
+      - Show template metadata (creator, usage count)
+      - Provide edit/delete actions
+      - Apply React.memo for performance
+      - Create tests in `__tests__/template-list.test.tsx`
+    - [ ] 7.2.3 Create `template-form.tsx` - Template creation/edit form
+      - Fields: title, description, type, difficulty
+      - Recurrence pattern settings for recurring templates
+      - Reward configuration (XP, gold)
+      - Class bonus configuration
+      - Form validation
+      - Apply React.memo for performance
+      - Create tests in `__tests__/template-form.test.tsx`
+    - [ ] 7.2.4 Create `template-item.tsx` - Individual template card
+      - Display template details
+      - Show edit/delete buttons
+      - Handle template selection
+      - Apply React.memo
+      - Create tests in `__tests__/template-item.test.tsx`
+    - [ ] 7.2.5 Create `index.tsx` - Template manager orchestrator
+      - Manage template loading and state
+      - Handle template CRUD operations
+      - Compose sub-components (TemplateList, TemplateForm)
+      - Realtime template updates
+      - Keep under 400 LOC by extracting helpers if needed
+    - [ ] 7.2.6 Move old quest-template-manager.tsx to quest-template-manager/index.tsx
+      - Use `git rm components/quests/quest-template-manager.tsx`
+      - Update imports in app pages
+      - Update barrel export in components/quests/index.ts
+      - Update any test files that reference quest-template-manager
+    - [ ] 7.2.7 Run quality gates
+      - Run `npm run build` - verify zero compilation errors
+      - Run `npm run lint` - verify zero linting warnings
+      - Run `npm run test` - verify all tests pass
+      - Verify all components under 400 LOC
+
+  - [ ] 7.3 Apply performance optimizations to new components
+    - [ ] 7.3.1 Optimize reward-store components
+      - Add useMemo for filtered/computed values
+      - Add useCallback for event handlers
+      - Verify React.memo usage
+    - [ ] 7.3.2 Optimize quest-template-manager components
+      - Add useMemo for filtered/computed values
+      - Add useCallback for event handlers
+      - Verify React.memo usage
+    - [ ] 7.3.3 Run quality gates
+      - Run `npm run build` - verify zero compilation errors
+      - Run `npm run lint` - verify zero linting warnings
+      - Run `npm run test` - verify all tests pass
+
+  - [ ] 7.4 Update documentation for new decompositions
+    - [ ] Update components/rewards/README.md with reward-store structure
+    - [ ] Update components/quests/README.md with quest-template-manager structure
+    - [ ] Run quality gates
+      - Run `npm run build` - verify zero compilation errors
+      - Run `npm run lint` - verify zero linting warnings
+      - Run `npm run test` - verify all tests pass
+
+  - [ ] 7.5 Run comprehensive quality gates
     - Run `npm run build` - verify zero compilation errors
     - Run `npm run lint` - verify zero linting warnings
     - Run `npm run test` - verify all tests pass
     - Check test coverage hasn't decreased
-  - [ ] 6.6 Create GitHub issue tracking refactoring completion
+    - Verify ALL components now under 400 LOC
+
+  - [ ] 7.6 Create GitHub issue tracking refactoring completion
     - Document all changes made
     - List performance improvements with metrics
     - Note any breaking changes or migration notes
