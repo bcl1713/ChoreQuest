@@ -18,44 +18,44 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock child components
-jest.mock("@/components/statistics-panel", () => {
+jest.mock("@/components/admin/statistics-panel", () => {
   return function StatisticsPanel() {
     return <div data-testid="statistics-panel">Statistics Panel</div>;
   };
 });
 
-jest.mock("@/components/activity-feed", () => {
+jest.mock("@/components/admin/activity-feed", () => {
   return function ActivityFeed() {
     return <div data-testid="activity-feed">Activity Feed</div>;
   };
 });
 
-jest.mock("@/components/guild-master-manager", () => {
+jest.mock("@/components/admin/guild-master-manager", () => {
   return function GuildMasterManager() {
     return <div data-testid="guild-master-manager">Guild Master Manager</div>;
   };
 });
 
-jest.mock("@/components/family-settings", () => {
+jest.mock("@/components/family/family-settings", () => {
   return function FamilySettings() {
     return <div data-testid="family-settings">Family Settings</div>;
   };
 });
 
-jest.mock("@/components/quest-template-manager", () => ({
+jest.mock("@/components/quests/quest-template-manager", () => ({
   QuestTemplateManager: function QuestTemplateManager() {
     return <div data-testid="quest-template-manager">Quest Template Manager</div>;
   },
 }));
 
-jest.mock("@/components/reward-manager", () => {
+jest.mock("@/components/rewards/reward-manager", () => {
   return function RewardManager() {
     return <div data-testid="reward-manager">Reward Manager</div>;
   };
 });
 
 // NOW import the component (after all mocks are set up)
-import { AdminDashboard } from "@/components/admin-dashboard";
+import { AdminDashboard } from "@/components/admin/admin-dashboard";
 
 describe("AdminDashboard", () => {
   beforeEach(() => {

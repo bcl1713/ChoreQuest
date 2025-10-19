@@ -3,7 +3,7 @@
 import { useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { AdminDashboard } from '@/components/admin-dashboard';
+import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
 // Error Boundary Component
 class AdminErrorBoundary extends Component<

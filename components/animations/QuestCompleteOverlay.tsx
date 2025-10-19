@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ParticleEffect } from './ParticleEffect';
-import { FantasyButton } from '@/components/ui/FantasyButton';
+import { FantasyButton } from '@/components/ui';
 import { Trophy, Coins, Star, Gem, Sparkles, X } from 'lucide-react';
 import { modalBackdrop, modalContent } from '@/lib/animations/variants';
 

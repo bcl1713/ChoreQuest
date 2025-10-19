@@ -1,23 +1,18 @@
 'use client';
 
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
-import StatisticsPanel from '@/components/statistics-panel';
-import ActivityFeed from '@/components/activity-feed';
-import GuildMasterManager from '@/components/guild-master-manager';
-import FamilySettings from '@/components/family-settings';
-import { QuestTemplateManager } from '@/components/quest-template-manager';
-import RewardManager from '@/components/reward-manager';
+import { useMemo } from 'react';
+import StatisticsPanel from './statistics-panel';
+import ActivityFeed from './activity-feed';
+import GuildMasterManager from './guild-master-manager';
+import FamilySettings from '@/components/family/family-settings';
+import { QuestTemplateManager } from '@/components/quests/quest-template-manager';
+import RewardManager from '@/components/rewards/reward-manager';
+import { useTabNavigation } from '@/hooks/useTabNavigation';
 
 type TabName = 'overview' | 'quest-templates' | 'rewards' | 'guild-masters' | 'family-settings';
 
 export function AdminDashboard() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
   // Tab configuration
   const tabs: { name: TabName; label: string; icon: string }[] = useMemo(() => [
     { name: 'overview', label: 'Overview', icon: '📊' },
@@ -27,25 +22,8 @@ export function AdminDashboard() {
     { name: 'family-settings', label: 'Family Settings', icon: '⚙️' },
   ], []);
 
-  // Sync selected tab with URL query params
-  useEffect(() => {
-    const tabParam = searchParams.get('tab') as TabName | null;
-    if (tabParam) {
-      const tabIndex = tabs.findIndex((tab) => tab.name === tabParam);
-      if (tabIndex !== -1) {
-        setSelectedIndex(tabIndex);
-      }
-    }
-  }, [searchParams, tabs]);
-
-  // Update URL when tab changes
-  const handleTabChange = (index: number) => {
-    setSelectedIndex(index);
-    const tabName = tabs[index].name;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', tabName);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  // Use custom hook for tab navigation with URL sync
+  const { selectedIndex, handleTabChange } = useTabNavigation(tabs, 'tab');
 
   return (
     <div className="w-full" data-testid="admin-dashboard">

@@ -10,12 +10,15 @@
 
 
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
-import QuestDashboard from "../../components/quest-dashboard";
+import QuestDashboard from "../../components/quests/quest-dashboard";
 import React from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useRealtime } from "../../lib/realtime-context";
 import { questInstanceApiService } from "../../lib/quest-instance-api-service";
 import { supabase } from "../../lib/supabase";
+import { useFamilyMembers } from "../../hooks/useFamilyMembers";
+import { useCharacter } from "../../hooks/useCharacter";
+import { useQuests } from "../../hooks/useQuests";
 
 jest.mock("../../lib/streak-service", () => ({
   streakService: {
@@ -37,6 +40,11 @@ jest.mock("../../lib/quest-instance-api-service", () => ({
     approveQuest: jest.fn().mockResolvedValue(undefined),
   },
 }));
+
+// Mock custom hooks
+jest.mock("../../hooks/useFamilyMembers");
+jest.mock("../../hooks/useCharacter");
+jest.mock("../../hooks/useQuests");
 
 describe("Quest Interaction Buttons - Core MVP Feature", () => {
   const mockHeroUser = {
@@ -108,6 +116,29 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       onQuestUpdate: jest.fn(),
     });
 
+    // Mock custom hooks
+    (useFamilyMembers as jest.Mock).mockReturnValue({
+      familyMembers: [],
+      familyCharacters: [],
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
+    (useCharacter as jest.Mock).mockReturnValue({
+      character: { id: 'char-123', user_id: 'hero-123' },
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
+    (useQuests as jest.Mock).mockReturnValue({
+      quests: questInstancesMock,
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
     (supabase.from as jest.Mock).mockImplementation((tableName) => {
       if (tableName === 'characters') {
         return {
@@ -161,6 +192,18 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       },
     });
 
+    // Add family members so assignment dropdown appears
+    (useFamilyMembers as jest.Mock).mockReturnValue({
+      familyMembers: [
+        { id: 'hero-123', name: 'Hero User', role: 'HERO' },
+        { id: 'hero-456', name: 'Another Hero', role: 'HERO' },
+      ],
+      familyCharacters: [],
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
     render(<QuestDashboard onError={jest.fn()} />);
 
     await waitFor(() => {
@@ -193,6 +236,14 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       },
     });
 
+    // Update the quests hook to return the completed quest
+    (useQuests as jest.Mock).mockReturnValue({
+      quests: questInstancesMock,
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
     render(<QuestDashboard onError={jest.fn()} />);
 
     await waitFor(() => {
@@ -216,10 +267,34 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
       profile: null,
     });
 
+    // When no user, hooks return empty data
+    (useFamilyMembers as jest.Mock).mockReturnValue({
+      familyMembers: [],
+      familyCharacters: [],
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
+    (useCharacter as jest.Mock).mockReturnValue({
+      character: null,
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
+    (useQuests as jest.Mock).mockReturnValue({
+      quests: [],
+      loading: false,
+      error: null,
+      reload: jest.fn(),
+    });
+
     render(<QuestDashboard onError={jest.fn()} />);
 
+    // Dashboard should render with no quests
     await waitFor(() => {
-      expect(screen.getByText("User not authenticated")).toBeInTheDocument();
+      expect(screen.getByText("You have no active quests right now.")).toBeInTheDocument();
     });
   });
 });

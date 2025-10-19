@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { QuestTemplateManager } from '@/components/quest-template-manager';
+import { QuestTemplateManager } from '@/components/quests/quest-template-manager';
 import React from 'react';
 import type { QuestTemplate } from '@/lib/types/database';
 

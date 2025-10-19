@@ -6,7 +6,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import QuestCreateModal from "@/components/quest-create-modal";
+import QuestCreateModal from "@/components/quests/quest-create-modal";
 import { questTemplateService } from "@/lib/quest-template-service";
 import { QuestTemplate } from "@/lib/types/database";
 
@@ -15,6 +15,38 @@ jest.mock("@/lib/auth-context", () => ({
   useAuth: () => ({
     user: { id: "test-user-id" },
     profile: { family_id: "test-family-id", role: "GUILD_MASTER" },
+  }),
+}));
+
+jest.mock("@/hooks/useFamilyMembers", () => ({
+  useFamilyMembers: () => ({
+    familyMembers: [
+      {
+        id: "member-1",
+        name: "Test Member",
+        role: "HERO",
+      },
+    ],
+    familyCharacters: [
+      {
+        id: "character-1",
+        user_id: "member-1",
+        name: "Sir Test",
+        class: "KNIGHT",
+        level: 1,
+        xp: 0,
+        gold: 0,
+        gems: 0,
+        honor_points: 0,
+        avatar_url: null,
+        created_at: "2025-01-01T00:00:00Z",
+        updated_at: "2025-01-01T00:00:00Z",
+        active_family_quest_id: null,
+      },
+    ],
+    loading: false,
+    error: null,
+    reload: jest.fn(),
   }),
 }));
 
