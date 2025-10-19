@@ -8,14 +8,16 @@ import GuildMasterManager from './guild-master-manager';
 import FamilySettings from '@/components/family/family-settings';
 import { QuestTemplateManager } from '@/components/quests/quest-template-manager';
 import RewardManager from '@/components/rewards/reward-manager';
+import QuestManagementTab from './quest-management-tab';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 
-type TabName = 'overview' | 'quest-templates' | 'rewards' | 'guild-masters' | 'family-settings';
+type TabName = 'overview' | 'quests' | 'quest-templates' | 'rewards' | 'guild-masters' | 'family-settings';
 
 export function AdminDashboard() {
   // Tab configuration
   const tabs: { name: TabName; label: string; icon: string }[] = useMemo(() => [
     { name: 'overview', label: 'Overview', icon: '📊' },
+    { name: 'quests', label: 'Quest Management', icon: '⚔️' },
     { name: 'quest-templates', label: 'Quest Templates', icon: '📜' },
     { name: 'rewards', label: 'Rewards', icon: '🏆' },
     { name: 'guild-masters', label: 'Guild Masters', icon: '👑' },
@@ -56,6 +58,11 @@ export function AdminDashboard() {
               <StatisticsPanel />
               <ActivityFeed />
             </div>
+          </TabPanel>
+
+          {/* Quest Management Tab */}
+          <TabPanel>
+            <QuestManagementTab />
           </TabPanel>
 
           {/* Quest Templates Tab */}

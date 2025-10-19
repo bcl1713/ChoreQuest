@@ -144,3 +144,38 @@ export function getAssignmentOptions(
       }));
   }
 }
+
+/**
+ * Filter quests pending approval (COMPLETED status)
+ */
+export function filterPendingApprovalQuests(quests: QuestInstance[]): QuestInstance[] {
+  return quests.filter((quest) => quest.status === "COMPLETED");
+}
+
+/**
+ * Filter unassigned active quests (no assigned_to_id and active statuses)
+ */
+export function filterUnassignedActiveQuests(quests: QuestInstance[]): QuestInstance[] {
+  const activeStatuses: QuestStatus[] = ["PENDING", "IN_PROGRESS", "CLAIMED", "AVAILABLE"];
+  const activeSet = new Set<QuestStatus>(activeStatuses);
+
+  return quests.filter((quest) => {
+    const isUnassigned = !quest.assigned_to_id;
+    const hasActiveStatus = quest.status && activeSet.has(quest.status);
+    return isUnassigned && hasActiveStatus;
+  });
+}
+
+/**
+ * Filter in-progress quests (assigned and IN_PROGRESS or CLAIMED status)
+ */
+export function filterInProgressQuests(quests: QuestInstance[]): QuestInstance[] {
+  const inProgressStatuses: QuestStatus[] = ["IN_PROGRESS", "CLAIMED"];
+  const inProgressSet = new Set<QuestStatus>(inProgressStatuses);
+
+  return quests.filter((quest) => {
+    const isAssigned = Boolean(quest.assigned_to_id);
+    const hasInProgressStatus = quest.status && inProgressSet.has(quest.status);
+    return isAssigned && hasInProgressStatus;
+  });
+}
