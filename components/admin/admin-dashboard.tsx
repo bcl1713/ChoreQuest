@@ -2,11 +2,11 @@
 
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { useMemo } from 'react';
-import StatisticsPanel from '@/components/statistics-panel';
-import ActivityFeed from '@/components/activity-feed';
-import GuildMasterManager from '@/components/guild-master-manager';
-import FamilySettings from '@/components/family-settings';
-import { QuestTemplateManager } from '@/components/quest-template-manager';
+import StatisticsPanel from './statistics-panel';
+import ActivityFeed from './activity-feed';
+import GuildMasterManager from './guild-master-manager';
+import FamilySettings from '@/components/family/family-settings';
+import { QuestTemplateManager } from '@/components/quests/quest-template-manager';
 import RewardManager from '@/components/rewards/reward-manager';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 

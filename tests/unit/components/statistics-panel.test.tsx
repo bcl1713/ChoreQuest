@@ -50,7 +50,7 @@ jest.mock("@/lib/statistics-service", () => {
 });
 
 // NOW import the component (after all mocks are set up)
-import StatisticsPanel from "@/components/statistics-panel";
+import StatisticsPanel from "@/components/admin/statistics-panel";
 import { StatisticsService } from "@/lib/statistics-service";
 
 describe("StatisticsPanel", () => {

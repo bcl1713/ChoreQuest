@@ -53,7 +53,7 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 // NOW import the component (after all mocks are set up)
-import GuildMasterManager from "@/components/guild-master-manager";
+import GuildMasterManager from "@/components/admin/guild-master-manager";
 
 describe("GuildMasterManager", () => {
   const mockMembers = [

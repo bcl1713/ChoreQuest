@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ParticleEffect } from './ParticleEffect';
-import { FantasyButton } from '@/components/ui/FantasyButton';
+import { FantasyButton } from '@/components/ui';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { modalBackdrop, celebrationBurst } from '@/lib/animations/variants';
 import { useEffect, useRef } from 'react';

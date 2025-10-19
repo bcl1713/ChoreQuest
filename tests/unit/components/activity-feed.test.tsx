@@ -50,7 +50,7 @@ jest.mock("@/lib/activity-service", () => {
 });
 
 // NOW import the component (after all mocks are set up)
-import ActivityFeed from "@/components/activity-feed";
+import ActivityFeed from "@/components/admin/activity-feed";
 import { ActivityService } from "@/lib/activity-service";
 
 describe("ActivityFeed", () => {

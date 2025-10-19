@@ -7,15 +7,13 @@ import { useCharacter } from '@/lib/character-context';
 import { useRealtime } from '@/lib/realtime-context';
 import QuestDashboard from '@/components/quests/quest-dashboard';
 import QuestCreateModal from '@/components/quests/quest-create-modal';
-import RewardStore from '@/components/reward-store';
+import RewardStore from '@/components/rewards/reward-store';
 import { QuestTemplate } from '@/lib/types/database';
 import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
-import { ProgressBar } from '@/components/animations/ProgressBar';
-import { LevelUpModal } from '@/components/animations/LevelUpModal';
-import { QuestCompleteOverlay, QuestReward } from '@/components/animations/QuestCompleteOverlay';
+import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } from '@/components/animations';
 import { RewardCalculator } from '@/lib/reward-calculator';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {

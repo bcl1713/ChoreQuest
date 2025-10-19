@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { presetTemplateApiService } from '@/lib/preset-template-api-service';
 import { questTemplateApiService } from '@/lib/quest-template-api-service';
-import { QuestTemplateForm } from '@/components/quest-template-manager';
+import { QuestTemplateForm } from '@/components/quests/quest-template-manager';
 import type { TemplateFormData } from '@/lib/types/quest-templates';
 import { presetTemplates, type PresetTemplateCollection, type PresetTemplateDefinition } from '@/lib/preset-templates';
 
