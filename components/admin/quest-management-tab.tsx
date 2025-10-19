@@ -96,10 +96,14 @@ export function QuestManagementTab() {
 
   // Memoized characters for assignment (map to { id, name } format)
   const assignableCharacters = useMemo(() => {
-    return familyCharacters.map((char) => ({
-      id: char.id,
-      name: char.name,
-    }));
+    return familyCharacters.map((char) => {
+      // Ensure we have a displayable name, using character id as last resort
+      const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
+      return {
+        id: char.id,
+        name: displayName,
+      };
+    });
   }, [familyCharacters]);
 
   // Memoized quest grouping
