@@ -98,6 +98,68 @@ class QuestInstanceApiService {
       throw new Error(errorData.error || 'Failed to assign quest');
     }
   }
+
+  async cancelQuest(questId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to cancel quest' }));
+      throw new Error(errorData.error || 'Failed to cancel quest');
+    }
+  }
+
+  async togglePauseQuest(questId: string, isPaused: boolean): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/pause`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ is_paused: isPaused }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to toggle pause' }));
+      throw new Error(errorData.error || 'Failed to toggle pause');
+    }
+  }
+
+  async assignQuest(questId: string, userId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/assign-user`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to assign quest' }));
+      throw new Error(errorData.error || 'Failed to assign quest');
+    }
+  }
 }
 
 export const questInstanceApiService = new QuestInstanceApiService();

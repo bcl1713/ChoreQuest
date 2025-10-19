@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuests } from '@/hooks/useQuests';
 import { useFamilyMembers } from '@/hooks/useFamilyMembers';
@@ -14,6 +14,7 @@ import {
 } from '@/components/quests/quest-dashboard/quest-helpers';
 import { staggerContainer } from '@/lib/animations/variants';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { questInstanceApiService } from '@/lib/quest-instance-api-service';
 
 interface QuestSection {
   title: string;
@@ -23,9 +24,72 @@ interface QuestSection {
 }
 
 export function QuestManagementTab() {
-  const { quests, loading, error } = useQuests();
+  const { quests, loading, error, reload } = useQuests();
   const { familyMembers } = useFamilyMembers();
   useAuth();
+  const [selectedAssignee, setSelectedAssignee] = useState<Record<string, string>>({});
+
+  // Action handlers with error handling
+  const handleAssignQuest = useCallback(
+    async (questId: string, userId: string) => {
+      if (!userId) return;
+      try {
+        await questInstanceApiService.assignQuest(questId, userId);
+        setSelectedAssignee((prev) => ({ ...prev, [questId]: '' }));
+        await reload();
+      } catch (err) {
+        console.error('Failed to assign quest:', err);
+        alert('Failed to assign quest. Please try again.');
+      }
+    },
+    [reload]
+  );
+
+  const handleApproveQuest = useCallback(
+    async (questId: string) => {
+      try {
+        await questInstanceApiService.approveQuest(questId);
+        await reload();
+      } catch (err) {
+        console.error('Failed to approve quest:', err);
+        alert('Failed to approve quest. Please try again.');
+      }
+    },
+    [reload]
+  );
+
+  const handleCancelQuest = useCallback(
+    async (questId: string) => {
+      if (!window.confirm('Are you sure you want to cancel this quest?')) {
+        return;
+      }
+      try {
+        await questInstanceApiService.cancelQuest(questId);
+        await reload();
+      } catch (err) {
+        console.error('Failed to cancel quest:', err);
+        alert('Failed to cancel quest. Please try again.');
+      }
+    },
+    [reload]
+  );
+
+  const handleTogglePause = useCallback(
+    async (questId: string, isPaused: boolean) => {
+      try {
+        await questInstanceApiService.togglePauseQuest(questId, isPaused);
+        await reload();
+      } catch (err) {
+        console.error('Failed to toggle pause:', err);
+        alert('Failed to toggle pause. Please try again.');
+      }
+    },
+    [reload]
+  );
+
+  const handleAssigneeChange = useCallback((questId: string, userId: string) => {
+    setSelectedAssignee((prev) => ({ ...prev, [questId]: userId }));
+  }, []);
 
   // Memoized quest grouping
   const questSections = useMemo(() => {
@@ -113,8 +177,12 @@ export function QuestManagementTab() {
                 viewMode="gm"
                 familyMembers={familyMembers}
                 assignedHeroName={getAssignedHeroName(quest!, familyMembers)}
-                // Callbacks will be implemented in subsequent tasks
-                // onAssign, onApprove, onCancel, onTogglePause
+                selectedAssignee={selectedAssignee[quest!.id] || ''}
+                onAssigneeChange={handleAssigneeChange}
+                onAssign={handleAssignQuest}
+                onApprove={handleApproveQuest}
+                onCancel={handleCancelQuest}
+                onTogglePause={handleTogglePause}
               />
             ))}
           </motion.div>
