@@ -166,6 +166,13 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     return redemptions.filter(r => r.status === 'PENDING');
   }, [redemptions]);
 
+  const goldBalance = useMemo(() => character?.gold || 0, [character]);
+
+  const hasPendingRedemptions = useMemo(
+    () => user?.role === 'GUILD_MASTER' && pendingRedemptions.length > 0,
+    [user?.role, pendingRedemptions.length]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -181,7 +188,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-yellow-800" data-testid="reward-store-title">⭐ Reward Store</h2>
           <div className="flex items-center space-x-4">
-            {user?.role === 'GUILD_MASTER' && pendingRedemptions.length > 0 && (
+            {hasPendingRedemptions && (
               <div className="flex items-center space-x-2 bg-orange-100 px-3 py-1 rounded-full">
                 <span className="text-orange-600 font-medium">🔔 {pendingRedemptions.length} pending</span>
               </div>
@@ -189,7 +196,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
             <div className="flex items-center space-x-2">
               <span className="text-2xl">🪙</span>
               <span className="text-xl font-bold text-yellow-700" data-testid="gold-balance">
-                {character?.gold || 0} Gold
+                {goldBalance} Gold
               </span>
             </div>
           </div>
@@ -210,7 +217,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       </RewardCatalog>
 
       {/* Pending Requests Section for Guild Masters */}
-      {user?.role === 'GUILD_MASTER' && pendingRedemptions.length > 0 && (
+      {hasPendingRedemptions && (
         <div className="border-2 border-orange-200 bg-orange-50 rounded-lg p-6">
           <h3 className="text-xl font-bold text-orange-800 mb-4 flex items-center">
             🔔 Pending Approval Requests

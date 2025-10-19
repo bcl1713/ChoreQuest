@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { userService } from '@/lib/user-service';
@@ -115,7 +115,7 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
     });
   };
 
-  const handleCharacterSelection = (characterId: string) => {
+  const handleCharacterSelection = useCallback((characterId: string) => {
     setFormData((prev) => {
       const currentlyAssigned = prev.assigned_character_ids;
       if (currentlyAssigned.includes(characterId)) {
@@ -130,16 +130,29 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
         };
       }
     });
-  };
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (formData.quest_type === 'INDIVIDUAL' && formData.assigned_character_ids.length === 0) {
       alert('Individual quests must be assigned to at least one character.');
       return;
     }
     onSave(formData);
-  };
+  }, [formData, onSave]);
+
+  const characterList = useMemo(
+    () =>
+      familyCharacters.map((character) => {
+        const owner = familyMembers.find((member) => member.id === character.user_id);
+        return {
+          id: character.id,
+          name: character.name,
+          ownerName: owner ? owner.name : '',
+        };
+      }),
+    [familyCharacters, familyMembers]
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -277,24 +290,21 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
                 <p className="text-sm text-gray-400">No characters found for this family.</p>
               ) : (
                 <div className="space-y-2">
-                  {familyCharacters.map((character) => {
-                    const owner = familyMembers.find((member) => member.id === character.user_id);
-                    return (
-                      <div key={character.id} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          id={character.id}
-                          checked={formData.assigned_character_ids.includes(character.id)}
-                          onChange={() => handleCharacterSelection(character.id)}
-                          className="form-checkbox h-4 w-4 text-purple-500"
-                        />
-                        <label htmlFor={character.id}>
-                          {character.name}
-                          {owner ? ` (${owner.name})` : ''}
-                        </label>
-                      </div>
-                    );
-                  })}
+                  {characterList.map((character) => (
+                    <div key={character.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        id={character.id}
+                        checked={formData.assigned_character_ids.includes(character.id)}
+                        onChange={() => handleCharacterSelection(character.id)}
+                        className="form-checkbox h-4 w-4 text-purple-500"
+                      />
+                      <label htmlFor={character.id}>
+                        {character.name}
+                        {character.ownerName ? ` (${character.ownerName})` : ''}
+                      </label>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

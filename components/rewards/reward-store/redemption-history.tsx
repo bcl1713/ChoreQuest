@@ -19,12 +19,13 @@ interface RedemptionHistoryProps {
   onFulfill?: (redemptionId: string) => void;
 }
 
-const REWARD_TYPE_ICONS = {
+// Constants defined outside component for performance
+const REWARD_TYPE_ICONS: Record<string, string> = {
   SCREEN_TIME: '📱',
   PRIVILEGE: '⭐',
   PURCHASE: '💰',
   EXPERIENCE: '🎈',
-};
+} as const;
 
 /**
  * RedemptionHistory - User's redemption history component

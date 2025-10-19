@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { User as UserIcon, Users, Repeat, Settings, Trash2 } from 'lucide-react';
 import type { QuestTemplate } from '@/lib/types/database';
 
@@ -23,12 +23,36 @@ export const TemplateItem = React.memo<TemplateItemProps>(({
   onDelete,
   onTogglePause,
 }) => {
+  const containerClasses = useMemo(
+    () => `p-4 rounded-lg ${template.is_paused ? 'bg-gray-700 opacity-60' : 'bg-gray-900'}`,
+    [template.is_paused]
+  );
+
+  const pauseButtonClasses = useMemo(
+    () =>
+      `text-sm text-white py-1 px-3 rounded-md ${
+        template.is_paused
+          ? 'bg-green-600 hover:bg-green-700'
+          : 'bg-yellow-600 hover:bg-yellow-700'
+      }`,
+    [template.is_paused]
+  );
+
+  const pauseButtonText = useMemo(
+    () => (template.is_paused ? 'Resume' : 'Pause'),
+    [template.is_paused]
+  );
+
+  const assignmentText = useMemo(
+    () =>
+      template.quest_type === 'INDIVIDUAL'
+        ? `Assigned to: ${(template.assigned_character_ids ?? []).join(', ')}`
+        : 'Claimable by: Any hero',
+    [template.quest_type, template.assigned_character_ids]
+  );
+
   return (
-    <div
-      className={`p-4 rounded-lg ${
-        template.is_paused ? 'bg-gray-700 opacity-60' : 'bg-gray-900'
-      }`}
-    >
+    <div className={containerClasses}>
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center space-x-2 mb-2">
@@ -52,9 +76,7 @@ export const TemplateItem = React.memo<TemplateItemProps>(({
             )}
           </div>
           <p className="text-sm text-gray-400">
-            {template.quest_type === 'INDIVIDUAL'
-              ? `Assigned to: ${(template.assigned_character_ids ?? []).join(', ')}`
-              : 'Claimable by: Any hero'}
+            {assignmentText}
           </p>
         </div>
         <button className="text-gray-400 hover:text-white">
@@ -70,13 +92,9 @@ export const TemplateItem = React.memo<TemplateItemProps>(({
         </button>
         <button
           onClick={() => onTogglePause(template)}
-          className={`text-sm text-white py-1 px-3 rounded-md ${
-            template.is_paused
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-yellow-600 hover:bg-yellow-700'
-          }`}
+          className={pauseButtonClasses}
         >
-          {template.is_paused ? 'Resume' : 'Pause'}
+          {pauseButtonText}
         </button>
         <button
           onClick={() => onDelete(template)}

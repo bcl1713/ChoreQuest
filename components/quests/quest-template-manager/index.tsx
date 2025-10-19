@@ -156,6 +156,15 @@ export function QuestTemplateManager() {
     }
   }, []);
 
+  const handleFormCancel = useCallback(() => {
+    setIsFormModalOpen(false);
+    setSelectedTemplate(null);
+  }, []);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteTarget(null);
+  }, []);
+
   if (loading) return <p>Loading templates...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -182,7 +191,7 @@ export function QuestTemplateManager() {
         <TemplateForm
           template={selectedTemplate}
           onSave={handleFormSave}
-          onCancel={() => setIsFormModalOpen(false)}
+          onCancel={handleFormCancel}
         />
       )}
 
@@ -190,7 +199,7 @@ export function QuestTemplateManager() {
         <DeleteModal
           template={deleteTarget}
           onConfirm={handleDeleteTemplate}
-          onCancel={() => setDeleteTarget(null)}
+          onCancel={handleDeleteCancel}
         />
       )}
     </div>

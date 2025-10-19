@@ -12,19 +12,20 @@ interface RewardCardProps {
   onRedeem: (reward: Reward) => void;
 }
 
-const REWARD_TYPE_ICONS = {
+// Constants defined outside component for performance
+const REWARD_TYPE_ICONS: Record<string, string> = {
   SCREEN_TIME: '📱',
   PRIVILEGE: '⭐',
   PURCHASE: '💰',
   EXPERIENCE: '🎈',
-};
+} as const;
 
-const REWARD_TYPE_LABELS = {
+const REWARD_TYPE_LABELS: Record<string, string> = {
   SCREEN_TIME: 'Screen Time',
   PRIVILEGE: 'Privilege',
   PURCHASE: 'Purchase',
   EXPERIENCE: 'Experience',
-};
+} as const;
 
 /**
  * RewardCard - Individual reward display card

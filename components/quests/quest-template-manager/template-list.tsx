@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { User as UserIcon, Users } from 'lucide-react';
 import type { QuestTemplate } from '@/lib/types/database';
 import { TemplateItem } from './template-item';
@@ -22,8 +22,15 @@ export const TemplateList = React.memo<TemplateListProps>(({
   onDelete,
   onTogglePause,
 }) => {
-  const individualQuests = templates.filter(t => t.quest_type === 'INDIVIDUAL');
-  const familyQuests = templates.filter(t => t.quest_type === 'FAMILY');
+  const individualQuests = useMemo(
+    () => templates.filter(t => t.quest_type === 'INDIVIDUAL'),
+    [templates]
+  );
+
+  const familyQuests = useMemo(
+    () => templates.filter(t => t.quest_type === 'FAMILY'),
+    [templates]
+  );
 
   return (
     <div className="space-y-6">
