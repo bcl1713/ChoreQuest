@@ -78,28 +78,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     }
   }, [loadData, onError]);
 
-  const handlePickupQuest = useCallback(async (quest: QuestInstance) => {
-    if (!user) {
-      onError("You must be signed in to pick up quests.");
-      return;
-    }
-
-    if (quest.quest_type === "FAMILY") {
-      await handleClaimQuest(quest.id);
-      return;
-    }
-
-    try {
-      const { error: updateError } = await supabase
-        .from("quest_instances")
-        .update({ assigned_to_id: user.id, status: "PENDING" })
-        .eq("id", quest.id);
-      if (updateError) throw new Error(updateError.message);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to pick up quest");
-      await loadData();
-    }
-  }, [user, loadData, onError, handleClaimQuest]);
 
   const handleReleaseQuest = useCallback(async (questId: string) => {
     if (!window.confirm("Release this quest back to available quests?")) {
@@ -128,11 +106,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const myHistoricalQuests = useMemo(
     () => QuestHelpers.filterHistoricalQuests(myQuests),
     [myQuests]
-  );
-
-  const unassignedIndividualQuests = useMemo(
-    () => QuestHelpers.filterUnassignedIndividualQuests(questInstances),
-    [questInstances]
   );
 
   const claimableFamilyQuests = useMemo(
@@ -196,19 +169,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       {character && claimableFamilyQuests.length > 0 && (
         <section>
           <FamilyQuestClaiming quests={claimableFamilyQuests} character={character} onClaimQuest={handleClaimQuest} />
-        </section>
-      )}
-
-      {/* Available Quests */}
-      {unassignedIndividualQuests.length > 0 && (
-        <section>
-          <h3 data-testid="available-quests-heading" className="text-xl font-fantasy text-gray-200 mb-4">📋 Available Quests</h3>
-          <QuestList
-            quests={unassignedIndividualQuests}
-            useQuestCard={true}
-            onPickupQuest={handlePickupQuest}
-            familyMembers={familyMembers}
-          />
         </section>
       )}
 

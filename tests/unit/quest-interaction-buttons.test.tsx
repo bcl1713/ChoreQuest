@@ -9,7 +9,7 @@
 
 
 
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import QuestDashboard from "../../components/quests/quest-dashboard";
 import React from "react";
 import { useAuth } from "../../lib/auth-context";
@@ -49,11 +49,6 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
   const mockHeroUser = {
     id: "hero-123",
     email: "hero@test.com",
-  };
-
-  const mockGMUser = {
-    id: "gm-123",
-    email: "gm@test.com",
   };
 
   const mockUnassignedQuest = {
@@ -143,59 +138,18 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     });
   });
 
-  test("Hero user sees Pick Up Quest button on unassigned quests", async () => {
+  test("Unassigned individual quests are not displayed (should never occur in normal operation)", async () => {
+    // Unassigned individual quests are only created manually and should not appear in the dashboard
+    // All individual quests are auto-assigned by cron job in normal operation
     render(<QuestDashboard onError={jest.fn()} />);
 
     await waitFor(() => {
       expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("available-quests-heading")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
-    const questCard = screen.getByText("Clean the Kitchen").closest(".fantasy-card");
-    expect(within(questCard).getByText("Pick Up Quest")).toBeInTheDocument();
-  });
-
-  test("Guild Master sees hero view on quest dashboard (GM-specific features moved to Quest Management tab)", async () => {
-    (useAuth as jest.Mock).mockReturnValue({
-      user: mockGMUser,
-      session: { user: { id: mockGMUser.id } },
-      profile: {
-        id: mockGMUser.id,
-        family_id: "00000000-0000-4000-8000-000000000001",
-        name: "Guild Master",
-        role: "GUILD_MASTER"
-      },
-    });
-
-    (useFamilyMembers as jest.Mock).mockReturnValue({
-      familyMembers: [],
-      familyCharacters: [],
-      loading: false,
-      error: null,
-      reload: jest.fn(),
-    });
-
-    render(<QuestDashboard onError={jest.fn()} />);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("available-quests-heading")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("Clean the Kitchen")).toBeInTheDocument();
-
-    const questCard = screen.getByText("Clean the Kitchen").closest(".fantasy-card");
-    // Quest Dashboard shows hero view for all users (including GMs)
-    // GM-specific features like assignment and approval are in the Quest Management tab
-    expect(within(questCard).getByText("Pick Up Quest")).toBeInTheDocument();
-    expect(within(questCard).queryByTestId("gm-assign-dropdown")).not.toBeInTheDocument();
+    // The "Available Quests" section should not be displayed
+    expect(screen.queryByTestId("available-quests-heading")).not.toBeInTheDocument();
+    expect(screen.queryByText("Clean the Kitchen")).not.toBeInTheDocument();
   });
 
   test("Unassigned quests display without interaction buttons when no user", async () => {
