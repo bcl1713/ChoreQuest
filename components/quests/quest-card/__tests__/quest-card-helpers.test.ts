@@ -17,9 +17,9 @@ describe('quest-card-helpers', () => {
         expect(result.canPickup).toBe(true);
       });
 
-      it('does NOT show Start button for CLAIMED quest', () => {
+      it('shows Start button for CLAIMED quest', () => {
         const result = getButtonVisibility('CLAIMED' as QuestStatus, 'hero');
-        expect(result.canStart).toBe(false);
+        expect(result.canStart).toBe(true);
         expect(result.canComplete).toBe(false);
       });
 

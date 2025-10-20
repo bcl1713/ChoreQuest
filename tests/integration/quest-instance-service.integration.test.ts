@@ -134,7 +134,7 @@ describe("QuestInstanceService Integration Tests", () => {
       const claimedQuest = await questInstanceService.claimQuest(testFamilyQuestId, testHeroCharacterId);
 
       expect(claimedQuest).toBeDefined();
-      expect(claimedQuest.status).toBe("PENDING");
+      expect(claimedQuest.status).toBe("CLAIMED");
       expect(claimedQuest.assigned_to_id).toBe(testHeroUserId);
       expect(claimedQuest.volunteered_by).toBe(testHeroCharacterId);
       expect(claimedQuest.volunteer_bonus).toBe(0.2); // 20% bonus

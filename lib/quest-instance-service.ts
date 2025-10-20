@@ -25,14 +25,15 @@ export class QuestInstanceService {
   }
 
   /**
-   * Claim a family quest for a hero
+   * Claim a family quest for a hero (hero volunteers for the quest)
    * - Validates quest is AVAILABLE and FAMILY type
    * - Checks hero doesn't already have an active family quest (anti-hoarding)
-   * - Sets assigned_to_id, volunteered_by, and calculates volunteer_bonus
+   * - Sets assigned_to_id, volunteered_by, and calculates 20% volunteer_bonus
+   * - Sets status to CLAIMED (indicates volunteer bonus applies)
    * - Updates character.active_family_quest_id
    * @param questId - The quest instance ID to claim
    * @param characterId - The character claiming the quest
-   * @returns The claimed quest instance
+   * @returns The claimed quest instance with CLAIMED status and volunteer bonus
    */
   async claimQuest(questId: string, characterId: string): Promise<QuestInstance> {
     // Fetch the quest to validate it's available and a family quest
@@ -83,7 +84,7 @@ export class QuestInstanceService {
         assigned_to_id: character.user_id, // Assign to the user, not character
         volunteered_by: characterId,
         volunteer_bonus: VOLUNTEER_BONUS_PERCENT, // Store as decimal (0.2 = 20%)
-        status: "PENDING",
+        status: "CLAIMED",
       })
       .eq("id", questId)
       .select()
@@ -188,14 +189,15 @@ export class QuestInstanceService {
   }
 
   /**
-   * Assign a family quest to a specific hero (GM manual assignment)
+   * Assign a family quest to a specific hero (GM manual assignment, not volunteer)
    * - No volunteer bonus applied (only for self-claimed quests)
-   * - Sets assigned_to_id without setting volunteered_by
+   * - Sets assigned_to_id and volunteered_by for tracking
+   * - Sets status to PENDING (indicates no volunteer bonus applies)
    * - Updates character.active_family_quest_id
    * @param questId - The quest instance ID to assign
    * @param characterId - The character to assign the quest to
    * @param _gmId - The GM user ID performing the assignment (unused, kept for API compatibility)
-   * @returns The assigned quest instance
+   * @returns The assigned quest instance with PENDING status and no volunteer bonus
    */
   async assignQuest(questId: string, characterId: string, _gmId: string): Promise<QuestInstance> {
     void _gmId;
@@ -279,12 +281,16 @@ export class QuestInstanceService {
 
   /**
    * Approve a completed quest and distribute rewards
-   * - Validates quest is in a completable state (CLAIMED)
+   * - Validates quest is in a completable state (COMPLETED, IN_PROGRESS, or CLAIMED)
    * - Fetches assigned character and quest template
    * - Calculates total rewards (base + volunteer bonus + streak bonus)
    * - Updates character stats (gold, xp, level)
    * - Increments quest streak for recurring quests
    * - Sets quest status to APPROVED
+   *
+   * Note: CLAIMED status quests keep their volunteer bonus when approved
+   * PENDING status quests have no volunteer bonus
+   *
    * @param questId - The quest instance ID to approve
    * @returns The approved quest instance
   */
@@ -299,6 +305,7 @@ export class QuestInstanceService {
       throw new Error(`Failed to fetch quest: ${fetchError?.message || "Quest not found"}`);
     }
 
+    // Quest must be COMPLETED to approve (or IN_PROGRESS/CLAIMED for special cases)
     if (quest.status !== "CLAIMED" && quest.status !== "IN_PROGRESS" && quest.status !== "COMPLETED") {
       throw new Error(`Quest cannot be approved (status: ${quest.status})`);
     }

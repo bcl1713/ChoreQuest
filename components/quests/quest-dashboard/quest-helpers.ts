@@ -103,7 +103,7 @@ export function canUpdateStatus(
   }
 
   if (quest.assigned_to_id === userId) {
-    if (newStatus === "IN_PROGRESS" && (quest.status === "PENDING" || quest.status === "CLAIMED" || !quest.status)) {
+    if (newStatus === "IN_PROGRESS" && (quest.status === "PENDING" || quest.status === "CLAIMED" || quest.status === "AVAILABLE" || !quest.status)) {
       return true;
     }
     if (newStatus === "COMPLETED" && quest.status === "IN_PROGRESS") {

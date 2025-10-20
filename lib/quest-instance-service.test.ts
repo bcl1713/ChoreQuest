@@ -43,10 +43,10 @@ describe("QuestInstanceService", () => {
     created_by_id: mockGMId,
   };
 
-  // Mock claimed quest (now has PENDING status after claiming)
+  // Mock claimed quest (has CLAIMED status after hero claims it with volunteer bonus)
   const mockClaimedQuest = {
     ...mockFamilyQuest,
-    status: "PENDING",
+    status: "CLAIMED",
     assigned_to_id: mockUserId,
     volunteered_by: mockCharacterId,
     volunteer_bonus: 0.2,
@@ -132,7 +132,7 @@ describe("QuestInstanceService", () => {
       expect(result.assigned_to_id).toBe(mockUserId);
       expect(result.volunteered_by).toBe(mockCharacterId);
       expect(result.volunteer_bonus).toBe(0.2); // 20% bonus
-      expect(result.status).toBe("PENDING");
+      expect(result.status).toBe("CLAIMED");
     });
 
     it("should throw error if quest is not found", async () => {

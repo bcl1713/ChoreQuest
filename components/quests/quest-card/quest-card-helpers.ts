@@ -26,8 +26,11 @@ export const getButtonVisibility = (
   };
 
   if (viewMode === 'hero') {
-    // Hero can start quests that are PENDING or AVAILABLE (AVAILABLE for unassigned individual quests)
-    buttonVis.canStart = status === 'PENDING' || status === 'AVAILABLE';
+    // Hero can start quests that are PENDING, CLAIMED, or AVAILABLE
+    // PENDING = GM-assigned quest without volunteer bonus
+    // CLAIMED = Hero-claimed quest with volunteer bonus
+    // AVAILABLE = Unassigned individual quests
+    buttonVis.canStart = status === 'PENDING' || status === 'CLAIMED' || status === 'AVAILABLE';
 
     // Hero can complete quests that are IN_PROGRESS
     buttonVis.canComplete = status === 'IN_PROGRESS';
