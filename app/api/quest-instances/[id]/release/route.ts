@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
+import {
+  extractBearerToken,
+  authenticateAndFetchUserProfile,
+  isAuthError,
+  authErrorResponse,
+} from "@/lib/api-auth-helpers";
 
 export async function POST(
   request: NextRequest,
@@ -9,41 +15,25 @@ export async function POST(
   try {
     const { id: questId } = await params;
 
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Missing or invalid authorization header" },
-        { status: 401 }
-      );
+    // Extract Bearer token
+    const tokenOrError = extractBearerToken(request);
+    if (isAuthError(tokenOrError)) {
+      return authErrorResponse(tokenOrError);
     }
 
-    const token = authHeader.substring(7);
+    const token = tokenOrError;
     const supabase = createServerSupabaseClient(token);
 
     const body = await request.json().catch(() => ({}));
     const characterId = body?.characterId as string | undefined;
 
-    const { data: authData, error: authError } = await supabase.auth.getUser(
-      token
-    );
-    const user = authData?.user;
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+    // Authenticate user and fetch profile
+    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
+    if (isAuthError(userOrError)) {
+      return authErrorResponse(userOrError);
     }
 
-    const { data: requesterProfile, error: profileError } = await supabase
-      .from("user_profiles")
-      .select("role, family_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !requesterProfile) {
-      return NextResponse.json(
-        { error: "Failed to load user profile" },
-        { status: 500 }
-      );
-    }
+    const requesterProfile = userOrError;
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")
@@ -64,7 +54,7 @@ export async function POST(
 
     // Check authorization: GM or hero who claimed the quest or is assigned to it
     const isGM = requesterProfile.role === "GUILD_MASTER";
-    const isQuestAssignedToUser = quest.assigned_to_id === user.id;
+    const isQuestAssignedToUser = quest.assigned_to_id === requesterProfile.id;
     const isQuestClaimer = characterId && quest.volunteered_by === characterId;
 
     if (!isGM && !isQuestAssignedToUser && !isQuestClaimer) {
