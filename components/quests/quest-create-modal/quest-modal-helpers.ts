@@ -113,7 +113,7 @@ export async function createAdhocQuest(
     gold_reward: goldReward,
     difficulty,
     category,
-    status: assignedToId ? "CLAIMED" : "AVAILABLE",
+    status: assignedToId ? "PENDING" : "AVAILABLE",
     family_id: familyId,
     created_by_id: userId,
     assigned_to_id: assignedToId || null,
