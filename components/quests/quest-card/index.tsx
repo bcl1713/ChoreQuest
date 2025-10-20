@@ -31,6 +31,15 @@ export interface QuestCardProps {
   assignedHeroName?: string;
   selectedAssignee?: string;
   onAssigneeChange?: (questId: string, assigneeId: string) => void;
+
+  // Styling options
+  isPaused?: boolean;
+
+  // Template-specific actions (optional)
+  isTemplate?: boolean;
+  onEditTemplate?: (questId: string) => void;
+  onTogglePauseTemplate?: (questId: string) => void;
+  onDeleteTemplate?: (questId: string) => void;
 }
 
 const QuestCard: React.FC<QuestCardProps> = memo(({
@@ -48,6 +57,11 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   assignedHeroName,
   selectedAssignee = '',
   onAssigneeChange,
+  isPaused = false,
+  isTemplate = false,
+  onEditTemplate,
+  onTogglePauseTemplate,
+  onDeleteTemplate,
 }) => {
   // Get button visibility based on quest status
   const buttonVis = getButtonVisibility(quest.status, viewMode);
@@ -61,13 +75,29 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   const recurrenceLabel = getRecurrenceLabel(quest.recurrence_pattern);
 
   // Determine card classes based on quest state
-  const cardClasses = 'fantasy-card p-6 transition-opacity duration-200';
+  const cardClasses = `fantasy-card p-6 transition-opacity duration-200 relative`;
 
   return (
     <motion.div
       variants={staggerItem}
       className={cardClasses}
     >
+      {/* Paused overlay */}
+      {isPaused && (
+        <div className="absolute inset-0 bg-black opacity-25 rounded-lg pointer-events-none" />
+      )}
+
+      {/* Content wrapper */}
+      <div className="relative z-10">
+        {/* Unavailable badge */}
+        {isPaused && (
+          <div className="mb-3">
+            <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-orange-600 bg-orange-200">
+              Unavailable
+            </span>
+          </div>
+        )}
+
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <div>
@@ -236,6 +266,49 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
           </div>
         </div>
       )}
+
+      {/* Template-specific action buttons */}
+      {isTemplate && (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {onEditTemplate && (
+            <button
+              type="button"
+              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 transition text-sm"
+              onClick={() => onEditTemplate(quest.id)}
+              data-testid="template-edit-button"
+            >
+              Edit
+            </button>
+          )}
+
+          {onTogglePauseTemplate && (
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-md text-white transition text-sm ${
+                isPaused
+                  ? 'bg-green-600 hover:bg-green-500'
+                  : 'bg-yellow-600 hover:bg-yellow-500'
+              }`}
+              onClick={() => onTogglePauseTemplate(quest.id)}
+              data-testid="template-pause-button"
+            >
+              {isPaused ? 'Resume' : 'Pause'}
+            </button>
+          )}
+
+          {onDeleteTemplate && (
+            <button
+              type="button"
+              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 transition text-sm"
+              onClick={() => onDeleteTemplate(quest.id)}
+              data-testid="template-delete-button"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      )}
+      </div>
     </motion.div>
   );
 });

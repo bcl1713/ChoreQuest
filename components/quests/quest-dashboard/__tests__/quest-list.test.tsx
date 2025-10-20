@@ -3,13 +3,6 @@ import { render, screen } from '@testing-library/react';
 import QuestList from '../quest-list';
 import { QuestInstance } from '@/lib/types/database';
 
-// Mock the QuestItem component
-jest.mock('../quest-item', () => {
-  return function MockQuestItem({ quest }: { quest: QuestInstance }) {
-    return <div data-testid={`quest-item-${quest.id}`}>{quest.title}</div>;
-  };
-});
-
 // Mock the QuestCard component
 jest.mock('../../quest-card', () => {
   return function MockQuestCard({ quest }: { quest: QuestInstance }) {
@@ -71,11 +64,11 @@ describe('QuestList', () => {
   ];
 
   describe('Rendering with quests', () => {
-    it('should render all quests in the list', () => {
+    it('should render all quests as QuestCard components', () => {
       render(<QuestList quests={mockQuests} />);
 
-      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
-      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
       expect(screen.getByText('Quest One')).toBeInTheDocument();
       expect(screen.getByText('Quest Two')).toBeInTheDocument();
     });
@@ -87,10 +80,10 @@ describe('QuestList', () => {
       expect(gridContainer).toBeInTheDocument();
     });
 
-    it('should pass quest data to QuestItem components', () => {
+    it('should pass quest data to QuestCard components', () => {
       render(<QuestList quests={mockQuests} />);
 
-      // Verify both quest items are rendered with correct data
+      // Verify both quest cards are rendered with correct data
       expect(screen.getByText('Quest One')).toBeInTheDocument();
       expect(screen.getByText('Quest Two')).toBeInTheDocument();
     });
@@ -136,17 +129,14 @@ describe('QuestList', () => {
     });
   });
 
-  describe('Quest item props forwarding', () => {
+  describe('Quest card props forwarding', () => {
     const mockHandlers = {
       onStart: jest.fn(),
       onComplete: jest.fn(),
       onApprove: jest.fn(),
     };
 
-    it('should forward handlers to quest items', () => {
-      // We'll verify this by checking that QuestItem receives the props
-      // Since we mocked QuestItem, we can't test the actual handler calls here
-      // but the component should pass them through
+    it('should forward handlers to quest cards', () => {
       render(
         <QuestList
           quests={mockQuests}
@@ -156,16 +146,16 @@ describe('QuestList', () => {
         />
       );
 
-      // Quest items should be rendered
-      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
-      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+      // Quest cards should be rendered
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
     });
 
-    it('should forward variant prop to quest items', () => {
-      render(<QuestList quests={mockQuests} variant="historical" />);
+    it('should use hero view mode by default', () => {
+      render(<QuestList quests={mockQuests} />);
 
-      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
-      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
     });
   });
 
@@ -196,8 +186,8 @@ describe('QuestList', () => {
 
       const { container } = render(<QuestList quests={largeQuestList} />);
 
-      const questItems = container.querySelectorAll('[data-testid^="quest-item-"]');
-      expect(questItems).toHaveLength(100);
+      const questCards = container.querySelectorAll('[data-testid^="quest-card-"]');
+      expect(questCards).toHaveLength(100);
     });
   });
 
@@ -224,31 +214,17 @@ describe('QuestList', () => {
       render(<QuestList quests={questsWithInvalid} />);
 
       // Should render valid quests
-      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
-      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
-    });
-  });
-
-  describe('QuestCard integration', () => {
-    it('should render QuestCard when useQuestCard is true', () => {
-      render(<QuestList quests={mockQuests} useQuestCard={true} />);
-
       expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
       expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
     });
+  });
 
-    it('should render QuestItem when useQuestCard is false', () => {
-      render(<QuestList quests={mockQuests} useQuestCard={false} />);
-
-      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
-      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
-    });
-
-    it('should render QuestItem by default (useQuestCard not specified)', () => {
+  describe('QuestCard rendering', () => {
+    it('should always render QuestCard components', () => {
       render(<QuestList quests={mockQuests} />);
 
-      expect(screen.getByTestId('quest-item-quest-1')).toBeInTheDocument();
-      expect(screen.getByTestId('quest-item-quest-2')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
     });
 
     it('should accept familyMembers prop for QuestCard', () => {
@@ -260,12 +236,23 @@ describe('QuestList', () => {
       render(
         <QuestList
           quests={mockQuests}
-          useQuestCard={true}
           familyMembers={familyMembers}
         />
       );
 
       expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+    });
+
+    it('should accept viewMode prop for QuestCard', () => {
+      render(
+        <QuestList
+          quests={mockQuests}
+          viewMode="gm"
+        />
+      );
+
+      expect(screen.getByTestId('quest-card-quest-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-quest-2')).toBeInTheDocument();
     });
   });
 });

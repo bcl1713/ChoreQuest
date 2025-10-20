@@ -1,5 +1,10 @@
 import { QuestInstance, QuestStatus, UserProfile, Character } from "@/lib/types/database";
-import { AssignmentOption } from "./quest-item";
+
+export interface AssignmentOption {
+  id: string;
+  label: string;
+  disabled: boolean;
+}
 
 /**
  * Filter quests by their assigned user

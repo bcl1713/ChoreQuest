@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { User as UserIcon, Users } from 'lucide-react';
 import type { QuestTemplate } from '@/lib/types/database';
 import { TemplateItem } from './template-item';
 
@@ -35,9 +34,8 @@ export const TemplateList = React.memo<TemplateListProps>(({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-semibold mb-3 flex items-center">
-          <UserIcon className="mr-2 h-6 w-6 text-purple-400" />
-          Individual Quests
+        <h3 className="text-xl font-fantasy text-gray-200 mb-6">
+          👤 Individual Quest Templates
         </h3>
         <div className="space-y-4">
           {individualQuests.length === 0 ? (
@@ -57,9 +55,8 @@ export const TemplateList = React.memo<TemplateListProps>(({
       </div>
 
       <div>
-        <h3 className="text-xl font-semibold mb-3 flex items-center">
-          <Users className="mr-2 h-6 w-6 text-green-400" />
-          Family Quests
+        <h3 className="text-xl font-fantasy text-gray-200 mb-6">
+          👥 Family Quest Templates
         </h3>
         <div className="space-y-4">
           {familyQuests.length === 0 ? (

@@ -155,7 +155,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
         </div>
         <QuestList
           quests={myActiveQuests}
-          useQuestCard={true}
           emptyMessage="You have no active quests right now."
           emptyHint={myHistoricalQuests.length > 0 ? "Check Quest History to revisit your completed quests." : undefined}
           onStartQuest={(id) => handleStatusUpdate(id, "IN_PROGRESS")}
@@ -185,7 +184,7 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
               {showQuestHistory ? "Hide History" : `Show History (${myHistoricalQuests.length})`}
             </button>
           </div>
-          {showQuestHistory && <QuestList quests={myHistoricalQuests} useQuestCard={true} familyMembers={familyMembers} />}
+          {showQuestHistory && <QuestList quests={myHistoricalQuests} familyMembers={familyMembers} />}
         </section>
       )}
     </div>
