@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useQuests } from '@/hooks/useQuests';
 import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 import { useAuth } from '@/lib/auth-context';
+import { useNotification } from '@/hooks/useNotification';
 import QuestCard from '@/components/quests/quest-card';
 import {
   filterPendingApprovalQuests,
@@ -14,6 +15,8 @@ import {
 } from '@/components/quests/quest-dashboard/quest-helpers';
 import { staggerContainer } from '@/lib/animations/variants';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { NotificationContainer } from '@/components/ui/NotificationContainer';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { questInstanceApiService } from '@/lib/quest-instance-api-service';
 
 interface QuestSection {
@@ -27,84 +30,126 @@ export function QuestManagementTab() {
   const { quests, loading, error, reload } = useQuests();
   const { familyCharacters } = useFamilyMembers();
   useAuth();
+  const { notifications, dismiss, success, error: showError } = useNotification();
   const [selectedAssignee, setSelectedAssignee] = useState<Record<string, string>>({});
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: string;
+    questId: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: '',
+    questId: '',
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Action handlers with error handling
   const handleAssignQuest = useCallback(
     async (questId: string, characterId: string) => {
       if (!characterId) return;
       try {
+        setIsProcessing(true);
         await questInstanceApiService.assignFamilyQuest(questId, characterId);
         setSelectedAssignee((prev) => ({ ...prev, [questId]: '' }));
+        success('Quest assigned successfully!');
         await reload();
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to assign quest. Please try again.';
         console.error('Failed to assign quest:', err);
-        alert(errorMessage);
+        showError(errorMessage);
+      } finally {
+        setIsProcessing(false);
       }
     },
-    [reload]
+    [reload, success, showError]
   );
 
   const handleApproveQuest = useCallback(
     async (questId: string) => {
       try {
+        setIsProcessing(true);
         await questInstanceApiService.approveQuest(questId);
+        success('Quest approved!');
         await reload();
       } catch (err) {
         console.error('Failed to approve quest:', err);
-        alert('Failed to approve quest. Please try again.');
+        showError('Failed to approve quest. Please try again.');
+      } finally {
+        setIsProcessing(false);
       }
     },
-    [reload]
+    [reload, success, showError]
   );
 
   const handleDenyQuest = useCallback(
     async (questId: string) => {
-      if (!window.confirm('Send this quest back to PENDING status? The hero can then work on it or abandon it.')) {
-        return;
-      }
-      try {
-        await questInstanceApiService.denyQuest(questId);
-        await reload();
-      } catch (err) {
-        console.error('Failed to deny quest:', err);
-        alert('Failed to deny quest. Please try again.');
-      }
+      setConfirmModal({
+        isOpen: true,
+        title: 'Send Quest Back to Pending?',
+        message: 'The hero can then work on it or abandon it.',
+        action: 'deny',
+        questId,
+      });
     },
-    [reload]
+    []
   );
 
   const handleCancelQuest = useCallback(
     async (questId: string) => {
-      if (!window.confirm('Are you sure you want to cancel this quest?')) {
-        return;
-      }
-      try {
-        await questInstanceApiService.cancelQuest(questId);
-        await reload();
-      } catch (err) {
-        console.error('Failed to cancel quest:', err);
-        alert('Failed to cancel quest. Please try again.');
-      }
+      setConfirmModal({
+        isOpen: true,
+        title: 'Cancel Quest?',
+        message: 'Are you sure you want to cancel this quest?',
+        action: 'cancel',
+        questId,
+      });
     },
-    [reload]
+    []
   );
 
   const handleReleaseQuest = useCallback(
     async (questId: string) => {
-      if (!window.confirm('Release this quest back to available quests?')) {
-        return;
-      }
+      setConfirmModal({
+        isOpen: true,
+        title: 'Release Quest?',
+        message: 'Release this quest back to available quests?',
+        action: 'release',
+        questId,
+      });
+    },
+    []
+  );
+
+  const handleConfirmAction = useCallback(
+    async (action: string, questId: string) => {
       try {
-        await questInstanceApiService.releaseQuest(questId);
+        setIsProcessing(true);
+        if (action === 'deny') {
+          await questInstanceApiService.denyQuest(questId);
+          success('Quest sent back to pending.');
+        } else if (action === 'cancel') {
+          await questInstanceApiService.cancelQuest(questId);
+          success('Quest cancelled.');
+        } else if (action === 'release') {
+          await questInstanceApiService.releaseQuest(questId);
+          success('Quest released back to available quests.');
+        }
+        setConfirmModal({ ...confirmModal, isOpen: false });
         await reload();
       } catch (err) {
-        console.error('Failed to release quest:', err);
-        alert('Failed to release quest. Please try again.');
+        console.error(`Failed to ${action} quest:`, err);
+        const actionText =
+          action === 'deny' ? 'deny' : action === 'cancel' ? 'cancel' : 'release';
+        showError(`Failed to ${actionText} quest. Please try again.`);
+      } finally {
+        setIsProcessing(false);
       }
     },
-    [reload]
+    [confirmModal, reload, success, showError]
   );
 
   const handleAssigneeChange = useCallback((questId: string, userId: string) => {
@@ -225,20 +270,33 @@ export function QuestManagementTab() {
   };
 
   return (
-    <div className="space-y-8" data-testid="quest-management-tab">
-      {/* Pending Approval Section */}
-      {renderSection(questSections.pendingApproval)}
+    <>
+      <NotificationContainer notifications={notifications} onDismiss={dismiss} />
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText="Confirm"
+        cancelText="Cancel"
+        isLoading={isProcessing}
+        onConfirm={() => handleConfirmAction(confirmModal.action, confirmModal.questId)}
+        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      />
+      <div className="space-y-8" data-testid="quest-management-tab">
+        {/* Pending Approval Section */}
+        {renderSection(questSections.pendingApproval)}
 
-      <hr className="border-dark-600" />
+        <hr className="border-dark-600" />
 
-      {/* Unassigned Section */}
-      {renderSection(questSections.unassigned)}
+        {/* Unassigned Section */}
+        {renderSection(questSections.unassigned)}
 
-      <hr className="border-dark-600" />
+        <hr className="border-dark-600" />
 
-      {/* In Progress Section */}
-      {renderSection(questSections.inProgress)}
-    </div>
+        {/* In Progress Section */}
+        {renderSection(questSections.inProgress)}
+      </div>
+    </>
   );
 }
 

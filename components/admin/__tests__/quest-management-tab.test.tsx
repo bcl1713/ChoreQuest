@@ -56,6 +56,42 @@ jest.mock('@/lib/animations/variants', () => ({
   staggerContainer: {},
 }));
 
+// Mock NotificationContainer
+jest.mock('@/components/ui/NotificationContainer', () => ({
+  NotificationContainer: function MockNotificationContainer() {
+    return <div data-testid="notification-container" />;
+  },
+}));
+
+// Mock ConfirmationModal
+jest.mock('@/components/ui/ConfirmationModal', () => ({
+  ConfirmationModal: function MockConfirmationModal({
+    isOpen,
+    onConfirm,
+  }: {
+    isOpen: boolean;
+    onConfirm: () => void;
+  }) {
+    return isOpen ? (
+      <div data-testid="confirmation-modal">
+        <button data-testid="confirm-button" onClick={onConfirm}>
+          Confirm
+        </button>
+      </div>
+    ) : null;
+  },
+}));
+
+// Mock useNotification hook
+jest.mock('@/hooks/useNotification', () => ({
+  useNotification: () => ({
+    notifications: [],
+    dismiss: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+  }),
+}));
+
 // Declare mocks before use
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const mockUseQuests = require('@/hooks/useQuests').useQuests;

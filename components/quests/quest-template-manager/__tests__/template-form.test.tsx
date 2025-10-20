@@ -15,6 +15,19 @@ jest.mock('@/lib/supabase', () => ({
   },
 }));
 
+// Mock NotificationContainer
+jest.mock('@/components/ui/NotificationContainer', () => ({
+  NotificationContainer: function MockNotificationContainer() {
+    return <div data-testid="notification-container" />;
+  },
+}));
+
+// Mock useNotification hook
+const mockUseNotification = jest.fn();
+jest.mock('@/hooks/useNotification', () => ({
+  useNotification: () => mockUseNotification(),
+}));
+
 const mockProfile = {
   id: 'user-1',
   family_id: 'family-1',
@@ -60,6 +73,12 @@ describe('TemplateForm', () => {
     (supabase.from as jest.Mock).mockReturnValue({
       select: jest.fn().mockReturnThis(),
       in: jest.fn().mockResolvedValue({ data: mockCharacters, error: null }),
+    });
+    mockUseNotification.mockReturnValue({
+      notifications: [],
+      dismiss: jest.fn(),
+      success: jest.fn(),
+      error: jest.fn(),
     });
   });
 
@@ -247,8 +266,14 @@ describe('TemplateForm', () => {
     });
   });
 
-  it('shows alert when submitting individual quest without character assignment', async () => {
-    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+  it('shows error notification when submitting individual quest without character assignment', async () => {
+    const mockError = jest.fn();
+    mockUseNotification.mockReturnValue({
+      notifications: [],
+      dismiss: jest.fn(),
+      success: jest.fn(),
+      error: mockError,
+    });
 
     render(<TemplateForm onSave={mockOnSave} onCancel={mockOnCancel} />);
 
@@ -268,12 +293,10 @@ describe('TemplateForm', () => {
     const saveButton = screen.getByText('Save Template');
     fireEvent.click(saveButton);
 
-    expect(alertSpy).toHaveBeenCalledWith(
+    expect(mockError).toHaveBeenCalledWith(
       'Individual quests must be assigned to at least one character.'
     );
     expect(mockOnSave).not.toHaveBeenCalled();
-
-    alertSpy.mockRestore();
   });
 
   it('allows submitting family quest without character assignment', async () => {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useNotification } from '@/hooks/useNotification';
 import { userService } from '@/lib/user-service';
+import { NotificationContainer } from '@/components/ui/NotificationContainer';
 import type {
   QuestTemplate,
   QuestType,
@@ -42,6 +44,7 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
   onCancel,
 }) => {
   const { profile } = useAuth();
+  const { notifications, dismiss, error: showError } = useNotification();
   const [familyMembers, setFamilyMembers] = useState<User[]>([]);
   const [familyCharacters, setFamilyCharacters] = useState<Tables<'characters'>[]>([]);
   const [formData, setFormData] = useState<TemplateFormData>({
@@ -135,11 +138,11 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (formData.quest_type === 'INDIVIDUAL' && formData.assigned_character_ids.length === 0) {
-      alert('Individual quests must be assigned to at least one character.');
+      showError('Individual quests must be assigned to at least one character.');
       return;
     }
     onSave(formData);
-  }, [formData, onSave]);
+  }, [formData, onSave, showError]);
 
   const characterList = useMemo(
     () =>
@@ -155,11 +158,13 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-gray-800 text-white p-8 rounded-lg shadow-2xl w-full max-w-2xl border border-gray-700">
-        <h2 className="text-2xl font-bold mb-6">
-          {template ? 'Edit' : 'Create'} Quest Template
-        </h2>
+    <>
+      <NotificationContainer notifications={notifications} onDismiss={dismiss} />
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="bg-gray-800 text-white p-8 rounded-lg shadow-2xl w-full max-w-2xl border border-gray-700">
+          <h2 className="text-2xl font-bold mb-6">
+            {template ? 'Edit' : 'Create'} Quest Template
+          </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="title" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
@@ -328,6 +333,7 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
         </form>
       </div>
     </div>
+    </>
   );
 });
 
