@@ -5,6 +5,16 @@
 ChoreQuest is a fantasy RPG-themed family chore management system that
 transforms household tasks into epic adventures.
 
+## Release 0.4.0 - Code Quality & UI Polish
+
+### Issue #82 - XP Progress Bar Shows Level Progress
+
+- [x] Review existing XP/level progress calculation logic for the dashboard progress bar
+- [x] Add Jest coverage capturing expected level-based progress behavior
+- [x] Update UI/component logic so the progress bar reflects current level progress
+- [x] Surface total lifetime XP below the progress bar for quick reference
+- [x] Manually verify visual behavior across breakpoints after code changes
+
 ## Phase 1: Core Foundation (MVP) - COMPLETED
 
 - [x] Authentication and user management system
