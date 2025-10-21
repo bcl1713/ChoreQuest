@@ -23,6 +23,13 @@ transforms household tasks into epic adventures.
 - [x] Render the shared pending approvals section on the main Quest Dashboard for Guild Masters
 - [x] Verify quest approval, deny, assign, and release actions still trigger reload flows
 
+### Issue #61 - Display Current Git Branch or Tag in Layout Footer
+
+- [x] Decide on branch/tag metadata source and expose it via build/runtime configuration
+- [x] Update the main layout footer to surface the current branch or tag when available
+- [x] Cover the footer logic with unit tests for branch, tag, and fallback scenarios
+- [x] Manually verify the footer output in the local development environment
+
 ## Phase 1: Core Foundation (MVP) - COMPLETED
 
 - [x] Authentication and user management system

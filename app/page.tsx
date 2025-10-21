@@ -111,22 +111,15 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-dark-600 p-6 text-center text-gray-500">
-        <p className="font-game">
-          Built with Next.js • TypeScript • Tailwind CSS • Prisma ORM
-        </p>
-        <p className="text-sm mt-2">
-          Ready for your family&apos;s epic adventure? The quest begins soon...
-        </p>
-        {!user && (
-          <p className="text-sm mt-4">
+      {!user && (
+        <div className="text-center px-6 pb-10">
+          <p className="text-sm text-gray-400">
             <Link href="/auth/login" className="text-primary-400 hover:text-primary-300" data-testid="login-link">
               Already have an account? Login here
             </Link>
           </p>
-        )}
-      </footer>
+        </div>
+      )}
     </div>
   );
 }
