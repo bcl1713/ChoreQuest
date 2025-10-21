@@ -245,6 +245,11 @@ function DashboardContent() {
     return null;
   }
 
+  const levelProgress = RewardCalculator.getLevelProgress(
+    character.level || 1,
+    character.xp || 0
+  );
+
   const getRoleDisplay = (role: string) => {
     switch (role) {
       case 'GUILD_MASTER': return '👑 Guild Master';
@@ -373,13 +378,16 @@ function DashboardContent() {
         {/* XP Progress Bar */}
         <div className="mb-8 sm:mb-12">
           <ProgressBar
-            current={character.xp || 0}
-            max={RewardCalculator.getXPRequiredForLevel((character.level || 1) + 1)}
+            current={levelProgress.current}
+            max={levelProgress.required}
             label="Experience Progress"
             showValues={true}
             showPercentage={true}
             variant="gold"
           />
+          <p className="mt-2 text-sm text-gray-400">
+            Total XP: <span className="text-gray-200">{(character.xp || 0).toLocaleString()}</span>
+          </p>
         </div>
 
         {/* Navigation Tabs */}

@@ -232,4 +232,69 @@ describe("RewardCalculator", () => {
       expect(RewardCalculator.getXPRequiredForLevel(4)).toBe(450);
     });
   });
+
+  describe("getLevelProgress", () => {
+    it("returns zero progress for a brand new level one hero", () => {
+      const progress = RewardCalculator.getLevelProgress(1, 0);
+
+      expect(progress.current).toBe(0);
+      expect(progress.required).toBe(50);
+      expect(progress.percentage).toBe(0);
+    });
+
+    it("calculates XP progress within the current level", () => {
+      // Level 3 starts at 200 XP, level 4 requires 450 XP total.
+      const progress = RewardCalculator.getLevelProgress(3, 250);
+
+      expect(progress.current).toBe(50); // 250 total - 200 required for level 3
+      expect(progress.required).toBe(250); // 450 - 200
+      expect(progress.percentage).toBeCloseTo(20, 5);
+    });
+
+    it("clamps progress when XP exceeds the next level requirement", () => {
+      // This can happen temporarily if the level up event hasn't processed yet.
+      const progress = RewardCalculator.getLevelProgress(2, 5000);
+
+      expect(progress.current).toBe(progress.required);
+      expect(progress.percentage).toBe(100);
+    });
+
+    it("floors non-integer levels and clamps progress", () => {
+      const progress = RewardCalculator.getLevelProgress(1.5, 75);
+
+      expect(progress.current).toBe(progress.required);
+      expect(progress.percentage).toBe(100);
+    });
+
+    it("defaults negative levels to level one", () => {
+      const progress = RewardCalculator.getLevelProgress(-3, 25);
+
+      expect(progress.current).toBe(25);
+      expect(progress.required).toBe(50);
+      expect(progress.percentage).toBe(50);
+    });
+
+    it("treats non-finite level values as level one", () => {
+      const progress = RewardCalculator.getLevelProgress(Number.NaN, 100);
+
+      expect(progress.current).toBe(progress.required);
+      expect(progress.percentage).toBe(100);
+    });
+
+    it("resets non-finite XP values to zero", () => {
+      const progress = RewardCalculator.getLevelProgress(3, Number.POSITIVE_INFINITY);
+
+      expect(progress.current).toBe(0);
+      expect(progress.required).toBe(250);
+      expect(progress.percentage).toBe(0);
+    });
+
+    it("clamps negative XP values to zero", () => {
+      const progress = RewardCalculator.getLevelProgress(2, -50);
+
+      expect(progress.current).toBe(0);
+      expect(progress.required).toBe(150);
+      expect(progress.percentage).toBe(0);
+    });
+  });
 });
