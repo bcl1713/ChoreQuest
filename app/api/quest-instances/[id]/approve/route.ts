@@ -32,20 +32,20 @@ export async function POST(
       return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: requesterProfile, error: profileError } = await supabase
       .from("user_profiles")
       .select("role, family_id")
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError || !requesterProfile) {
       return NextResponse.json(
         { error: "Failed to load user profile" },
         { status: 500 }
       );
     }
 
-    if (profile.role !== "GUILD_MASTER") {
+    if (requesterProfile.role !== "GUILD_MASTER") {
       return NextResponse.json(
         { error: "Only Guild Masters can approve quests" },
         { status: 403 }
@@ -66,7 +66,7 @@ export async function POST(
       return NextResponse.json({ error: "Quest not found" }, { status: 404 });
     }
 
-    if (quest.family_id !== profile.family_id) {
+    if (quest.family_id !== requesterProfile.family_id) {
       return NextResponse.json(
         { error: "Cannot approve quests for other families" },
         { status: 403 }

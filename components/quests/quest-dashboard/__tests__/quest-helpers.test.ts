@@ -11,8 +11,9 @@ import {
   filterClaimableFamilyQuests,
   filterOtherQuests,
   getAssignedHeroName,
+  mapFamilyCharactersToAssignmentDisplay,
 } from '../quest-helpers';
-import { QuestInstance, QuestStatus } from '@/lib/types/database';
+import { QuestInstance, QuestStatus, Character } from '@/lib/types/database';
 
 // Helper to create mock quest
 const createMockQuest = (overrides: Partial<QuestInstance> = {}): QuestInstance => ({
@@ -44,7 +45,45 @@ const createMockQuest = (overrides: Partial<QuestInstance> = {}): QuestInstance 
   ...overrides,
 });
 
-describe('Quest Filtering Helpers', () => {
+describe('Quest Helpers', () => {
+  describe('mapFamilyCharactersToAssignmentDisplay', () => {
+    const baseCharacter: Character = {
+      id: 'char-1',
+      user_id: 'user-1',
+      name: 'Knight Nova',
+      class: 'KNIGHT',
+      level: 1,
+      xp: 0,
+      gold: 0,
+      gems: 0,
+      honor_points: 0,
+      avatar_url: null,
+      created_at: '2025-01-01',
+      updated_at: '2025-01-01',
+      active_family_quest_id: null,
+    };
+
+    it('maps characters to id/name pairs preserving names', () => {
+      const result = mapFamilyCharactersToAssignmentDisplay([baseCharacter]);
+
+      expect(result).toEqual([
+        {
+          id: 'char-1',
+          name: 'Knight Nova',
+        },
+      ]);
+    });
+
+    it('falls back to shortened id when name is blank', () => {
+      const result = mapFamilyCharactersToAssignmentDisplay([
+        { ...baseCharacter, id: 'char-2', name: '   ' },
+      ]);
+
+      expect(result[0].name).toBe('Hero (char-2)');
+    });
+  });
+
+  describe('Quest Filtering Helpers', () => {
   describe('filterPendingApprovalQuests', () => {
     it('returns only COMPLETED quests', () => {
       const quests = [
@@ -349,4 +388,5 @@ describe('Quest Filtering Helpers', () => {
       expect(result).toBeUndefined();
     });
   });
+});
 });

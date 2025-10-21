@@ -537,6 +537,82 @@ describe('expireQuests', () => {
     expect(result.streaksBroken).toBe(1);
   });
 
+  it('should clear active family quest assignments for expired family quests with heroes', async () => {
+    const mockSupabase = createMockSupabase();
+    const expiredQuests = [
+      {
+        id: 'family-quest-1',
+        template_id: null,
+        assigned_to_id: 'user-1',
+        quest_type: 'FAMILY' as const,
+        status: 'PENDING',
+      },
+    ];
+
+    const charactersInMock = jest.fn().mockResolvedValue({
+      data: null,
+      error: null,
+    });
+
+    const charactersUpdateMock = jest.fn().mockReturnValue({
+      in: charactersInMock,
+    });
+
+    let questInstancesCall = 0;
+    (mockSupabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === 'quest_instances') {
+        questInstancesCall++;
+        if (questInstancesCall === 1) {
+          return {
+            select: jest.fn().mockReturnValue({
+              not: jest.fn().mockReturnValue({
+                lt: jest.fn().mockReturnValue({
+                  in: jest.fn().mockResolvedValue({
+                    data: expiredQuests,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return {
+          update: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: null,
+              error: null,
+            }),
+          }),
+        };
+      }
+
+      if (table === 'quest_templates') {
+        return {
+          select: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          }),
+        };
+      }
+
+      if (table === 'characters') {
+        return {
+          update: charactersUpdateMock,
+        };
+      }
+
+      return {};
+    });
+
+    const result = await expireQuests(mockSupabase);
+
+    expect(result.success).toBe(true);
+    expect(charactersUpdateMock).toHaveBeenCalledWith({ active_family_quest_id: null });
+    expect(charactersInMock).toHaveBeenCalledWith('active_family_quest_id', ['family-quest-1']);
+  });
+
   it('should not break streaks for paused templates', async () => {
     const mockSupabase = createMockSupabase();
     const expiredQuests = [
