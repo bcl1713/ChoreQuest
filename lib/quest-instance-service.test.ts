@@ -43,7 +43,7 @@ describe("QuestInstanceService", () => {
     created_by_id: mockGMId,
   };
 
-  // Mock claimed quest
+  // Mock claimed quest (has CLAIMED status after hero claims it with volunteer bonus)
   const mockClaimedQuest = {
     ...mockFamilyQuest,
     status: "CLAIMED",
@@ -659,7 +659,7 @@ describe("QuestInstanceService", () => {
     it("should successfully assign an available family quest (GM only)", async () => {
       const assignedQuest = {
         ...mockFamilyQuest,
-        status: "CLAIMED",
+        status: "PENDING",
         assigned_to_id: mockUserId,
         volunteered_by: mockCharacterId,
         volunteer_bonus: null, // No bonus for GM assignment
@@ -718,7 +718,7 @@ describe("QuestInstanceService", () => {
       expect(result.assigned_to_id).toBe(mockUserId);
       expect(result.volunteered_by).toBe(mockCharacterId);
       expect(result.volunteer_bonus).toBeNull(); // No bonus for GM assignment
-      expect(result.status).toBe("CLAIMED");
+      expect(result.status).toBe("PENDING");
     });
 
     it("should throw error if quest is not found", async () => {
@@ -809,7 +809,7 @@ describe("QuestInstanceService", () => {
     it("should rollback quest update if character update fails", async () => {
       const assignedQuest = {
         ...mockFamilyQuest,
-        status: "CLAIMED",
+        status: "PENDING",
         assigned_to_id: mockUserId,
         volunteered_by: mockCharacterId,
       };

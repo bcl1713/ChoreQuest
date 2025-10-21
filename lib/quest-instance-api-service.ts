@@ -37,27 +37,6 @@ class QuestInstanceApiService {
     }
   }
 
-  async releaseQuest(questId: string): Promise<void> {
-    const token = await this.getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`/api/quests/${questId}/release`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to release quest');
-    }
-  }
-
   async approveQuest(questId: string): Promise<void> {
     const token = await this.getAuthToken();
     if (!token) {
@@ -96,6 +75,67 @@ class QuestInstanceApiService {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Failed to assign quest' }));
       throw new Error(errorData.error || 'Failed to assign quest');
+    }
+  }
+
+  async cancelQuest(questId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to cancel quest' }));
+      throw new Error(errorData.error || 'Failed to cancel quest');
+    }
+  }
+
+  async releaseQuest(questId: string, characterId?: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/release`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ characterId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to release quest' }));
+      throw new Error(errorData.error || 'Failed to release quest');
+    }
+  }
+
+  async denyQuest(questId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/deny`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to deny quest' }));
+      throw new Error(errorData.error || 'Failed to deny quest');
     }
   }
 }

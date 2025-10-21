@@ -1,5 +1,10 @@
 import { QuestInstance, QuestStatus, UserProfile, Character } from "@/lib/types/database";
-import { AssignmentOption } from "./quest-item";
+
+export interface AssignmentOption {
+  id: string;
+  label: string;
+  disabled: boolean;
+}
 
 /**
  * Filter quests by their assigned user
@@ -41,7 +46,8 @@ export function filterHistoricalQuests(quests: QuestInstance[]): QuestInstance[]
 }
 
 /**
- * Filter unassigned individual quests
+ * Filter unassigned individual quests - these should only appear if they were created manually
+ * and not auto-assigned by the cron job. In most cases, this list should be empty.
  */
 export function filterUnassignedIndividualQuests(quests: QuestInstance[]): QuestInstance[] {
   return quests.filter((quest) => !quest.assigned_to_id && quest.quest_type !== "FAMILY");
@@ -97,7 +103,7 @@ export function canUpdateStatus(
   }
 
   if (quest.assigned_to_id === userId) {
-    if (newStatus === "IN_PROGRESS" && (quest.status === "PENDING" || quest.status === "CLAIMED" || !quest.status)) {
+    if (newStatus === "IN_PROGRESS" && (quest.status === "PENDING" || quest.status === "CLAIMED" || quest.status === "AVAILABLE" || !quest.status)) {
       return true;
     }
     if (newStatus === "COMPLETED" && quest.status === "IN_PROGRESS") {
@@ -110,9 +116,13 @@ export function canUpdateStatus(
 
 /**
  * Get assigned hero name for a quest
+ * Works with both characters and user profiles
  */
-export function getAssignedHeroName(quest: QuestInstance, familyMembers: UserProfile[]): string | undefined {
-  const assignedHero = familyMembers.find((member) => member.id === quest.assigned_to_id);
+export function getAssignedHeroName(
+  quest: QuestInstance,
+  assignmentOptions: Array<{ id: string; name: string }>
+): string | undefined {
+  const assignedHero = assignmentOptions.find((option) => option.id === quest.assigned_to_id);
   return assignedHero?.name;
 }
 
@@ -143,4 +153,39 @@ export function getAssignmentOptions(
         disabled: false,
       }));
   }
+}
+
+/**
+ * Filter quests pending approval (COMPLETED status)
+ */
+export function filterPendingApprovalQuests(quests: QuestInstance[]): QuestInstance[] {
+  return quests.filter((quest) => quest.status === "COMPLETED");
+}
+
+/**
+ * Filter unassigned active quests (no assigned_to_id and active statuses)
+ */
+export function filterUnassignedActiveQuests(quests: QuestInstance[]): QuestInstance[] {
+  const activeStatuses: QuestStatus[] = ["PENDING", "IN_PROGRESS", "CLAIMED", "AVAILABLE"];
+  const activeSet = new Set<QuestStatus>(activeStatuses);
+
+  return quests.filter((quest) => {
+    const isUnassigned = !quest.assigned_to_id;
+    const hasActiveStatus = quest.status && activeSet.has(quest.status);
+    return isUnassigned && hasActiveStatus;
+  });
+}
+
+/**
+ * Filter in-progress quests (assigned and IN_PROGRESS or CLAIMED status)
+ */
+export function filterInProgressQuests(quests: QuestInstance[]): QuestInstance[] {
+  const inProgressStatuses: QuestStatus[] = ["IN_PROGRESS", "CLAIMED"];
+  const inProgressSet = new Set<QuestStatus>(inProgressStatuses);
+
+  return quests.filter((quest) => {
+    const isAssigned = Boolean(quest.assigned_to_id);
+    const hasInProgressStatus = quest.status && inProgressSet.has(quest.status);
+    return isAssigned && hasInProgressStatus;
+  });
 }

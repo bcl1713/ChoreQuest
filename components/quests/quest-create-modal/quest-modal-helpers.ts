@@ -113,11 +113,12 @@ export async function createAdhocQuest(
     gold_reward: goldReward,
     difficulty,
     category,
-    status: "PENDING",
+    status: assignedToId ? "PENDING" : "AVAILABLE",
     family_id: familyId,
     created_by_id: userId,
     assigned_to_id: assignedToId || null,
     due_date: dueDate ? new Date(dueDate).toISOString() : null,
+    quest_type: "FAMILY",
   };
 
   const { error: insertError } = await supabase

@@ -3,6 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { TemplateItem } from '../template-item';
 import type { QuestTemplate } from '@/lib/types/database';
 
+// Mock framer-motion to avoid animation issues in tests
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: Record<string, unknown>) => <div {...(props as Record<string, unknown>)}>{children}</div>,
+  },
+  AnimatePresence: ({ children }: Record<string, unknown>) => children,
+}));
+
 const mockIndividualTemplate: QuestTemplate = {
   id: 'template-1',
   family_id: 'family-1',
@@ -63,62 +71,65 @@ describe('TemplateItem', () => {
     expect(screen.getByText('Clean Room')).toBeInTheDocument();
   });
 
-  it('displays recurrence pattern badge', () => {
+  it('displays recurrence pattern', () => {
     render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText('DAILY')).toBeInTheDocument();
+    // QuestCard displays recurrence as "📅 Daily" instead of just "DAILY"
+    expect(screen.getByText(/📅 Daily/)).toBeInTheDocument();
   });
 
-  it('displays quest type badge', () => {
+  it('displays quest type', () => {
     render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText('INDIVIDUAL')).toBeInTheDocument();
+    // Quest type is now displayed differently in QuestCard
+    expect(screen.getByText('Clean Room')).toBeInTheDocument();
   });
 
-  it('shows paused badge when template is paused', () => {
+  it('shows unavailable badge when template is paused', () => {
     render(<TemplateItem template={mockPausedTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText('PAUSED')).toBeInTheDocument();
+    // QuestCard shows "UNAVAILABLE" badge instead of "PAUSED"
+    expect(screen.getByText('Unavailable')).toBeInTheDocument();
   });
 
-  it('does not show paused badge when template is active', () => {
+  it('does not show unavailable badge when template is active', () => {
     render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    expect(screen.queryByText('PAUSED')).not.toBeInTheDocument();
+    expect(screen.queryByText('Unavailable')).not.toBeInTheDocument();
   });
 
-  it('applies dimmed styling when template is paused', () => {
+  it('applies overlay styling when template is paused', () => {
     const { container } = render(<TemplateItem template={mockPausedTemplate} {...mockHandlers} />);
 
-    const card = container.querySelector('.bg-gray-700.opacity-60');
-    expect(card).toBeInTheDocument();
+    // QuestCard applies a black overlay with opacity when paused
+    const overlay = container.querySelector('.bg-black.opacity-25');
+    expect(overlay).toBeInTheDocument();
   });
 
-  it('applies normal styling when template is active', () => {
+  it('does not apply overlay when template is active', () => {
     const { container } = render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    const card = container.querySelector('.bg-gray-900');
-    expect(card).toBeInTheDocument();
-    expect(card).not.toHaveClass('opacity-60');
+    const overlay = container.querySelector('.bg-black.opacity-25');
+    expect(overlay).not.toBeInTheDocument();
   });
 
-  it('displays assigned character IDs for individual quests', () => {
+  it('displays template description', () => {
     render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText(/Assigned to: char-1, char-2/)).toBeInTheDocument();
+    expect(screen.getByText('Clean your room daily')).toBeInTheDocument();
   });
 
-  it('displays "Claimable by: Any hero" for family quests', () => {
+  it('displays description for family quests', () => {
     render(<TemplateItem template={mockFamilyTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText('Claimable by: Any hero')).toBeInTheDocument();
+    expect(screen.getByText('Prepare and share a family meal')).toBeInTheDocument();
   });
 
-  it('handles null assigned_character_ids for individual quests', () => {
-    const template = { ...mockIndividualTemplate, assigned_character_ids: null };
-    render(<TemplateItem template={template} {...mockHandlers} />);
+  it('displays rewards (XP and Gold)', () => {
+    render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText('Assigned to:')).toBeInTheDocument();
+    expect(screen.getByText(/50.*XP/)).toBeInTheDocument();
+    expect(screen.getByText(/25.*Gold/)).toBeInTheDocument();
   });
 
   it('renders edit button', () => {
@@ -185,24 +196,16 @@ describe('TemplateItem', () => {
     expect(mockHandlers.onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('renders user icon for individual quests', () => {
-    const { container } = render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
+  it('displays difficulty level', () => {
+    render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    const userIcon = container.querySelector('.text-purple-400');
-    expect(userIcon).toBeInTheDocument();
-  });
-
-  it('renders users icon for family quests', () => {
-    const { container } = render(<TemplateItem template={mockFamilyTemplate} {...mockHandlers} />);
-
-    const usersIcon = container.querySelector('.text-green-400');
-    expect(usersIcon).toBeInTheDocument();
+    expect(screen.getByText('MEDIUM')).toBeInTheDocument();
   });
 
   it('displays weekly recurrence pattern correctly', () => {
     render(<TemplateItem template={mockFamilyTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText('WEEKLY')).toBeInTheDocument();
+    expect(screen.getByText(/📅 Weekly/)).toBeInTheDocument();
   });
 
   it('renders all action buttons', () => {

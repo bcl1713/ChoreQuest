@@ -57,17 +57,17 @@ describe('TemplateList', () => {
     expect(screen.getByText('No family quest templates yet.')).toBeInTheDocument();
   });
 
-  it('displays individual quest templates under Individual Quests section', () => {
+  it('displays individual quest templates under Individual Quest Templates section', () => {
     render(<TemplateList templates={[mockIndividualTemplate]} {...mockHandlers} />);
 
-    expect(screen.getByText('Individual Quests')).toBeInTheDocument();
+    expect(screen.getByText(/Individual Quest Templates/)).toBeInTheDocument();
     expect(screen.getByText('Clean Room')).toBeInTheDocument();
   });
 
-  it('displays family quest templates under Family Quests section', () => {
+  it('displays family quest templates under Family Quest Templates section', () => {
     render(<TemplateList templates={[mockFamilyTemplate]} {...mockHandlers} />);
 
-    expect(screen.getByText('Family Quests')).toBeInTheDocument();
+    expect(screen.getByText(/Family Quest Templates/)).toBeInTheDocument();
     expect(screen.getByText('Family Dinner')).toBeInTheDocument();
   });
 
@@ -79,8 +79,8 @@ describe('TemplateList', () => {
       />
     );
 
-    const individualSection = screen.getByText('Individual Quests').closest('div');
-    const familySection = screen.getByText('Family Quests').closest('div');
+    const individualSection = screen.getByText(/Individual Quest Templates/).closest('div');
+    const familySection = screen.getByText(/Family Quest Templates/).closest('div');
 
     expect(individualSection).toContainHTML('Clean Room');
     expect(familySection).toContainHTML('Family Dinner');

@@ -19,16 +19,14 @@ type QuestDashboardProps = {
 };
 
 export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashboardProps) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   // Custom hooks for data fetching
-  const { familyMembers, familyCharacters, loading: familyLoading, error: familyError, reload: reloadFamily } = useFamilyMembers();
+  const { familyMembers, loading: familyLoading, error: familyError, reload: reloadFamily } = useFamilyMembers();
   const { character, loading: characterLoading, error: characterError, reload: reloadCharacter } = useCharacter();
   const { quests: questInstances, loading: questsLoading, error: questsError, reload: reloadQuests } = useQuests();
 
   // Local state
-  const [selectedAssignee, setSelectedAssignee] = useState<Record<string, string>>({});
-  const [selectedFamilyAssignments, setSelectedFamilyAssignments] = useState<Record<string, string>>({});
   const [showQuestHistory, setShowQuestHistory] = useState(false);
 
   // Combine loading and error states
@@ -80,89 +78,19 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     }
   }, [loadData, onError]);
 
-  const handlePickupQuest = useCallback(async (quest: QuestInstance) => {
-    if (!user) {
-      onError("You must be signed in to pick up quests.");
-      return;
-    }
-
-    if (quest.quest_type === "FAMILY") {
-      await handleClaimQuest(quest.id);
-      return;
-    }
-
-    try {
-      const { error: updateError } = await supabase
-        .from("quest_instances")
-        .update({ assigned_to_id: user.id, status: "PENDING" })
-        .eq("id", quest.id);
-      if (updateError) throw new Error(updateError.message);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to pick up quest");
-      await loadData();
-    }
-  }, [user, loadData, onError, handleClaimQuest]);
-
-  const handleAssignQuest = useCallback(async (questId: string, assigneeId: string) => {
-    if (!assigneeId) return;
-    try {
-      const { error: updateError } = await supabase
-        .from("quest_instances")
-        .update({ assigned_to_id: assigneeId, status: "PENDING" })
-        .eq("id", questId);
-      if (updateError) throw new Error(updateError.message);
-      setSelectedAssignee((prev) => ({ ...prev, [questId]: "" }));
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to assign quest");
-      await loadData();
-    }
-  }, [loadData, onError]);
-
-  const handleAssignFamilyQuest = useCallback(async (questId: string, characterId: string) => {
-    if (!characterId) return;
-    try {
-      await questInstanceApiService.assignFamilyQuest(questId, characterId);
-      setSelectedFamilyAssignments((prev) => {
-        const updated = { ...prev };
-        delete updated[questId];
-        return updated;
-      });
-      await loadData();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to assign family quest");
-      await loadData();
-    }
-  }, [loadData, onError]);
-
-  const handleCancelQuest = useCallback(async (questId: string) => {
-    const confirmed = typeof window === "undefined" ? true : window.confirm("Are you sure you want to cancel this quest?");
-    if (!confirmed) return;
-    try {
-      const { error: deleteError } = await supabase.from("quest_instances").delete().eq("id", questId);
-      if (deleteError) throw new Error(deleteError.message);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to cancel quest");
-      await loadData();
-    }
-  }, [loadData, onError]);
 
   const handleReleaseQuest = useCallback(async (questId: string) => {
+    if (!window.confirm("Release this quest back to available quests?")) {
+      return;
+    }
     try {
-      await questInstanceApiService.releaseQuest(questId);
+      // Pass character ID for family quests so the character's active_family_quest_id is cleared
+      await questInstanceApiService.releaseQuest(questId, character?.id);
       await loadData();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed to release quest");
     }
-  }, [loadData, onError]);
-
-  const handleApproveQuest = useCallback(async (questId: string) => {
-    try {
-      await questInstanceApiService.approveQuest(questId);
-      await loadData();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Failed to approve quest");
-    }
-  }, [loadData, onError]);
+  }, [loadData, onError, character?.id]);
 
   // Quest filtering using helpers (memoized for performance)
   const myQuests = useMemo(
@@ -178,29 +106,6 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const myHistoricalQuests = useMemo(
     () => QuestHelpers.filterHistoricalQuests(myQuests),
     [myQuests]
-  );
-
-  const unassignedIndividualQuests = useMemo(
-    () => QuestHelpers.filterUnassignedIndividualQuests(questInstances),
-    [questInstances]
-  );
-
-  const unassignedFamilyQuests = useMemo(
-    () => QuestHelpers.filterUnassignedFamilyQuests(questInstances),
-    [questInstances]
-  );
-
-  const questsAwaitingApproval = useMemo(
-    () => QuestHelpers.filterQuestsAwaitingApproval(questInstances),
-    [questInstances]
-  );
-
-  // Filter out quests that are already in the awaiting approval section
-  const otherQuests = useMemo(
-    () => profile?.role === "GUILD_MASTER"
-      ? QuestHelpers.filterOtherQuests(questInstances, user?.id).filter(q => q.status !== "COMPLETED")
-      : [],
-    [profile?.role, questInstances, user?.id]
   );
 
   const claimableFamilyQuests = useMemo(
@@ -255,95 +160,14 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
           onStartQuest={(id) => handleStatusUpdate(id, "IN_PROGRESS")}
           onCompleteQuest={(id) => handleStatusUpdate(id, "COMPLETED")}
           onReleaseQuest={handleReleaseQuest}
-          canStart={(quest) => QuestHelpers.canUpdateStatus(quest, "IN_PROGRESS", user?.id, profile?.role)}
-          canComplete={(quest) => QuestHelpers.canUpdateStatus(quest, "COMPLETED", user?.id, profile?.role)}
-          canRelease={(quest) => quest.quest_type === "FAMILY" && quest.status === "CLAIMED"}
+          familyMembers={familyMembers}
         />
       </section>
-
-      {/* Quests Awaiting Approval (Guild Master only) */}
-      {profile?.role === "GUILD_MASTER" && questsAwaitingApproval.length > 0 && (
-        <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">🛡️ Quests Awaiting Approval</h3>
-          <QuestList
-            quests={questsAwaitingApproval}
-            variant="awaiting-approval"
-            onApproveQuest={handleApproveQuest}
-            canApprove={() => true}
-            getAssignedHeroName={(quest) => QuestHelpers.getAssignedHeroName(quest, familyMembers)}
-          />
-        </section>
-      )}
 
       {/* Family Quest Claiming (for characters) */}
       {character && claimableFamilyQuests.length > 0 && (
         <section>
           <FamilyQuestClaiming quests={claimableFamilyQuests} character={character} onClaimQuest={handleClaimQuest} />
-        </section>
-      )}
-
-      {/* Manual Family Quest Assignment (Guild Master only) */}
-      {profile?.role === "GUILD_MASTER" && claimableFamilyQuests.length > 0 && (
-        <section className="bg-gray-800 border border-gray-700 rounded-lg p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-fantasy text-gray-100">👑 Manual Family Quest Assignment</h3>
-            <p className="text-sm text-gray-400">Assign a family quest directly to a hero when no one has claimed it.</p>
-          </div>
-          {familyCharacters.length === 0 ? (
-            <p className="text-sm text-gray-400">No hero characters found. Ask heroes to create their characters before assigning quests.</p>
-          ) : (
-            <QuestList
-              quests={claimableFamilyQuests}
-              variant="family-gm"
-              showAssignment={() => true}
-              getAssignmentOptions={(quest) => QuestHelpers.getAssignmentOptions(quest, familyMembers, familyCharacters)}
-              getSelectedAssignee={(questId) => selectedFamilyAssignments[questId] ?? ""}
-              onAssigneeChange={(questId, assigneeId) => setSelectedFamilyAssignments((prev) => ({ ...prev, [questId]: assigneeId }))}
-              onAssignQuest={handleAssignFamilyQuest}
-            />
-          )}
-        </section>
-      )}
-
-      {/* Available Quests */}
-      {unassignedIndividualQuests.length > 0 && (
-        <section>
-          <h3 data-testid="available-quests-heading" className="text-xl font-fantasy text-gray-200 mb-4">📋 Available Quests</h3>
-          <QuestList
-            quests={unassignedIndividualQuests}
-            variant="available"
-            onPickupQuest={handlePickupQuest}
-            onCancelQuest={handleCancelQuest}
-            onAssignQuest={handleAssignQuest}
-            canPickup={() => true}
-            canCancel={() => profile?.role === "GUILD_MASTER"}
-            showAssignment={() => profile?.role === "GUILD_MASTER"}
-            getAssignmentOptions={(quest) => QuestHelpers.getAssignmentOptions(quest, familyMembers, familyCharacters)}
-            getSelectedAssignee={(questId) => selectedAssignee[questId] ?? ""}
-            onAssigneeChange={(questId, assigneeId) => setSelectedAssignee((prev) => ({ ...prev, [questId]: assigneeId }))}
-          />
-        </section>
-      )}
-
-      {/* Family Quests (GM View) */}
-      {profile?.role === "GUILD_MASTER" && unassignedFamilyQuests.length > 0 && (
-        <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">🏰 Family Quests (GM View)</h3>
-          <QuestList quests={unassignedFamilyQuests} variant="family-gm" onCancelQuest={handleCancelQuest} canCancel={() => true} />
-        </section>
-      )}
-
-      {/* Family Quests (Other Heroes) */}
-      {profile?.role === "GUILD_MASTER" && otherQuests.length > 0 && (
-        <section>
-          <h3 className="text-xl font-fantasy text-gray-200 mb-4">👥 Family Quests</h3>
-          <QuestList
-            quests={otherQuests}
-            onApproveQuest={handleApproveQuest}
-            onCancelQuest={handleCancelQuest}
-            canApprove={(quest) => quest.status === "COMPLETED"}
-            canCancel={(quest) => quest.status !== "COMPLETED" && quest.status !== "APPROVED"}
-          />
         </section>
       )}
 
@@ -360,7 +184,7 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
               {showQuestHistory ? "Hide History" : `Show History (${myHistoricalQuests.length})`}
             </button>
           </div>
-          {showQuestHistory && <QuestList quests={myHistoricalQuests} variant="historical" />}
+          {showQuestHistory && <QuestList quests={myHistoricalQuests} familyMembers={familyMembers} />}
         </section>
       )}
     </div>

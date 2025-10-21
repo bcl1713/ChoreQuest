@@ -187,7 +187,7 @@ describe("QuestInstanceService Integration Tests", () => {
       const assignedQuest = await questInstanceService.assignQuest(testFamilyQuestId, testHeroCharacterId, testGMUserId);
 
       expect(assignedQuest).toBeDefined();
-      expect(assignedQuest.status).toBe("CLAIMED");
+      expect(assignedQuest.status).toBe("PENDING");
       expect(assignedQuest.assigned_to_id).toBe(testHeroUserId);
       expect(assignedQuest.volunteered_by).toBe(testHeroCharacterId); // Track specific character for approval path
       expect(assignedQuest.volunteer_bonus).toBeNull(); // No bonus for GM assignment

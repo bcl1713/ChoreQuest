@@ -54,6 +54,12 @@ jest.mock("@/components/rewards/reward-manager", () => {
   };
 });
 
+jest.mock("@/components/admin/quest-management-tab", () => ({
+  QuestManagementTab: function QuestManagementTab() {
+    return <div data-testid="quest-management-tab">Quest Management Tab</div>;
+  },
+}));
+
 // NOW import the component (after all mocks are set up)
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 
@@ -87,17 +93,18 @@ describe("AdminDashboard", () => {
 
       // Desktop labels (hidden sm:inline)
       expect(screen.getByText(/📊 Overview/)).toBeInTheDocument();
+      expect(screen.getByText(/⚔️ Quest Management/)).toBeInTheDocument();
       expect(screen.getByText(/📜 Quest Templates/)).toBeInTheDocument();
       expect(screen.getByText(/🏆 Rewards/)).toBeInTheDocument();
       expect(screen.getByText(/👑 Guild Masters/)).toBeInTheDocument();
       expect(screen.getByText(/⚙️ Family Settings/)).toBeInTheDocument();
     });
 
-    it("should render 5 tabs", () => {
+    it("should render 6 tabs", () => {
       render(<AdminDashboard />);
 
       const tabs = screen.getAllByRole("tab");
-      expect(tabs.length).toBe(5);
+      expect(tabs.length).toBe(6);
     });
 
     it("should have Overview tab selected by default", () => {
@@ -384,10 +391,11 @@ describe("AdminDashboard", () => {
 
       const tabs = screen.getAllByRole("tab");
       expect(tabs[0]).toHaveTextContent(/📊/);
-      expect(tabs[1]).toHaveTextContent(/📜/);
-      expect(tabs[2]).toHaveTextContent(/🏆/);
-      expect(tabs[3]).toHaveTextContent(/👑/);
-      expect(tabs[4]).toHaveTextContent(/⚙️/);
+      expect(tabs[1]).toHaveTextContent(/⚔️/);
+      expect(tabs[2]).toHaveTextContent(/📜/);
+      expect(tabs[3]).toHaveTextContent(/🏆/);
+      expect(tabs[4]).toHaveTextContent(/👑/);
+      expect(tabs[5]).toHaveTextContent(/⚙️/);
     });
 
     it("should use scroll: false when navigating", async () => {

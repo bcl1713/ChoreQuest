@@ -3,6 +3,37 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import FamilyQuestClaiming from './family-quest-claiming';
 import { Character, QuestInstance } from '@/lib/types/database';
 
+// Mock framer-motion to avoid animation issues in tests
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: Record<string, unknown>) => <div {...(props as Record<string, unknown>)}>{children}</div>,
+  },
+  AnimatePresence: ({ children }: Record<string, unknown>) => children,
+}));
+
+// Mock QuestCard component
+jest.mock('@/components/quests/quest-card', () => {
+  return function MockQuestCard({ quest, onPickup }: { quest: QuestInstance; onPickup?: (quest: QuestInstance) => void }) {
+    return (
+      <div data-testid={`quest-card-${quest.id}`}>
+        <h4>{quest.title}</h4>
+        {quest.recurrence_pattern && <p>📅 {quest.recurrence_pattern}</p>}
+        <p>⚡ {quest.xp_reward} XP</p>
+        <p>💰 {quest.gold_reward} Gold</p>
+        {quest.assigned_to_id && <p>Assigned to another hero.</p>}
+        {onPickup && (
+          <button
+            data-testid={`pickup-button-${quest.id}`}
+            onClick={() => onPickup(quest)}
+          >
+            Pick Up Quest
+          </button>
+        )}
+      </div>
+    );
+  };
+});
+
 // Mock data
 const mockQuests: QuestInstance[] = [
   {
@@ -13,6 +44,7 @@ const mockQuests: QuestInstance[] = [
     xp_reward: 50,
     gold_reward: 20,
     recurrence_pattern: 'DAILY',
+    assigned_to_id: null,
   },
   {
     id: '2',
@@ -22,6 +54,7 @@ const mockQuests: QuestInstance[] = [
     xp_reward: 30,
     gold_reward: 10,
     recurrence_pattern: 'DAILY',
+    assigned_to_id: null,
   },
   {
     id: '3',
@@ -67,10 +100,10 @@ describe('FamilyQuestClaiming', () => {
       expect(screen.getByText('Assigned to another hero.')).toBeInTheDocument();
     });
 
-    it('should call onClaimQuest with the quest id when the claim button is clicked', () => {
+    it('should call onClaimQuest with the quest id when the pick up button is clicked', () => {
       render(<FamilyQuestClaiming quests={mockQuests} character={mockCharacterWithoutActiveQuest} onClaimQuest={onClaimQuest} />);
-      const claimButtons = screen.getAllByText('Claim Quest');
-      fireEvent.click(claimButtons[0]);
+      const pickupButtons = screen.getAllByText('Pick Up Quest');
+      fireEvent.click(pickupButtons[0]);
       expect(onClaimQuest).toHaveBeenCalledWith('1');
     });
 
@@ -86,19 +119,18 @@ describe('FamilyQuestClaiming', () => {
       expect(screen.getByText(/You already have an active family quest/)).toBeInTheDocument();
     });
 
-    it('should disable all "Claim Quest" buttons', () => {
+    it('should render QuestCard components for each quest', () => {
       render(<FamilyQuestClaiming quests={mockQuests} character={mockCharacterWithActiveQuest} onClaimQuest={onClaimQuest} />);
-      const claimButtons = screen.getAllByText('Claim Quest');
-      claimButtons.forEach(button => {
-        expect(button).toBeDisabled();
-      });
+      expect(screen.getByTestId('quest-card-1')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-2')).toBeInTheDocument();
+      expect(screen.getByTestId('quest-card-3')).toBeInTheDocument();
     });
 
-    it('should not call onClaimQuest when a disabled button is clicked', () => {
+    it('should still call onClaimQuest when clicking pick up button (parent component handles disabling)', () => {
       render(<FamilyQuestClaiming quests={mockQuests} character={mockCharacterWithActiveQuest} onClaimQuest={onClaimQuest} />);
-      const claimButtons = screen.getAllByText('Claim Quest');
-      fireEvent.click(claimButtons[0]);
-      expect(onClaimQuest).not.toHaveBeenCalled();
+      const pickupButtons = screen.getAllByText('Pick Up Quest');
+      fireEvent.click(pickupButtons[0]);
+      expect(onClaimQuest).toHaveBeenCalledWith('1');
     });
   });
 });
