@@ -377,16 +377,16 @@ export async function expireQuests(
       return result;
     }
 
-    // Clear active_family_quest_id for any CLAIMED family quests that expired
-    const claimedFamilyQuestIds = expiredQuests
-      .filter((q) => q.quest_type === 'FAMILY' && q.status === 'CLAIMED')
+    // Clear active_family_quest_id for any family quests that expired while assigned to a hero
+    const familyQuestIdsWithActiveHeroes = expiredQuests
+      .filter((q) => q.quest_type === 'FAMILY' && Boolean(q.assigned_to_id))
       .map((q) => q.id);
 
-    if (claimedFamilyQuestIds.length > 0) {
+    if (familyQuestIdsWithActiveHeroes.length > 0) {
       const { error: clearError } = await supabase
         .from('characters')
         .update({ active_family_quest_id: null })
-        .in('active_family_quest_id', claimedFamilyQuestIds);
+        .in('active_family_quest_id', familyQuestIdsWithActiveHeroes);
 
       if (clearError) {
         result.errors.push(`Failed to clear active_family_quest_id: ${clearError.message}`);

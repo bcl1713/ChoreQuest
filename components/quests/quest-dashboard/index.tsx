@@ -12,6 +12,7 @@ import { useCharacter } from "@/hooks/useCharacter";
 import { useQuests } from "@/hooks/useQuests";
 import QuestList from "./quest-list";
 import * as QuestHelpers from "./quest-helpers";
+import PendingApprovalsSection from "@/components/quests/pending-approvals-section";
 
 type QuestDashboardProps = {
   onError: (error: string) => void;
@@ -19,15 +20,18 @@ type QuestDashboardProps = {
 };
 
 export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashboardProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   // Custom hooks for data fetching
-  const { familyMembers, loading: familyLoading, error: familyError, reload: reloadFamily } = useFamilyMembers();
+  const { familyMembers, familyCharacters, loading: familyLoading, error: familyError, reload: reloadFamily } = useFamilyMembers();
   const { character, loading: characterLoading, error: characterError, reload: reloadCharacter } = useCharacter();
   const { quests: questInstances, loading: questsLoading, error: questsError, reload: reloadQuests } = useQuests();
 
   // Local state
   const [showQuestHistory, setShowQuestHistory] = useState(false);
+  const [selectedAssignees, setSelectedAssignees] = useState<Record<string, string>>({});
+
+  const isGuildMaster = profile?.role === "GUILD_MASTER";
 
   // Combine loading and error states
   const loading = familyLoading || characterLoading || questsLoading;
@@ -92,6 +96,57 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     }
   }, [loadData, onError, character?.id]);
 
+  const handleAssignQuest = useCallback(async (questId: string, assigneeId: string) => {
+    if (!assigneeId) return;
+    try {
+      await questInstanceApiService.assignFamilyQuest(questId, assigneeId);
+      setSelectedAssignees((prev) => ({ ...prev, [questId]: "" }));
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to assign quest");
+    }
+  }, [loadData, onError]);
+
+  const handleApproveQuest = useCallback(async (questId: string) => {
+    try {
+      await questInstanceApiService.approveQuest(questId);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to approve quest");
+    }
+  }, [loadData, onError]);
+
+  const handleDenyQuest = useCallback(async (questId: string) => {
+    try {
+      await questInstanceApiService.denyQuest(questId);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to deny quest");
+    }
+  }, [loadData, onError]);
+
+  const handleCancelQuest = useCallback(async (questId: string) => {
+    try {
+      await questInstanceApiService.cancelQuest(questId);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to cancel quest");
+    }
+  }, [loadData, onError]);
+
+  const handleGmReleaseQuest = useCallback(async (questId: string) => {
+    try {
+      await questInstanceApiService.releaseQuest(questId);
+      await loadData();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to release quest");
+    }
+  }, [loadData, onError]);
+
+  const handleAssigneeChange = useCallback((questId: string, assigneeId: string) => {
+    setSelectedAssignees((prev) => ({ ...prev, [questId]: assigneeId }));
+  }, []);
+
   // Quest filtering using helpers (memoized for performance)
   const myQuests = useMemo(
     () => QuestHelpers.filterQuestsByUser(questInstances, user?.id),
@@ -111,6 +166,26 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const claimableFamilyQuests = useMemo(
     () => QuestHelpers.filterClaimableFamilyQuests(questInstances),
     [questInstances]
+  );
+
+  const pendingApprovalQuests = useMemo(
+    () => QuestHelpers.filterPendingApprovalQuests(questInstances),
+    [questInstances]
+  );
+
+  const assignableCharacters = useMemo(() => {
+    return familyCharacters.map((char) => {
+      const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
+      return {
+        id: char.id,
+        name: displayName,
+      };
+    });
+  }, [familyCharacters]);
+
+  const getAssignedHeroName = useCallback(
+    (quest: QuestInstance) => QuestHelpers.getAssignedHeroName(quest, assignableCharacters),
+    [assignableCharacters]
   );
 
   if (loading) {
@@ -144,6 +219,21 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
           <p className="text-gray-400 text-sm">Manage active quests, approvals, and family challenges.</p>
         </div>
       </div>
+
+      {isGuildMaster && pendingApprovalQuests.length > 0 && (
+        <PendingApprovalsSection
+          quests={pendingApprovalQuests}
+          assignmentOptions={assignableCharacters}
+          selectedAssignees={selectedAssignees}
+          onAssigneeChange={handleAssigneeChange}
+          onAssign={handleAssignQuest}
+          onApprove={handleApproveQuest}
+          onDeny={handleDenyQuest}
+          onCancel={handleCancelQuest}
+          onRelease={handleGmReleaseQuest}
+          getAssignedHeroName={getAssignedHeroName}
+        />
+      )}
 
       {/* My Quests Section */}
       <section>

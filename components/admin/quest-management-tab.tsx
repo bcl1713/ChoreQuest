@@ -7,6 +7,7 @@ import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/hooks/useNotification';
 import QuestCard from '@/components/quests/quest-card';
+import PendingApprovalsSection from '@/components/quests/pending-approvals-section';
 import {
   filterPendingApprovalQuests,
   filterUnassignedActiveQuests,
@@ -18,10 +19,11 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { NotificationContainer } from '@/components/ui/NotificationContainer';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { questInstanceApiService } from '@/lib/quest-instance-api-service';
+import type { QuestInstance } from '@/lib/types/database';
 
 interface QuestSection {
   title: string;
-  questIds: string[];
+  quests: QuestInstance[];
   emptyMessage: string;
   count: number;
 }
@@ -77,7 +79,8 @@ export function QuestManagementTab() {
         await reload();
       } catch (err) {
         console.error('Failed to approve quest:', err);
-        showError('Failed to approve quest. Please try again.');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to approve quest. Please try again.';
+        showError(errorMessage);
       } finally {
         setIsProcessing(false);
       }
@@ -177,29 +180,23 @@ export function QuestManagementTab() {
     return {
       pendingApproval: {
         title: 'Pending Approval',
-        questIds: pendingApproval.map((q) => q.id),
+        quests: pendingApproval,
         emptyMessage: 'No quests awaiting approval',
         count: pendingApproval.length,
       },
       unassigned: {
         title: 'Unassigned',
-        questIds: unassigned.map((q) => q.id),
+        quests: unassigned,
         emptyMessage: 'All quests have been assigned',
         count: unassigned.length,
       },
       inProgress: {
         title: 'In Progress',
-        questIds: inProgress.map((q) => q.id),
+        quests: inProgress,
         emptyMessage: 'No quests currently in progress',
         count: inProgress.length,
       },
     };
-  }, [quests]);
-
-  // Create a map for quick quest lookup
-  const questMap = useMemo(() => {
-    const map = new Map(quests.map((q) => [q.id, q]));
-    return map;
   }, [quests]);
 
   if (loading) {
@@ -221,9 +218,7 @@ export function QuestManagementTab() {
 
   // Section renderer
   const renderSection = (section: QuestSection) => {
-    const sectionQuests = section.questIds
-      .map((id) => questMap.get(id))
-      .filter((q) => q !== undefined);
+    const sectionQuests = section.quests;
 
     return (
       <motion.div key={section.title} className="space-y-4">
@@ -249,12 +244,12 @@ export function QuestManagementTab() {
           >
             {sectionQuests.map((quest) => (
               <QuestCard
-                key={quest!.id}
-                quest={quest!}
+                key={quest.id}
+                quest={quest}
                 viewMode="gm"
                 familyMembers={assignableCharacters}
-                assignedHeroName={getAssignedHeroName(quest!, assignableCharacters)}
-                selectedAssignee={selectedAssignee[quest!.id] || ''}
+                assignedHeroName={getAssignedHeroName(quest, assignableCharacters)}
+                selectedAssignee={selectedAssignee[quest.id] || ''}
                 onAssigneeChange={handleAssigneeChange}
                 onAssign={handleAssignQuest}
                 onApprove={handleApproveQuest}
@@ -284,7 +279,18 @@ export function QuestManagementTab() {
       />
       <div className="space-y-8" data-testid="quest-management-tab">
         {/* Pending Approval Section */}
-        {renderSection(questSections.pendingApproval)}
+        <PendingApprovalsSection
+          quests={questSections.pendingApproval.quests}
+          assignmentOptions={assignableCharacters}
+          selectedAssignees={selectedAssignee}
+          onAssigneeChange={handleAssigneeChange}
+          onAssign={handleAssignQuest}
+          onApprove={handleApproveQuest}
+          onDeny={handleDenyQuest}
+          onCancel={handleCancelQuest}
+          onRelease={handleReleaseQuest}
+          getAssignedHeroName={(quest) => getAssignedHeroName(quest, assignableCharacters)}
+        />
 
         <hr className="border-dark-600" />
 
@@ -299,4 +305,3 @@ export function QuestManagementTab() {
     </>
   );
 }
-

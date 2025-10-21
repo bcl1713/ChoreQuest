@@ -9,8 +9,22 @@ class QuestInstanceApiService {
   private async getAuthToken(): Promise<string | null> {
     if (typeof window === 'undefined') return null;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Failed to fetch auth session:', error);
+      }
+
+      if (session?.access_token) {
+        return session.access_token;
+      }
+
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Failed to refresh auth session:', refreshError);
+        return null;
+      }
+
+      return refreshData.session?.access_token ?? null;
     } catch {
       return null;
     }

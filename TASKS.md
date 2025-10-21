@@ -15,6 +15,14 @@ transforms household tasks into epic adventures.
 - [x] Surface total lifetime XP below the progress bar for quick reference
 - [x] Manually verify visual behavior across breakpoints after code changes
 
+### Issue #95 - Restore Guild Master Quest Approvals on Main Dashboard
+
+- [x] Analyze existing GM approval workflows and identify shared logic candidates
+- [x] Add Jest coverage for a shared PendingApprovalsSection component reused across surfaces
+- [x] Refactor `components/admin/quest-management-tab.tsx` to consume the shared component
+- [x] Render the shared pending approvals section on the main Quest Dashboard for Guild Masters
+- [x] Verify quest approval, deny, assign, and release actions still trigger reload flows
+
 ## Phase 1: Core Foundation (MVP) - COMPLETED
 
 - [x] Authentication and user management system
