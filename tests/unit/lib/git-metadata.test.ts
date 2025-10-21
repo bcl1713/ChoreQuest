@@ -108,7 +108,9 @@ afterEach(() => {
     const result = getGitReferenceMetadata();
 
     expect(result).toBeNull();
-    expect(warnMock).toHaveBeenCalled();
+    expect(warnMock).toHaveBeenCalledWith(
+      'git-metadata: unable to read local .git metadata; falling back to environment variables'
+    );
     warnMock.mockRestore();
   });
 });

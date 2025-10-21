@@ -136,9 +136,9 @@ const resolveLocalGitReference = (): GitReferenceMetadata | null => {
     if (ref.startsWith('refs/tags/')) {
       return { type: 'tag', value: ref.slice('refs/tags/'.length) };
     }
-  } catch (error) {
+  } catch {
     // Ignore failures; fall back to environment metadata only
-    console.warn('git-metadata: unable to read local .git metadata', error);
+    console.warn('git-metadata: unable to read local .git metadata; falling back to environment variables');
   }
 
   return null;
