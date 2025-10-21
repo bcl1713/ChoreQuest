@@ -1,7 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { QuestManagementTab } from '../quest-management-tab';
 import { QuestInstance, QuestStatus, UserProfile } from '@/lib/types/database';
+import { useAuth } from '@/lib/auth-context';
+import { useFamilyMembers } from '@/hooks/useFamilyMembers';
+import { useQuests } from '@/hooks/useQuests';
+import { QuestManagementTab } from '../quest-management-tab';
 
 // Mock the hooks
 jest.mock('@/hooks/useQuests', () => ({
@@ -92,13 +95,9 @@ jest.mock('@/hooks/useNotification', () => ({
   }),
 }));
 
-// Declare mocks before use
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockUseQuests = require('@/hooks/useQuests').useQuests;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockUseFamilyMembers = require('@/hooks/useFamilyMembers').useFamilyMembers;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockUseAuth = require('@/lib/auth-context').useAuth;
+const mockUseQuests = jest.mocked(useQuests);
+const mockUseFamilyMembers = jest.mocked(useFamilyMembers);
+const mockUseAuth = jest.mocked(useAuth);
 
 // Helper to create mock quest
 const createMockQuest = (overrides: Partial<QuestInstance> = {}): QuestInstance => ({
