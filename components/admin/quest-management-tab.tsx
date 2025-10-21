@@ -13,6 +13,7 @@ import {
   filterUnassignedActiveQuests,
   filterInProgressQuests,
   getAssignedHeroName,
+  mapFamilyCharactersToAssignmentDisplay,
 } from '@/components/quests/quest-dashboard/quest-helpers';
 import { staggerContainer } from '@/lib/animations/variants';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -160,16 +161,10 @@ export function QuestManagementTab() {
   }, []);
 
   // Memoized characters for assignment (map to { id, name } format)
-  const assignableCharacters = useMemo(() => {
-    return familyCharacters.map((char) => {
-      // Ensure we have a displayable name, using character id as last resort
-      const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
-      return {
-        id: char.id,
-        name: displayName,
-      };
-    });
-  }, [familyCharacters]);
+  const assignableCharacters = useMemo(
+    () => mapFamilyCharactersToAssignmentDisplay(familyCharacters),
+    [familyCharacters]
+  );
 
   // Memoized quest grouping
   const questSections = useMemo(() => {

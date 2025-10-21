@@ -173,15 +173,10 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     [questInstances]
   );
 
-  const assignableCharacters = useMemo(() => {
-    return familyCharacters.map((char) => {
-      const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
-      return {
-        id: char.id,
-        name: displayName,
-      };
-    });
-  }, [familyCharacters]);
+  const assignableCharacters = useMemo(
+    () => QuestHelpers.mapFamilyCharactersToAssignmentDisplay(familyCharacters),
+    [familyCharacters]
+  );
 
   const getAssignedHeroName = useCallback(
     (quest: QuestInstance) => QuestHelpers.getAssignedHeroName(quest, assignableCharacters),

@@ -163,6 +163,22 @@ export function filterPendingApprovalQuests(quests: QuestInstance[]): QuestInsta
 }
 
 /**
+ * Map family characters to lightweight assignment display objects (id + name).
+ * Ensures every character has a readable label, falling back to a shortened id.
+ */
+export function mapFamilyCharactersToAssignmentDisplay(
+  familyCharacters: Character[]
+): Array<{ id: string; name: string }> {
+  return familyCharacters.map((char) => {
+    const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
+    return {
+      id: char.id,
+      name: displayName,
+    };
+  });
+}
+
+/**
  * Filter unassigned active quests (no assigned_to_id and active statuses)
  */
 export function filterUnassignedActiveQuests(quests: QuestInstance[]): QuestInstance[] {
