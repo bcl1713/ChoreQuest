@@ -7,6 +7,7 @@ import { Character, CharacterClass } from '@/lib/types/database';
 import { CHARACTER_CLASSES, formatBonusPercentage } from '@/lib/constants/character-classes';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { FantasyButton } from '@/components/ui';
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
@@ -209,20 +210,15 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
 
           {/* Submit Button */}
           <div className="text-center">
-            <button
+            <FantasyButton
               type="submit"
               disabled={isLoading || !name.trim() || !selectedClass}
-              className="fantasy-button fantasy-button-primary px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-w-48"
+              isLoading={isLoading}
+              size="lg"
+              className="min-w-48 justify-center"
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Creating Hero...
-                </div>
-              ) : (
-                'Begin Your Quest'
-              )}
-            </button>
+              {isLoading ? 'Creating Hero...' : 'Begin Your Quest'}
+            </FantasyButton>
           </div>
         </form>
       </div>

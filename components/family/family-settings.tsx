@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { FamilyService, FamilyInfo } from "@/lib/family-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, RefreshCw, Users, Calendar, Shield, User, Globe } from "lucide-react";
+import { Button } from "@/components/ui";
 
 // Common timezones organized by region
 const COMMON_TIMEZONES = [
@@ -237,14 +238,15 @@ export default function FamilySettings() {
                   {familyInfo.code}
                 </code>
               </div>
-              <button
+              <Button
                 onClick={handleCopyCode}
-                className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md font-medium"
+                variant="primary"
+                size="sm"
+                startIcon={<Copy className="h-4 w-4" />}
                 title="Copy to clipboard"
               >
-                <Copy className="w-4 h-4" />
                 <span className="hidden sm:inline">Copy</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -266,13 +268,14 @@ export default function FamilySettings() {
                   </option>
                 ))}
               </select>
-              <button
+              <Button
                 onClick={handleTimezoneUpdate}
                 disabled={updatingTimezone || selectedTimezone === familyInfo?.timezone}
-                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                variant="primary"
+                size="sm"
               >
                 {updatingTimezone ? "Updating..." : "Update Timezone"}
-              </button>
+              </Button>
             </div>
             <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
               <span className="text-blue-400 font-medium">ℹ️ Info:</span> Quest recurrence (daily/weekly resets) will align to this timezone. This ensures quests reset at midnight in your local time, not server time.
@@ -281,14 +284,15 @@ export default function FamilySettings() {
 
           {/* Regenerate Button */}
           <div className="pt-2 border-t border-dark-600">
-            <button
+            <Button
               onClick={() => setShowConfirmModal(true)}
               disabled={regenerating}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="gold"
+              size="sm"
+              startIcon={<RefreshCw className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`} />}
             >
-              <RefreshCw className={`w-4 h-4 ${regenerating ? "animate-spin" : ""}`} />
               {regenerating ? "Regenerating..." : "Regenerate Invite Code"}
-            </button>
+            </Button>
             <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
               <span className="text-orange-400 font-medium">⚠️ Warning:</span> Regenerating will invalidate the current invite code. Existing members will not be affected.
             </p>
@@ -357,19 +361,27 @@ export default function FamilySettings() {
                 Existing members will not be affected.
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleRegenerateCode}
-                  disabled={regenerating}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg font-medium transition-all shadow-md disabled:opacity-50"
-                >
-                  {regenerating ? "⏳ Regenerating..." : "🔄 Regenerate"}
-                </button>
+                <div className="flex-1">
+                  <Button
+                    onClick={() => setShowConfirmModal(false)}
+                    variant="secondary"
+                    size="sm"
+                    fullWidth
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <Button
+                    onClick={handleRegenerateCode}
+                    disabled={regenerating}
+                    variant="gold"
+                    size="sm"
+                    fullWidth
+                  >
+                    {regenerating ? "⏳ Regenerating..." : "🔄 Regenerate"}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

@@ -4,6 +4,7 @@ import { useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
+import { Button } from '@/components/ui';
 
 // Error Boundary Component
 class AdminErrorBoundary extends Component<
@@ -35,12 +36,9 @@ class AdminErrorBoundary extends Component<
             <p className="text-sm text-gray-500 mb-6">
               {this.state.error?.message || 'Unknown error'}
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-gold-600 hover:bg-gold-700 text-white px-6 py-2 rounded-lg transition-colors"
-            >
+            <Button onClick={() => window.location.reload()} variant="gold" size="sm">
               Reload Page
-            </button>
+            </Button>
           </div>
         </div>
       );
@@ -102,12 +100,9 @@ export default function AdminPage() {
                   </p>
                 )}
               </div>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="bg-dark-700 hover:bg-dark-600 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors"
-              >
+              <Button onClick={() => router.push('/dashboard')} variant="secondary" size="sm">
                 ← Back to Dashboard
-              </button>
+              </Button>
             </div>
           </div>
         </header>

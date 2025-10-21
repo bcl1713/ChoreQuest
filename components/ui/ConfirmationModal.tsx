@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { Button } from './Button';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -70,24 +71,22 @@ export function ConfirmationModal({
                 <p className="text-gray-300 text-sm mb-6">{message}</p>
 
                 <div className="flex gap-3 justify-end">
-                  <button
+                  <Button
                     onClick={onCancel}
                     disabled={isLoading}
-                    className="px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    variant="secondary"
+                    size="sm"
                   >
                     {cancelText}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={onConfirm}
                     disabled={isLoading}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isDangerous
-                        ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
-                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
-                    }`}
+                    variant={isDangerous ? 'destructive' : 'primary'}
+                    size="sm"
                   >
                     {isLoading ? '⏳ Processing...' : confirmText}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

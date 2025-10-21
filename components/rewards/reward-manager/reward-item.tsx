@@ -3,6 +3,8 @@
 import React from "react";
 import { Reward } from "@/lib/types/database";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 const REWARD_TYPE_ICONS = {
   SCREEN_TIME: "📱",
@@ -70,31 +72,38 @@ export const RewardItem = React.memo(function RewardItem({
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <button
+        <Button
           onClick={() => onEdit(reward)}
           data-testid="edit-reward-button"
-          className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg text-sm font-medium hover:bg-blue-600/30 transition-colors"
+          variant="ghost"
+          size="sm"
+          className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg font-medium hover:bg-blue-600/30"
         >
           ✏️ Edit
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => onToggleActive(reward)}
           data-testid="toggle-reward-active"
-          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors",
             reward.is_active
-              ? 'bg-dark-600 text-green-400 border border-green-500/50 hover:bg-dark-500'
-              : 'bg-dark-600 text-gray-400 border border-gray-600 hover:bg-dark-500'
-          }`}
+              ? "bg-dark-600 text-green-400 border-green-500/50 hover:bg-dark-500"
+              : "bg-dark-600 text-gray-400 border-gray-600 hover:bg-dark-500"
+          )}
         >
           {reward.is_active ? "✓ Active" : "○ Inactive"}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => onDelete(reward)}
           data-testid="delete-reward-button"
-          className="px-3 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg text-sm font-medium hover:bg-red-600/30 transition-colors"
+          variant="ghost"
+          size="sm"
+          className="px-3 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg font-medium hover:bg-red-600/30"
         >
           🗑️
-        </button>
+        </Button>
       </div>
     </motion.div>
   );

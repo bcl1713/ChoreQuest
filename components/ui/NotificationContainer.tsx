@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Notification } from '@/hooks/useNotification';
 import { Check, AlertCircle, Info, X } from 'lucide-react';
+import { Button } from './Button';
 
 interface NotificationContainerProps {
   notifications: Notification[];
@@ -39,13 +40,15 @@ export function NotificationContainer({ notifications, onDismiss }: Notification
 
             <span className="flex-1 text-sm font-medium">{notification.message}</span>
 
-            <button
+            <Button
               onClick={() => onDismiss(notification.id)}
-              className="ml-2 p-1 hover:bg-black/10 rounded transition-colors flex-shrink-0"
+              variant="ghost"
+              size="icon"
+              className="ml-2 h-fit w-fit p-1 flex-shrink-0 hover:bg-black/10"
               aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </motion.div>
         ))}
       </div>

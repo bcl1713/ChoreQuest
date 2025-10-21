@@ -7,6 +7,7 @@ import { getDifficultyColor, getStatusColor } from '@/lib/utils/colors';
 import { formatDueDate, formatPercent } from '@/lib/utils/formatting';
 import { staggerItem } from '@/lib/animations/variants';
 import { getButtonVisibility, getRecurrenceLabel } from './quest-card-helpers';
+import { Button } from '@/components/ui';
 
 export interface QuestCardProps {
   quest: QuestInstance;
@@ -136,48 +137,52 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
       {viewMode === 'hero' && (
         <div className="flex flex-wrap gap-2 mb-3">
           {buttonVis.canStart && onStart && (
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 transition"
+              variant="primary"
+              size="sm"
               onClick={() => onStart(quest.id)}
               data-testid="hero-start-quest"
             >
               Start Quest
-            </button>
+            </Button>
           )}
 
           {buttonVis.canComplete && onComplete && (
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-500 transition"
+              variant="gold"
+              size="sm"
               onClick={() => onComplete(quest.id)}
               data-testid="hero-complete-quest"
             >
               Complete Quest
-            </button>
+            </Button>
           )}
 
           {buttonVis.canPickup && onPickup && (
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition"
+              variant="success"
+              size="sm"
               onClick={() => onPickup(quest)}
               data-testid="hero-pickup-quest"
             >
               Pick Up Quest
-            </button>
+            </Button>
           )}
 
           {/* Release button for unassigned family quests */}
           {quest.quest_type === 'FAMILY' && !quest.assigned_to_id && onRelease && (
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition"
+              variant="secondary"
+              size="sm"
               onClick={() => onRelease(quest.id)}
               data-testid="hero-release-quest"
             >
               Abandon Quest
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -205,15 +210,16 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
                     </option>
                   ))}
                 </select>
-                <button
+                <Button
                   type="button"
-                  className="px-3 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-500 transition disabled:bg-gray-600 disabled:text-gray-300"
+                  variant="primary"
+                  size="sm"
                   disabled={!selectedAssignee}
                   onClick={() => onAssign?.(quest.id, selectedAssignee)}
                   data-testid="gm-assign-button"
                 >
                   Assign
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -221,47 +227,51 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
           {/* Action buttons row */}
           <div className="flex flex-wrap gap-2">
             {buttonVis.canApprove && onApprove && (
-              <button
+              <Button
                 type="button"
-                className="px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+                variant="success"
+                size="sm"
                 onClick={() => onApprove(quest.id)}
                 data-testid="gm-approve-quest"
               >
                 Approve Quest
-              </button>
+              </Button>
             )}
 
             {buttonVis.canDeny && onDeny && (
-              <button
+              <Button
                 type="button"
-                className="px-4 py-2 rounded-md bg-orange-700 text-white hover:bg-orange-600 transition"
+                variant="destructive"
+                size="sm"
                 onClick={() => onDeny(quest.id)}
                 data-testid="gm-deny-quest"
               >
                 Deny Quest
-              </button>
+              </Button>
             )}
 
             {buttonVis.canCancel && onCancel && (
-              <button
+              <Button
                 type="button"
-                className="px-4 py-2 rounded-md bg-rose-700 text-white hover:bg-rose-600 transition"
+                variant="destructive"
+                size="sm"
                 onClick={() => onCancel(quest.id)}
                 data-testid="gm-cancel-quest"
               >
                 Cancel Quest
-              </button>
+              </Button>
             )}
 
             {onRelease && quest.assigned_to_id && quest.status !== 'COMPLETED' && (
-              <button
+              <Button
                 type="button"
-                className="px-4 py-2 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition"
+                variant="secondary"
+                size="sm"
                 onClick={() => onRelease(quest.id)}
                 data-testid="gm-release-quest"
               >
                 Unassign Quest
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -271,40 +281,39 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
       {isTemplate && (
         <div className="flex flex-wrap gap-2 mt-3">
           {onEditTemplate && (
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 transition text-sm"
+              variant="primary"
+              size="sm"
               onClick={() => onEditTemplate(quest.id)}
               data-testid="template-edit-button"
             >
               Edit
-            </button>
+            </Button>
           )}
 
           {onTogglePauseTemplate && (
-            <button
+            <Button
               type="button"
-              className={`px-4 py-2 rounded-md text-white transition text-sm ${
-                isPaused
-                  ? 'bg-green-600 hover:bg-green-500'
-                  : 'bg-yellow-600 hover:bg-yellow-500'
-              }`}
+              variant={isPaused ? 'success' : 'gold'}
+              size="sm"
               onClick={() => onTogglePauseTemplate(quest.id)}
               data-testid="template-pause-button"
             >
               {isPaused ? 'Resume' : 'Pause'}
-            </button>
+            </Button>
           )}
 
           {onDeleteTemplate && (
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 transition text-sm"
+              variant="destructive"
+              size="sm"
               onClick={() => onDeleteTemplate(quest.id)}
               data-testid="template-delete-button"
             >
               Delete
-            </button>
+            </Button>
           )}
         </div>
       )}

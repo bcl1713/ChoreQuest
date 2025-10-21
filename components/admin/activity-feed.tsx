@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui";
 
 const activityService = new ActivityService();
 
@@ -183,13 +184,15 @@ export default function ActivityFeed() {
       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
-          <button
+          <Button
             onClick={handleRefresh}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-white"
             data-testid="activity-feed-refresh-button"
           >
             🔄 Retry
-          </button>
+          </Button>
         </div>
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
           {error}
@@ -203,14 +206,16 @@ export default function ActivityFeed() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
-        <button
+        <Button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+          variant="ghost"
+          size="sm"
+          className="text-gray-400 hover:text-white"
           data-testid="activity-feed-refresh-button"
         >
           {refreshing ? "⟳ Refreshing..." : "🔄 Refresh"}
-        </button>
+        </Button>
       </div>
 
       {/* Activity List */}
@@ -259,15 +264,17 @@ export default function ActivityFeed() {
                   {/* Quick Action for Pending Approvals */}
                   {event.type === "QUEST_SUBMITTED" && event.questId && (
                     <div className="flex-shrink-0">
-                      <button
+                      <Button
                         onClick={() => {
                           // Navigate to quest approval
                           window.location.href = `/dashboard?highlight=${event.questId}`;
                         }}
-                        className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded transition-colors"
+                        variant="gold"
+                        size="sm"
+                        className="text-xs px-3 py-1 rounded bg-orange-500 hover:bg-orange-600"
                       >
                         Review
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </motion.div>

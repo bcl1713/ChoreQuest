@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { RewardService } from "@/lib/reward-service";
 import { Reward } from "@/lib/types/database";
 import { useRewards } from "@/hooks/useRewards";
+import { Button } from "@/components/ui";
 import { RewardList } from "./reward-list";
 import { RewardForm, RewardFormData } from "./reward-form";
 import { RedemptionList } from "./redemption-list";
@@ -198,13 +199,14 @@ export default function RewardManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-fantasy text-gray-100">🏆 Reward Management</h2>
-        <button
+        <Button
           onClick={handleCreate}
           data-testid="create-reward-button"
-          className="px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
+          variant="gold"
+          size="sm"
         >
           ⚡ Create Reward
-        </button>
+        </Button>
       </div>
 
       {/* Error message */}
@@ -266,27 +268,34 @@ export default function RewardManager() {
               This action will deactivate the reward.
             </p>
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  if (deleteLoading) return;
-                  setShowDeleteConfirm(false);
-                  setSelectedReward(null);
-                  setDeleteTarget(null);
-                  setDeleteLoading(false);
-                }}
-                className={`flex-1 px-4 py-2 rounded-lg ${deleteLoading ? "bg-dark-700 text-gray-500 cursor-not-allowed" : "bg-dark-600 text-gray-300 border border-dark-500 hover:bg-dark-500 transition-colors"}`}
-                disabled={deleteLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                disabled={deleteLoading}
-                data-testid="confirm-delete-button"
-                className={`flex-1 px-4 py-2 rounded-lg font-medium text-white transition-all ${deleteLoading ? "bg-red-400 cursor-not-allowed" : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-md"}`}
-              >
-                {deleteLoading ? "⏳ Deleting..." : "🗑️ Delete"}
-              </button>
+              <div className="flex-1">
+                <Button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setSelectedReward(null);
+                    setDeleteTarget(null);
+                    setDeleteLoading(false);
+                  }}
+                  disabled={deleteLoading}
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
+                >
+                  Cancel
+                </Button>
+              </div>
+              <div className="flex-1">
+                <Button
+                  onClick={handleConfirmDelete}
+                  disabled={deleteLoading}
+                  data-testid="confirm-delete-button"
+                  variant="destructive"
+                  size="sm"
+                  fullWidth
+                >
+                  {deleteLoading ? "⏳ Deleting..." : "🗑️ Delete"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

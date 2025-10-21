@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { RewardType } from "@/lib/types/database";
+import { Button } from "@/components/ui";
 
 export const REWARD_TYPE_ICONS = {
   SCREEN_TIME: "📱",
@@ -119,20 +120,28 @@ export const RewardForm = React.memo(function RewardForm({
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              data-testid="save-reward-button"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white rounded-lg font-medium transition-all shadow-md"
-            >
-              {submitButtonText}
-            </button>
+            <div className="flex-1">
+              <Button
+                type="button"
+                onClick={onCancel}
+                variant="secondary"
+                size="sm"
+                fullWidth
+              >
+                Cancel
+              </Button>
+            </div>
+            <div className="flex-1">
+              <Button
+                type="submit"
+                data-testid="save-reward-button"
+                variant="gold"
+                size="sm"
+                fullWidth
+              >
+                {submitButtonText}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

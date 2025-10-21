@@ -6,6 +6,7 @@ import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui";
 
 interface FamilyMemberWithCharacter extends UserProfile {
   characters: {
@@ -253,28 +254,26 @@ export default function GuildMasterManager() {
                       (You)
                     </span>
                   ) : isGuildMaster ? (
-                    <button
+                    <Button
                       data-testid="demote-button"
                       onClick={() => handleConfirmAction("demote", member.id, member.name)}
                       disabled={actionLoading === member.id || isLastGM}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isLastGM
-                          ? "bg-gray-600/50 text-gray-500 cursor-not-allowed"
-                          : "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30"
-                      }`}
+                      variant="destructive"
+                      size="sm"
                       title={isLastGM ? "Cannot demote the last Guild Master" : "Demote to Hero"}
                     >
                       {actionLoading === member.id ? "⟳ Demoting..." : "Demote"}
-                    </button>
+                    </Button>
                   ) : (
-                    <button
+                    <Button
                       data-testid="promote-button"
                       onClick={() => handleConfirmAction("promote", member.id, member.name)}
                       disabled={actionLoading === member.id}
-                      className="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30"
+                      variant="gold"
+                      size="sm"
                     >
                       {actionLoading === member.id ? "⟳ Promoting..." : "Promote"}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </motion.div>
@@ -309,27 +308,25 @@ export default function GuildMasterManager() {
               )}
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
                 data-testid="cancel-confirm-button"
                 onClick={() => {
                   setShowConfirmModal(false);
                   setConfirmAction(null);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                variant="secondary"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 data-testid={confirmAction.type === "promote" ? "confirm-promote-button" : "confirm-demote-button"}
                 onClick={executeAction}
-                className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
-                  confirmAction.type === "promote"
-                    ? "bg-gold-600 hover:bg-gold-700 text-white"
-                    : "bg-red-600 hover:bg-red-700 text-white"
-                }`}
+                variant={confirmAction.type === "promote" ? "gold" : "destructive"}
+                size="sm"
               >
                 {confirmAction.type === "promote" ? "Promote" : "Demote"}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>

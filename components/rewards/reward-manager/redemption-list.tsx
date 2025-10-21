@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { RewardRedemptionWithUser } from "@/lib/reward-service";
+import { Button } from "@/components/ui";
 
 interface RedemptionListProps {
   redemptions: RewardRedemptionWithUser[];
@@ -55,20 +56,22 @@ export const RedemptionList = React.memo(function RedemptionList({
                   )}
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <button
+                  <Button
                     onClick={() => onApprove(redemption.id)}
                     data-testid="approve-redemption-button"
-                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                    variant="success"
+                    size="sm"
                   >
                     Approve
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => onDeny(redemption.id)}
                     data-testid="deny-redemption-button"
-                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                    variant="destructive"
+                    size="sm"
                   >
                     Deny
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -96,13 +99,15 @@ export const RedemptionList = React.memo(function RedemptionList({
                     Approved {new Date(redemption.approved_at!).toLocaleString()}
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={() => onFulfill(redemption.id)}
                   data-testid="fulfill-redemption-button"
-                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm ml-4"
+                  variant="primary"
+                  size="sm"
+                  className="ml-4"
                 >
                   Mark Fulfilled
-                </button>
+                </Button>
               </div>
             ))}
           </div>

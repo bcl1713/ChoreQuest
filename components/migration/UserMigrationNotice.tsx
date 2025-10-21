@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Button } from '@/components/ui';
 
 interface UserMigrationNoticeProps {
   onDismiss?: () => void;
@@ -69,12 +70,14 @@ export default function UserMigrationNotice({ onDismiss }: UserMigrationNoticePr
           </Link>
 
           {onDismiss && (
-            <button
+            <Button
               onClick={onDismiss}
-              className="w-full text-gray-400 hover:text-gray-300 text-sm underline py-2 transition-colors"
+              variant="ghost"
+              size="sm"
+              className="w-full text-gray-400 hover:text-gray-300 underline"
             >
               I&apos;ll do this later
-            </button>
+            </Button>
           )}
         </div>
       </div>

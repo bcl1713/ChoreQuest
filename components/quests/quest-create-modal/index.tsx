@@ -10,6 +10,8 @@ import {
 import type { TemplateFormData } from "@/lib/types/quest-templates";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { Button } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import AdhocQuestForm from "./adhoc-quest-form";
 import RecurringQuestForm from "./recurring-quest-form";
 import TemplateQuestForm from "./template-quest-form";
@@ -247,52 +249,50 @@ export default function QuestCreateModal({
               <h2 className="text-2xl font-fantasy text-gray-100">
                 ⚡ Create New Quest
               </h2>
-              <button
+              <Button
                 onClick={handleClose}
-                className="text-gray-400 hover:text-gray-200 text-2xl"
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-gray-200 text-xl h-auto w-auto"
+                aria-label="Close"
               >
                 ×
-              </button>
+              </Button>
             </div>
 
             {/* Mode Selection */}
             <div className="flex mb-6">
-              <button
+              <Button
+                type="button"
                 data-testid="existing-mode-button"
                 onClick={() => setMode("existing")}
-                className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-colors ${
-                  mode === "existing"
-                    ? "bg-gold-600 text-white"
-                    : "bg-dark-700 text-gray-400 hover:text-gray-200"
-                }`}
+                variant={mode === "existing" ? "gold" : "ghost"}
+                size="sm"
+                className="flex-1 rounded-l-lg"
               >
                 From Template
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
                 data-testid="adhoc-mode-button"
                 onClick={() => setMode("adhoc")}
-                className={`flex-1 py-2 px-4 font-medium transition-colors ${
-                  profile?.role !== "GUILD_MASTER" ? "rounded-r-lg " : ""
-                }${
-                  mode === "adhoc"
-                    ? "bg-gold-600 text-white"
-                    : "bg-dark-700 text-gray-400 hover:text-gray-200"
-                }`}
+                variant={mode === "adhoc" ? "gold" : "ghost"}
+                size="sm"
+                className={cn("flex-1", profile?.role !== "GUILD_MASTER" && "rounded-r-lg")}
               >
                 One-Time Quest
-              </button>
+              </Button>
               {profile?.role === "GUILD_MASTER" && (
-                <button
+                <Button
+                  type="button"
                   data-testid="recurring-mode-button"
                   onClick={() => setMode("recurring")}
-                  className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-colors ${
-                    mode === "recurring"
-                      ? "bg-gold-600 text-white"
-                      : "bg-dark-700 text-gray-400 hover:text-gray-200"
-                  }`}
+                  variant={mode === "recurring" ? "gold" : "ghost"}
+                  size="sm"
+                  className="flex-1 rounded-r-lg"
                 >
                   Recurring Template
-                </button>
+                </Button>
               )}
             </div>
 
@@ -373,22 +373,24 @@ export default function QuestCreateModal({
 
               {/* Actions */}
               <div className="flex gap-4 justify-end">
-                <button
+                <Button
                   type="button"
                   data-testid="cancel-quest-button"
                   onClick={handleClose}
-                  className="px-6 py-2 border border-gray-600 rounded-lg text-gray-400 hover:text-gray-200 hover:border-gray-500 transition-colors"
+                  variant="outline"
+                  className="px-6 py-2 border border-gray-600 text-gray-400 hover:text-gray-200"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   data-testid="submit-quest-button"
                   disabled={loading}
-                  className="px-6 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="gold"
+                  className="px-6 py-2 bg-gold-600 hover:bg-gold-700 font-medium"
                 >
                   {loading ? "Creating..." : "⚡ Create Quest"}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>

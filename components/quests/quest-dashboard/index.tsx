@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestStatus } from "@/lib/types/database";
-import { LoadingSpinner } from "@/components/ui";
+import { LoadingSpinner, Button } from "@/components/ui";
 import FamilyQuestClaiming from "@/components/family/family-quest-claiming";
 import { questInstanceApiService } from "@/lib/quest-instance-api-service";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
@@ -195,13 +195,15 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     return (
       <div className="fantasy-card p-6 text-center text-red-400">
         <p>{error}</p>
-        <button
+        <Button
           type="button"
-          className="mt-4 px-4 py-2 rounded-md bg-emerald-700 text-white hover:bg-emerald-600 transition"
+          variant="success"
+          size="sm"
+          className="mt-4 px-4 py-2 rounded-md bg-emerald-700 hover:bg-emerald-600"
           onClick={() => void loadData()}
         >
           Try Again
-        </button>
+        </Button>
       </div>
     );
   }
@@ -261,13 +263,15 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
         <section>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <h3 className="text-xl font-fantasy text-gray-200">📜 Quest History</h3>
-            <button
+            <Button
               type="button"
-              className="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-md border border-gray-700 text-sm text-gray-300 hover:bg-gray-800 transition"
+              variant="outline"
+              size="sm"
+              className="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-md border border-gray-700 text-sm text-gray-300 hover:bg-gray-800"
               onClick={() => setShowQuestHistory((prev) => !prev)}
             >
               {showQuestHistory ? "Hide History" : `Show History (${myHistoricalQuests.length})`}
-            </button>
+            </Button>
           </div>
           {showQuestHistory && <QuestList quests={myHistoricalQuests} familyMembers={familyMembers} />}
         </section>

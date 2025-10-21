@@ -10,6 +10,7 @@ import { PlusCircle } from 'lucide-react';
 import { TemplateList } from './template-list';
 import { TemplateForm, QuestTemplateForm } from './template-form';
 import { DeleteModal } from './delete-modal';
+import { Button } from '@/components/ui';
 
 // Re-export for backwards compatibility
 export { QuestTemplateForm };
@@ -172,12 +173,13 @@ export function QuestTemplateManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Quest Templates</h2>
-        <button
+        <Button
           onClick={openCreateModal}
-          className="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+          variant="success"
+          className="flex items-center font-bold py-2 px-4 bg-green-600 hover:bg-green-700"
         >
           <PlusCircle className="mr-2 h-5 w-5" /> Create New
-        </button>
+        </Button>
       </div>
 
       <TemplateList

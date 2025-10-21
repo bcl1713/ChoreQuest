@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui';
 import type { QuestInstance } from '@/lib/types/database';
 import type { TemplateFormData } from '@/lib/types/quest-templates';
 
@@ -160,8 +161,12 @@ const QuestConversionWizard: React.FC<QuestConversionWizardProps> = ({ quest, on
           </div>
 
           <div className="flex justify-end space-x-4 pt-4">
-            <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Convert</button>
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Convert
+            </Button>
           </div>
         </form>
       </div>

@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { userService } from '@/lib/user-service';
 import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 import type { Tables } from '@/lib/types/database';
+import { Button } from '@/components/ui';
 
 type UserProfile = Tables<'user_profiles'>;
 
@@ -143,24 +144,26 @@ export function FamilyManagement() {
                     <div className="flex items-center justify-end gap-2">
                       {/* Show Promote button for Heroes and Young Heroes */}
                       {canBePromoted && (
-                        <button
+                        <Button
                           onClick={() => openPromoteModal(member)}
                           disabled={actionLoading === member.id}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                          variant="success"
+                          size="sm"
                         >
                           {actionLoading === member.id ? 'Processing...' : 'Promote to GM'}
-                        </button>
+                        </Button>
                       )}
 
                       {/* Show Demote button for other GMs (not current user) */}
                       {isGuildMaster && !isCurrentUser && (
-                        <button
+                        <Button
                           onClick={() => openDemoteModal(member)}
                           disabled={actionLoading === member.id}
-                          className="px-3 py-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                          variant="gold"
+                          size="sm"
                         >
                           {actionLoading === member.id ? 'Processing...' : 'Demote to Hero'}
-                        </button>
+                        </Button>
                       )}
 
                       {/* No action buttons for current user */}
@@ -200,22 +203,24 @@ export function FamilyManagement() {
               <li>Promote and demote other users</li>
             </ul>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
                 onClick={() => {
                   setIsPromoteModalOpen(false);
                   setSelectedUser(null);
                 }}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                variant="secondary"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handlePromote}
                 disabled={!!actionLoading}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+                variant="success"
+                size="sm"
               >
                 {actionLoading ? 'Promoting...' : 'Confirm Promotion'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -239,22 +244,24 @@ export function FamilyManagement() {
               <li>User role management</li>
             </ul>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
                 onClick={() => {
                   setIsDemoteModalOpen(false);
                   setSelectedUser(null);
                 }}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                variant="secondary"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleDemote}
                 disabled={!!actionLoading}
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+                variant="gold"
+                size="sm"
               >
                 {actionLoading ? 'Demoting...' : 'Confirm Demotion'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

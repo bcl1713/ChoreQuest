@@ -8,6 +8,7 @@ import { Reward } from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle } from "lucide-react";
 import { useRewards } from "@/hooks/useRewards";
+import { Button } from "@/components/ui";
 import RewardCatalog from "./reward-catalog";
 import RewardCard from "./reward-card";
 import RedemptionHistory from "./redemption-history";
@@ -249,18 +250,22 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                 </div>
 
                 <div className="flex space-x-3">
-                  <button
+                  <Button
                     onClick={() => handleApproval(redemption.id, 'APPROVED')}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium transition-colors"
+                    variant="success"
+                    size="sm"
+                    className="font-medium"
                   >
                     ✅ Approve
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => handleApproval(redemption.id, 'DENIED')}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium transition-colors"
+                    variant="destructive"
+                    size="sm"
+                    className="font-medium"
                   >
                     ❌ Deny
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
