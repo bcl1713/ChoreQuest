@@ -25,7 +25,8 @@ class QuestInstanceApiService {
       }
 
       return refreshData.session?.access_token ?? null;
-    } catch {
+    } catch (err) {
+      console.error('Unexpected error in getAuthToken:', err);
       return null;
     }
   }
