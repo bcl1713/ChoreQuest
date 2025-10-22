@@ -77,9 +77,8 @@ export const RewardItem = React.memo(function RewardItem({
           variant="secondary"
           size="sm"
           className="flex-1"
-          startIcon="✏️"
         >
-          Edit
+          ✏️Edit
         </Button>
         <Button
           onClick={() => onToggleActive(reward)}

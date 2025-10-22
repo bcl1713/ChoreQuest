@@ -42,32 +42,38 @@ export const RewardForm = React.memo(function RewardForm({
 }: RewardFormProps) {
   // Memoize computed values to prevent recalculation on every render
   const title = useMemo(
-    () => mode === "create" ? "⚡ Create New Reward" : "✏️ Edit Reward",
-    [mode]
+    () => (mode === "create" ? "⚡ Create New Reward" : "✏️ Edit Reward"),
+    [mode],
   );
 
   const submitButtonText = useMemo(
-    () => mode === "create" ? "💾 Create Reward" : "💾 Save Changes",
-    [mode]
+    () => (mode === "create" ? "💾 Create Reward" : "💾 Save Changes"),
+    [mode],
   );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div
         className="fantasy-card p-6 max-w-md w-full"
-        data-testid={mode === "create" ? "create-reward-modal" : "edit-reward-modal"}
+        data-testid={
+          mode === "create" ? "create-reward-modal" : "edit-reward-modal"
+        }
       >
         <h3 className="text-xl font-fantasy text-gray-100 mb-6">{title}</h3>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Reward Name</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">
+              Reward Name
+            </label>
             <input
               type="text"
               data-testid="reward-name-input"
               value={formData.name}
               onChange={(e) => onChange("name", e.target.value)}
               required
-              placeholder={mode === "create" ? "Enter reward name..." : undefined}
+              placeholder={
+                mode === "create" ? "Enter reward name..." : undefined
+              }
               className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             />
           </div>
@@ -82,13 +88,17 @@ export const RewardForm = React.memo(function RewardForm({
               onChange={(e) => onChange("description", e.target.value)}
               required
               rows={3}
-              placeholder={mode === "create" ? "Describe the reward..." : undefined}
+              placeholder={
+                mode === "create" ? "Describe the reward..." : undefined
+              }
               className="w-full bg-dark-700 border border-dark-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gold-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">Type</label>
+            <label className="block text-sm font-medium text-gray-200 mb-2">
+              Type
+            </label>
             <select
               data-testid="reward-type-select"
               value={formData.type}
@@ -120,28 +130,24 @@ export const RewardForm = React.memo(function RewardForm({
           </div>
 
           <div className="flex gap-2 pt-2">
-            <div className="flex-1">
-              <Button
-                type="button"
-                onClick={onCancel}
-                variant="secondary"
-                size="sm"
-                fullWidth
-              >
-                Cancel
-              </Button>
-            </div>
-            <div className="flex-1">
-              <Button
-                type="submit"
-                data-testid="save-reward-button"
-                variant="gold"
-                size="sm"
-                fullWidth
-              >
-                {submitButtonText}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              onClick={onCancel}
+              variant="secondary"
+              size="sm"
+              fullWidth
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              data-testid="save-reward-button"
+              variant="gold"
+              size="sm"
+              fullWidth
+            >
+              {submitButtonText}
+            </Button>
           </div>
         </form>
       </div>

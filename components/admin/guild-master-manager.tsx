@@ -310,9 +310,7 @@ export default function GuildMasterManager() {
                       variant="gold"
                       size="sm"
                     >
-                      {actionLoading === member.id
-                        ? "⟳ Promoting..."
-                        : "Promote"}
+                      {actionLoading === member.id ? "Promoting..." : "Promote"}
                     </Button>
                   )}
                 </div>

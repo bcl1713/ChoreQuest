@@ -392,27 +392,23 @@ export default function FamilySettings() {
                 your family. Existing members will not be affected.
               </p>
               <div className="flex gap-3">
-                <div className="flex-1">
-                  <Button
-                    onClick={() => setShowConfirmModal(false)}
-                    variant="secondary"
-                    size="sm"
-                    fullWidth
-                  >
-                    Cancel
-                  </Button>
-                </div>
-                <div className="flex-1">
-                  <Button
-                    onClick={handleRegenerateCode}
-                    disabled={regenerating}
-                    variant="gold"
-                    size="sm"
-                    fullWidth
-                  >
-                    {regenerating ? "⏳ Regenerating..." : "🔄 Regenerate"}
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setShowConfirmModal(false)}
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleRegenerateCode}
+                  disabled={regenerating}
+                  variant="gold"
+                  size="sm"
+                  fullWidth
+                >
+                  {regenerating ? "Regenerating..." : "🔄 Regenerate"}
+                </Button>
               </div>
             </motion.div>
           </motion.div>
