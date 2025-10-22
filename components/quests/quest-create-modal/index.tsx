@@ -380,14 +380,12 @@ export default function QuestCreateModal({
                   variant="outline"
                   className="px-6 py-2 border border-gray-600 text-gray-400 hover:text-gray-200"
                 >
-                  Cancel
-                </Button>
                 <Button
                   type="submit"
                   data-testid="submit-quest-button"
                   disabled={loading}
                   variant="gold-solid"
-                  className="px-6 font-medium"
+                  className="px-6 py-2 text-white font-medium"
                 >
                   {loading ? "Creating..." : "⚡ Create Quest"}
                 </Button>
