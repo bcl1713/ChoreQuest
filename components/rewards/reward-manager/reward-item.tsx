@@ -94,7 +94,7 @@ export const RewardItem = React.memo(function RewardItem({
           onClick={() => onDelete(reward)}
           data-testid="delete-reward-button"
           variant="destructive"
-          size="sm"
+          size="icon-sm"
           aria-label="Delete reward"
         >
           🗑️
