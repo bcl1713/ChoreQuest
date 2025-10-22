@@ -87,7 +87,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const shouldRenderStartSlot = !isIconButton || hasStartVisual;
   const shouldRenderEndSlot = !isIconButton || hasEndVisual;
   const usesGridLayout = !isIconButton;
-  const iconDimensionClass = 'h-[var(--btn-icon-size,1.3rem)] w-[var(--btn-icon-size,1.3rem)]';
+  const iconDimensionClass = 'h-[var(--btn-icon-size,1.3rem)] w-[var(--btn-icon-size,1.3rem)] flex-shrink-0';
   const spinnerSizeClass = isIconButton ? 'h-5 w-5' : iconDimensionClass;
 
   return (
@@ -148,7 +148,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
       <span
         className={cn(
-          'inline-flex items-center justify-center',
+          'inline-flex items-center justify-center whitespace-nowrap',
           usesGridLayout && 'justify-self-center text-center',
           isIconButton && !hasEndVisual && 'h-full w-full'
         )}
