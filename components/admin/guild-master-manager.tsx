@@ -39,13 +39,15 @@ export default function GuildMasterManager() {
 
       const { data, error: fetchError } = await supabase
         .from("user_profiles")
-        .select(`
+        .select(
+          `
           *,
           characters (
             name,
             level
           )
-        `)
+        `,
+        )
         .eq("family_id", profile.family_id)
         .order("role", { ascending: false }) // Guild Masters first
         .order("name", { ascending: true });
@@ -55,12 +57,13 @@ export default function GuildMasterManager() {
       }
 
       // Transform data to handle characters array/object
-      const transformedData = data?.map(member => ({
-        ...member,
-        characters: Array.isArray(member.characters)
-          ? member.characters[0] || null
-          : member.characters,
-      })) || [];
+      const transformedData =
+        data?.map((member) => ({
+          ...member,
+          characters: Array.isArray(member.characters)
+            ? member.characters[0] || null
+            : member.characters,
+        })) || [];
 
       setMembers(transformedData);
     } catch (err) {
@@ -87,7 +90,11 @@ export default function GuildMasterManager() {
   }, [onFamilyMemberUpdate, loadMembers]);
 
   // Handle promote/demote confirmation
-  const handleConfirmAction = (type: "promote" | "demote", userId: string, userName: string) => {
+  const handleConfirmAction = (
+    type: "promote" | "demote",
+    userId: string,
+    userName: string,
+  ) => {
     setConfirmAction({ type, userId, userName });
     setShowConfirmModal(true);
   };
@@ -101,19 +108,21 @@ export default function GuildMasterManager() {
     setShowConfirmModal(false);
 
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const token = (await supabase.auth.getSession()).data.session
+        ?.access_token;
       if (!token) {
         throw new Error("Not authenticated");
       }
 
-      const endpoint = type === "promote"
-        ? `/api/users/${userId}/promote`
-        : `/api/users/${userId}/demote`;
+      const endpoint =
+        type === "promote"
+          ? `/api/users/${userId}/promote`
+          : `/api/users/${userId}/demote`;
 
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
@@ -127,7 +136,6 @@ export default function GuildMasterManager() {
 
       // Show success (members will update via realtime subscription)
       console.log(result.message);
-
     } catch (err) {
       console.error("Failed to update role:", err);
       setError(err instanceof Error ? err.message : "Failed to update role");
@@ -137,15 +145,22 @@ export default function GuildMasterManager() {
     }
   };
 
-  const guildMasterCount = members.filter(m => m.role === "GUILD_MASTER").length;
+  const guildMasterCount = members.filter(
+    (m) => m.role === "GUILD_MASTER",
+  ).length;
 
   if (loading) {
     return (
       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">👑 Guild Master Management</h3>
+        <h3 className="text-xl font-semibold text-white mb-4">
+          👑 Guild Master Management
+        </h3>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+            <div
+              key={i}
+              className="animate-pulse flex items-center justify-between p-4 bg-gray-700/30 rounded-lg"
+            >
               <div className="flex items-center gap-4 flex-1">
                 <div className="w-12 h-12 bg-gray-600 rounded-full"></div>
                 <div className="flex-1">
@@ -164,7 +179,9 @@ export default function GuildMasterManager() {
   if (error) {
     return (
       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">👑 Guild Master Management</h3>
+        <h3 className="text-xl font-semibold text-white mb-4">
+          👑 Guild Master Management
+        </h3>
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
           {error}
         </div>
@@ -173,17 +190,26 @@ export default function GuildMasterManager() {
   }
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="guild-master-manager">
+    <div
+      className="bg-gray-800/50 border border-gray-700 rounded-lg p-6"
+      data-testid="guild-master-manager"
+    >
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-white mb-2">👑 Guild Master Management</h3>
+        <h3 className="text-xl font-semibold text-white mb-2">
+          👑 Guild Master Management
+        </h3>
         <p className="text-sm text-gray-400">Family Members</p>
         <p className="text-sm text-gray-400">
-          Manage administrative roles for your family. Guild Masters can create quests, approve rewards, and promote other members.
+          Manage administrative roles for your family. Guild Masters can create
+          quests, approve rewards, and promote other members.
         </p>
         <div className="mt-2 inline-flex items-center gap-2 text-xs bg-blue-500/10 text-blue-400 px-3 py-1 rounded border border-blue-500/30">
           <span>ℹ️</span>
-          <span>{guildMasterCount} Guild Master{guildMasterCount !== 1 ? "s" : ""} in family</span>
+          <span>
+            {guildMasterCount} Guild Master{guildMasterCount !== 1 ? "s" : ""}{" "}
+            in family
+          </span>
         </div>
       </div>
 
@@ -226,7 +252,9 @@ export default function GuildMasterManager() {
                       <p className="text-white font-medium truncate">
                         {member.name}
                         {isCurrentUser && (
-                          <span className="text-xs text-gray-400 ml-2">(You)</span>
+                          <span className="text-xs text-gray-400 ml-2">
+                            (You)
+                          </span>
                         )}
                       </p>
                       <span
@@ -241,7 +269,8 @@ export default function GuildMasterManager() {
                     </div>
                     {member.characters && (
                       <p className="text-sm text-gray-400 truncate">
-                        {member.characters.name} • Level {member.characters.level}
+                        {member.characters.name} • Level{" "}
+                        {member.characters.level}
                       </p>
                     )}
                   </div>
@@ -256,23 +285,34 @@ export default function GuildMasterManager() {
                   ) : isGuildMaster ? (
                     <Button
                       data-testid="demote-button"
-                      onClick={() => handleConfirmAction("demote", member.id, member.name)}
-                      disabled={actionLoading === member.id || isLastGM}
+                      onClick={() =>
+                        handleConfirmAction("demote", member.id, member.name)
+                      }
+                      isLoading={actionLoading === member.id}
+                      disabled={isLastGM}
                       variant="destructive"
                       size="sm"
-                      title={isLastGM ? "Cannot demote the last Guild Master" : "Demote to Hero"}
+                      title={
+                        isLastGM
+                          ? "Cannot demote the last Guild Master"
+                          : "Demote to Hero"
+                      }
                     >
                       {actionLoading === member.id ? "⟳ Demoting..." : "Demote"}
                     </Button>
                   ) : (
                     <Button
                       data-testid="promote-button"
-                      onClick={() => handleConfirmAction("promote", member.id, member.name)}
-                      disabled={actionLoading === member.id}
+                      onClick={() =>
+                        handleConfirmAction("promote", member.id, member.name)
+                      }
+                      isLoading={actionLoading === member.id}
                       variant="gold"
                       size="sm"
                     >
-                      {actionLoading === member.id ? "⟳ Promoting..." : "Promote"}
+                      {actionLoading === member.id
+                        ? "⟳ Promoting..."
+                        : "Promote"}
                     </Button>
                   )}
                 </div>
@@ -286,24 +326,38 @@ export default function GuildMasterManager() {
       {showConfirmModal && confirmAction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
-            data-testid={confirmAction.type === "promote" ? "promote-confirm-modal" : "demote-confirm-modal"}
+            data-testid={
+              confirmAction.type === "promote"
+                ? "promote-confirm-modal"
+                : "demote-confirm-modal"
+            }
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-md w-full"
           >
             <h3 className="text-xl font-semibold text-white mb-4">
-              {confirmAction.type === "promote" ? "Promote to Guild Master?" : "Demote to Hero?"}
+              {confirmAction.type === "promote"
+                ? "Promote to Guild Master?"
+                : "Demote to Hero?"}
             </h3>
             <p className="text-gray-300 mb-6">
               {confirmAction.type === "promote" ? (
                 <>
-                  Are you sure you want to promote <span className="font-semibold text-gold-400">{confirmAction.userName}</span> to Guild Master?
-                  They will gain full administrative access to manage quests, rewards, and family settings.
+                  Are you sure you want to promote{" "}
+                  <span className="font-semibold text-gold-400">
+                    {confirmAction.userName}
+                  </span>{" "}
+                  to Guild Master? They will gain full administrative access to
+                  manage quests, rewards, and family settings.
                 </>
               ) : (
                 <>
-                  Are you sure you want to demote <span className="font-semibold text-gold-400">{confirmAction.userName}</span> to Hero?
-                  They will lose administrative privileges but remain a family member.
+                  Are you sure you want to demote{" "}
+                  <span className="font-semibold text-gold-400">
+                    {confirmAction.userName}
+                  </span>{" "}
+                  to Hero? They will lose administrative privileges but remain a
+                  family member.
                 </>
               )}
             </p>
@@ -320,9 +374,15 @@ export default function GuildMasterManager() {
                 Cancel
               </Button>
               <Button
-                data-testid={confirmAction.type === "promote" ? "confirm-promote-button" : "confirm-demote-button"}
+                data-testid={
+                  confirmAction.type === "promote"
+                    ? "confirm-promote-button"
+                    : "confirm-demote-button"
+                }
                 onClick={executeAction}
-                variant={confirmAction.type === "promote" ? "gold" : "destructive"}
+                variant={
+                  confirmAction.type === "promote" ? "gold" : "destructive"
+                }
                 size="sm"
               >
                 {confirmAction.type === "promote" ? "Promote" : "Demote"}

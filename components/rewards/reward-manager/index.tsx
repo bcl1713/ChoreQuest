@@ -77,52 +77,61 @@ export default function RewardManager() {
     }
   }, []);
 
-  const handleFormChange = useCallback((field: keyof RewardFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const handleFormChange = useCallback(
+    (field: keyof RewardFormData, value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
-  const handleSubmitCreate = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!profile?.family_id) return;
+  const handleSubmitCreate = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!profile?.family_id) return;
 
-    try {
-      await rewardService.createReward({
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
-        cost: parseInt(formData.cost),
-        family_id: profile.family_id,
-        is_active: true,
-      });
+      try {
+        await rewardService.createReward({
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          cost: parseInt(formData.cost),
+          family_id: profile.family_id,
+          is_active: true,
+        });
 
-      setShowCreateModal(false);
-      resetForm();
-    } catch (err) {
-      console.error("Failed to create reward:", err);
-      // Error will be shown via the hook's error state
-    }
-  }, [profile?.family_id, formData, resetForm]);
+        setShowCreateModal(false);
+        resetForm();
+      } catch (err) {
+        console.error("Failed to create reward:", err);
+        // Error will be shown via the hook's error state
+      }
+    },
+    [profile?.family_id, formData, resetForm],
+  );
 
-  const handleSubmitEdit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedReward) return;
+  const handleSubmitEdit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!selectedReward) return;
 
-    try {
-      await rewardService.updateReward(selectedReward.id, {
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
-        cost: parseInt(formData.cost),
-      });
+      try {
+        await rewardService.updateReward(selectedReward.id, {
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          cost: parseInt(formData.cost),
+        });
 
-      setShowEditModal(false);
-      setSelectedReward(null);
-      resetForm();
-    } catch (err) {
-      console.error("Failed to update reward:", err);
-      // Error will be shown via the hook's error state
-    }
-  }, [selectedReward, formData, resetForm]);
+        setShowEditModal(false);
+        setSelectedReward(null);
+        resetForm();
+      } catch (err) {
+        console.error("Failed to update reward:", err);
+        // Error will be shown via the hook's error state
+      }
+    },
+    [selectedReward, formData, resetForm],
+  );
 
   const handleCancelCreate = useCallback(() => {
     setShowCreateModal(false);
@@ -155,31 +164,41 @@ export default function RewardManager() {
     }
   }, [deleteTarget, deleteLoading]);
 
-  const handleApproveRedemption = useCallback(async (redemptionId: string) => {
-    if (!user) return;
+  const handleApproveRedemption = useCallback(
+    async (redemptionId: string) => {
+      if (!user) return;
 
-    try {
-      await rewardService.updateRedemptionStatus(redemptionId, "APPROVED", user.id);
-    } catch (err) {
-      console.error("Failed to approve redemption:", err);
-      // Error will be shown via the hook's error state
-    }
-  }, [user]);
+      try {
+        await rewardService.updateRedemptionStatus(
+          redemptionId,
+          "APPROVED",
+          user.id,
+        );
+      } catch (err) {
+        console.error("Failed to approve redemption:", err);
+        // Error will be shown via the hook's error state
+      }
+    },
+    [user],
+  );
 
-  const handleDenyRedemption = useCallback(async (redemptionId: string) => {
-    if (!user) return;
+  const handleDenyRedemption = useCallback(
+    async (redemptionId: string) => {
+      if (!user) return;
 
-    try {
-      const redemption = redemptions.find(r => r.id === redemptionId);
-      if (!redemption || !redemption.user_id) return;
+      try {
+        const redemption = redemptions.find((r) => r.id === redemptionId);
+        if (!redemption || !redemption.user_id) return;
 
-      await rewardService.updateRedemptionStatus(redemptionId, "DENIED");
-      await rewardService.refundGold(redemption.user_id, redemption.cost);
-    } catch (err) {
-      console.error("Failed to deny redemption:", err);
-      // Error will be shown via the hook's error state
-    }
-  }, [user, redemptions]);
+        await rewardService.updateRedemptionStatus(redemptionId, "DENIED");
+        await rewardService.refundGold(redemption.user_id, redemption.cost);
+      } catch (err) {
+        console.error("Failed to deny redemption:", err);
+        // Error will be shown via the hook's error state
+      }
+    },
+    [user, redemptions],
+  );
 
   const handleFulfillRedemption = useCallback(async (redemptionId: string) => {
     try {
@@ -198,7 +217,9 @@ export default function RewardManager() {
     <div className="space-y-6" data-testid="reward-manager">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-fantasy text-gray-100">🏆 Reward Management</h2>
+        <h2 className="text-2xl font-fantasy text-gray-100">
+          🏆 Reward Management
+        </h2>
         <Button
           onClick={handleCreate}
           data-testid="create-reward-button"
@@ -261,11 +282,15 @@ export default function RewardManager() {
             className="fantasy-card p-6 max-w-md w-full"
             data-testid="delete-confirmation-dialog"
           >
-            <h3 className="text-xl font-fantasy text-red-400 mb-4">⚠️ Delete Reward?</h3>
+            <h3 className="text-xl font-fantasy text-red-400 mb-4">
+              ⚠️ Delete Reward?
+            </h3>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to delete{' '}
-              <span className="font-semibold text-gray-100">&ldquo;{deleteTarget.name}&rdquo;</span>?
-              This action will deactivate the reward.
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-100">
+                &ldquo;{deleteTarget.name}&rdquo;
+              </span>
+              ? This action will deactivate the reward.
             </p>
             <div className="flex gap-2">
               <div className="flex-1">
@@ -287,7 +312,7 @@ export default function RewardManager() {
               <div className="flex-1">
                 <Button
                   onClick={handleConfirmDelete}
-                  disabled={deleteLoading}
+                  isLoading={deleteLoading}
                   data-testid="confirm-delete-button"
                   variant="destructive"
                   size="sm"
