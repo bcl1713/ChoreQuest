@@ -298,7 +298,7 @@ export default function GuildMasterManager() {
                           : "Demote to Hero"
                       }
                     >
-                      {actionLoading === member.id ? "⟳ Demoting..." : "Demote"}
+                      {actionLoading === member.id ? "Demoting..." : "Demote"}
                     </Button>
                   ) : (
                     <Button
