@@ -130,9 +130,23 @@ body {
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
 
-/* Mobile touch targets - maintain width while allowing shorter height when needed */
+/* Mobile touch targets - expands the tappable area to 44x44 while keeping visuals compact */
 .touch-target {
-  @apply min-w-[44px] min-h-[16px];
+  position: relative;
+  z-index: 0;
+  min-width: 44px;
+}
+
+.touch-target::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
+  z-index: -1;
 }
 
 /* Fantasy Button Variants */
