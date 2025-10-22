@@ -14,6 +14,7 @@ import { useSearchParams } from 'next/navigation';
 import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } from '@/components/animations';
 import { RewardCalculator } from '@/lib/reward-calculator';
 import { LoadingSpinner, Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -402,23 +403,29 @@ function DashboardContent() {
             onClick={() => setActiveTab('quests')}
             data-testid="tab-quests"
             variant={activeTab === 'quests' ? 'gold' : 'ghost'}
-            className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium min-h-[48px] touch-target text-sm sm:text-base ${
-              activeTab !== 'quests' ? 'text-gray-400 hover:text-gray-200' : ''
-            }`}
+            size="lg"
+            startIcon={<span aria-hidden="true">⚔️</span>}
+            className={cn(
+              'flex-1 touch-target',
+              activeTab !== 'quests' && 'text-gray-300 hover:text-gray-100'
+            )}
           >
-            <span className="hidden sm:inline">⚔️ Quests & Adventures</span>
-            <span className="sm:hidden">⚔️ Quests</span>
+            <span className="hidden sm:inline">Quests & Adventures</span>
+            <span className="sm:hidden">Quests</span>
           </Button>
           <Button
             onClick={() => setActiveTab('rewards')}
             data-testid="tab-rewards"
             variant={activeTab === 'rewards' ? 'gold' : 'ghost'}
-            className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium min-h-[48px] touch-target text-sm sm:text-base ${
-              activeTab !== 'rewards' ? 'text-gray-400 hover:text-gray-200' : ''
-            }`}
+            size="lg"
+            startIcon={<span aria-hidden="true">🏪</span>}
+            className={cn(
+              'flex-1 touch-target',
+              activeTab !== 'rewards' && 'text-gray-300 hover:text-gray-100'
+            )}
           >
-            <span className="hidden sm:inline">🏪 Reward Store</span>
-            <span className="sm:hidden">🏪 Rewards</span>
+            <span className="hidden sm:inline">Reward Store</span>
+            <span className="sm:hidden">Rewards</span>
           </Button>
         </div>
 
