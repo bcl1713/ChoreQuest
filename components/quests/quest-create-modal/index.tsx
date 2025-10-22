@@ -386,8 +386,8 @@ export default function QuestCreateModal({
                   type="submit"
                   data-testid="submit-quest-button"
                   disabled={loading}
-                  variant="gold"
-                  className="px-6 py-2 bg-gold-600 hover:bg-gold-700 font-medium"
+                  variant="gold-solid"
+                  className="px-6 font-medium"
                 >
                   {loading ? "Creating..." : "⚡ Create Quest"}
                 </Button>
