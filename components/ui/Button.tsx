@@ -48,10 +48,17 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-2 text-sm min-h-[44px]',
-  md: 'px-4 py-2.5 text-base min-h-[48px]',
-  lg: 'px-6 py-3 text-lg min-h-[52px]',
+  sm: 'px-3 py-1 text-sm min-h-[16px]',
+  md: 'px-4 py-1.5 text-base min-h-[16px]',
+  lg: 'px-5 py-2 text-lg min-h-[16px]',
   icon: 'h-10 w-10 p-0',
+};
+
+const iconSizeClasses: Record<ButtonSize, string> = {
+  sm: 'h-2 w-2',
+  md: 'h-3 w-3',
+  lg: 'h-4 w-4',
+  icon: 'h-full w-full',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -72,9 +79,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const isDisabled = disabled || isLoading;
   const isIconButton = size === 'icon';
-  const showStartSlot = Boolean(startIcon) || isLoading;
-  const showEndSlot = Boolean(endIcon);
-  const applyGap = !isIconButton && (showStartSlot || showEndSlot);
+  const hasStartVisual = Boolean(startIcon) || isLoading;
+  const hasEndVisual = Boolean(endIcon);
+  const shouldRenderStartSlot = !isIconButton || hasStartVisual;
+  const shouldRenderEndSlot = !isIconButton || hasEndVisual;
+  const usesGridLayout = !isIconButton;
+  const placeholderSizeClass = iconSizeClasses[size];
+  const spinnerSizeClass = isIconButton ? 'h-5 w-5' : iconSizeClasses[size];
 
   return (
     <button
@@ -83,29 +94,33 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={isDisabled}
       aria-busy={isLoading || undefined}
       className={cn(
-        'relative inline-flex items-center justify-center rounded-lg font-semibold transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed',
+        'relative rounded-lg font-semibold transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed',
+        usesGridLayout
+          ? 'inline-grid grid-cols-[auto,1fr,auto] items-center gap-x-2'
+          : 'inline-flex items-center justify-center',
         baseFocus,
         variantClasses[variant],
         sizeClasses[size],
-        applyGap ? 'gap-2' : 'gap-0',
         fullWidth && 'w-full',
         isLoading && 'cursor-wait',
         className
       )}
       {...props}
     >
-      {showStartSlot && (
+      {shouldRenderStartSlot && (
         <span
           className={cn(
-            'flex items-center justify-center transition-[width] duration-150',
-            isIconButton ? 'absolute inset-0' : '',
-            isLoading ? 'w-5' : 'w-4'
+            'pointer-events-none flex items-center justify-center transition-opacity duration-150',
+            isIconButton
+              ? 'absolute inset-0'
+              : cn(placeholderSizeClass, 'justify-self-start'),
+            hasStartVisual ? 'opacity-100' : 'opacity-0'
           )}
-          aria-hidden={!isLoading && !startIcon}
+          aria-hidden={!hasStartVisual}
         >
           {isLoading ? (
             <svg
-              className="h-5 w-5 animate-spin text-current"
+              className={cn(spinnerSizeClass, 'animate-spin text-current')}
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -133,15 +148,24 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       <span
         className={cn(
           'inline-flex items-center justify-center',
-          isIconButton && !showEndSlot && 'h-full w-full'
+          usesGridLayout && 'justify-self-center text-center',
+          isIconButton && !hasEndVisual && 'h-full w-full'
         )}
       >
         {children}
       </span>
 
-      {showEndSlot && (
-        <span className="flex items-center justify-center">
-          {endIcon}
+      {shouldRenderEndSlot && (
+        <span
+          className={cn(
+            'pointer-events-none flex items-center justify-center transition-opacity duration-150',
+            usesGridLayout ? cn(placeholderSizeClass, 'justify-self-end') : '',
+            hasEndVisual ? 'opacity-100' : 'opacity-0',
+            isIconButton && !hasEndVisual && 'hidden'
+          )}
+          aria-hidden={!hasEndVisual}
+        >
+          {hasEndVisual ? endIcon : null}
         </span>
       )}
     </button>

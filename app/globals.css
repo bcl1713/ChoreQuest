@@ -130,9 +130,9 @@ body {
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
 }
 
-/* Mobile touch targets - minimum 44px for accessibility */
+/* Mobile touch targets - maintain width while allowing shorter height when needed */
 .touch-target {
-  @apply min-w-[44px] min-h-[44px];
+  @apply min-w-[44px] min-h-[16px];
 }
 
 /* Fantasy Button Variants */
