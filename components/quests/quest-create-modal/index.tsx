@@ -372,6 +372,9 @@ export default function QuestCreateModal({
                 <div className="bg-red-600/20 border border-red-600 rounded-lg p-3 text-red-200">
                   {error}
                 </div>
+              )}
+
+              <div className="flex gap-4 justify-end">
                 <Button
                   type="button"
                   data-testid="cancel-quest-button"
