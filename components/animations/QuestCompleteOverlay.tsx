@@ -105,8 +105,8 @@ export function QuestCompleteOverlay({
               <Button
                 onClick={handleDismiss}
                 variant="ghost"
-                size="icon"
-                className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 h-auto w-auto"
+                size="icon-sm"
+                className="absolute right-4 top-4 rounded-full text-gray-400 hover:text-gray-200 hover:bg-gray-700"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

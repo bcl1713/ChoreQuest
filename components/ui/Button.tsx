@@ -10,7 +10,7 @@ export type ButtonVariant =
   | 'outline'
   | 'ghost';
 
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual style of the button */
@@ -51,6 +51,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   sm: 'px-3 py-2 text-sm leading-tight [--btn-icon-size:1rem] [--btn-gap:0.5rem]',
   md: 'px-4 py-2.5 text-base leading-snug [--btn-icon-size:1rem] [--btn-gap:0.65rem]',
   lg: 'px-5 py-3 text-lg leading-snug [--btn-icon-size:1.25rem] [--btn-gap:0.75rem]',
+  'icon-sm': 'h-10 w-10 p-2 [--btn-icon-size:1.25rem] [--btn-gap:0]',
   icon: 'h-11 w-11 p-0 [--btn-icon-size:1.5rem] [--btn-gap:0]',
 };
 
@@ -62,6 +63,7 @@ const iconSizeClasses: Record<ButtonSize, string> = {
   md: 'h-4 w-4',
   lg: 'h-5 w-5',
   icon: 'h-full w-full',
+  'icon-sm': 'h-full w-full',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
