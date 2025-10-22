@@ -261,14 +261,14 @@ export default function QuestCreateModal({
             </div>
 
             {/* Mode Selection */}
-            <div className="flex mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-0 mb-6">
               <Button
                 type="button"
                 data-testid="existing-mode-button"
                 onClick={() => setMode("existing")}
                 variant={mode === "existing" ? "gold" : "ghost"}
                 size="sm"
-                className="flex-1 rounded-l-lg"
+                className="w-full sm:flex-1 rounded-lg sm:rounded-l-lg"
               >
                 From Template
               </Button>
@@ -278,7 +278,10 @@ export default function QuestCreateModal({
                 onClick={() => setMode("adhoc")}
                 variant={mode === "adhoc" ? "gold" : "ghost"}
                 size="sm"
-                className={cn("flex-1", profile?.role !== "GUILD_MASTER" && "rounded-r-lg")}
+                className={cn(
+                  "w-full sm:flex-1 rounded-lg sm:rounded-none",
+                  profile?.role !== "GUILD_MASTER" && "sm:rounded-r-lg",
+                )}
               >
                 One-Time Quest
               </Button>
@@ -289,7 +292,7 @@ export default function QuestCreateModal({
                   onClick={() => setMode("recurring")}
                   variant={mode === "recurring" ? "gold" : "ghost"}
                   size="sm"
-                  className="flex-1 rounded-r-lg"
+                  className="w-full sm:flex-1 rounded-lg sm:rounded-r-lg"
                 >
                   Recurring Template
                 </Button>
@@ -380,6 +383,8 @@ export default function QuestCreateModal({
                   variant="outline"
                   className="px-6 py-2 border border-gray-600 text-gray-400 hover:text-gray-200"
                 >
+                  Cancel
+                </Button>
                 <Button
                   type="submit"
                   data-testid="submit-quest-button"
