@@ -263,20 +263,19 @@ export default function ActivityFeed() {
 
                   {/* Quick Action for Pending Approvals */}
                   {event.type === "QUEST_SUBMITTED" && event.questId && (
-                    <div className="flex-shrink-0">
-                      <Button
-                        onClick={() => {
-                          // Navigate to quest approval
-                          window.location.href = `/dashboard?highlight=${event.questId}`;
-                        }}
-                        variant="gold"
-                        size="sm"
-                        className="text-xs px-3 py-1 rounded bg-orange-500 hover:bg-orange-600"
-                      >
-                        Review
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex-shrink-0">
+                    <Button
+                      onClick={() => {
+                        // Navigate to quest approval
+                        window.location.href = `/dashboard?highlight=${event.questId}`;
+                      }}
+                      variant="gold"
+                      size="sm"
+                    >
+                      Review
+                    </Button>
+                  </div>
+                )}
                 </motion.div>
               );
             })}
