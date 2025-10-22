@@ -48,22 +48,18 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1 text-sm min-h-[16px] min-w-[1.5rem]',
-  md: 'px-4 py-1.5 text-base min-h-[16px] min-w-[2rem]',
-  lg: 'px-5 py-2 text-lg min-h-[16px] min-w-[2.5rem]',
+  sm: 'px-3 text-[0.95rem] leading-tight min-w-[2.5rem] [--btn-height:2.1rem] [--btn-icon-size:1.1rem] [--btn-gap:0.5rem]',
+  md: 'px-4 text-[1.05rem] leading-snug min-w-[3rem] [--btn-height:2.35rem] [--btn-icon-size:1.3rem] [--btn-gap:0.6rem]',
+  lg: 'px-5 text-[1.2rem] leading-snug min-w-[3.5rem] [--btn-height:2.6rem] [--btn-icon-size:1.55rem] [--btn-gap:0.75rem]',
   icon: 'h-10 w-10 p-0',
-};
-
-const iconSizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-4 w-4',
-  md: 'h-5 w-5',
-  lg: 'h-6 w-6',
-  icon: 'h-full w-full',
 };
 
 const renderIconContent = (icon: ReactNode) =>
   icon ? (
-    <span className="flex h-full w-full items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:shrink-0 [&>*]:max-h-full [&>*]:max-w-full">
+    <span
+      className="flex h-full w-full items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:shrink-0 [&>*]:max-h-full [&>*]:max-w-full"
+      style={{ fontSize: 'var(--btn-icon-size, 1.25rem)' }}
+    >
       {icon}
     </span>
   ) : null;
@@ -91,8 +87,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const shouldRenderStartSlot = !isIconButton || hasStartVisual;
   const shouldRenderEndSlot = !isIconButton || hasEndVisual;
   const usesGridLayout = !isIconButton;
-  const placeholderSizeClass = iconSizeClasses[size];
-  const spinnerSizeClass = isIconButton ? 'h-5 w-5' : iconSizeClasses[size];
+  const iconDimensionClass = 'h-[var(--btn-icon-size,1.25rem)] w-[var(--btn-icon-size,1.25rem)]';
+  const spinnerSizeClass = isIconButton ? 'h-5 w-5' : iconDimensionClass;
 
   return (
     <button
@@ -103,7 +99,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cn(
         'relative rounded-lg font-semibold transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed',
         usesGridLayout
-          ? 'inline-grid grid-cols-[auto,1fr,auto] items-center gap-x-2'
+          ? 'inline-grid grid-cols-[var(--btn-icon-size,1.25rem),1fr,var(--btn-icon-size,1.25rem)] items-center gap-x-[var(--btn-gap,0.5rem)] py-0 min-h-[var(--btn-height,2.35rem)]'
           : 'inline-flex items-center justify-center',
         baseFocus,
         variantClasses[variant],
@@ -120,7 +116,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
             'pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-150',
             isIconButton
               ? 'absolute inset-0'
-              : cn(placeholderSizeClass, 'justify-self-start'),
+              : cn(iconDimensionClass, 'justify-self-start'),
             hasStartVisual ? 'opacity-100' : 'opacity-0'
           )}
           aria-hidden={!hasStartVisual}
@@ -164,7 +160,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         <span
           className={cn(
             'pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-150',
-            usesGridLayout ? cn(placeholderSizeClass, 'justify-self-end') : '',
+            usesGridLayout ? cn(iconDimensionClass, 'justify-self-end') : '',
             hasEndVisual ? 'opacity-100' : 'opacity-0',
             isIconButton && !hasEndVisual && 'hidden'
           )}
