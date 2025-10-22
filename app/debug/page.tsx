@@ -121,13 +121,13 @@ export default function DebugPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Database Debug Page</h1>
 
-          <Button
-            onClick={testFamilyCreation}
-            isLoading={isLoading}
-          >
-            {isLoading ? 'Testing...' : 'Test Family Creation Process'}
-          </Button>
-        </div>
+        <Button
+          onClick={testFamilyCreation}
+          isLoading={isLoading}
+          className="mb-4"
+        >
+          {isLoading ? 'Testing...' : 'Test Family Creation Process'}
+        </Button>
 
         <div className="bg-gray-800 p-4 rounded-lg">
           <h2 className="text-xl font-semibold mb-2">Debug Output:</h2>
