@@ -15,6 +15,7 @@ import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } fro
 import { RewardCalculator } from '@/lib/reward-calculator';
 import { LoadingSpinner, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { Sword, Store } from 'lucide-react';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -404,7 +405,7 @@ function DashboardContent() {
             data-testid="tab-quests"
             variant={activeTab === 'quests' ? 'gold' : 'ghost'}
             size="lg"
-            startIcon={<span aria-hidden="true">⚔️</span>}
+            startIcon={<Sword aria-hidden="true" className="h-full w-full" />}
             className={cn(
               'flex-1 touch-target',
               activeTab !== 'quests' && 'text-gray-300 hover:text-gray-100'
@@ -418,7 +419,7 @@ function DashboardContent() {
             data-testid="tab-rewards"
             variant={activeTab === 'rewards' ? 'gold' : 'ghost'}
             size="lg"
-            startIcon={<span aria-hidden="true">🏪</span>}
+            startIcon={<Store aria-hidden="true" className="h-full w-full" />}
             className={cn(
               'flex-1 touch-target',
               activeTab !== 'rewards' && 'text-gray-300 hover:text-gray-100'
