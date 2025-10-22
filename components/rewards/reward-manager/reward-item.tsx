@@ -4,7 +4,6 @@ import React from "react";
 import { Reward } from "@/lib/types/database";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui";
-import { cn } from "@/lib/utils";
 
 const REWARD_TYPE_ICONS = {
   SCREEN_TIME: "📱",
@@ -46,11 +45,11 @@ export const RewardItem = React.memo(function RewardItem({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">
-            {REWARD_TYPE_ICONS[reward.type]}
-          </span>
+          <span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>
           <div>
-            <h3 className="font-fantasy text-lg text-gray-100">{reward.name}</h3>
+            <h3 className="font-fantasy text-lg text-gray-100">
+              {reward.name}
+            </h3>
             <p className="text-sm text-gray-400">
               {REWARD_TYPE_LABELS[reward.type]}
             </p>
@@ -75,32 +74,28 @@ export const RewardItem = React.memo(function RewardItem({
         <Button
           onClick={() => onEdit(reward)}
           data-testid="edit-reward-button"
-          variant="ghost"
+          variant="secondary"
           size="sm"
-          className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/50 rounded-lg font-medium hover:bg-blue-600/30"
+          className="flex-1"
+          startIcon="✏️"
         >
-          ✏️ Edit
+          Edit
         </Button>
         <Button
           onClick={() => onToggleActive(reward)}
           data-testid="toggle-reward-active"
-          variant="ghost"
+          variant={reward.is_active ? "success" : "outline"}
           size="sm"
-          className={cn(
-            "flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors",
-            reward.is_active
-              ? "bg-dark-600 text-green-400 border-green-500/50 hover:bg-dark-500"
-              : "bg-dark-600 text-gray-400 border-gray-600 hover:bg-dark-500"
-          )}
+          className="flex-1"
         >
           {reward.is_active ? "✓ Active" : "○ Inactive"}
         </Button>
         <Button
           onClick={() => onDelete(reward)}
           data-testid="delete-reward-button"
-          variant="ghost"
+          variant="destructive"
           size="sm"
-          className="px-3 py-2 bg-red-600/20 text-red-400 border border-red-500/50 rounded-lg font-medium hover:bg-red-600/30"
+          aria-label="Delete reward"
         >
           🗑️
         </Button>

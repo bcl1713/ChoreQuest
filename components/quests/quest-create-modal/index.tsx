@@ -21,6 +21,7 @@ import {
   createAdhocQuest,
   validateDueDate,
 } from "./quest-modal-helpers";
+import { X } from "lucide-react";
 
 interface QuestCreateModalProps {
   isOpen: boolean;
@@ -94,46 +95,60 @@ export default function QuestCreateModal({
     });
   }, []);
 
-  const updateRecurringForm = useCallback((updates: Partial<TemplateFormData>) => {
-    setRecurringForm((prev) => {
-      const next = { ...prev, ...updates } as TemplateFormData;
-      if (updates.recurrence_pattern) {
-        next.category = updates.recurrence_pattern === "WEEKLY" ? "WEEKLY" : "DAILY";
-      }
-      return next;
-    });
-  }, []);
-
-  const handleRecurringInputChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    switch (name) {
-      case "title":
-      case "description":
-      case "quest_type":
-      case "recurrence_pattern":
-      case "difficulty":
-        updateRecurringForm({ [name]: value } as Partial<TemplateFormData>);
-        if (name === "quest_type" && value === "FAMILY") {
-          updateRecurringForm({ assigned_character_ids: [] });
+  const updateRecurringForm = useCallback(
+    (updates: Partial<TemplateFormData>) => {
+      setRecurringForm((prev) => {
+        const next = { ...prev, ...updates } as TemplateFormData;
+        if (updates.recurrence_pattern) {
+          next.category =
+            updates.recurrence_pattern === "WEEKLY" ? "WEEKLY" : "DAILY";
         }
-        break;
-      case "xp_reward":
-      case "gold_reward":
-        updateRecurringForm({ [name]: Number(value) } as Partial<TemplateFormData>);
-        break;
-      default:
-        break;
-    }
-  }, [updateRecurringForm]);
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleRecurringInputChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >,
+    ) => {
+      const { name, value } = e.target;
+
+      switch (name) {
+        case "title":
+        case "description":
+        case "quest_type":
+        case "recurrence_pattern":
+        case "difficulty":
+          updateRecurringForm({ [name]: value } as Partial<TemplateFormData>);
+          if (name === "quest_type" && value === "FAMILY") {
+            updateRecurringForm({ assigned_character_ids: [] });
+          }
+          break;
+        case "xp_reward":
+        case "gold_reward":
+          updateRecurringForm({
+            [name]: Number(value),
+          } as Partial<TemplateFormData>);
+          break;
+        default:
+          break;
+      }
+    },
+    [updateRecurringForm],
+  );
 
   const toggleRecurringCharacter = useCallback((characterId: string) => {
     setRecurringForm((prev) => {
       const assigned = prev.assigned_character_ids ?? [];
       if (assigned.includes(characterId)) {
-        return { ...prev, assigned_character_ids: assigned.filter((id) => id !== characterId) };
+        return {
+          ...prev,
+          assigned_character_ids: assigned.filter((id) => id !== characterId),
+        };
       }
       return { ...prev, assigned_character_ids: [...assigned, characterId] };
     });
@@ -144,77 +159,98 @@ export default function QuestCreateModal({
     onClose();
   }, [resetForm, onClose]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (!user || !profile) {
-      setError("User not authenticated");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    let questCreated = false;
-
-    try {
-      if (mode === "existing") {
-        const validation = validateDueDate(dueDate);
-        if (!validation.isValid) {
-          setError(validation.error);
-          return;
-        }
-
-        await createQuestFromTemplate({
-          selectedTemplateId,
-          userId: user.id,
-          assignedToId,
-          dueDate,
-        });
-      } else if (mode === "recurring") {
-        await createRecurringTemplate({
-          formData: recurringForm,
-          familyId: profile.family_id ?? "",
-        });
-      } else {
-        const validation = validateDueDate(dueDate);
-        if (!validation.isValid) {
-          setError(validation.error);
-          return;
-        }
-
-        await createAdhocQuest({
-          title,
-          description,
-          xpReward,
-          goldReward,
-          difficulty,
-          category,
-          familyId: profile.family_id,
-          userId: user.id,
-          assignedToId,
-          dueDate,
-        });
+      if (!user || !profile) {
+        setError("User not authenticated");
+        return;
       }
 
-      questCreated = true;
-      handleClose();
+      setLoading(true);
+      setError(null);
 
-      void Promise.resolve(onQuestCreated()).catch((callbackError) => {
-        console.error(
-          "QuestCreateModal: failed to refresh quest data after creation",
-          callbackError,
-        );
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create quest");
-    } finally {
-      setLoading(false);
-      if (!questCreated && !isOpen) {
-        resetForm();
+      let questCreated = false;
+
+      try {
+        if (mode === "existing") {
+          const validation = validateDueDate(dueDate);
+          if (!validation.isValid) {
+            setError(validation.error);
+            return;
+          }
+
+          await createQuestFromTemplate({
+            selectedTemplateId,
+            userId: user.id,
+            assignedToId,
+            dueDate,
+          });
+        } else if (mode === "recurring") {
+          await createRecurringTemplate({
+            formData: recurringForm,
+            familyId: profile.family_id ?? "",
+          });
+        } else {
+          const validation = validateDueDate(dueDate);
+          if (!validation.isValid) {
+            setError(validation.error);
+            return;
+          }
+
+          await createAdhocQuest({
+            title,
+            description,
+            xpReward,
+            goldReward,
+            difficulty,
+            category,
+            familyId: profile.family_id,
+            userId: user.id,
+            assignedToId,
+            dueDate,
+          });
+        }
+
+        questCreated = true;
+        handleClose();
+
+        void Promise.resolve(onQuestCreated()).catch((callbackError) => {
+          console.error(
+            "QuestCreateModal: failed to refresh quest data after creation",
+            callbackError,
+          );
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to create quest");
+      } finally {
+        setLoading(false);
+        if (!questCreated && !isOpen) {
+          resetForm();
+        }
       }
-    }
-  }, [user, profile, mode, dueDate, selectedTemplateId, assignedToId, recurringForm, title, description, xpReward, goldReward, difficulty, category, handleClose, onQuestCreated, isOpen, resetForm]);
+    },
+    [
+      user,
+      profile,
+      mode,
+      dueDate,
+      selectedTemplateId,
+      assignedToId,
+      recurringForm,
+      title,
+      description,
+      xpReward,
+      goldReward,
+      difficulty,
+      category,
+      handleClose,
+      onQuestCreated,
+      isOpen,
+      resetForm,
+    ],
+  );
 
   // Memoize assignee options to prevent re-processing on every render
   const assigneeOptions = useMemo(() => {
@@ -252,11 +288,11 @@ export default function QuestCreateModal({
               <Button
                 onClick={handleClose}
                 variant="ghost"
-                size="icon"
-                className="text-gray-400 hover:text-gray-200 text-xl h-auto w-auto"
+                size="icon-sm"
+                className="text-gray-400 hover:text-gray-20"
                 aria-label="Close"
               >
-                ×
+                <X className="h-5 w-5" />
               </Button>
             </div>
 
@@ -335,7 +371,10 @@ export default function QuestCreateModal({
               {mode !== "recurring" && (
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="assign-to" className="block text-sm font-medium text-gray-200 mb-2">
+                    <label
+                      htmlFor="assign-to"
+                      className="block text-sm font-medium text-gray-200 mb-2"
+                    >
                       Assign To (Optional)
                     </label>
                     <select
@@ -354,7 +393,10 @@ export default function QuestCreateModal({
                   </div>
 
                   <div>
-                    <label htmlFor="due-date" className="block text-sm font-medium text-gray-200 mb-2">
+                    <label
+                      htmlFor="due-date"
+                      className="block text-sm font-medium text-gray-200 mb-2"
+                    >
                       Due Date (Optional)
                     </label>
                     <input

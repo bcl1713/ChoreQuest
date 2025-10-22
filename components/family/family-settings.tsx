@@ -313,11 +313,7 @@ export default function FamilySettings() {
               isLoading={regenerating}
               variant="gold"
               size="sm"
-              startIcon={
-                <RefreshCw
-                  className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`}
-                />
-              }
+              startIcon={<RefreshCw className={"h-4 w-4"} />}
             >
               {regenerating ? "Regenerating..." : "Regenerate Invite Code"}
             </Button>
