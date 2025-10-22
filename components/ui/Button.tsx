@@ -6,6 +6,7 @@ export type ButtonVariant =
   | 'secondary'
   | 'success'
   | 'destructive'
+  | 'destructiveSubtle'
   | 'gold'
   | 'outline'
   | 'ghost';
@@ -39,6 +40,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md focus-visible:ring-emerald-400',
   destructive:
     'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md focus-visible:ring-red-500',
+  destructiveSubtle:
+    'border border-red-500/30 bg-red-500/10 text-red-200 hover:bg-red-500/20 focus-visible:ring-red-500/40 disabled:border-gray-600/50 disabled:bg-gray-700/40 disabled:text-gray-500',
   gold:
     'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white shadow-md focus-visible:ring-gold-400',
   outline:
