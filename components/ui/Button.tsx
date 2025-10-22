@@ -51,7 +51,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   sm: 'px-3 py-2 text-sm leading-tight [--btn-icon-size:1rem] [--btn-gap:0.5rem]',
   md: 'px-4 py-2.5 text-base leading-snug [--btn-icon-size:1rem] [--btn-gap:0.65rem]',
   lg: 'px-5 py-3 text-lg leading-snug [--btn-icon-size:1.25rem] [--btn-gap:0.75rem]',
-  icon: 'h-11 w-11 p-0 [--btn-icon-size:1.25rem] [--btn-gap:0]',
+  icon: 'h-11 w-11 p-0 [--btn-icon-size:1.5rem] [--btn-gap:0]',
 };
 
 const iconWrapperClass =
@@ -61,7 +61,7 @@ const iconSizeClasses: Record<ButtonSize, string> = {
   sm: 'h-4 w-4',
   md: 'h-4 w-4',
   lg: 'h-5 w-5',
-  icon: 'h-5 w-5',
+  icon: 'h-full w-full',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
