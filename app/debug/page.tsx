@@ -125,7 +125,6 @@ export default function DebugPage() {
           <Button
             onClick={testFamilyCreation}
             isLoading={isLoading}
-            disabled={isLoading}
           >
             {isLoading ? 'Testing...' : 'Test Family Creation Process'}
           </Button>
