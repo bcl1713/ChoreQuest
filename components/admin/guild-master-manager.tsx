@@ -258,7 +258,7 @@ export default function GuildMasterManager() {
                       data-testid="demote-button"
                       onClick={() => handleConfirmAction("demote", member.id, member.name)}
                       disabled={actionLoading === member.id || isLastGM}
-                      variant="destructiveSubtle"
+                      variant="destructive"
                       size="sm"
                       title={isLastGM ? "Cannot demote the last Guild Master" : "Demote to Hero"}
                     >
