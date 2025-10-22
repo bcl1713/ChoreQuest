@@ -48,18 +48,25 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1 text-sm min-h-[16px]',
-  md: 'px-4 py-1.5 text-base min-h-[16px]',
-  lg: 'px-5 py-2 text-lg min-h-[16px]',
+  sm: 'px-3 py-1 text-sm min-h-[16px] min-w-[1.5rem]',
+  md: 'px-4 py-1.5 text-base min-h-[16px] min-w-[2rem]',
+  lg: 'px-5 py-2 text-lg min-h-[16px] min-w-[2.5rem]',
   icon: 'h-10 w-10 p-0',
 };
 
 const iconSizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-2 w-2',
-  md: 'h-3 w-3',
-  lg: 'h-4 w-4',
+  sm: 'h-4 w-4',
+  md: 'h-5 w-5',
+  lg: 'h-6 w-6',
   icon: 'h-full w-full',
 };
+
+const renderIconContent = (icon: ReactNode) =>
+  icon ? (
+    <span className="flex h-full w-full items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:shrink-0 [&>*]:max-h-full [&>*]:max-w-full">
+      {icon}
+    </span>
+  ) : null;
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
@@ -110,7 +117,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {shouldRenderStartSlot && (
         <span
           className={cn(
-            'pointer-events-none flex items-center justify-center transition-opacity duration-150',
+            'pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-150',
             isIconButton
               ? 'absolute inset-0'
               : cn(placeholderSizeClass, 'justify-self-start'),
@@ -139,9 +146,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-          ) : (
-            startIcon
-          )}
+          ) : renderIconContent(startIcon)}
         </span>
       )}
 
@@ -158,14 +163,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {shouldRenderEndSlot && (
         <span
           className={cn(
-            'pointer-events-none flex items-center justify-center transition-opacity duration-150',
+            'pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-150',
             usesGridLayout ? cn(placeholderSizeClass, 'justify-self-end') : '',
             hasEndVisual ? 'opacity-100' : 'opacity-0',
             isIconButton && !hasEndVisual && 'hidden'
           )}
           aria-hidden={!hasEndVisual}
         >
-          {hasEndVisual ? endIcon : null}
+          {hasEndVisual ? renderIconContent(endIcon) : null}
         </span>
       )}
     </button>
