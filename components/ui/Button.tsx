@@ -1,4 +1,4 @@
-import { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
+import { forwardRef, ButtonHTMLAttributes, ReactNode, type CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 export type ButtonVariant =
@@ -48,21 +48,14 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 text-[0.95rem] leading-tight min-w-[2.4rem] [--btn-height:2.1rem] [--btn-icon-size:1.1rem] [--btn-gap:0.5rem]',
-  md: 'px-4 text-[1.05rem] leading-snug min-w-[2.9rem] [--btn-height:2.35rem] [--btn-icon-size:1.3rem] [--btn-gap:0.6rem]',
-  lg: 'px-5 text-[1.2rem] leading-snug min-w-[3.4rem] [--btn-height:2.6rem] [--btn-icon-size:1.55rem] [--btn-gap:0.75rem]',
-  icon: 'h-10 w-10 p-0',
+  sm: 'px-3 py-2 text-sm leading-tight [--btn-icon-size:1.1rem] [--btn-gap:0.5rem]',
+  md: 'px-4 py-2.5 text-base leading-snug [--btn-icon-size:1.3rem] [--btn-gap:0.65rem]',
+  lg: 'px-5 py-3 text-lg leading-snug [--btn-icon-size:1.5rem] [--btn-gap:0.75rem]',
+  icon: 'h-11 w-11 p-0 [--btn-icon-size:1.3rem] [--btn-gap:0]',
 };
 
-const renderIconContent = (icon: ReactNode) =>
-  icon ? (
-    <span
-      className="flex h-full w-full items-center justify-center leading-none [&>svg]:h-full [&>svg]:w-full [&>svg]:shrink-0 [&>*]:max-h-full [&>*]:max-w-full"
-      style={{ fontSize: 'var(--btn-icon-size,1.3rem)' }}
-    >
-      {icon}
-    </span>
-  ) : null;
+const iconWrapperClass =
+  'pointer-events-none flex items-center justify-center shrink-0 leading-none transition-opacity duration-150 [&>svg]:h-full [&>svg]:w-full [&>*]:max-h-full [&>*]:max-w-full';
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
@@ -81,14 +74,36 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref
 ) {
   const isDisabled = disabled || isLoading;
-  const isIconButton = size === 'icon';
-  const hasStartVisual = Boolean(startIcon) || isLoading;
-  const hasEndVisual = Boolean(endIcon);
-  const shouldRenderStartSlot = !isIconButton || hasStartVisual;
-  const shouldRenderEndSlot = !isIconButton || hasEndVisual;
-  const usesGridLayout = !isIconButton;
-  const iconDimensionClass = 'h-[var(--btn-icon-size,1.3rem)] w-[var(--btn-icon-size,1.3rem)] flex-shrink-0';
-  const spinnerSizeClass = isIconButton ? 'h-5 w-5' : iconDimensionClass;
+  const showStartSlot = Boolean(startIcon) || isLoading;
+  const showEndSlot = Boolean(endIcon);
+  const iconSizeStyle: CSSProperties = {
+    width: 'var(--btn-icon-size, 1.3rem)',
+    height: 'var(--btn-icon-size, 1.3rem)',
+  };
+  const spinnerMarkup = (
+    <svg
+      className="h-full w-full animate-spin text-current"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      role="status"
+      aria-label="Loading"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
 
   return (
     <button
@@ -97,10 +112,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={isDisabled}
       aria-busy={isLoading || undefined}
       className={cn(
-        'relative rounded-lg font-semibold transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed',
-        usesGridLayout
-          ? 'inline-grid grid-cols-[var(--btn-icon-size,1.3rem),1fr,var(--btn-icon-size,1.3rem)] items-center justify-items-center gap-x-[var(--btn-gap,0.6rem)] py-0 min-h-[var(--btn-height,2.35rem)]'
-          : 'inline-flex items-center justify-center',
+        'relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-[var(--btn-gap,0.65rem)] rounded-lg font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60',
         baseFocus,
         variantClasses[variant],
         sizeClasses[size],
@@ -110,63 +122,29 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       )}
       {...props}
     >
-      {shouldRenderStartSlot && (
+      {showStartSlot && (
         <span
-          className={cn(
-            'pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-150',
-            isIconButton
-              ? 'absolute inset-0'
-              : cn(iconDimensionClass, 'justify-self-start'),
-            hasStartVisual ? 'opacity-100' : 'opacity-0'
-          )}
-          aria-hidden={!hasStartVisual}
+          className={iconWrapperClass}
+          style={iconSizeStyle}
+          aria-hidden={isLoading ? undefined : true}
         >
-          {isLoading ? (
-            <svg
-              className={cn(spinnerSizeClass, 'animate-spin text-current')}
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-          ) : renderIconContent(startIcon)}
+          {isLoading ? spinnerMarkup : startIcon}
         </span>
       )}
 
-      <span
-        className={cn(
-          'inline-flex items-center justify-center whitespace-nowrap',
-          usesGridLayout && 'justify-self-center text-center',
-          isIconButton && !hasEndVisual && 'h-full w-full'
-        )}
-      >
-        {children}
-      </span>
+      {children && (
+        <span className="flex items-center justify-center whitespace-nowrap text-center">
+          {children}
+        </span>
+      )}
 
-      {shouldRenderEndSlot && (
+      {showEndSlot && (
         <span
-          className={cn(
-            'pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-150',
-            usesGridLayout ? cn(iconDimensionClass, 'justify-self-end') : '',
-            hasEndVisual ? 'opacity-100' : 'opacity-0',
-            isIconButton && !hasEndVisual && 'hidden'
-          )}
-          aria-hidden={!hasEndVisual}
+          className={iconWrapperClass}
+          style={iconSizeStyle}
+          aria-hidden="true"
         >
-          {hasEndVisual ? renderIconContent(endIcon) : null}
+          {endIcon}
         </span>
       )}
     </button>
