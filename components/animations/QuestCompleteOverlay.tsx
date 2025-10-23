@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ParticleEffect } from './ParticleEffect';
-import { FantasyButton } from '@/components/ui';
+import { FantasyButton, Button } from '@/components/ui';
 import { Trophy, Coins, Star, Gem, Sparkles, X } from 'lucide-react';
 import { modalBackdrop, modalContent } from '@/lib/animations/variants';
 
@@ -102,13 +102,15 @@ export function QuestCompleteOverlay({
               aria-labelledby="quest-complete-title"
             >
               {/* Close button */}
-              <button
+              <Button
                 onClick={handleDismiss}
-                className="absolute right-4 top-4 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-gray-200"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute right-4 top-4 rounded-full text-gray-400 hover:text-gray-200 hover:bg-gray-700"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
 
               {/* Trophy icon */}
               <div className="mb-6 flex justify-center">

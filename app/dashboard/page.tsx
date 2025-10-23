@@ -13,7 +13,9 @@ import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } from '@/components/animations';
 import { RewardCalculator } from '@/lib/reward-calculator';
-import { LoadingSpinner } from '@/components/ui';
+import { LoadingSpinner, Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
+import { Sword, Store } from 'lucide-react';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -307,30 +309,36 @@ function DashboardContent() {
               <div className="flex gap-2 sm:gap-3">
                 {profile?.role === 'GUILD_MASTER' && (
                   <>
-                    <button
+                    <Button
                       onClick={() => router.push('/admin')}
-                      className="bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                      variant="primary"
+                      size="sm"
+                      className="touch-target"
                       data-testid="admin-dashboard-button"
                     >
                       <span className="hidden sm:inline">⚙️ Admin</span>
                       <span className="sm:hidden">⚙️</span>
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => setShowCreateQuest(true)}
-                      className="bg-gold-600 hover:bg-gold-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-target"
+                      variant="gold"
+                      size="sm"
+                      className="touch-target"
                       data-testid="create-quest-button"
                     >
                       <span className="hidden sm:inline">⚡ Create Quest</span>
                       <span className="sm:hidden">⚡ Quest</span>
-                    </button>
+                    </Button>
                   </>
                 )}
-                <button
+                <Button
                   onClick={logout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-sm transition-colors min-h-[44px] touch-target"
+                  variant="destructive"
+                  size="sm"
+                  className="touch-target"
                 >
                   Logout
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -392,30 +400,34 @@ function DashboardContent() {
 
         {/* Navigation Tabs */}
         <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg">
-          <button
+          <Button
             onClick={() => setActiveTab('quests')}
             data-testid="tab-quests"
-            className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
-              activeTab === 'quests'
-                ? 'bg-gold-600 text-white'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
-            }`}
+            variant={activeTab === 'quests' ? 'gold' : 'ghost'}
+            size="lg"
+            startIcon={<Sword aria-hidden="true" className="h-full w-full" />}
+            className={cn(
+              'flex-1 touch-target',
+              activeTab !== 'quests' && 'text-gray-300 hover:text-gray-100'
+            )}
           >
-            <span className="hidden sm:inline">⚔️ Quests & Adventures</span>
-            <span className="sm:hidden">⚔️ Quests</span>
-          </button>
-          <button
+            <span className="hidden sm:inline">Quests & Adventures</span>
+            <span className="sm:hidden">Quests</span>
+          </Button>
+          <Button
             onClick={() => setActiveTab('rewards')}
             data-testid="tab-rewards"
-            className={`flex-1 py-3 px-3 sm:px-6 rounded-lg font-medium transition-colors min-h-[48px] touch-target text-sm sm:text-base ${
-              activeTab === 'rewards'
-                ? 'bg-gold-600 text-white'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-dark-700'
-            }`}
+            variant={activeTab === 'rewards' ? 'gold' : 'ghost'}
+            size="lg"
+            startIcon={<Store aria-hidden="true" className="h-full w-full" />}
+            className={cn(
+              'flex-1 touch-target',
+              activeTab !== 'rewards' && 'text-gray-300 hover:text-gray-100'
+            )}
           >
-            <span className="hidden sm:inline">🏪 Reward Store</span>
-            <span className="sm:hidden">🏪 Rewards</span>
-          </button>
+            <span className="hidden sm:inline">Reward Store</span>
+            <span className="sm:hidden">Rewards</span>
+          </Button>
         </div>
 
         {/* Error Display */}

@@ -4,7 +4,16 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { FamilyService, FamilyInfo } from "@/lib/family-service";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, RefreshCw, Users, Calendar, Shield, User, Globe } from "lucide-react";
+import {
+  Copy,
+  RefreshCw,
+  Users,
+  Calendar,
+  Shield,
+  User,
+  Globe,
+} from "lucide-react";
+import { Button } from "@/components/ui";
 
 // Common timezones organized by region
 const COMMON_TIMEZONES = [
@@ -99,7 +108,9 @@ export default function FamilySettings() {
 
     try {
       setRegenerating(true);
-      const newCode = await familyService.regenerateInviteCode(profile.family_id);
+      const newCode = await familyService.regenerateInviteCode(
+        profile.family_id,
+      );
 
       // Update local state
       if (familyInfo) {
@@ -192,7 +203,9 @@ export default function FamilySettings() {
   if (error || !familyInfo) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error || "Failed to load family settings"}</p>
+        <p className="text-red-800">
+          {error || "Failed to load family settings"}
+        </p>
       </div>
     );
   }
@@ -219,32 +232,41 @@ export default function FamilySettings() {
 
       {/* Family Info Card */}
       <div className="fantasy-card p-6">
-        <h3 className="text-lg font-fantasy text-gray-100 mb-6">👥 Family Information</h3>
+        <h3 className="text-lg font-fantasy text-gray-100 mb-6">
+          👥 Family Information
+        </h3>
 
         <div className="space-y-6">
           {/* Family Name */}
           <div>
-            <label className="text-sm font-medium text-gray-400 mb-2 block">Family Name</label>
-            <p className="text-xl font-fantasy text-gray-100">{familyInfo.name}</p>
+            <label className="text-sm font-medium text-gray-400 mb-2 block">
+              Family Name
+            </label>
+            <p className="text-xl font-fantasy text-gray-100">
+              {familyInfo.name}
+            </p>
           </div>
 
           {/* Invite Code */}
           <div>
-            <label className="text-sm font-medium text-gray-400 mb-2 block">Invite Code</label>
+            <label className="text-sm font-medium text-gray-400 mb-2 block">
+              Invite Code
+            </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-dark-700 border border-dark-600 rounded-lg px-4 py-3">
                 <code className="text-xl font-mono font-bold gold-text tracking-wider">
                   {familyInfo.code}
                 </code>
               </div>
-              <button
+              <Button
                 onClick={handleCopyCode}
-                className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md font-medium"
+                variant="primary"
+                size="sm"
+                startIcon={<Copy className="h-4 w-4" />}
                 title="Copy to clipboard"
               >
-                <Copy className="w-4 h-4" />
                 <span className="hidden sm:inline">Copy</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -266,31 +288,39 @@ export default function FamilySettings() {
                   </option>
                 ))}
               </select>
-              <button
+              <Button
                 onClick={handleTimezoneUpdate}
-                disabled={updatingTimezone || selectedTimezone === familyInfo?.timezone}
-                className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                isLoading={updatingTimezone}
+                disabled={selectedTimezone === familyInfo?.timezone}
+                variant="primary"
+                size="sm"
               >
                 {updatingTimezone ? "Updating..." : "Update Timezone"}
-              </button>
+              </Button>
             </div>
             <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
-              <span className="text-blue-400 font-medium">ℹ️ Info:</span> Quest recurrence (daily/weekly resets) will align to this timezone. This ensures quests reset at midnight in your local time, not server time.
+              <span className="text-blue-400 font-medium">ℹ️ Info:</span> Quest
+              recurrence (daily/weekly resets) will align to this timezone. This
+              ensures quests reset at midnight in your local time, not server
+              time.
             </p>
           </div>
 
           {/* Regenerate Button */}
           <div className="pt-2 border-t border-dark-600">
-            <button
+            <Button
               onClick={() => setShowConfirmModal(true)}
-              disabled={regenerating}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg transition-all shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              isLoading={regenerating}
+              variant="gold"
+              size="sm"
+              startIcon={<RefreshCw className={"h-4 w-4"} />}
             >
-              <RefreshCw className={`w-4 h-4 ${regenerating ? "animate-spin" : ""}`} />
               {regenerating ? "Regenerating..." : "Regenerate Invite Code"}
-            </button>
+            </Button>
             <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
-              <span className="text-orange-400 font-medium">⚠️ Warning:</span> Regenerating will invalidate the current invite code. Existing members will not be affected.
+              <span className="text-orange-400 font-medium">⚠️ Warning:</span>{" "}
+              Regenerating will invalidate the current invite code. Existing
+              members will not be affected.
             </p>
           </div>
         </div>
@@ -313,12 +343,17 @@ export default function FamilySettings() {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <p className="font-fantasy text-gray-100">{member.displayName}</p>
+                  <p className="font-fantasy text-gray-100">
+                    {member.displayName}
+                  </p>
                   {getRoleBadge(member.role)}
                 </div>
                 {member.characterName && (
                   <p className="text-sm text-gray-400">
-                    Character: <span className="font-medium text-gray-300">{member.characterName}</span>
+                    Character:{" "}
+                    <span className="font-medium text-gray-300">
+                      {member.characterName}
+                    </span>
                   </p>
                 )}
                 <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
@@ -352,24 +387,28 @@ export default function FamilySettings() {
                 ⚠️ Regenerate Invite Code?
               </h3>
               <p className="text-gray-300 mb-6">
-                This will create a new invite code and invalidate the current one.
-                Anyone with the old code will no longer be able to join your family.
-                Existing members will not be affected.
+                This will create a new invite code and invalidate the current
+                one. Anyone with the old code will no longer be able to join
+                your family. Existing members will not be affected.
               </p>
               <div className="flex gap-3">
-                <button
+                <Button
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 px-4 py-2 bg-dark-600 text-gray-300 border border-dark-500 rounded-lg hover:bg-dark-500 transition-colors"
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleRegenerateCode}
                   disabled={regenerating}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg font-medium transition-all shadow-md disabled:opacity-50"
+                  variant="gold"
+                  size="sm"
+                  fullWidth
                 >
-                  {regenerating ? "⏳ Regenerating..." : "🔄 Regenerate"}
-                </button>
+                  {regenerating ? "Regenerating..." : "🔄 Regenerate"}
+                </Button>
               </div>
             </motion.div>
           </motion.div>

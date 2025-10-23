@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/hooks/useNotification';
 import { userService } from '@/lib/user-service';
 import { NotificationContainer } from '@/components/ui/NotificationContainer';
+import { Button } from '@/components/ui';
 import type {
   QuestTemplate,
   QuestType,
@@ -316,19 +317,12 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
           )}
 
           <div className="flex justify-end space-x-4 pt-4">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-            >
+            <Button type="button" variant="secondary" onClick={onCancel}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-            >
+            </Button>
+            <Button type="submit">
               Save Template
-            </button>
+            </Button>
           </div>
         </form>
       </div>

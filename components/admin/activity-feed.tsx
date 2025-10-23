@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui";
 
 const activityService = new ActivityService();
 
@@ -101,7 +102,8 @@ function getEventDescription(event: ActivityEvent): string {
 
 export default function ActivityFeed() {
   const { profile } = useAuth();
-  const { onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate } = useRealtime();
+  const { onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate } =
+    useRealtime();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +116,10 @@ export default function ActivityFeed() {
     try {
       setLoading(true);
       setError(null);
-      const activityEvents = await activityService.getRecentActivity(profile.family_id, 50);
+      const activityEvents = await activityService.getRecentActivity(
+        profile.family_id,
+        50,
+      );
       setEvents(activityEvents);
     } catch (err) {
       console.error("Failed to load activity:", err);
@@ -149,7 +154,12 @@ export default function ActivityFeed() {
       unsubscribeRedemption();
       unsubscribeCharacter();
     };
-  }, [onQuestUpdate, onRewardRedemptionUpdate, onCharacterUpdate, loadActivity]);
+  }, [
+    onQuestUpdate,
+    onRewardRedemptionUpdate,
+    onCharacterUpdate,
+    loadActivity,
+  ]);
 
   // Manual refresh
   const handleRefresh = () => {
@@ -159,9 +169,14 @@ export default function ActivityFeed() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
+      <div
+        className="bg-gray-800/50 border border-gray-700 rounded-lg p-6"
+        data-testid="activity-feed"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
+          <h3 className="text-xl font-semibold text-white">
+            📡 Recent Activity
+          </h3>
         </div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -180,16 +195,23 @@ export default function ActivityFeed() {
 
   if (error) {
     return (
-      <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
+      <div
+        className="bg-gray-800/50 border border-gray-700 rounded-lg p-6"
+        data-testid="activity-feed"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
-          <button
+          <h3 className="text-xl font-semibold text-white">
+            📡 Recent Activity
+          </h3>
+          <Button
             onClick={handleRefresh}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-white"
             data-testid="activity-feed-refresh-button"
           >
             🔄 Retry
-          </button>
+          </Button>
         </div>
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
           {error}
@@ -199,18 +221,23 @@ export default function ActivityFeed() {
   }
 
   return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6" data-testid="activity-feed">
+    <div
+      className="bg-gray-800/50 border border-gray-700 rounded-lg p-6"
+      data-testid="activity-feed"
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
-        <button
+        <Button
           onClick={handleRefresh}
-          disabled={refreshing}
-          className="text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+          isLoading={refreshing}
+          variant="ghost"
+          size="sm"
+          className="text-gray-400 hover:text-white"
           data-testid="activity-feed-refresh-button"
         >
           {refreshing ? "⟳ Refreshing..." : "🔄 Refresh"}
-        </button>
+        </Button>
       </div>
 
       {/* Activity List */}
@@ -218,7 +245,9 @@ export default function ActivityFeed() {
         <div className="text-center py-12 text-gray-400">
           <p className="text-4xl mb-2">🔇</p>
           <p>No recent activity</p>
-          <p className="text-sm mt-1">Complete quests and redeem rewards to see activity here</p>
+          <p className="text-sm mt-1">
+            Complete quests and redeem rewards to see activity here
+          </p>
         </div>
       ) : (
         <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
@@ -247,8 +276,7 @@ export default function ActivityFeed() {
                     <p className="text-sm text-gray-200">
                       <span className={`font-semibold ${config.color}`}>
                         {event.characterName}
-                      </span>
-                      {" "}
+                      </span>{" "}
                       {getEventDescription(event)}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
@@ -259,15 +287,16 @@ export default function ActivityFeed() {
                   {/* Quick Action for Pending Approvals */}
                   {event.type === "QUEST_SUBMITTED" && event.questId && (
                     <div className="flex-shrink-0">
-                      <button
+                      <Button
                         onClick={() => {
                           // Navigate to quest approval
                           window.location.href = `/dashboard?highlight=${event.questId}`;
                         }}
-                        className="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded transition-colors"
+                        variant="gold"
+                        size="sm"
                       >
                         Review
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </motion.div>

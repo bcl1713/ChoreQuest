@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import type { QuestTemplate } from '@/lib/types/database';
+import { Button } from '@/components/ui';
 
 interface DeleteModalProps {
   template: QuestTemplate;
@@ -45,18 +46,12 @@ export const DeleteModal = React.memo<DeleteModalProps>(({ template, onConfirm, 
           </label>
         </div>
         <div className="flex justify-end space-x-4">
-          <button
-            onClick={onCancel}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-          >
+          <Button onClick={onCancel} variant="secondary">
             Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(template.id, cleanup)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-          >
+          </Button>
+          <Button onClick={() => onConfirm(template.id, cleanup)} variant="destructive">
             Confirm Delete
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { userService } from '@/lib/user-service';
-import { useFamilyMembers } from '@/hooks/useFamilyMembers';
-import type { Tables } from '@/lib/types/database';
+import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { userService } from "@/lib/user-service";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import type { Tables } from "@/lib/types/database";
+import { Button } from "@/components/ui";
 
-type UserProfile = Tables<'user_profiles'>;
+type UserProfile = Tables<"user_profiles">;
 
 export function FamilyManagement() {
   const { user } = useAuth();
@@ -43,8 +44,8 @@ export function FamilyManagement() {
       setSelectedUser(null);
       // Realtime update will refresh the list
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to promote user');
-      console.error('Error promoting user:', err);
+      setError(err instanceof Error ? err.message : "Failed to promote user");
+      console.error("Error promoting user:", err);
     } finally {
       setActionLoading(null);
     }
@@ -62,30 +63,30 @@ export function FamilyManagement() {
       setSelectedUser(null);
       // Realtime update will refresh the list
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to demote user');
-      console.error('Error demoting user:', err);
+      setError(err instanceof Error ? err.message : "Failed to demote user");
+      console.error("Error demoting user:", err);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const getRoleBadge = (role: UserProfile['role']) => {
+  const getRoleBadge = (role: UserProfile["role"]) => {
     switch (role) {
-      case 'GUILD_MASTER':
+      case "GUILD_MASTER":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-sm font-medium">
             <span title="Guild Master">👑</span>
             Guild Master
           </span>
         );
-      case 'HERO':
+      case "HERO":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-sm font-medium">
             <span title="Hero">🛡️</span>
             Hero
           </span>
         );
-      case 'YOUNG_HERO':
+      case "YOUNG_HERO":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-300 rounded text-sm font-medium">
             <span title="Young Hero">⭐</span>
@@ -109,7 +110,9 @@ export function FamilyManagement() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-yellow-400">Family Management</h2>
+        <h2 className="text-2xl font-bold text-yellow-400">
+          Family Management
+        </h2>
       </div>
 
       {displayError && (
@@ -131,11 +134,15 @@ export function FamilyManagement() {
           <tbody>
             {familyMembers.map((member) => {
               const isCurrentUser = member.id === user?.id;
-              const isGuildMaster = member.role === 'GUILD_MASTER';
-              const canBePromoted = member.role === 'HERO' || member.role === 'YOUNG_HERO';
+              const isGuildMaster = member.role === "GUILD_MASTER";
+              const canBePromoted =
+                member.role === "HERO" || member.role === "YOUNG_HERO";
 
               return (
-                <tr key={member.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                <tr
+                  key={member.id}
+                  className="border-b border-gray-800 hover:bg-gray-800/50"
+                >
                   <td className="py-3 px-4 text-gray-200">{member.name}</td>
                   <td className="py-3 px-4 text-gray-400">{member.email}</td>
                   <td className="py-3 px-4">{getRoleBadge(member.role)}</td>
@@ -143,24 +150,30 @@ export function FamilyManagement() {
                     <div className="flex items-center justify-end gap-2">
                       {/* Show Promote button for Heroes and Young Heroes */}
                       {canBePromoted && (
-                        <button
+                        <Button
                           onClick={() => openPromoteModal(member)}
-                          disabled={actionLoading === member.id}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                          isLoading={actionLoading === member.id}
+                          variant="success"
+                          size="sm"
                         >
-                          {actionLoading === member.id ? 'Processing...' : 'Promote to GM'}
-                        </button>
+                          {actionLoading === member.id
+                            ? "Processing..."
+                            : "Promote to GM"}
+                        </Button>
                       )}
 
                       {/* Show Demote button for other GMs (not current user) */}
                       {isGuildMaster && !isCurrentUser && (
-                        <button
+                        <Button
                           onClick={() => openDemoteModal(member)}
-                          disabled={actionLoading === member.id}
-                          className="px-3 py-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                          isLoading={actionLoading === member.id}
+                          variant="gold"
+                          size="sm"
                         >
-                          {actionLoading === member.id ? 'Processing...' : 'Demote to Hero'}
-                        </button>
+                          {actionLoading === member.id
+                            ? "Processing..."
+                            : "Demote to Hero"}
+                        </Button>
                       )}
 
                       {/* No action buttons for current user */}
@@ -190,8 +203,9 @@ export function FamilyManagement() {
               Promote to Guild Master
             </h3>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to promote <strong>{selectedUser.name}</strong> to Guild Master?
-              They will gain full administrative privileges including the ability to:
+              Are you sure you want to promote{" "}
+              <strong>{selectedUser.name}</strong> to Guild Master? They will
+              gain full administrative privileges including the ability to:
             </p>
             <ul className="list-disc list-inside text-gray-400 mb-6 space-y-1">
               <li>Create and manage quest templates</li>
@@ -200,22 +214,24 @@ export function FamilyManagement() {
               <li>Promote and demote other users</li>
             </ul>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
                 onClick={() => {
                   setIsPromoteModalOpen(false);
                   setSelectedUser(null);
                 }}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                variant="secondary"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handlePromote}
-                disabled={!!actionLoading}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+                isLoading={!!actionLoading}
+                variant="success"
+                size="sm"
               >
-                {actionLoading ? 'Promoting...' : 'Confirm Promotion'}
-              </button>
+                {actionLoading ? "Promoting..." : "Confirm Promotion"}
+              </Button>
             </div>
           </div>
         </div>
@@ -229,8 +245,9 @@ export function FamilyManagement() {
               Demote to Hero
             </h3>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to demote <strong>{selectedUser.name}</strong> to Hero?
-              They will lose all administrative privileges including:
+              Are you sure you want to demote{" "}
+              <strong>{selectedUser.name}</strong> to Hero? They will lose all
+              administrative privileges including:
             </p>
             <ul className="list-disc list-inside text-gray-400 mb-6 space-y-1">
               <li>Quest template management</li>
@@ -239,22 +256,24 @@ export function FamilyManagement() {
               <li>User role management</li>
             </ul>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
                 onClick={() => {
                   setIsDemoteModalOpen(false);
                   setSelectedUser(null);
                 }}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+                variant="secondary"
+                size="sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleDemote}
-                disabled={!!actionLoading}
-                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+                isLoading={!!actionLoading}
+                variant="gold"
+                size="sm"
               >
-                {actionLoading ? 'Demoting...' : 'Confirm Demotion'}
-              </button>
+                {actionLoading ? "Demoting..." : "Confirm Demotion"}
+              </Button>
             </div>
           </div>
         </div>

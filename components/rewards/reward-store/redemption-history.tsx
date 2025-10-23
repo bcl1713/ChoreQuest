@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RewardRedemption, UserProfile } from '@/lib/types/database';
+import { Button } from '@/components/ui';
 
 interface RewardRedemptionWithDetails extends RewardRedemption {
   user_profiles: UserProfile;
@@ -110,33 +111,36 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
             {/* Guild Master Approval Buttons */}
             {isGuildMaster && redemption.status === 'PENDING' && onApprove && onDeny && (
               <div className="mt-4 flex space-x-3 pt-3 border-t border-dark-600">
-                <button
+                <Button
                   onClick={() => onApprove(redemption.id)}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg border border-green-500/50"
+                  variant="success"
+                  size="sm"
                   data-testid={`approve-${redemption.id}`}
                 >
                   ✅ Approve
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => onDeny(redemption.id)}
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg border border-red-500/50"
+                  variant="destructive"
+                  size="sm"
                   data-testid={`deny-${redemption.id}`}
                 >
                   ❌ Deny
-                </button>
+                </Button>
               </div>
             )}
 
             {/* Mark as Fulfilled Button for Approved Items */}
             {isGuildMaster && redemption.status === 'APPROVED' && onFulfill && (
               <div className="mt-4 pt-3 border-t border-dark-600">
-                <button
+                <Button
                   onClick={() => onFulfill(redemption.id)}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg border border-blue-500/50"
+                  variant="primary"
+                  size="sm"
                   data-testid={`fulfill-${redemption.id}`}
                 >
                   🎯 Mark as Fulfilled
-                </button>
+                </Button>
               </div>
             )}
           </motion.div>

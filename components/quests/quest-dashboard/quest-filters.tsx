@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import type { QuestStatus } from '@/lib/types/database';
+import { Button } from '@/components/ui';
 
 export interface QuestFiltersProps {
   filters: {
@@ -89,15 +90,17 @@ const QuestFilters: React.FC<QuestFiltersProps> = memo(({
 
       {/* Reset button */}
       {onReset && (
-        <button
+        <Button
           type="button"
           onClick={onReset}
           disabled={!hasActiveFilters}
-          className="px-4 py-2 rounded-md border border-gray-700 text-sm text-gray-300 hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="outline"
+          size="sm"
+          className="px-4 py-2 rounded-md border border-gray-700 text-sm text-gray-300 hover:bg-gray-800"
           aria-label="Reset filters"
         >
           Reset
-        </button>
+        </Button>
       )}
     </div>
   );

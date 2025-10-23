@@ -15,9 +15,13 @@ jest.mock('framer-motion', () => ({
   },
 }));
 
-jest.mock('@/components/ui', () => ({
-  LoadingSpinner: () => <div data-testid="loading-spinner" />,
-}));
+jest.mock('@/components/ui', () => {
+  const actual = jest.requireActual('@/components/ui');
+  return {
+    ...actual,
+    LoadingSpinner: () => <div data-testid="loading-spinner" />,
+  };
+});
 
 jest.mock('../quest-list', () => ({
   __esModule: true,

@@ -209,8 +209,8 @@ describe('RewardItem', () => {
       );
 
       const toggleButton = screen.getByTestId('toggle-reward-active');
-      expect(toggleButton).toHaveClass('text-green-400');
-      expect(toggleButton).toHaveClass('border-green-500/50');
+      expect(toggleButton.className).toContain('from-emerald-600');
+      expect(toggleButton.className).toContain('text-white');
     });
 
     it('should apply gray styling when reward is inactive', () => {
@@ -225,8 +225,8 @@ describe('RewardItem', () => {
       );
 
       const toggleButton = screen.getByTestId('toggle-reward-active');
-      expect(toggleButton).toHaveClass('text-gray-400');
-      expect(toggleButton).toHaveClass('border-gray-600');
+      expect(toggleButton.className).toContain('border-gray-600');
+      expect(toggleButton.className).toContain('text-gray-200');
     });
   });
 

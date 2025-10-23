@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Reward } from '@/lib/types/database';
+import { Button } from '@/components/ui';
 
 interface RewardCardProps {
   reward: Reward;
@@ -41,22 +42,14 @@ const RewardCard = React.memo<RewardCardProps>(({
   onRedeem,
 }) => {
   const buttonText = useMemo(() => {
-    if (isRedeeming) return null; // Spinner will be shown
     if (redemptionStatus === 'PENDING') return '⏳ Request Pending';
     if (redemptionStatus === 'APPROVED') return '✓ Approved';
     if (!canAfford) return '🔒 Insufficient Gold';
     return '⚡ Redeem Reward';
-  }, [isRedeeming, redemptionStatus, canAfford]);
+  }, [redemptionStatus, canAfford]);
 
-  const isDisabled = !canAfford || !!redemptionStatus || isRedeeming;
-
-  const buttonClasses = useMemo(() => {
-    return `w-full py-2 px-4 rounded-lg font-medium transition-all ${
-      canAfford && !redemptionStatus && !isRedeeming
-        ? 'bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-700 hover:to-gold-800 text-white shadow-md'
-        : 'bg-dark-600 text-gray-400 border border-dark-500 cursor-not-allowed'
-    }`;
-  }, [canAfford, redemptionStatus, isRedeeming]);
+  const isDisabled = !canAfford || !!redemptionStatus;
+  const variant = canAfford && !redemptionStatus ? 'gold' : 'secondary';
 
   return (
     <motion.div
@@ -96,21 +89,17 @@ const RewardCard = React.memo<RewardCardProps>(({
         </span>
       </div>
 
-      <button
+      <Button
         data-testid="reward-store-redeem-button"
         onClick={() => onRedeem(reward)}
         disabled={isDisabled}
-        className={buttonClasses}
+        isLoading={isRedeeming}
+        variant={variant}
+        size="sm"
+        fullWidth
       >
-        {isRedeeming ? (
-          <div className="flex items-center justify-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <span>Redeeming...</span>
-          </div>
-        ) : (
-          buttonText
-        )}
-      </button>
+        {isRedeeming ? 'Redeeming...' : buttonText}
+      </Button>
     </motion.div>
   );
 });
