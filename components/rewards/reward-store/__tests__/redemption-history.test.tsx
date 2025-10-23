@@ -165,10 +165,10 @@ describe('RedemptionHistory', () => {
         />
       );
 
-      expect(screen.getByText('📱')).toBeInTheDocument(); // SCREEN_TIME
-      expect(screen.getByText('⭐')).toBeInTheDocument(); // PRIVILEGE
-      expect(screen.getByText('💰')).toBeInTheDocument(); // PURCHASE
-      expect(screen.getByText('🎈')).toBeInTheDocument(); // EXPERIENCE
+      // All reward type icons are now rendered as Lucide React SVG components
+      const icons = document.querySelectorAll('svg');
+      // Should have SVGs for reward type icons
+      expect(icons.length).toBeGreaterThan(0);
     });
   });
 

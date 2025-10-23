@@ -4,12 +4,13 @@ import React from "react";
 import { Reward } from "@/lib/types/database";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui";
+import { Smartphone, Star, Coins, Lightbulb } from "lucide-react";
 
 const REWARD_TYPE_ICONS = {
-  SCREEN_TIME: "📱",
-  PRIVILEGE: "⭐",
-  PURCHASE: "💰",
-  EXPERIENCE: "🎈",
+  SCREEN_TIME: Smartphone,
+  PRIVILEGE: Star,
+  PURCHASE: Coins,
+  EXPERIENCE: Lightbulb,
 };
 
 const REWARD_TYPE_LABELS = {
@@ -45,7 +46,10 @@ export const RewardItem = React.memo(function RewardItem({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>
+          {(() => {
+            const IconComponent = REWARD_TYPE_ICONS[reward.type];
+            return <IconComponent size={32} aria-hidden="true" className="text-gold-400" />;
+          })()}
           <div>
             <h3 className="font-fantasy text-lg text-gray-100">
               {reward.name}
@@ -65,8 +69,9 @@ export const RewardItem = React.memo(function RewardItem({
       <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
 
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xl font-bold gold-text">
-          💰 {reward.cost} gold
+        <span className="text-xl font-bold gold-text flex items-center gap-1">
+          <Coins size={20} aria-hidden="true" className="text-gold-400" />
+          {reward.cost} gold
         </span>
       </div>
 

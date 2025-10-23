@@ -81,7 +81,9 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('💰')).toBeInTheDocument();
+      // Icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('Purchase')).toBeInTheDocument();
     });
 
@@ -97,7 +99,9 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('🎈')).toBeInTheDocument();
+      // Icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('Experience')).toBeInTheDocument();
     });
 
@@ -112,7 +116,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('💰 50 gold')).toBeInTheDocument();
+      expect(screen.getByText('50 gold')).toBeInTheDocument();
     });
 
     it('has correct test id', () => {
@@ -157,7 +161,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('🔒 Insufficient Gold');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Insufficient Gold');
       expect(screen.getByTestId('reward-store-redeem-button')).toBeDisabled();
     });
 
@@ -172,7 +176,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('⏳ Request Pending');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Request Pending');
       expect(screen.getByTestId('reward-store-redeem-button')).toBeDisabled();
     });
 

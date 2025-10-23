@@ -3,6 +3,7 @@
 import React from "react";
 import { Reward } from "@/lib/types/database";
 import { AnimatePresence } from "framer-motion";
+import { Trophy } from "lucide-react";
 import { RewardItem } from "./reward-item";
 
 interface RewardListProps {
@@ -22,7 +23,9 @@ export const RewardList = React.memo(function RewardList({
   if (rewards.length === 0) {
     return (
       <div className="fantasy-card text-center py-12">
-        <div className="text-6xl mb-4">🏆</div>
+        <div className="flex justify-center mb-4">
+          <Trophy size={48} aria-hidden="true" className="text-gold-400" />
+        </div>
         <p className="text-gray-300 text-lg">No rewards yet</p>
         <p className="text-gray-500 text-sm mt-2">Create one to get started!</p>
       </div>

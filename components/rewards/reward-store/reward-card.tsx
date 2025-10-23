@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Reward } from '@/lib/types/database';
 import { Button } from '@/components/ui';
+import { Smartphone, Star, Coins, Lightbulb, Loader, Lock, Zap } from 'lucide-react';
 
 interface RewardCardProps {
   reward: Reward;
@@ -13,13 +14,13 @@ interface RewardCardProps {
   onRedeem: (reward: Reward) => void;
 }
 
-// Constants defined outside component for performance
-const REWARD_TYPE_ICONS: Record<string, string> = {
-  SCREEN_TIME: '📱',
-  PRIVILEGE: '⭐',
-  PURCHASE: '💰',
-  EXPERIENCE: '🎈',
-} as const;
+// Icon components for reward types
+const REWARD_TYPE_ICONS: Record<string, typeof Smartphone> = {
+  SCREEN_TIME: Smartphone,
+  PRIVILEGE: Star,
+  PURCHASE: Coins,
+  EXPERIENCE: Lightbulb,
+};
 
 const REWARD_TYPE_LABELS: Record<string, string> = {
   SCREEN_TIME: 'Screen Time',
@@ -42,11 +43,17 @@ const RewardCard = React.memo<RewardCardProps>(({
   onRedeem,
 }) => {
   const buttonText = useMemo(() => {
-    if (redemptionStatus === 'PENDING') return '⏳ Request Pending';
-    if (redemptionStatus === 'APPROVED') return '✓ Approved';
-    if (!canAfford) return '🔒 Insufficient Gold';
-    return '⚡ Redeem Reward';
+    if (redemptionStatus === 'PENDING') return 'Request Pending';
+    if (redemptionStatus === 'APPROVED') return 'Approved';
+    if (!canAfford) return 'Insufficient Gold';
+    return 'Redeem Reward';
   }, [redemptionStatus, canAfford]);
+
+  const getButtonIcon = () => {
+    if (redemptionStatus === 'PENDING') return <Loader size={16} aria-hidden="true" />;
+    if (!canAfford) return <Lock size={16} aria-hidden="true" />;
+    return <Zap size={16} aria-hidden="true" />;
+  };
 
   const isDisabled = !canAfford || !!redemptionStatus;
   const variant = canAfford && !redemptionStatus ? 'gold' : 'secondary';
@@ -62,7 +69,10 @@ const RewardCard = React.memo<RewardCardProps>(({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>
+          {(() => {
+            const IconComponent = REWARD_TYPE_ICONS[reward.type];
+            return <IconComponent size={32} aria-hidden="true" className="text-gold-400" />;
+          })()}
           <div>
             <h3 className="font-fantasy text-lg text-gray-100">{reward.name}</h3>
             <p className="text-sm text-gray-400">
@@ -84,8 +94,9 @@ const RewardCard = React.memo<RewardCardProps>(({
       <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
 
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xl font-bold gold-text">
-          💰 {reward.cost} gold
+        <span className="text-xl font-bold gold-text flex items-center gap-1">
+          <Coins size={20} aria-hidden="true" className="text-gold-400" />
+          {reward.cost} gold
         </span>
       </div>
 
@@ -97,6 +108,7 @@ const RewardCard = React.memo<RewardCardProps>(({
         variant={variant}
         size="sm"
         fullWidth
+        startIcon={isRedeeming ? undefined : getButtonIcon()}
       >
         {isRedeeming ? 'Redeeming...' : buttonText}
       </Button>

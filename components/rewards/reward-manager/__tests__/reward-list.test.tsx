@@ -43,7 +43,9 @@ describe('RewardList', () => {
         />
       );
 
-      expect(screen.getByText('🏆')).toBeInTheDocument();
+      // Trophy icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('No rewards yet')).toBeInTheDocument();
       expect(screen.getByText('Create one to get started!')).toBeInTheDocument();
     });

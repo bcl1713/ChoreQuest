@@ -28,12 +28,14 @@ describe('RewardForm', () => {
 
   describe('Constants', () => {
     it('should export REWARD_TYPE_ICONS', () => {
-      expect(REWARD_TYPE_ICONS).toEqual({
-        SCREEN_TIME: "📱",
-        PRIVILEGE: "⭐",
-        PURCHASE: "💰",
-        EXPERIENCE: "🎈",
-      });
+      // REWARD_TYPE_ICONS now exports Lucide React components instead of emoji
+      expect(REWARD_TYPE_ICONS).toBeDefined();
+      expect(Object.keys(REWARD_TYPE_ICONS)).toEqual([
+        'SCREEN_TIME',
+        'PRIVILEGE',
+        'PURCHASE',
+        'EXPERIENCE',
+      ]);
     });
 
     it('should export REWARD_TYPE_LABELS', () => {
@@ -58,7 +60,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('⚡ Create New Reward')).toBeInTheDocument();
+      expect(screen.getByText('Create New Reward')).toBeInTheDocument();
     });
 
     it('should have create-reward-modal testid in create mode', () => {
@@ -117,7 +119,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('✏️ Edit Reward')).toBeInTheDocument();
+      expect(screen.getByText('Edit Reward')).toBeInTheDocument();
     });
 
     it('should have edit-reward-modal testid in edit mode', () => {
@@ -425,7 +427,7 @@ describe('RewardForm', () => {
       expect(screen.getByText('Reward Name')).toBeInTheDocument();
       expect(screen.getByText('Description')).toBeInTheDocument();
       expect(screen.getByText('Type')).toBeInTheDocument();
-      expect(screen.getByText('💰 Cost (gold)')).toBeInTheDocument();
+      expect(screen.getByText('Cost (gold)')).toBeInTheDocument();
     });
   });
 
@@ -546,7 +548,7 @@ describe('RewardForm', () => {
       );
 
       // Component should still be rendered correctly
-      expect(screen.getByText('⚡ Create New Reward')).toBeInTheDocument();
+      expect(screen.getByText('Create New Reward')).toBeInTheDocument();
     });
   });
 });

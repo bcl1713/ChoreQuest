@@ -6,6 +6,7 @@ import { RewardService } from "@/lib/reward-service";
 import { Reward } from "@/lib/types/database";
 import { useRewards } from "@/hooks/useRewards";
 import { Button } from "@/components/ui";
+import { Trophy, Loader, Trash2 } from "lucide-react";
 import { RewardList } from "./reward-list";
 import { RewardForm, RewardFormData } from "./reward-form";
 import { RedemptionList } from "./redemption-list";
@@ -217,8 +218,9 @@ export default function RewardManager() {
     <div className="space-y-6" data-testid="reward-manager">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-fantasy text-gray-100">
-          🏆 Reward Management
+        <h2 className="text-2xl font-fantasy text-gray-100 flex items-center gap-2">
+          <Trophy size={28} aria-hidden="true" className="text-gold-400" />
+          Reward Management
         </h2>
         <Button
           onClick={handleCreate}
@@ -226,7 +228,7 @@ export default function RewardManager() {
           variant="gold"
           size="sm"
         >
-          ⚡ Create Reward
+          Create Reward
         </Button>
       </div>
 
@@ -317,8 +319,9 @@ export default function RewardManager() {
                   variant="destructive"
                   size="sm"
                   fullWidth
+                  startIcon={deleteLoading ? <Loader size={16} aria-hidden="true" className="animate-spin" /> : <Trash2 size={16} aria-hidden="true" />}
                 >
-                  {deleteLoading ? "⏳ Deleting..." : "🗑️ Delete"}
+                  {deleteLoading ? "Deleting..." : "Delete"}
                 </Button>
               </div>
             </div>
