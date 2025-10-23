@@ -6,6 +6,7 @@ import { userService } from "@/lib/user-service";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import type { Tables } from "@/lib/types/database";
 import { Button } from "@/components/ui";
+import { Crown, Shield, Star } from "lucide-react";
 
 type UserProfile = Tables<"user_profiles">;
 
@@ -74,22 +75,22 @@ export function FamilyManagement() {
     switch (role) {
       case "GUILD_MASTER":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-sm font-medium">
-            <span title="Guild Master">👑</span>
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-sm font-medium" title="Guild Master">
+            <Crown size={14} aria-hidden={true} />
             Guild Master
           </span>
         );
       case "HERO":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-sm font-medium">
-            <span title="Hero">🛡️</span>
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-sm font-medium" title="Hero">
+            <Shield size={14} aria-hidden={true} />
             Hero
           </span>
         );
       case "YOUNG_HERO":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-300 rounded text-sm font-medium">
-            <span title="Young Hero">⭐</span>
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-300 rounded text-sm font-medium" title="Young Hero">
+            <Star size={14} aria-hidden={true} />
             Young Hero
           </span>
         );

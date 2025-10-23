@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RewardRedemption, UserProfile } from '@/lib/types/database';
 import { Button } from '@/components/ui';
+import { Smartphone, Star, Coins, Lightbulb, Check } from 'lucide-react';
 
 interface RewardRedemptionWithDetails extends RewardRedemption {
   user_profiles: UserProfile;
@@ -21,11 +22,11 @@ interface RedemptionHistoryProps {
 }
 
 // Constants defined outside component for performance
-const REWARD_TYPE_ICONS: Record<string, string> = {
-  SCREEN_TIME: '📱',
-  PRIVILEGE: '⭐',
-  PURCHASE: '💰',
-  EXPERIENCE: '🎈',
+const REWARD_TYPE_ICONS: Record<string, typeof Smartphone> = {
+  SCREEN_TIME: Smartphone,
+  PRIVILEGE: Star,
+  PURCHASE: Coins,
+  EXPERIENCE: Lightbulb,
 } as const;
 
 /**
@@ -77,10 +78,13 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
-                  <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward_type]}</span>
+                  {(() => {
+                    const IconComponent = REWARD_TYPE_ICONS[redemption.reward_type];
+                    return <IconComponent size={20} aria-hidden={true} className="text-gold-400" />;
+                  })()}
                   <span className="font-medium text-gray-100">{redemption.reward_name}</span>
                   <div className="flex items-center space-x-1">
-                    <span className="text-gold-400">🪙</span>
+                    <Coins size={16} aria-hidden={true} className="text-gold-400" />
                     <span className="text-sm font-bold gold-text">{redemption.cost}</span>
                   </div>
                 </div>
@@ -138,8 +142,9 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
                   variant="primary"
                   size="sm"
                   data-testid={`fulfill-${redemption.id}`}
+                  startIcon={<Check size={16} aria-hidden={true} />}
                 >
-                  🎯 Mark as Fulfilled
+                  Mark as Fulfilled
                 </Button>
               </div>
             )}
