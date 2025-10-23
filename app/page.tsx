@@ -31,15 +31,15 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             {user ? (
-              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="enter-realm-button">
+              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-flex items-center gap-2" data-testid="enter-realm-button">
                 <Castle size={20} aria-hidden="true" /> Enter Your Realm
               </Link>
             ) : (
               <>
-                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="create-family-button">
+                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-flex items-center gap-2" data-testid="create-family-button">
                   <Castle size={20} aria-hidden="true" /> Create Family Guild
                 </Link>
-                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block flex items-center gap-2" data-testid="join-guild-button">
+                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-flex items-center gap-2" data-testid="join-guild-button">
                   <Swords size={20} aria-hidden="true" /> Join Existing Guild
                 </Link>
               </>
