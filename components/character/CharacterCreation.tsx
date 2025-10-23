@@ -11,10 +11,23 @@ import {
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { FantasyButton } from "@/components/ui";
+import { Wand, Sword, Shield, Sparkles, Crosshair, Zap, Coins, Award, Gem } from "lucide-react";
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
   initialCharacterName?: string;
+}
+
+// Helper function to get the icon component by name
+function getIconComponent(iconName: string) {
+  const iconMap: { [key: string]: typeof Wand } = {
+    Wand,
+    Sword,
+    Shield,
+    Sparkles,
+    Crosshair,
+  };
+  return iconMap[iconName] || Shield; // Default to Shield if not found
 }
 
 export default function CharacterCreation({
@@ -197,7 +210,12 @@ export default function CharacterCreation({
                   transition={{ duration: 0.2 }}
                 >
                   <div className="text-center">
-                    <div className="text-3xl mb-2">{characterClass.icon}</div>
+                    <div className="mb-2 flex justify-center">
+                      {(() => {
+                        const IconComponent = getIconComponent(characterClass.icon);
+                        return <IconComponent size={24} aria-label={`${characterClass.name} class icon`} />;
+                      })()}
+                    </div>
                     <h3 className="text-lg font-semibold text-gold-300 mb-2">
                       {characterClass.name}
                     </h3>
@@ -209,30 +227,27 @@ export default function CharacterCreation({
                         Bonuses on ALL quests:
                       </div>
                       {characterClass.bonuses.xp > 1.0 && (
-                        <div className="text-primary-400">
-                          ⚡ {formatBonusPercentage(characterClass.bonuses.xp)}{" "}
-                          XP
+                        <div className="text-primary-400 flex items-center gap-1 justify-center">
+                          <Zap size={14} aria-hidden="true" />
+                          <span>{formatBonusPercentage(characterClass.bonuses.xp)} XP</span>
                         </div>
                       )}
                       {characterClass.bonuses.gold > 1.0 && (
-                        <div className="text-gold-400">
-                          💰{" "}
-                          {formatBonusPercentage(characterClass.bonuses.gold)}{" "}
-                          Gold
+                        <div className="text-gold-400 flex items-center gap-1 justify-center">
+                          <Coins size={14} aria-hidden="true" />
+                          <span>{formatBonusPercentage(characterClass.bonuses.gold)} Gold</span>
                         </div>
                       )}
                       {characterClass.bonuses.honor > 1.0 && (
-                        <div className="text-purple-400">
-                          🎖️{" "}
-                          {formatBonusPercentage(characterClass.bonuses.honor)}{" "}
-                          Honor
+                        <div className="text-purple-400 flex items-center gap-1 justify-center">
+                          <Award size={14} aria-hidden="true" />
+                          <span>{formatBonusPercentage(characterClass.bonuses.honor)} Honor</span>
                         </div>
                       )}
                       {characterClass.bonuses.gems > 1.0 && (
-                        <div className="text-gem-400">
-                          💎{" "}
-                          {formatBonusPercentage(characterClass.bonuses.gems)}{" "}
-                          Gems
+                        <div className="text-gem-400 flex items-center gap-1 justify-center">
+                          <Gem size={14} aria-hidden="true" />
+                          <span>{formatBonusPercentage(characterClass.bonuses.gems)} Gems</span>
                         </div>
                       )}
                     </div>

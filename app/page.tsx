@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { Castle, Swords, Zap, Trophy, Coins, Gem, Award } from 'lucide-react';
 
 export default function Home() {
   const { user } = useAuth();
@@ -30,16 +31,16 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             {user ? (
-              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block" data-testid="enter-realm-button">
-                🏰 Enter Your Realm
+              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="enter-realm-button">
+                <Castle size={20} aria-hidden="true" /> Enter Your Realm
               </Link>
             ) : (
               <>
-                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block" data-testid="create-family-button">
-                  🏰 Create Family Guild
+                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="create-family-button">
+                  <Castle size={20} aria-hidden="true" /> Create Family Guild
                 </Link>
-                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block" data-testid="join-guild-button">
-                  ⚔️ Join Existing Guild
+                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block flex items-center gap-2" data-testid="join-guild-button">
+                  <Swords size={20} aria-hidden="true" /> Join Existing Guild
                 </Link>
               </>
             )}
@@ -49,21 +50,27 @@ export default function Home() {
         {/* Feature Cards */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           <div className="fantasy-card p-6 text-center">
-            <div className="text-4xl mb-4">🗡️</div>
+            <div className="mb-4 flex justify-center">
+              <Swords size={32} aria-hidden="true" className="text-gold-400" />
+            </div>
             <h3 className="text-xl font-fantasy text-gray-100 mb-3">Epic Quests</h3>
             <p className="text-gray-400">
               Transform daily chores into heroic adventures. Earn XP and gold for every task completed.
             </p>
           </div>
           <div className="fantasy-card p-6 text-center">
-            <div className="text-4xl mb-4">⚡</div>
+            <div className="mb-4 flex justify-center">
+              <Zap size={32} aria-hidden="true" className="text-primary-400" />
+            </div>
             <h3 className="text-xl font-fantasy text-gray-100 mb-3">Character Classes</h3>
             <p className="text-gray-400">
               Choose your path: Knight, Mage, Ranger, Rogue, or Healer. Each class offers unique bonuses.
             </p>
           </div>
           <div className="fantasy-card p-6 text-center">
-            <div className="text-4xl mb-4">🏆</div>
+            <div className="mb-4 flex justify-center">
+              <Trophy size={32} aria-hidden="true" className="text-gold-400" />
+            </div>
             <h3 className="text-xl font-fantasy text-gray-100 mb-3">Boss Battles</h3>
             <p className="text-gray-400">
               Unite your family against epic boss challenges. Teamwork brings the greatest rewards.
@@ -78,19 +85,31 @@ export default function Home() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-3xl gold-text mb-2">💰 1,250</div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Coins size={24} aria-hidden="true" className="text-gold-400" />
+                <span className="text-3xl gold-text">1,250</span>
+              </div>
               <div className="text-sm text-gray-400">Gold Earned</div>
             </div>
             <div>
-              <div className="text-3xl xp-text mb-2">⚡ 3,450</div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Zap size={24} aria-hidden="true" className="text-xp-500" />
+                <span className="text-3xl xp-text">3,450</span>
+              </div>
               <div className="text-sm text-gray-400">Experience Points</div>
             </div>
             <div>
-              <div className="text-3xl gem-text mb-2">💎 45</div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Gem size={24} aria-hidden="true" className="text-gem-400" />
+                <span className="text-3xl gem-text">45</span>
+              </div>
               <div className="text-sm text-gray-400">Gems Collected</div>
             </div>
             <div>
-              <div className="text-3xl text-primary-400 mb-2">🏅 128</div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Award size={24} aria-hidden="true" className="text-primary-400" />
+                <span className="text-3xl text-primary-400">128</span>
+              </div>
               <div className="text-sm text-gray-400">Honor Points</div>
             </div>
           </div>
@@ -98,7 +117,7 @@ export default function Home() {
 
         {/* Development Status */}
         <div className="fantasy-card p-6 text-center">
-          <h3 className="text-xl font-fantasy text-gray-100 mb-3">🚧 Under Construction 🚧</h3>
+          <h3 className="text-xl font-fantasy text-gray-100 mb-3">Under Construction</h3>
           <p className="text-gray-400 mb-4">
             The great ChoreQuest is being forged by skilled developers. Current progress:
           </p>

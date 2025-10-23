@@ -15,7 +15,7 @@ import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } fro
 import { RewardCalculator } from '@/lib/reward-calculator';
 import { LoadingSpinner, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { Sword, Store } from 'lucide-react';
+import { Sword, Store, Crown, Settings, AlertCircle, Shield, Wand, Crosshair, Sparkles, Coins, Zap, Gem, Award } from 'lucide-react';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -254,21 +254,41 @@ function DashboardContent() {
 
   const getRoleDisplay = (role: string) => {
     switch (role) {
-      case 'GUILD_MASTER': return '👑 Guild Master';
-      case 'HERO': return '⚔️ Hero';
-      case 'YOUNG_HERO': return '🛡️ Young Hero';
+      case 'GUILD_MASTER': return 'Guild Master';
+      case 'HERO': return 'Hero';
+      case 'YOUNG_HERO': return 'Young Hero';
       default: return role;
     }
   };
 
   const getClassDisplay = (characterClass: string) => {
     switch (characterClass) {
-      case 'KNIGHT': return '🛡️ Knight';
-      case 'MAGE': return '🔮 Mage';
-      case 'RANGER': return '🏹 Ranger';
-      case 'ROGUE': return '🗡️ Rogue';
-      case 'HEALER': return '💚 Healer';
+      case 'KNIGHT': return 'Knight';
+      case 'MAGE': return 'Mage';
+      case 'RANGER': return 'Ranger';
+      case 'ROGUE': return 'Rogue';
+      case 'HEALER': return 'Healer';
       default: return characterClass;
+    }
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'GUILD_MASTER': return <Crown size={16} aria-hidden="true" className="text-gold-400" />;
+      case 'HERO': return <Sword size={16} aria-hidden="true" className="text-primary-400" />;
+      case 'YOUNG_HERO': return <Shield size={16} aria-hidden="true" className="text-blue-400" />;
+      default: return null;
+    }
+  };
+
+  const getClassIcon = (characterClass: string) => {
+    switch (characterClass) {
+      case 'KNIGHT': return <Shield size={16} aria-hidden="true" />;
+      case 'MAGE': return <Wand size={16} aria-hidden="true" />;
+      case 'RANGER': return <Crosshair size={16} aria-hidden="true" />;
+      case 'ROGUE': return <Sword size={16} aria-hidden="true" />;
+      case 'HEALER': return <Sparkles size={16} aria-hidden="true" />;
+      default: return null;
     }
   };
 
@@ -293,7 +313,7 @@ function DashboardContent() {
                 </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                🕐 {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
+                {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
               </p>
             </div>
 
@@ -301,8 +321,11 @@ function DashboardContent() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="text-left sm:text-right">
                 <p className="text-gray-300 font-medium">{character.name}</p>
-                <p className="text-sm text-gray-400" data-testid="character-level">{character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}</p>
-                <p className="text-xs text-gray-500">{profile?.role ? getRoleDisplay(profile.role) : ''}</p>
+                <p className="text-sm text-gray-400 flex items-center gap-1 sm:justify-end" data-testid="character-level">
+                  {character.class && getClassIcon(character.class)}
+                  {character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}
+                </p>
+                <p className="text-xs text-gray-500 flex items-center gap-1 sm:justify-end">{profile?.role && getRoleIcon(profile.role)} {profile?.role ? getRoleDisplay(profile.role) : ''}</p>
               </div>
 
               {/* Action buttons - mobile-optimized */}
@@ -315,9 +338,9 @@ function DashboardContent() {
                       size="sm"
                       className="touch-target"
                       data-testid="admin-dashboard-button"
+                      startIcon={<Settings size={16} aria-hidden="true" />}
                     >
-                      <span className="hidden sm:inline">⚙️ Admin</span>
-                      <span className="sm:hidden">⚙️</span>
+                      <span className="hidden sm:inline">Admin</span>
                     </Button>
                     <Button
                       onClick={() => setShowCreateQuest(true)}
@@ -325,9 +348,10 @@ function DashboardContent() {
                       size="sm"
                       className="touch-target"
                       data-testid="create-quest-button"
+                      startIcon={<Sword size={16} aria-hidden="true" />}
                     >
-                      <span className="hidden sm:inline">⚡ Create Quest</span>
-                      <span className="sm:hidden">⚡ Quest</span>
+                      <span className="hidden sm:inline">Create Quest</span>
+                      <span className="sm:hidden">Quest</span>
                     </Button>
                   </>
                 )}
@@ -349,8 +373,9 @@ function DashboardContent() {
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {/* Authorization Error Banner */}
         {authError && (
-          <div className="mb-6 bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
-            <p className="font-medium">🚫 {authError}</p>
+          <div className="mb-6 bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200 flex items-center gap-2">
+            <AlertCircle size={20} aria-hidden="true" />
+            <p className="font-medium">{authError}</p>
           </div>
         )}
 
@@ -366,19 +391,31 @@ function DashboardContent() {
         {/* Character Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2" data-testid="character-gold">💰 {character.gold}</div>
+            <div className="flex items-center justify-center gap-1 mb-1 sm:mb-2">
+              <Coins size={20} aria-hidden="true" className="text-gold-400" />
+              <span className="text-xl sm:text-3xl gold-text" data-testid="character-gold">{character.gold}</span>
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Gold</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2" data-testid="character-xp">⚡ {character.xp}</div>
+            <div className="flex items-center justify-center gap-1 mb-1 sm:mb-2">
+              <Zap size={20} aria-hidden="true" className="text-primary-400" />
+              <span className="text-xl sm:text-3xl xp-text" data-testid="character-xp">{character.xp}</span>
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Experience</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2" data-testid="character-gems">💎 {character.gems}</div>
+            <div className="flex items-center justify-center gap-1 mb-1 sm:mb-2">
+              <Gem size={20} aria-hidden="true" className="text-gem-400" />
+              <span className="text-xl sm:text-3xl gem-text" data-testid="character-gems">{character.gems}</span>
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Gems</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2" data-testid="character-honor-points">🏅 {character.honor_points}</div>
+            <div className="flex items-center justify-center gap-1 mb-1 sm:mb-2">
+              <Award size={20} aria-hidden="true" className="text-primary-400" />
+              <span className="text-xl sm:text-3xl text-primary-400" data-testid="character-honor-points">{character.honor_points}</span>
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Honor Points</div>
           </div>
         </div>
@@ -432,8 +469,9 @@ function DashboardContent() {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6">
-            <p className="text-red-200">⚠️ {error}</p>
+          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6 flex items-center gap-2">
+            <AlertCircle size={20} aria-hidden="true" className="text-red-400" />
+            <p className="text-red-200">{error}</p>
           </div>
         )}
 
