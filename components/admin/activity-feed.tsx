@@ -6,49 +6,50 @@ import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui";
+import { Check, Clock, Gift, Sparkles, X, PartyPopper, UserPlus } from "lucide-react";
 
 const activityService = new ActivityService();
 
 // Event type icons and colors
-const EVENT_CONFIG = {
+const EVENT_CONFIG: { [key: string]: { iconComponent: React.ComponentType<{ size: number; className?: string; 'aria-hidden'?: boolean }>; color: string; bgColor: string; borderColor: string } } = {
   QUEST_COMPLETED: {
-    icon: "✅",
+    iconComponent: Check,
     color: "text-green-400",
     bgColor: "bg-green-500/10",
     borderColor: "border-green-500/30",
   },
   QUEST_SUBMITTED: {
-    icon: "⏳",
+    iconComponent: Clock,
     color: "text-orange-400",
     bgColor: "bg-orange-500/10",
     borderColor: "border-orange-500/30",
   },
   REWARD_REDEEMED: {
-    icon: "🎁",
+    iconComponent: Gift,
     color: "text-purple-400",
     bgColor: "bg-purple-500/10",
     borderColor: "border-purple-500/30",
   },
   REWARD_APPROVED: {
-    icon: "✨",
+    iconComponent: Sparkles,
     color: "text-cyan-400",
     bgColor: "bg-cyan-500/10",
     borderColor: "border-cyan-500/30",
   },
   REWARD_DENIED: {
-    icon: "❌",
+    iconComponent: X,
     color: "text-red-400",
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/30",
   },
   LEVEL_UP: {
-    icon: "🎉",
+    iconComponent: PartyPopper,
     color: "text-yellow-400",
     bgColor: "bg-yellow-500/10",
     borderColor: "border-yellow-500/30",
   },
   CHARACTER_CREATED: {
-    icon: "🆕",
+    iconComponent: UserPlus,
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/30",
@@ -266,9 +267,12 @@ export default function ActivityFeed() {
                 >
                   {/* Icon */}
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl ${config.bgColor}`}
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${config.bgColor}`}
                   >
-                    {config.icon}
+                    {(() => {
+                      const IconComponent = config.iconComponent;
+                      return <IconComponent size={20} aria-hidden={true} className={config.color} />;
+                    })()}
                   </div>
 
                   {/* Content */}
