@@ -74,8 +74,8 @@ describe('TemplateItem', () => {
   it('displays recurrence pattern', () => {
     render(<TemplateItem template={mockIndividualTemplate} {...mockHandlers} />);
 
-    // QuestCard displays recurrence as "📅 Daily" instead of just "DAILY"
-    expect(screen.getByText(/📅 Daily/)).toBeInTheDocument();
+    // QuestCard displays recurrence as "Daily" (without emoji)
+    expect(screen.getByText(/Daily/)).toBeInTheDocument();
   });
 
   it('displays quest type', () => {
@@ -205,7 +205,7 @@ describe('TemplateItem', () => {
   it('displays weekly recurrence pattern correctly', () => {
     render(<TemplateItem template={mockFamilyTemplate} {...mockHandlers} />);
 
-    expect(screen.getByText(/📅 Weekly/)).toBeInTheDocument();
+    expect(screen.getByText(/Weekly/)).toBeInTheDocument();
   });
 
   it('renders all action buttons', () => {

@@ -166,15 +166,15 @@ describe('quest-card-helpers', () => {
 
   describe('getRecurrenceLabel', () => {
     it('returns formatted label for DAILY pattern', () => {
-      expect(getRecurrenceLabel('DAILY')).toBe('📅 Daily');
+      expect(getRecurrenceLabel('DAILY')).toBe('Daily');
     });
 
     it('returns formatted label for WEEKLY pattern', () => {
-      expect(getRecurrenceLabel('WEEKLY')).toBe('📅 Weekly');
+      expect(getRecurrenceLabel('WEEKLY')).toBe('Weekly');
     });
 
     it('returns formatted label for CUSTOM pattern', () => {
-      expect(getRecurrenceLabel('CUSTOM')).toBe('📅 Custom');
+      expect(getRecurrenceLabel('CUSTOM')).toBe('Custom');
     });
 
     it('returns null for null pattern', () => {

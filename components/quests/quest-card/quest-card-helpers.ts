@@ -80,11 +80,11 @@ export const getRecurrenceLabel = (pattern: RecurrencePattern | null | undefined
 
   switch (pattern) {
     case 'DAILY':
-      return '📅 Daily';
+      return 'Daily';
     case 'WEEKLY':
-      return '📅 Weekly';
+      return 'Weekly';
     case 'CUSTOM':
-      return '📅 Custom';
+      return 'Custom';
     default:
       return null;
   }
