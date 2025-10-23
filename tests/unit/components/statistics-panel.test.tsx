@@ -145,9 +145,9 @@ describe("StatisticsPanel", () => {
     render(<StatisticsPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText("📊 Family Statistics")).toBeInTheDocument();
-      expect(screen.getByText("💰 Family Totals")).toBeInTheDocument();
-      expect(screen.getByText("🏆 Character Progress")).toBeInTheDocument();
+      expect(screen.getByText("Family Statistics")).toBeInTheDocument();
+      expect(screen.getByText("Family Totals")).toBeInTheDocument();
+      expect(screen.getByText("Character Progress")).toBeInTheDocument();
     });
   });
 

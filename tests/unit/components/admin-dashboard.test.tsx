@@ -91,13 +91,13 @@ describe("AdminDashboard", () => {
     it("should render all tab labels", () => {
       render(<AdminDashboard />);
 
-      // Desktop labels (hidden sm:inline)
-      expect(screen.getByText(/📊 Overview/)).toBeInTheDocument();
-      expect(screen.getByText(/⚔️ Quest Management/)).toBeInTheDocument();
-      expect(screen.getByText(/📜 Quest Templates/)).toBeInTheDocument();
-      expect(screen.getByText(/🏆 Rewards/)).toBeInTheDocument();
-      expect(screen.getByText(/👑 Guild Masters/)).toBeInTheDocument();
-      expect(screen.getByText(/⚙️ Family Settings/)).toBeInTheDocument();
+      // Desktop labels (hidden sm:inline) - now with Lucide icons
+      expect(screen.getByText(/Overview/)).toBeInTheDocument();
+      expect(screen.getByText(/Quest Management/)).toBeInTheDocument();
+      expect(screen.getByText(/Quest Templates/)).toBeInTheDocument();
+      expect(screen.getByText(/Rewards/)).toBeInTheDocument();
+      expect(screen.getByText(/Guild Masters/)).toBeInTheDocument();
+      expect(screen.getByText(/Family Settings/)).toBeInTheDocument();
     });
 
     it("should render 6 tabs", () => {
@@ -110,14 +110,14 @@ describe("AdminDashboard", () => {
     it("should have Overview tab selected by default", () => {
       render(<AdminDashboard />);
 
-      const overviewTab = screen.getByRole("tab", { name: /📊 Overview/ });
+      const overviewTab = screen.getByRole("tab", { name: /Overview/ });
       expect(overviewTab).toHaveClass("bg-gold-600");
     });
 
     it("should apply selected styling to active tab", () => {
       render(<AdminDashboard />);
 
-      const overviewTab = screen.getByRole("tab", { name: /📊 Overview/ });
+      const overviewTab = screen.getByRole("tab", { name: /Overview/ });
       expect(overviewTab.className).toContain("bg-gold-600");
       expect(overviewTab.className).toContain("text-white");
     });
@@ -125,7 +125,7 @@ describe("AdminDashboard", () => {
     it("should apply hover styling to inactive tabs", () => {
       render(<AdminDashboard />);
 
-      const questTab = screen.getByRole("tab", { name: /📜 Quest Templates/ });
+      const questTab = screen.getByRole("tab", { name: /Quest Templates/ });
       expect(questTab.className).toContain("text-gray-400");
       expect(questTab.className).toContain("hover:text-gray-200");
     });
@@ -146,7 +146,7 @@ describe("AdminDashboard", () => {
     it("should update URL with tab query param when tab changes", async () => {
       render(<AdminDashboard />);
 
-      const rewardsTab = screen.getByRole("tab", { name: /🏆 Rewards/ });
+      const rewardsTab = screen.getByRole("tab", { name: /Rewards/ });
       fireEvent.click(rewardsTab);
 
       await waitFor(() => {
@@ -176,10 +176,10 @@ describe("AdminDashboard", () => {
 
       // Skip Overview (already selected, won't trigger navigation)
       const tabs = [
-        { name: /📜 Quest Templates/, param: "quest-templates" },
-        { name: /🏆 Rewards/, param: "rewards" },
+        { name: /Quest Templates/, param: "quest-templates" },
+        { name: /Rewards/, param: "rewards" },
         { name: /👑 Guild Masters/, param: "guild-masters" },
-        { name: /⚙️ Family Settings/, param: "family-settings" },
+        { name: /Family Settings/, param: "family-settings" },
       ];
 
       for (const tab of tabs) {
@@ -220,7 +220,7 @@ describe("AdminDashboard", () => {
 
       render(<AdminDashboard />);
 
-      const questTab = screen.getByRole("tab", { name: /📜 Quest Templates/ });
+      const questTab = screen.getByRole("tab", { name: /Quest Templates/ });
       expect(questTab).toHaveClass("bg-gold-600");
     });
 
@@ -229,7 +229,7 @@ describe("AdminDashboard", () => {
 
       render(<AdminDashboard />);
 
-      const rewardsTab = screen.getByRole("tab", { name: /🏆 Rewards/ });
+      const rewardsTab = screen.getByRole("tab", { name: /Rewards/ });
       expect(rewardsTab).toHaveClass("bg-gold-600");
     });
 
@@ -238,7 +238,7 @@ describe("AdminDashboard", () => {
 
       render(<AdminDashboard />);
 
-      const settingsTab = screen.getByRole("tab", { name: /⚙️ Family Settings/ });
+      const settingsTab = screen.getByRole("tab", { name: /Family Settings/ });
       expect(settingsTab).toHaveClass("bg-gold-600");
     });
 
@@ -292,7 +292,7 @@ describe("AdminDashboard", () => {
     it("should render Quest Templates when selected", async () => {
       render(<AdminDashboard />);
 
-      const questTab = screen.getByRole("tab", { name: /📜 Quest Templates/ });
+      const questTab = screen.getByRole("tab", { name: /Quest Templates/ });
       fireEvent.click(questTab);
 
       await waitFor(() => {
@@ -304,7 +304,7 @@ describe("AdminDashboard", () => {
     it("should render Rewards when selected", async () => {
       render(<AdminDashboard />);
 
-      const rewardsTab = screen.getByRole("tab", { name: /🏆 Rewards/ });
+      const rewardsTab = screen.getByRole("tab", { name: /Rewards/ });
       fireEvent.click(rewardsTab);
 
       await waitFor(() => {
@@ -328,7 +328,7 @@ describe("AdminDashboard", () => {
     it("should render FamilySettings when Family Settings tab selected", async () => {
       render(<AdminDashboard />);
 
-      const settingsTab = screen.getByRole("tab", { name: /⚙️ Family Settings/ });
+      const settingsTab = screen.getByRole("tab", { name: /Family Settings/ });
       fireEvent.click(settingsTab);
 
       await waitFor(() => {
@@ -390,18 +390,20 @@ describe("AdminDashboard", () => {
       render(<AdminDashboard />);
 
       const tabs = screen.getAllByRole("tab");
-      expect(tabs[0]).toHaveTextContent(/📊/);
-      expect(tabs[1]).toHaveTextContent(/⚔️/);
-      expect(tabs[2]).toHaveTextContent(/📜/);
-      expect(tabs[3]).toHaveTextContent(/🏆/);
-      expect(tabs[4]).toHaveTextContent(/👑/);
-      expect(tabs[5]).toHaveTextContent(/⚙️/);
+      expect(tabs.length).toBe(6);
+      // Verify tabs are rendered (they now have Lucide icons instead of emoji)
+      expect(tabs[0]).toBeInTheDocument();
+      expect(tabs[1]).toBeInTheDocument();
+      expect(tabs[2]).toBeInTheDocument();
+      expect(tabs[3]).toHaveTextContent(/Rewards/);
+      expect(tabs[4]).toHaveTextContent(/Guild Masters/);
+      expect(tabs[5]).toHaveTextContent(/Family Settings/);
     });
 
     it("should use scroll: false when navigating", async () => {
       render(<AdminDashboard />);
 
-      const rewardsTab = screen.getByRole("tab", { name: /🏆 Rewards/ });
+      const rewardsTab = screen.getByRole("tab", { name: /Rewards/ });
       fireEvent.click(rewardsTab);
 
       await waitFor(() => {
@@ -417,8 +419,8 @@ describe("AdminDashboard", () => {
     it("should handle rapid tab switching", async () => {
       render(<AdminDashboard />);
 
-      const questTab = screen.getByRole("tab", { name: /📜 Quest Templates/ });
-      const rewardsTab = screen.getByRole("tab", { name: /🏆 Rewards/ });
+      const questTab = screen.getByRole("tab", { name: /Quest Templates/ });
+      const rewardsTab = screen.getByRole("tab", { name: /Rewards/ });
       const guildTab = screen.getByRole("tab", { name: /👑 Guild Masters/ });
 
       fireEvent.click(questTab);

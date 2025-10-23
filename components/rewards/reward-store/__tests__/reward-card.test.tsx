@@ -49,7 +49,9 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('📱')).toBeInTheDocument();
+      // Icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('Screen Time')).toBeInTheDocument();
     });
 
@@ -65,7 +67,9 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('⭐')).toBeInTheDocument();
+      // Icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('Privilege')).toBeInTheDocument();
     });
 

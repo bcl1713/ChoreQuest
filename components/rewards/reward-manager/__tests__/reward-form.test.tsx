@@ -88,7 +88,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('💾 Create Reward')).toBeInTheDocument();
+      expect(screen.getByText('Create Reward')).toBeInTheDocument();
     });
 
     it('should show placeholder text in create mode', () => {
@@ -147,7 +147,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('💾 Save Changes')).toBeInTheDocument();
+      expect(screen.getByText('Save Changes')).toBeInTheDocument();
     });
 
     it('should not show placeholder text in edit mode', () => {
