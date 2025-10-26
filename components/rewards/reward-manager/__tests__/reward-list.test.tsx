@@ -270,8 +270,13 @@ describe('RewardList', () => {
         />
       );
 
-      expect(screen.getByText('✓ Active')).toBeInTheDocument();
-      expect(screen.getByText('○ Inactive')).toBeInTheDocument();
+      // Check that both rewards are rendered with the correct activity status
+      expect(screen.getByTestId('reward-card-reward-1')).toBeInTheDocument();
+      expect(screen.getByTestId('reward-card-reward-2')).toBeInTheDocument();
+
+      // Verify the inactive reward has the inactive badge
+      const inactiveCard = screen.getByTestId('reward-card-reward-2');
+      expect(inactiveCard.textContent).toContain('Inactive');
     });
   });
 

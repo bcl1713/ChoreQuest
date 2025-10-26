@@ -150,7 +150,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('⚡ Redeem Reward');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Redeem Reward');
       expect(screen.getByTestId('reward-store-redeem-button')).not.toBeDisabled();
     });
 
@@ -195,7 +195,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('✓ Approved');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Approved');
       expect(screen.getByTestId('reward-store-redeem-button')).toBeDisabled();
     });
 
@@ -231,7 +231,7 @@ describe('RewardCard', () => {
     });
 
     it('shows APPROVED badge when status is APPROVED', () => {
-      render(
+      const { container } = render(
         <RewardCard
           reward={mockReward}
           canAfford={true}
@@ -241,7 +241,10 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('Approved')).toBeInTheDocument();
+      // Check for the badge span with green styling (specific to APPROVED status)
+      const badge = container.querySelector('.bg-green-900\\/30');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent('Approved');
     });
 
     it('does not show badge when no redemption status', () => {

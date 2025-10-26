@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { Button } from '@/components/ui';
+import { AlertTriangle, Crown } from 'lucide-react';
 
 // Error Boundary Component
 class AdminErrorBoundary extends Component<
@@ -29,7 +30,10 @@ class AdminErrorBoundary extends Component<
       return (
         <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 flex items-center justify-center">
           <div className="fantasy-card p-8 max-w-md text-center">
-            <h2 className="text-2xl font-fantasy text-red-400 mb-4">⚠️ Error</h2>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <AlertTriangle size={28} aria-hidden="true" className="text-red-400" />
+              <h2 className="text-2xl font-fantasy text-red-400">Error</h2>
+            </div>
             <p className="text-gray-300 mb-4">
               Something went wrong loading the admin dashboard.
             </p>
@@ -91,9 +95,12 @@ export default function AdminPage() {
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold">
-                  👑 Admin Dashboard
-                </h1>
+                <div className="flex items-center gap-2">
+                  <Crown size={28} aria-hidden="true" className="text-gold-400" />
+                  <h1 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold">
+                    Admin Dashboard
+                  </h1>
+                </div>
                 {family && (
                   <p className="text-sm text-gray-400">
                     Managing: <span className="text-gold-400">{family.name}</span>

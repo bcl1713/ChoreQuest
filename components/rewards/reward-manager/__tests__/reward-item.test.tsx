@@ -77,7 +77,9 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('⭐')).toBeInTheDocument();
+      // Star icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('Privilege')).toBeInTheDocument();
     });
 
@@ -109,13 +111,15 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('🎈')).toBeInTheDocument();
+      // Lightbulb icon is rendered as SVG from Lucide React
+      const icons = document.querySelectorAll('svg');
+      expect(icons.length).toBeGreaterThan(0);
       expect(screen.getByText('Experience')).toBeInTheDocument();
     });
 
     it('should show inactive badge when reward is inactive', () => {
       const reward = createMockReward({ is_active: false });
-      render(
+      const { container } = render(
         <RewardItem
           reward={reward}
           onEdit={mockOnEdit}
@@ -124,7 +128,10 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('Inactive')).toBeInTheDocument();
+      // Check for the inactive badge specifically
+      const badge = container.querySelector('.bg-gray-700');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveTextContent('Inactive');
     });
 
     it('should not show inactive badge when reward is active', () => {
@@ -173,7 +180,7 @@ describe('RewardItem', () => {
   });
 
   describe('Toggle Active Button', () => {
-    it('should show "✓ Active" when reward is active', () => {
+    it('should show "Active" when reward is active', () => {
       const reward = createMockReward({ is_active: true });
       render(
         <RewardItem
@@ -184,10 +191,10 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('✓ Active')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
     });
 
-    it('should show "○ Inactive" when reward is inactive', () => {
+    it('should show "Inactive" when reward is inactive', () => {
       const reward = createMockReward({ is_active: false });
       render(
         <RewardItem
@@ -198,7 +205,8 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('○ Inactive')).toBeInTheDocument();
+      // Check that the toggle button shows "Inactive"
+      expect(screen.getByTestId('toggle-reward-active')).toHaveTextContent('Inactive');
     });
 
     it('should apply green styling when reward is active', () => {

@@ -157,7 +157,7 @@ describe("StatisticsPanel", () => {
     await waitFor(() => {
       expect(screen.getByText("Quests This Week")).toBeInTheDocument();
       expect(screen.getByText("Quests This Month")).toBeInTheDocument();
-      expect(screen.getByText("⏳ Pending Approvals")).toBeInTheDocument();
+      expect(screen.getByText("Pending Approvals")).toBeInTheDocument();
     });
   });
 
@@ -165,8 +165,8 @@ describe("StatisticsPanel", () => {
     render(<StatisticsPanel />);
 
     await waitFor(() => {
-      expect(screen.getByText("💰 Total Gold")).toBeInTheDocument();
-      expect(screen.getByText("⭐ Total XP")).toBeInTheDocument();
+      expect(screen.getByText("Total Gold")).toBeInTheDocument();
+      expect(screen.getByText("Total XP")).toBeInTheDocument();
     });
   });
 

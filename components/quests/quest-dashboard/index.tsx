@@ -13,6 +13,7 @@ import { useQuests } from "@/hooks/useQuests";
 import QuestList from "./quest-list";
 import * as QuestHelpers from "./quest-helpers";
 import PendingApprovalsSection from "@/components/quests/pending-approvals-section";
+import { Swords, ScrollText } from "lucide-react";
 
 type QuestDashboardProps = {
   onError: (error: string) => void;
@@ -235,7 +236,10 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       {/* My Quests Section */}
       <section>
         <div className="mb-4">
-          <h3 className="text-xl font-fantasy text-gray-200">🗡️ My Quests</h3>
+          <div className="flex items-center gap-2">
+            <Swords size={24} aria-hidden="true" className="text-gray-300" />
+            <h3 className="text-xl font-fantasy text-gray-200">My Quests</h3>
+          </div>
           {myHistoricalQuests.length > 0 && (
             <p className="text-xs text-gray-500 mt-1">Completed adventures live in Quest History near the bottom of the page.</p>
           )}
@@ -262,7 +266,10 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       {myHistoricalQuests.length > 0 && (
         <section>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h3 className="text-xl font-fantasy text-gray-200">📜 Quest History</h3>
+            <div className="flex items-center gap-2">
+              <ScrollText size={24} aria-hidden="true" className="text-gray-300" />
+              <h3 className="text-xl font-fantasy text-gray-200">Quest History</h3>
+            </div>
             <Button
               type="button"
               variant="outline"

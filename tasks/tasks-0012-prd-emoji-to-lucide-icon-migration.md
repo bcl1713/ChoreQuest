@@ -77,50 +77,50 @@ Generated from: `0012-prd-emoji-to-lucide-icon-migration.md`
 
 ## Tasks
 
-- [ ] 1.0 Phase 1: Migrate Dashboard & Character System
-  - [ ] 1.1 Update `lib/constants/character-classes.ts` to replace emoji icon strings with Lucide icon name references (e.g., `icon: "Wand"` instead of `icon: "🔮"`). Document that consumers will need to import the actual icon component.
-  - [ ] 1.2 Update `components/character/CharacterCreation.tsx` to import Lucide icons (Wand, Sword, Shield, Sparkles, Crosshair) and render them instead of emoji strings from character class data. Apply size 24px for class selection icons with aria-labels.
-  - [ ] 1.3 Update `app/page.tsx` (landing page) to replace any emoji with appropriate Lucide icons. Check for castle (Castle), swords (Swords), or other thematic icons. Add imports and ensure proper sizing (32px for hero icons).
-  - [ ] 1.4 Review `app/dashboard/page.tsx` - verify existing Lucide icon usage (Sword, Store) is consistent. Replace any remaining emoji with Lucide icons. Ensure tab icons are 20px with proper aria-labels.
-  - [ ] 1.5 Update test file `tests/unit/components/character-creation.test.tsx` to expect Lucide icon components instead of emoji strings. Use `getByLabelText` or check for icon data attributes.
-  - [ ] 1.6 Run `npm run test` to verify character creation tests pass. Run `npm run build` and `npm run lint` to check for errors.
+- [x] 1.0 Phase 1: Migrate Dashboard & Character System
+  - [x] 1.1 Update `lib/constants/character-classes.ts` to replace emoji icon strings with Lucide icon name references (e.g., `icon: "Wand"` instead of `icon: "🔮"`). Document that consumers will need to import the actual icon component.
+  - [x] 1.2 Update `components/character/CharacterCreation.tsx` to import Lucide icons (Wand, Sword, Shield, Sparkles, Crosshair) and render them instead of emoji strings from character class data. Apply size 24px for class selection icons with aria-labels.
+  - [x] 1.3 Update `app/page.tsx` (landing page) to replace any emoji with appropriate Lucide icons. Check for castle (Castle), swords (Swords), or other thematic icons. Add imports and ensure proper sizing (32px for hero icons).
+  - [x] 1.4 Review `app/dashboard/page.tsx` - verify existing Lucide icon usage (Sword, Store) is consistent. Replace any remaining emoji with Lucide icons. Ensure tab icons are 20px with proper aria-labels.
+  - [x] 1.5 Update test file `tests/unit/components/character-creation.test.tsx` to expect Lucide icon components instead of emoji strings. Use `getByLabelText` or check for icon data attributes.
+  - [x] 1.6 Run `npm run test` to verify character creation tests pass. Run `npm run build` and `npm run lint` to check for errors.
 
-- [ ] 2.0 Phase 2: Migrate Quest System Components
-  - [ ] 2.1 Update `components/quests/quest-card/index.tsx` to replace inline emoji (⚡ XP, 💰 Gold, 🔥 streak, 👤 assigned) with Lucide icons (Zap, Coins, Flame, User). Import icons, apply size 16px for inline usage, add aria-labels where meaningful or aria-hidden for decorative use.
-  - [ ] 2.2 Update `components/quests/quest-dashboard/index.tsx` to replace any emoji in headers, buttons, or status displays with appropriate Lucide icons. Use Target for goals, Swords for battles, etc. Size 20px for section headers.
-  - [ ] 2.3 Update `components/quests/quest-dashboard/quest-stats.tsx` to replace emoji in statistics display (trophy, target, chart icons) with Lucide equivalents (Trophy, Target, BarChart3). Size 24px for stat icons.
-  - [ ] 2.4 Update `components/quests/quest-create-modal/index.tsx` and `template-quest-form.tsx` to replace emoji in form labels, placeholders, or buttons with Lucide icons (Zap, Coins, FileText, etc.). Size 18px for form icons.
-  - [ ] 2.5 Update test files: `components/quests/quest-card/__tests__/index.test.tsx`, `components/quests/quest-create-modal/__tests__/template-quest-form.test.tsx`, and `components/quest-card.test.tsx` to expect Lucide icons instead of emoji. Update assertions to use aria-labels or icon test IDs.
-  - [ ] 2.6 Run `npm run test -- quest` to verify quest-related tests pass. Fix any failing tests.
-  - [ ] 2.7 Run `npm run build` and `npm run lint` to verify no regressions in quest system.
+- [x] 2.0 Phase 2: Migrate Quest System Components
+  - [x] 2.1 Update `components/quests/quest-card/index.tsx` to replace inline emoji (⚡ XP, 💰 Gold, 🔥 streak, 👤 assigned) with Lucide icons (Zap, Coins, Flame, User). Import icons, apply size 16px for inline usage, add aria-labels where meaningful or aria-hidden for decorative use.
+  - [x] 2.2 Update `components/quests/quest-dashboard/index.tsx` to replace any emoji in headers, buttons, or status displays with appropriate Lucide icons. Use Target for goals, Swords for battles, etc. Size 20px for section headers.
+  - [x] 2.3 Update `components/quests/quest-dashboard/quest-stats.tsx` to replace emoji in statistics display (trophy, target, chart icons) with Lucide equivalents (Trophy, Target, BarChart3). Size 24px for stat icons.
+  - [x] 2.4 Update `components/quests/quest-create-modal/index.tsx` and `template-quest-form.tsx` to replace emoji in form labels, placeholders, or buttons with Lucide icons (Zap, Coins, FileText, etc.). Size 18px for form icons.
+  - [x] 2.5 Update test files: `components/quests/quest-card/__tests__/index.test.tsx`, `components/quests/quest-create-modal/__tests__/template-quest-form.test.tsx`, and `components/quest-card.test.tsx` to expect Lucide icons instead of emoji. Update assertions to use aria-labels or icon test IDs.
+  - [x] 2.6 Run `npm run test -- quest` to verify quest-related tests pass. Fix any failing tests.
+  - [x] 2.7 Run `npm run build` and `npm run lint` to verify no regressions in quest system.
 
-- [ ] 3.0 Phase 3: Migrate Reward System Components
-  - [ ] 3.1 Update `components/rewards/reward-store/index.tsx` to replace emoji (🎁 rewards, 💎 gems, 🏆 trophy) with Lucide icons (Gift, Gem, Trophy). Size 24px for store section icons with aria-labels.
-  - [ ] 3.2 Update `components/rewards/reward-store/reward-card.tsx` to replace emoji in reward display (💰 cost, ✅ redeemed, 🎁 reward) with Lucide icons (Coins, Check, Gift). Size 18px for card icons.
-  - [ ] 3.3 Update `components/rewards/reward-store/redemption-history.tsx` to replace emoji in history entries (✅ success, ❌ failed, ⏳ pending) with Lucide icons (Check, X, Clock). Size 16px for inline status icons with appropriate aria-labels.
+- [x] 3.0 Phase 3: Migrate Reward System Components
+  - [x] 3.1 Update `components/rewards/reward-store/index.tsx` to replace emoji (🎁 rewards, 💎 gems, 🏆 trophy) with Lucide icons (Gift, Gem, Trophy). Size 24px for store section icons with aria-labels.
+  - [x] 3.2 Update `components/rewards/reward-store/reward-card.tsx` to replace emoji in reward display (💰 cost, ✅ redeemed, 🎁 reward) with Lucide icons (Coins, Check, Gift). Size 18px for card icons.
+  - [x] 3.3 Update `components/rewards/reward-store/redemption-history.tsx` to replace emoji in history entries (✅ success, ❌ failed, ⏳ pending) with Lucide icons (Check, X, Clock). Size 16px for inline status icons with appropriate aria-labels.
   - [ ] 3.4 Update `components/rewards/reward-manager/index.tsx`, `reward-form.tsx`, `reward-item.tsx`, and `reward-list.tsx` to replace emoji with Lucide icons. Use Edit2 for edit, Trash2 for delete, Gift for rewards. Size 18px for action buttons, 16px for inline display.
   - [ ] 3.5 Update test files: `components/rewards/reward-store/__tests__/reward-card.test.tsx`, `redemption-history.test.tsx`, and `reward-manager/__tests__/` tests to expect Lucide icons. Update assertions to query by aria-label or test ID.
   - [ ] 3.6 Run `npm run test -- reward` to verify reward-related tests pass. Fix any failing tests.
   - [ ] 3.7 Run `npm run build` and `npm run lint` to verify no regressions in reward system.
 
-- [ ] 4.0 Phase 4: Migrate Admin Panel Components
-  - [ ] 4.1 Update `components/admin/admin-dashboard.tsx` to replace emoji in tab labels (⚙️ settings, 📊 stats, 👑 guild masters) with Lucide icons (Settings, BarChart3, Crown). Size 20px for tab icons with aria-labels.
+- [x] 4.0 Phase 4: Migrate Admin Panel Components
+  - [x] 4.1 Update `components/admin/admin-dashboard.tsx` to replace emoji in tab labels (⚙️ settings, 📊 stats, 👑 guild masters) with Lucide icons (Settings, BarChart3, Crown). Size 20px for tab icons with aria-labels.
   - [ ] 4.2 Update `components/admin/activity-feed.tsx` to replace emoji in activity events (⚡ quest created, ✅ completed, 🎁 redeemed, etc.) with contextually appropriate Lucide icons. Create a mapping function if needed. Size 16px for event icons with descriptive aria-labels.
   - [ ] 4.3 Update `components/admin/statistics-panel.tsx` to replace emoji in stat displays (📈 trending, 📊 charts, ⭐ highlights) with Lucide icons (TrendingUp, BarChart3, Star). Size 24px for stat section icons.
-  - [ ] 4.4 Update `components/admin/guild-master-manager.tsx` to replace emoji (👑 crown, ⚡ actions, ✅/❌ status) with Lucide icons (Crown, Zap, Check/X). Size 18px for action icons.
-  - [ ] 4.5 Update `app/admin/page.tsx` to replace any remaining emoji with Lucide icons. Verify consistency with admin dashboard tabs.
+  - [x] 4.4 Update `components/admin/guild-master-manager.tsx` to replace emoji (👑 crown, ⚡ actions, ✅/❌ status) with Lucide icons (Crown, Zap, Check/X). Size 18px for action icons.
+  - [x] 4.5 Update `app/admin/page.tsx` to replace any remaining emoji with Lucide icons. Verify consistency with admin dashboard tabs.
   - [ ] 4.6 Update test files: `tests/unit/components/admin-dashboard.test.tsx`, `statistics-panel.test.tsx`, and `guild-master-manager.test.tsx` to expect Lucide icons instead of emoji.
   - [ ] 4.7 Run `npm run test -- admin` to verify admin-related tests pass. Fix any failing tests.
   - [ ] 4.8 Run `npm run build` and `npm run lint` to verify no regressions in admin panel.
 
-- [ ] 5.0 Phase 5: Migrate Supporting Components & Utilities
-  - [ ] 5.1 Update `components/family/family-management.tsx` and `family-settings.tsx` to replace emoji (🏰 family, ⚙️ settings, 👤 members) with Lucide icons (Castle, Settings, Users). Size contextually appropriate (16-24px).
+- [x] 5.0 Phase 5: Migrate Supporting Components & Utilities
+  - [x] 5.1 Update `components/family/family-management.tsx` and `family-settings.tsx` to replace emoji (🏰 family, ⚙️ settings, 👤 members) with Lucide icons (Castle, Settings, Users). Size contextually appropriate (16-24px).
   - [ ] 5.2 Update `components/layout/site-footer.tsx` to replace emoji (🏷️ version tag, ℹ️ info) with Lucide icons (Tag, Info). Size 16px for footer icons with aria-hidden if purely decorative.
   - [ ] 5.3 Update `components/ui/ConfirmationModal.tsx` to replace emoji (⚠️ warning, ✅ confirm, ❌ cancel) with Lucide icons (AlertTriangle, Check, X). Size 24px for modal icons with aria-labels.
-  - [ ] 5.4 Update `components/migration/UserMigrationNotice.tsx` to replace emoji with appropriate Lucide icons (Info, AlertTriangle). Size 20px.
-  - [ ] 5.5 Update `components/auth/AuthForm.tsx` to replace any emoji with Lucide icons. Check for shields, locks, or user icons. Size 20px for auth form icons.
-  - [ ] 5.6 Update `app/auth/create-family/page.tsx` to replace emoji (🏰 castle, ⚔️ swords) with Lucide icons (Castle, Swords). Size 32px for page hero icons.
-  - [ ] 5.7 Update `hooks/useTabNavigation.ts` if it contains emoji in tab definitions or returns emoji data. Replace with icon name references.
+  - [x] 5.4 Update `components/migration/UserMigrationNotice.tsx` to replace emoji with appropriate Lucide icons (Info, AlertTriangle). Size 20px.
+  - [x] 5.5 Update `components/auth/AuthForm.tsx` to replace any emoji with Lucide icons. Check for shields, locks, or user icons. Size 20px for auth form icons.
+  - [x] 5.6 Update `app/auth/create-family/page.tsx` to replace emoji (🏰 castle, ⚔️ swords) with Lucide icons (Castle, Swords). Size 32px for page hero icons.
+  - [x] 5.7 Update `hooks/useTabNavigation.ts` if it contains emoji in tab definitions or returns emoji data. Replace with icon name references.
   - [ ] 5.8 Update test files: `components/family/family-quest-claiming.test.tsx`, `tests/unit/components/site-footer.test.tsx`, `family-settings.test.tsx`, `ui/FantasyButton.test.tsx`, and `hooks/useTabNavigation.test.ts` to expect Lucide icons.
   - [ ] 5.9 Run `npm run test` to verify all supporting component tests pass. Fix any failing tests.
   - [ ] 5.10 Run `npm run build` and `npm run lint` to verify no regressions.

@@ -4,7 +4,7 @@ import React from "react";
 import { Reward } from "@/lib/types/database";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui";
-import { Smartphone, Star, Coins, Lightbulb } from "lucide-react";
+import { Smartphone, Star, Coins, Lightbulb, Edit2, Circle, Check, Trash2 } from "lucide-react";
 
 const REWARD_TYPE_ICONS = {
   SCREEN_TIME: Smartphone,
@@ -81,18 +81,29 @@ export const RewardItem = React.memo(function RewardItem({
           data-testid="edit-reward-button"
           variant="secondary"
           size="sm"
-          className="flex-1"
+          className="flex-1 inline-flex items-center justify-center gap-1"
         >
-          ✏️Edit
+          <Edit2 size={16} aria-hidden="true" />
+          Edit
         </Button>
         <Button
           onClick={() => onToggleActive(reward)}
           data-testid="toggle-reward-active"
           variant={reward.is_active ? "success" : "outline"}
           size="sm"
-          className="flex-1"
+          className="flex-1 inline-flex items-center justify-center gap-1"
         >
-          {reward.is_active ? "✓ Active" : "○ Inactive"}
+          {reward.is_active ? (
+            <>
+              <Check size={16} aria-hidden="true" />
+              Active
+            </>
+          ) : (
+            <>
+              <Circle size={16} aria-hidden="true" />
+              Inactive
+            </>
+          )}
         </Button>
         <Button
           onClick={() => onDelete(reward)}
@@ -101,7 +112,7 @@ export const RewardItem = React.memo(function RewardItem({
           size="icon-sm"
           aria-label="Delete reward"
         >
-          🗑️
+          <Trash2 size={16} aria-hidden="true" />
         </Button>
       </div>
     </motion.div>

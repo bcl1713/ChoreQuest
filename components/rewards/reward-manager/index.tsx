@@ -6,7 +6,7 @@ import { RewardService } from "@/lib/reward-service";
 import { Reward } from "@/lib/types/database";
 import { useRewards } from "@/hooks/useRewards";
 import { Button } from "@/components/ui";
-import { Trophy, Loader, Trash2 } from "lucide-react";
+import { Trophy, Loader, Trash2, AlertTriangle } from "lucide-react";
 import { RewardList } from "./reward-list";
 import { RewardForm, RewardFormData } from "./reward-form";
 import { RedemptionList } from "./redemption-list";
@@ -284,9 +284,12 @@ export default function RewardManager() {
             className="fantasy-card p-6 max-w-md w-full"
             data-testid="delete-confirmation-dialog"
           >
-            <h3 className="text-xl font-fantasy text-red-400 mb-4">
-              ⚠️ Delete Reward?
-            </h3>
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle size={24} aria-hidden="true" className="text-red-400" />
+              <h3 className="text-xl font-fantasy text-red-400">
+                Delete Reward?
+              </h3>
+            </div>
             <p className="text-gray-300 mb-6">
               Are you sure you want to delete{" "}
               <span className="font-semibold text-gray-100">

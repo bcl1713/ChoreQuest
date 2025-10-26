@@ -6,13 +6,13 @@ describe("SiteFooter", () => {
     render(<SiteFooter gitReference={{ type: "branch", value: "feature/ui-polish" }} />);
 
     expect(screen.getByText(/Built with Next\.js/i)).toBeInTheDocument();
-    expect(screen.getByText("🌿 Branch: feature/ui-polish")).toBeInTheDocument();
+    expect(screen.getByText(/Branch: feature\/ui-polish/i)).toBeInTheDocument();
   });
 
   it("renders tag metadata when provided", () => {
     render(<SiteFooter gitReference={{ type: "tag", value: "v0.4.0" }} />);
 
-    expect(screen.getByText("🏷️ Tag: v0.4.0")).toBeInTheDocument();
+    expect(screen.getByText(/Tag: v0\.4\.0/i)).toBeInTheDocument();
   });
 
   it("hides git metadata when not available", () => {

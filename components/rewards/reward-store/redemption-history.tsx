@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RewardRedemption, UserProfile } from '@/lib/types/database';
 import { Button } from '@/components/ui';
-import { Smartphone, Star, Coins, Lightbulb, Check } from 'lucide-react';
+import { Smartphone, Star, Coins, Lightbulb, Check, ScrollText, X } from 'lucide-react';
 
 interface RewardRedemptionWithDetails extends RewardRedemption {
   user_profiles: UserProfile;
@@ -49,11 +49,12 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
   if (redemptions.length === 0) {
     return (
       <div className="fantasy-card p-6">
-        <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center">
-          📜 Recent Redemptions
+        <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center gap-2">
+          <ScrollText size={24} aria-hidden="true" className="text-gold-400" />
+          Recent Redemptions
         </h3>
         <div className="text-center py-8">
-          <div className="text-6xl mb-4">📜</div>
+          <ScrollText size={48} className="mx-auto mb-4 text-gold-400" aria-hidden="true" />
           <p className="text-gray-400 text-lg">No redemption history yet.</p>
           <p className="text-gray-500 text-sm mt-2">Your reward requests will appear here.</p>
         </div>
@@ -63,8 +64,9 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
 
   return (
     <div className="fantasy-card p-6">
-      <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center">
-        📜 Recent Redemptions
+      <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center gap-2">
+        <ScrollText size={24} aria-hidden="true" className="text-gold-400" />
+        Recent Redemptions
       </h3>
       <div className="space-y-4">
         {displayRedemptions.map((redemption) => (
@@ -120,16 +122,18 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
                   variant="success"
                   size="sm"
                   data-testid={`approve-${redemption.id}`}
+                  startIcon={<Check size={16} aria-hidden="true" />}
                 >
-                  ✅ Approve
+                  Approve
                 </Button>
                 <Button
                   onClick={() => onDeny(redemption.id)}
                   variant="destructive"
                   size="sm"
                   data-testid={`deny-${redemption.id}`}
+                  startIcon={<X size={16} aria-hidden="true" />}
                 >
-                  ❌ Deny
+                  Deny
                 </Button>
               </div>
             )}

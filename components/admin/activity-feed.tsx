@@ -6,7 +6,7 @@ import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui";
-import { Check, Clock, Gift, Sparkles, X, PartyPopper, UserPlus } from "lucide-react";
+import { Check, Clock, Gift, Sparkles, X, PartyPopper, UserPlus, Radio, RefreshCw, Volume2 } from "lucide-react";
 
 const activityService = new ActivityService();
 
@@ -175,8 +175,9 @@ export default function ActivityFeed() {
         data-testid="activity-feed"
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-white">
-            📡 Recent Activity
+          <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+            <Radio size={20} aria-hidden="true" className="text-gray-400" />
+            Recent Activity
           </h3>
         </div>
         <div className="space-y-3">
@@ -201,17 +202,19 @@ export default function ActivityFeed() {
         data-testid="activity-feed"
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-white">
-            📡 Recent Activity
+          <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+            <Radio size={20} aria-hidden="true" className="text-gray-400" />
+            Recent Activity
           </h3>
           <Button
             onClick={handleRefresh}
             variant="ghost"
             size="sm"
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white inline-flex items-center gap-1"
             data-testid="activity-feed-refresh-button"
           >
-            🔄 Retry
+            <RefreshCw size={16} aria-hidden="true" />
+            Retry
           </Button>
         </div>
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
@@ -228,23 +231,36 @@ export default function ActivityFeed() {
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold text-white">📡 Recent Activity</h3>
+        <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+          <Radio size={20} aria-hidden="true" className="text-gray-400" />
+          Recent Activity
+        </h3>
         <Button
           onClick={handleRefresh}
           isLoading={refreshing}
           variant="ghost"
           size="sm"
-          className="text-gray-400 hover:text-white"
+          className="text-gray-400 hover:text-white inline-flex items-center gap-1"
           data-testid="activity-feed-refresh-button"
         >
-          {refreshing ? "⟳ Refreshing..." : "🔄 Refresh"}
+          {refreshing ? (
+            <>
+              <RefreshCw size={16} aria-hidden="true" className="animate-spin" />
+              Refreshing...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={16} aria-hidden="true" />
+              Refresh
+            </>
+          )}
         </Button>
       </div>
 
       {/* Activity List */}
       {events.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
-          <p className="text-4xl mb-2">🔇</p>
+          <Volume2 size={48} className="mx-auto mb-2 text-gray-600" aria-hidden="true" />
           <p>No recent activity</p>
           <p className="text-sm mt-1">
             Complete quests and redeem rewards to see activity here

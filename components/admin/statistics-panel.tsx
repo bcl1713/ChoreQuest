@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { StatisticsService, FamilyStatistics } from "@/lib/statistics-service";
 import { motion } from "framer-motion";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Clock, Coins, Star, Gift, Trophy, Medal } from "lucide-react";
 
 const statisticsService = new StatisticsService();
 
@@ -174,7 +174,10 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.2 }}
             className="bg-gradient-to-br from-orange-900/50 to-orange-800/30 border border-orange-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">⏳ Pending Approvals</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Clock size={16} aria-hidden="true" className="text-orange-400" />
+              Pending Approvals
+            </p>
             <p className="text-3xl font-bold text-white">
               {statistics.pendingQuestApprovals + statistics.pendingRewardRedemptions}
             </p>
@@ -188,7 +191,10 @@ export default function StatisticsPanel() {
 
       {/* Family Totals */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">💰 Family Totals</h3>
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Coins size={20} aria-hidden="true" className="text-gold-400" />
+          Family Totals
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Gold */}
           <motion.div
@@ -197,7 +203,10 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.3 }}
             className="bg-gradient-to-br from-yellow-900/50 to-yellow-800/30 border border-yellow-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">💰 Total Gold</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Coins size={16} aria-hidden="true" className="text-gold-400" />
+              Total Gold
+            </p>
             <p className="text-3xl font-bold text-yellow-400">
               {statistics.totalGoldEarned.toLocaleString()}
             </p>
@@ -210,7 +219,10 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.4 }}
             className="bg-gradient-to-br from-cyan-900/50 to-cyan-800/30 border border-cyan-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">⭐ Total XP</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Star size={16} aria-hidden="true" className="text-cyan-400" />
+              Total XP
+            </p>
             <p className="text-3xl font-bold text-cyan-400">
               {statistics.totalXpEarned.toLocaleString()}
             </p>
@@ -223,7 +235,10 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.5 }}
             className="bg-gradient-to-br from-pink-900/50 to-pink-800/30 border border-pink-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">🎁 Redemptions (Week)</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Gift size={16} aria-hidden="true" className="text-pink-400" />
+              Redemptions (Week)
+            </p>
             <p className="text-3xl font-bold text-pink-400">
               {statistics.rewardRedemptionsThisWeek}
             </p>
@@ -236,7 +251,10 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.6 }}
             className="bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">🎁 Redemptions (Month)</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Gift size={16} aria-hidden="true" className="text-green-400" />
+              Redemptions (Month)
+            </p>
             <p className="text-3xl font-bold text-green-400">
               {statistics.rewardRedemptionsThisMonth}
             </p>
@@ -246,7 +264,10 @@ export default function StatisticsPanel() {
 
       {/* Character Progress */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">🏆 Character Progress</h3>
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Trophy size={20} aria-hidden="true" className="text-amber-400" />
+          Character Progress
+        </h3>
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -331,7 +352,7 @@ export default function StatisticsPanel() {
             className="mt-4 bg-gradient-to-br from-amber-900/50 to-amber-800/30 border border-amber-500/30 rounded-lg p-6"
           >
             <div className="flex items-center gap-4">
-              <div className="text-4xl">🏅</div>
+              <Medal size={32} aria-hidden="true" className="text-amber-400" />
               <div>
                 <p className="text-sm text-gray-400 mb-1">Most Active Member</p>
                 <p className="text-xl font-bold text-white">

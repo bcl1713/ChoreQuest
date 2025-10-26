@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from './Button';
 
@@ -84,8 +84,16 @@ export function ConfirmationModal({
                     disabled={isLoading}
                     variant={isDangerous ? 'destructive' : 'primary'}
                     size="sm"
+                    className="inline-flex items-center justify-center gap-1"
                   >
-                    {isLoading ? '⏳ Processing...' : confirmText}
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={14} aria-hidden="true" className="animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      confirmText
+                    )}
                   </Button>
                 </div>
               </div>

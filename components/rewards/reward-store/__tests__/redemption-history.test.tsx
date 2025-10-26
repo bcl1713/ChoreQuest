@@ -107,7 +107,7 @@ describe('RedemptionHistory', () => {
         />
       );
 
-      expect(screen.getByText('📜 Recent Redemptions')).toBeInTheDocument();
+      expect(screen.getByText('Recent Redemptions')).toBeInTheDocument();
     });
 
     it('displays redemption name and cost', () => {

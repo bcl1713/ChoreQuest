@@ -51,7 +51,7 @@ npm run test         # All unit tests pass
 
 **If ANY step fails, fix it. No exceptions.**
 
-### **Pull Request & Merge** 🚀
+### Pull Request & Merge
 
 ```bash
 git push -u origin feature/feature-name
@@ -59,7 +59,7 @@ gh pr create --title "Feature description" --body "Detailed description"
 gh pr merge --squash --delete-branch
 ```
 
-### 🔧 Development Commands
+### Development Commands
 
 ```bash
 # Essential TDD Commands
