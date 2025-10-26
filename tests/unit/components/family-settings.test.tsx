@@ -26,6 +26,8 @@ jest.mock("lucide-react", () => ({
   Shield: () => <span>Shield Icon</span>,
   User: () => <span>User Icon</span>,
   Globe: () => <span>Globe Icon</span>,
+  Info: () => <span>Info Icon</span>,
+  AlertCircle: () => <span>AlertCircle Icon</span>,
 }));
 
 // Mock auth context
@@ -148,7 +150,7 @@ describe("FamilySettings", () => {
       render(<FamilySettings />);
 
       await waitFor(() => {
-        expect(screen.getByText("👥 Family Information")).toBeInTheDocument();
+        expect(screen.getByText("Family Information")).toBeInTheDocument();
         expect(screen.getByText(/Family Members \(3\)/)).toBeInTheDocument();
       });
     });
@@ -320,7 +322,7 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      expect(screen.getByText("⚠️ Regenerate Invite Code?")).toBeInTheDocument();
+      expect(screen.getByText("Regenerate Invite Code?")).toBeInTheDocument();
       expect(
         screen.getByText(/This will create a new invite code and invalidate the current one/)
       ).toBeInTheDocument();
@@ -336,13 +338,13 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      expect(screen.getByText("⚠️ Regenerate Invite Code?")).toBeInTheDocument();
+      expect(screen.getByText("Regenerate Invite Code?")).toBeInTheDocument();
 
       const cancelButton = screen.getByRole("button", { name: "Cancel" });
       fireEvent.click(cancelButton);
 
       await waitFor(() => {
-        expect(screen.queryByText("⚠️ Regenerate Invite Code?")).not.toBeInTheDocument();
+        expect(screen.queryByText("Regenerate Invite Code?")).not.toBeInTheDocument();
       });
     });
 
@@ -356,7 +358,8 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1]; // Second one is in modal
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1]; // Last one is in modal
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -378,7 +381,8 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1];
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -396,7 +400,8 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1];
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -416,11 +421,12 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1];
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        expect(screen.queryByText("⚠️ Regenerate Invite Code?")).not.toBeInTheDocument();
+        expect(screen.queryByText("Regenerate Invite Code?")).not.toBeInTheDocument();
       });
     });
 
@@ -442,7 +448,8 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1];
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -476,7 +483,8 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1];
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -504,7 +512,8 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: /Regenerate/ })[1];
+      const confirmButtons = screen.getAllByRole("button", { name: /Regenerate/ });
+      const confirmButton = confirmButtons[confirmButtons.length - 1];
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -546,16 +555,22 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      expect(screen.getByText("⚠️ Regenerate Invite Code?")).toBeInTheDocument();
+      expect(screen.getByText("Regenerate Invite Code?")).toBeInTheDocument();
 
-      // Click the backdrop (modal overlay)
-      const backdrop = screen.getByText("⚠️ Regenerate Invite Code?").closest("div")?.parentElement;
+      // Find and click the backdrop (the outer modal container with onClick handler)
+      // The backdrop is the element with "fixed inset-0 bg-black bg-opacity-50" classes
+      const allDivs = screen.getAllByRole("generic");
+      const backdrop = allDivs.find((div) => {
+        const classList = div.className;
+        return classList && classList.includes("bg-opacity-50") && classList.includes("inset-0");
+      });
+
       if (backdrop) {
         fireEvent.click(backdrop);
       }
 
       await waitFor(() => {
-        expect(screen.queryByText("⚠️ Regenerate Invite Code?")).not.toBeInTheDocument();
+        expect(screen.queryByText("Regenerate Invite Code?")).not.toBeInTheDocument();
       });
     });
 
@@ -569,11 +584,11 @@ describe("FamilySettings", () => {
         fireEvent.click(regenButton);
       });
 
-      const modalTitle = screen.getByText("⚠️ Regenerate Invite Code?");
+      const modalTitle = screen.getByText("Regenerate Invite Code?");
       fireEvent.click(modalTitle);
 
       // Modal should still be open
-      expect(screen.getByText("⚠️ Regenerate Invite Code?")).toBeInTheDocument();
+      expect(screen.getByText("Regenerate Invite Code?")).toBeInTheDocument();
     });
   });
 
