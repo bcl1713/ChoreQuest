@@ -94,14 +94,14 @@ Generated from: `0012-prd-emoji-to-lucide-icon-migration.md`
   - [x] 2.6 Run `npm run test -- quest` to verify quest-related tests pass. Fix any failing tests.
   - [x] 2.7 Run `npm run build` and `npm run lint` to verify no regressions in quest system.
 
-- [x] 3.0 Phase 3: Migrate Reward System Components
+- [x] 3.0 Phase 3: Migrate Reward System Components (Complete)
   - [x] 3.1 Update `components/rewards/reward-store/index.tsx` to replace emoji (🎁 rewards, 💎 gems, 🏆 trophy) with Lucide icons (Gift, Gem, Trophy). Size 24px for store section icons with aria-labels.
   - [x] 3.2 Update `components/rewards/reward-store/reward-card.tsx` to replace emoji in reward display (💰 cost, ✅ redeemed, 🎁 reward) with Lucide icons (Coins, Check, Gift). Size 18px for card icons.
   - [x] 3.3 Update `components/rewards/reward-store/redemption-history.tsx` to replace emoji in history entries (✅ success, ❌ failed, ⏳ pending) with Lucide icons (Check, X, Clock). Size 16px for inline status icons with appropriate aria-labels.
-  - [ ] 3.4 Update `components/rewards/reward-manager/index.tsx`, `reward-form.tsx`, `reward-item.tsx`, and `reward-list.tsx` to replace emoji with Lucide icons. Use Edit2 for edit, Trash2 for delete, Gift for rewards. Size 18px for action buttons, 16px for inline display.
-  - [ ] 3.5 Update test files: `components/rewards/reward-store/__tests__/reward-card.test.tsx`, `redemption-history.test.tsx`, and `reward-manager/__tests__/` tests to expect Lucide icons. Update assertions to query by aria-label or test ID.
-  - [ ] 3.6 Run `npm run test -- reward` to verify reward-related tests pass. Fix any failing tests.
-  - [ ] 3.7 Run `npm run build` and `npm run lint` to verify no regressions in reward system.
+  - [x] 3.4 Update `components/rewards/reward-manager/index.tsx`, `reward-form.tsx`, `reward-item.tsx`, and `reward-list.tsx` to replace emoji with Lucide icons. Use Edit2 for edit, Trash2 for delete, Gift for rewards. Size 18px for action buttons, 16px for inline display.
+  - [x] 3.5 Update test files: `components/rewards/reward-store/__tests__/reward-card.test.tsx`, `redemption-history.test.tsx`, and `reward-manager/__tests__/` tests to expect Lucide icons. Update assertions to query by aria-label or test ID.
+  - [x] 3.6 Run `npm run test -- reward` to verify reward-related tests pass. Fix any failing tests.
+  - [x] 3.7 Run `npm run build` and `npm run lint` to verify no regressions in reward system.
 
 - [x] 4.0 Phase 4: Migrate Admin Panel Components
   - [x] 4.1 Update `components/admin/admin-dashboard.tsx` to replace emoji in tab labels (⚙️ settings, 📊 stats, 👑 guild masters) with Lucide icons (Settings, BarChart3, Crown). Size 20px for tab icons with aria-labels.
