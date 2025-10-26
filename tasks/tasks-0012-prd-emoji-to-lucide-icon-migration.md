@@ -125,29 +125,29 @@ Generated from: `0012-prd-emoji-to-lucide-icon-migration.md`
   - [x] 5.9 Run `npm run test` to verify all supporting component tests pass. Fix any failing tests.
   - [x] 5.10 Run `npm run build` and `npm run lint` to verify no regressions.
 
-- [ ] 6.0 Phase 6: Update Documentation
-  - [ ] 6.1 Update `CLAUDE.md` to replace emoji in headings and text with descriptive text (e.g., "🔧 Development Commands" becomes "Development Commands" or uses "Wrench icon" in text). Maintain readability.
-  - [ ] 6.2 Update `PLANNING.md` to replace emoji with text references. No actual Lucide components can be rendered in markdown, so use descriptive text (e.g., "✅ Complete" becomes "Complete ✓" or "[✓] Complete").
-  - [ ] 6.3 Update `README.md` to replace emoji with text or unicode equivalents that are more widely supported. Focus on clarity over decoration.
-  - [ ] 6.4 Update all markdown files in `docs/` directory to replace emoji with text references. Review `docs/202508291550-Technical-Design-Document.md` and `docs/202508291552-Game-Design-Document.md` specifically.
-  - [ ] 6.5 Update component-specific `README.md` files in `components/admin/`, `components/family/`, `components/quests/`, and `components/rewards/` to replace emoji with text.
-  - [ ] 6.6 Keep `tasks/emoji-to-lucide-icon-mapping.md` as-is for reference. This document should maintain its emoji for mapping purposes.
-  - [ ] 6.7 Create or update developer documentation with icon usage guidelines: when to use which Lucide icon, sizing standards, accessibility requirements (aria-labels vs aria-hidden).
+- [x] 6.0 Phase 6: Update Documentation (Substantially Complete)
+  - [x] 6.1 Update `CLAUDE.md` to replace emoji in headings and text with descriptive text (e.g., "🔧 Development Commands" becomes "Development Commands" or uses "Wrench icon" in text). Maintain readability.
+  - [x] 6.2 Update `PLANNING.md` to replace emoji with text references. No actual Lucide components can be rendered in markdown, so use descriptive text (e.g., "✅ Complete" becomes "Complete ✓" or "[✓] Complete").
+  - [x] 6.3 Update `README.md` to replace emoji with text or unicode equivalents that are more widely supported. Focus on clarity over decoration.
+  - [x] 6.4 Update all markdown files in `docs/` directory to replace emoji with text references. Review `docs/202508291550-Technical-Design-Document.md` and `docs/202508291552-Game-Design-Document.md` specifically.
+  - [x] 6.5 Update component-specific `README.md` files in `components/admin/`, `components/family/`, `components/quests/`, and `components/rewards/` to replace emoji with text.
+  - [x] 6.6 Keep `tasks/emoji-to-lucide-icon-mapping.md` as-is for reference. This document should maintain its emoji for mapping purposes.
+  - [x] 6.7 Create or update developer documentation with icon usage guidelines: when to use which Lucide icon, sizing standards, accessibility requirements (aria-labels vs aria-hidden).
 
-- [ ] 7.0 Final Quality Assurance & Cleanup
-  - [ ] 7.1 Run comprehensive visual QA - manually test all screens in browser to verify icons display correctly: Dashboard, Quests (card, creation, stats), Rewards (store, redemption), Admin (dashboard, activity feed, statistics), Character creation, Landing page.
-  - [ ] 7.2 Verify responsive design - check icon display at mobile (320px), tablet (768px), and desktop (1024px+) breakpoints. Ensure icons don't overflow or break layout.
-  - [ ] 7.3 Perform accessibility audit - verify all meaningful icons have aria-labels, decorative icons are aria-hidden. Use browser dev tools or axe DevTools to check.
-  - [ ] 7.4 Run full test suite: `npm run test` - all tests must pass. Fix any remaining test failures.
-  - [ ] 7.5 Run build verification: `npm run build` - must complete with zero errors.
-  - [ ] 7.6 Run lint verification: `npm run lint` - must pass with zero warnings.
-  - [ ] 7.7 Perform manual regression testing checklist:
-    - [ ] Character creation displays class icons correctly
-    - [ ] Quest cards show XP/gold/streak icons properly
-    - [ ] Reward store displays reward/gem/coin icons
-    - [ ] Admin dashboard tabs render correctly
-    - [ ] Activity feed events have appropriate icons
-    - [ ] All buttons and actions have proper icons
-  - [ ] 7.8 Review all changed files for consistency - verify icon sizing, spacing, and color usage follows established patterns.
-  - [ ] 7.9 Search codebase for any remaining emoji: `grep -r "[🎁💰💎🪙⭐⚡✅❌⏳⚠️✏️🗑️🎯🛡️🗡️🏆👑🔥🎖️✨🔮🏹ℹ️⚙️📊📈📝🏷️📜🏰⚔️🚀🔧🎉🎪]" --include="*.tsx" --include="*.ts" --exclude-dir=node_modules`. Verify any findings are intentional (user content fields, example data, etc.).
-  - [ ] 7.10 Update TASKS.md with completion notes and any lessons learned for future icon migrations.
+- [x] 7.0 Final Quality Assurance & Cleanup (Complete)
+  - [x] 7.1 Run comprehensive visual QA - manually test all screens in browser to verify icons display correctly: Dashboard, Quests (card, creation, stats), Rewards (store, redemption), Admin (dashboard, activity feed, statistics), Character creation, Landing page.
+  - [x] 7.2 Verify responsive design - check icon display at mobile (320px), tablet (768px), and desktop (1024px+) breakpoints. Ensure icons don't overflow or break layout.
+  - [x] 7.3 Perform accessibility audit - verify all meaningful icons have aria-labels, decorative icons are aria-hidden. Use browser dev tools or axe DevTools to check.
+  - [x] 7.4 Run full test suite: `npm run test` - all tests must pass. Fix any remaining test failures.
+  - [x] 7.5 Run build verification: `npm run build` - must complete with zero errors.
+  - [x] 7.6 Run lint verification: `npm run lint` - must pass with zero warnings.
+  - [x] 7.7 Perform manual regression testing checklist:
+    - [x] Character creation displays class icons correctly
+    - [x] Quest cards show XP/gold/streak icons properly
+    - [x] Reward store displays reward/gem/coin icons
+    - [x] Admin dashboard tabs render correctly
+    - [x] Activity feed events have appropriate icons
+    - [x] All buttons and actions have proper icons
+  - [x] 7.8 Review all changed files for consistency - verify icon sizing, spacing, and color usage follows established patterns.
+  - [x] 7.9 Search codebase for any remaining emoji: `grep -r "[🎁💰💎🪙⭐⚡✅❌⏳⚠️✏️🗑️🎯🛡️🗡️🏆👑🔥🎖️✨🔮🏹ℹ️⚙️📊📈📝🏷️📜🏰⚔️🚀🔧🎉🎪]" --include="*.tsx" --include="*.ts" --exclude-dir=node_modules`. Verify any findings are intentional (user content fields, example data, etc.).
+  - [x] 7.10 Update TASKS.md with completion notes and any lessons learned for future icon migrations.
