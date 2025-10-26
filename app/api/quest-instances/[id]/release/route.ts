@@ -52,10 +52,24 @@ export async function POST(
       return NextResponse.json({ error: "Quest not found" }, { status: 404 });
     }
 
+    // Security: Validate that characterId (if provided) belongs to the authenticated user
+    let validCharacterId: string | undefined = undefined;
+    if (characterId) {
+      const { count, error: charError } = await supabase
+        .from("characters")
+        .select("*", { count: "exact", head: true })
+        .eq("id", characterId)
+        .eq("user_id", requesterProfile.id);
+
+      if (!charError && count && count > 0) {
+        validCharacterId = characterId;
+      }
+    }
+
     // Check authorization: GM or hero who claimed the quest or is assigned to it
     const isGM = requesterProfile.role === "GUILD_MASTER";
     const isQuestAssignedToUser = quest.assigned_to_id === requesterProfile.id;
-    const isQuestClaimer = characterId && quest.volunteered_by === characterId;
+    const isQuestClaimer = validCharacterId && quest.volunteered_by === validCharacterId;
 
     if (!isGM && !isQuestAssignedToUser && !isQuestClaimer) {
       return NextResponse.json(
@@ -75,8 +89,8 @@ export async function POST(
     // For family quests, use the service to properly handle character updates
     if (quest.quest_type === "FAMILY") {
       const questService = new QuestInstanceService(supabase);
-      // Use characterId if provided, otherwise try to find the character via volunteered_by
-      const charIdToRelease = characterId || quest.volunteered_by;
+      // Use validCharacterId if provided, otherwise try to find the character via volunteered_by
+      const charIdToRelease = validCharacterId || quest.volunteered_by;
       if (charIdToRelease) {
         await questService.releaseQuest(questId, charIdToRelease);
       } else {
