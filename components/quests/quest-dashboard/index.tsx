@@ -179,8 +179,8 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   );
 
   const getAssignedHeroName = useCallback(
-    (quest: QuestInstance) => QuestHelpers.getAssignedHeroName(quest, assignableCharacters),
-    [assignableCharacters]
+    (quest: QuestInstance) => QuestHelpers.getAssignedHeroName(quest, familyCharacters),
+    [familyCharacters]
   );
 
   if (loading) {

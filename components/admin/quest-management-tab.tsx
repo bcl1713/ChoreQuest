@@ -243,7 +243,7 @@ export function QuestManagementTab() {
                 quest={quest}
                 viewMode="gm"
                 familyMembers={assignableCharacters}
-                assignedHeroName={getAssignedHeroName(quest, assignableCharacters)}
+                assignedHeroName={getAssignedHeroName(quest, familyCharacters)}
                 selectedAssignee={selectedAssignee[quest.id] || ''}
                 onAssigneeChange={handleAssigneeChange}
                 onAssign={handleAssignQuest}
@@ -284,7 +284,7 @@ export function QuestManagementTab() {
           onDeny={handleDenyQuest}
           onCancel={handleCancelQuest}
           onRelease={handleReleaseQuest}
-          getAssignedHeroName={(quest) => getAssignedHeroName(quest, assignableCharacters)}
+          getAssignedHeroName={(quest) => getAssignedHeroName(quest, familyCharacters)}
         />
 
         <hr className="border-dark-600" />

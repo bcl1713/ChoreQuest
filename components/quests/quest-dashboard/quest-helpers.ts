@@ -120,10 +120,16 @@ export function canUpdateStatus(
  */
 export function getAssignedHeroName(
   quest: QuestInstance,
-  assignmentOptions: Array<{ id: string; name: string }>
+  characters: Character[]
 ): string | undefined {
-  const assignedHero = assignmentOptions.find((option) => option.id === quest.assigned_to_id);
-  return assignedHero?.name;
+  // Find character by matching against the quest's assigned_to_id (which stores user_id)
+  // In family quests, assigned_to_id is the user_id of the assigned character owner
+  const assignedCharacter = characters.find((char) => char.user_id === quest.assigned_to_id);
+  if (assignedCharacter?.name?.trim()) {
+    return assignedCharacter.name;
+  }
+  // Fallback to shortened character ID if name is empty
+  return assignedCharacter ? `Hero (${assignedCharacter.id.substring(0, 8)})` : undefined;
 }
 
 /**
@@ -163,23 +169,23 @@ export function filterPendingApprovalQuests(quests: QuestInstance[]): QuestInsta
 }
 
 /**
- * Map family characters to lightweight assignment display objects (id + name).
- * Maps characters by user_id (not character.id) because quest.assigned_to_id references user_profiles.id.
+ * Map family characters to lightweight assignment display objects.
+ * Returns characterId (used by API) alongside user_id information.
+ * The quest.assigned_to_id references user_profiles.id, but API expects character ID.
  * Ensures every character has a readable label, falling back to a shortened id.
  *
  * @param familyCharacters - Array of Character objects to map
- * @returns Array of objects with user_id and character name for assignment lookup
- * @description This function will still return data if a character's `user_id` is missing, using `char.id` as a fallback.
+ * @returns Array of objects with characterId and character name for assignment lookup
+ * @description Returns the actual character ID so the API receives the correct identifier.
  */
 export function mapFamilyCharactersToAssignmentDisplay(
   familyCharacters: Character[]
 ): Array<{ id: string; name: string }> {
   return familyCharacters.map((char) => {
     const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
-    // Use char.user_id for the id since quest.assigned_to_id references user_profiles.id
-    const userId = char.user_id || char.id; // Fallback to char.id if user_id is missing (defensive)
+    // Return the character ID (the API expects this to look up the character)
     return {
-      id: userId,
+      id: char.id,
       name: displayName,
     };
   });
