@@ -113,17 +113,17 @@ Generated from: `0012-prd-emoji-to-lucide-icon-migration.md`
   - [x] 4.7 Run `npm run test -- admin` to verify admin-related tests pass. Fix any failing tests.
   - [x] 4.8 Run `npm run build` and `npm run lint` to verify no regressions in admin panel.
 
-- [x] 5.0 Phase 5: Migrate Supporting Components & Utilities
+- [x] 5.0 Phase 5: Migrate Supporting Components & Utilities (Complete)
   - [x] 5.1 Update `components/family/family-management.tsx` and `family-settings.tsx` to replace emoji (🏰 family, ⚙️ settings, 👤 members) with Lucide icons (Castle, Settings, Users). Size contextually appropriate (16-24px).
-  - [ ] 5.2 Update `components/layout/site-footer.tsx` to replace emoji (🏷️ version tag, ℹ️ info) with Lucide icons (Tag, Info). Size 16px for footer icons with aria-hidden if purely decorative.
-  - [ ] 5.3 Update `components/ui/ConfirmationModal.tsx` to replace emoji (⚠️ warning, ✅ confirm, ❌ cancel) with Lucide icons (AlertTriangle, Check, X). Size 24px for modal icons with aria-labels.
+  - [x] 5.2 Update `components/layout/site-footer.tsx` to replace emoji (🏷️ version tag, ℹ️ info) with Lucide icons (Tag, Info). Size 16px for footer icons with aria-hidden if purely decorative.
+  - [x] 5.3 Update `components/ui/ConfirmationModal.tsx` to replace emoji (⚠️ warning, ✅ confirm, ❌ cancel) with Lucide icons (AlertTriangle, Check, X). Size 24px for modal icons with aria-labels.
   - [x] 5.4 Update `components/migration/UserMigrationNotice.tsx` to replace emoji with appropriate Lucide icons (Info, AlertTriangle). Size 20px.
   - [x] 5.5 Update `components/auth/AuthForm.tsx` to replace any emoji with Lucide icons. Check for shields, locks, or user icons. Size 20px for auth form icons.
   - [x] 5.6 Update `app/auth/create-family/page.tsx` to replace emoji (🏰 castle, ⚔️ swords) with Lucide icons (Castle, Swords). Size 32px for page hero icons.
   - [x] 5.7 Update `hooks/useTabNavigation.ts` if it contains emoji in tab definitions or returns emoji data. Replace with icon name references.
-  - [ ] 5.8 Update test files: `components/family/family-quest-claiming.test.tsx`, `tests/unit/components/site-footer.test.tsx`, `family-settings.test.tsx`, `ui/FantasyButton.test.tsx`, and `hooks/useTabNavigation.test.ts` to expect Lucide icons.
-  - [ ] 5.9 Run `npm run test` to verify all supporting component tests pass. Fix any failing tests.
-  - [ ] 5.10 Run `npm run build` and `npm run lint` to verify no regressions.
+  - [x] 5.8 Update test files: `components/family/family-quest-claiming.test.tsx`, `tests/unit/components/site-footer.test.tsx`, `family-settings.test.tsx`, `ui/FantasyButton.test.tsx`, and `hooks/useTabNavigation.test.ts` to expect Lucide icons.
+  - [x] 5.9 Run `npm run test` to verify all supporting component tests pass. Fix any failing tests.
+  - [x] 5.10 Run `npm run build` and `npm run lint` to verify no regressions.
 
 - [ ] 6.0 Phase 6: Update Documentation
   - [ ] 6.1 Update `CLAUDE.md` to replace emoji in headings and text with descriptive text (e.g., "🔧 Development Commands" becomes "Development Commands" or uses "Wrench icon" in text). Maintain readability.
