@@ -64,8 +64,8 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   onTogglePauseTemplate,
   onDeleteTemplate,
 }) => {
-  // Get button visibility based on quest status
-  const buttonVis = getButtonVisibility(quest.status, viewMode);
+  // Get button visibility based on quest status and type
+  const buttonVis = getButtonVisibility(quest.status, viewMode, quest.quest_type);
 
   // Format status label
   const statusLabel = (quest.status ?? 'PENDING').replace(/_/g, ' ');
@@ -172,8 +172,8 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
             </Button>
           )}
 
-          {/* Release button for unassigned family quests */}
-          {quest.quest_type === 'FAMILY' && !quest.assigned_to_id && onRelease && (
+          {/* Abandon button for family quests */}
+          {buttonVis.canAbandon && onRelease && (
             <Button
               type="button"
               variant="secondary"

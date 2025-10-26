@@ -5,17 +5,20 @@ import { QuestStatus, RecurrencePattern } from '@/lib/types/database';
  *
  * @param status - The quest status
  * @param viewMode - Whether the viewer is a 'hero' or 'gm'
+ * @param questType - The quest type ('INDIVIDUAL' or 'FAMILY')
  * @returns Object with boolean flags for button visibility
  */
 export const getButtonVisibility = (
   status: QuestStatus | null | undefined,
-  viewMode: 'hero' | 'gm'
+  viewMode: 'hero' | 'gm',
+  questType?: 'INDIVIDUAL' | 'FAMILY' | null | undefined
 ) => {
   const buttonVis = {
     // Hero mode buttons
     canStart: false,
     canComplete: false,
     canPickup: false,
+    canAbandon: false,
 
     // GM mode buttons
     canApprove: false,
@@ -37,6 +40,10 @@ export const getButtonVisibility = (
 
     // Hero can pick up AVAILABLE quests (unassigned quests)
     buttonVis.canPickup = status === 'AVAILABLE';
+
+    // Hero can abandon FAMILY quests that are PENDING, CLAIMED, or IN_PROGRESS
+    buttonVis.canAbandon = questType === 'FAMILY' &&
+      (status === 'PENDING' || status === 'CLAIMED' || status === 'IN_PROGRESS');
   } else if (viewMode === 'gm') {
     // GM can approve completed quests
     buttonVis.canApprove = status === 'COMPLETED';
