@@ -1,12 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import QuestCard, { QuestCardProps } from './index';
+import QuestCard from './index';
 import { QuestInstance } from '@/lib/types/database';
 
 // Mock Framer Motion to avoid animation complexity in tests
 jest.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,
   },
 }));
 
@@ -63,7 +63,7 @@ jest.mock('@/lib/utils/formatting', () => ({
 
 // Mock Button component
 jest.mock('@/components/ui', () => ({
-  Button: ({ children, onClick, 'data-testid': testid, ...props }: any) => (
+  Button: ({ children, onClick, 'data-testid': testid, ...props }: { children: React.ReactNode; onClick?: () => void; 'data-testid'?: string; [key: string]: unknown }) => (
     <button onClick={onClick} data-testid={testid} {...props}>
       {children}
     </button>
