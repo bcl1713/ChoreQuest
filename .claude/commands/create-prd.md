@@ -9,16 +9,17 @@ implement the feature.
 
 ## Process
 
-1.  **Receive Initial Prompt:** The user provides a brief description or request
+1. **Receive Initial Prompt:** The user provides a brief description or request
     for a new feature or functionality.
-2.  **Ask Clarifying Questions:** Before writing the PRD, the AI _must_ ask
+2. **Ask Clarifying Questions:** Before writing the PRD, the AI _must_ ask
     clarifying questions to gather sufficient detail. The goal is to understand
     the "what" and "why" of the feature, not necessarily the "how" (which the
     developer will figure out). Make sure to provide options in letter/number
-    lists so I can respond easily with my selections.
-3.  **Generate PRD:** Based on the initial prompt and the user's answers to the
+    lists so I can respond easily with my selections. Use the askquestions tool
+    and don't leave "open questions"
+3. **Generate PRD:** Based on the initial prompt and the user's answers to the
     clarifying questions, generate a PRD using the structure outlined below.
-4.  **Save PRD:** Save the generated document as `[n]-prd-[feature-name].md`
+4. **Save PRD:** Save the generated document as `[n]-prd-[feature-name].md`
     inside the `/tasks` directory. (Where `n` is a zero-padded 4-digit sequence
     starting from 0001, e.g., `0001-prd-user-authentication.md`,
     `0002-prd-dashboard.md`, etc.)
@@ -50,25 +51,25 @@ areas to explore:
 
 The generated PRD should include the following sections:
 
-1.  **Introduction/Overview:** Briefly describe the feature and the problem it
+1. **Introduction/Overview:** Briefly describe the feature and the problem it
     solves. State the goal.
-2.  **Goals:** List the specific, measurable objectives for this feature.
-3.  **User Stories:** Detail the user narratives describing feature usage and
+2. **Goals:** List the specific, measurable objectives for this feature.
+3. **User Stories:** Detail the user narratives describing feature usage and
     benefits.
-4.  **Functional Requirements:** List the specific functionalities the feature
+4. **Functional Requirements:** List the specific functionalities the feature
     must have. Use clear, concise language (e.g., "The system must allow users
     to upload a profile picture."). Number these requirements.
-5.  **Non-Goals (Out of Scope):** Clearly state what this feature will _not_
+5. **Non-Goals (Out of Scope):** Clearly state what this feature will _not_
     include to manage scope.
-6.  **Design Considerations (Optional):** Link to mockups, describe UI/UX
+6. **Design Considerations (Optional):** Link to mockups, describe UI/UX
     requirements, or mention relevant components/styles if applicable.
-7.  **Technical Considerations (Optional):** Mention any known technical
+7. **Technical Considerations (Optional):** Mention any known technical
     constraints, dependencies, or suggestions (e.g., "Should integrate with the
     existing Auth module").
-8.  **Success Metrics:** How will the success of this feature be measured?
+8. **Success Metrics:** How will the success of this feature be measured?
     (e.g., "Increase user engagement by 10%", "Reduce support tickets related to
     X").
-9.  **Open Questions:** List any remaining questions or areas needing further
+9. **Open Questions:** List any remaining questions or areas needing further
     clarification.
 
 ## Target Audience
