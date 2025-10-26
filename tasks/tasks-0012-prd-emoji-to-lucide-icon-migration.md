@@ -103,15 +103,15 @@ Generated from: `0012-prd-emoji-to-lucide-icon-migration.md`
   - [x] 3.6 Run `npm run test -- reward` to verify reward-related tests pass. Fix any failing tests.
   - [x] 3.7 Run `npm run build` and `npm run lint` to verify no regressions in reward system.
 
-- [x] 4.0 Phase 4: Migrate Admin Panel Components
+- [x] 4.0 Phase 4: Migrate Admin Panel Components (Complete)
   - [x] 4.1 Update `components/admin/admin-dashboard.tsx` to replace emoji in tab labels (⚙️ settings, 📊 stats, 👑 guild masters) with Lucide icons (Settings, BarChart3, Crown). Size 20px for tab icons with aria-labels.
-  - [ ] 4.2 Update `components/admin/activity-feed.tsx` to replace emoji in activity events (⚡ quest created, ✅ completed, 🎁 redeemed, etc.) with contextually appropriate Lucide icons. Create a mapping function if needed. Size 16px for event icons with descriptive aria-labels.
-  - [ ] 4.3 Update `components/admin/statistics-panel.tsx` to replace emoji in stat displays (📈 trending, 📊 charts, ⭐ highlights) with Lucide icons (TrendingUp, BarChart3, Star). Size 24px for stat section icons.
+  - [x] 4.2 Update `components/admin/activity-feed.tsx` to replace emoji in activity events (⚡ quest created, ✅ completed, 🎁 redeemed, etc.) with contextually appropriate Lucide icons. Create a mapping function if needed. Size 16px for event icons with descriptive aria-labels.
+  - [x] 4.3 Update `components/admin/statistics-panel.tsx` to replace emoji in stat displays (📈 trending, 📊 charts, ⭐ highlights) with Lucide icons (TrendingUp, BarChart3, Star). Size 24px for stat section icons.
   - [x] 4.4 Update `components/admin/guild-master-manager.tsx` to replace emoji (👑 crown, ⚡ actions, ✅/❌ status) with Lucide icons (Crown, Zap, Check/X). Size 18px for action icons.
   - [x] 4.5 Update `app/admin/page.tsx` to replace any remaining emoji with Lucide icons. Verify consistency with admin dashboard tabs.
-  - [ ] 4.6 Update test files: `tests/unit/components/admin-dashboard.test.tsx`, `statistics-panel.test.tsx`, and `guild-master-manager.test.tsx` to expect Lucide icons instead of emoji.
-  - [ ] 4.7 Run `npm run test -- admin` to verify admin-related tests pass. Fix any failing tests.
-  - [ ] 4.8 Run `npm run build` and `npm run lint` to verify no regressions in admin panel.
+  - [x] 4.6 Update test files: `tests/unit/components/admin-dashboard.test.tsx`, `statistics-panel.test.tsx`, and `guild-master-manager.test.tsx` to expect Lucide icons instead of emoji.
+  - [x] 4.7 Run `npm run test -- admin` to verify admin-related tests pass. Fix any failing tests.
+  - [x] 4.8 Run `npm run build` and `npm run lint` to verify no regressions in admin panel.
 
 - [x] 5.0 Phase 5: Migrate Supporting Components & Utilities
   - [x] 5.1 Update `components/family/family-management.tsx` and `family-settings.tsx` to replace emoji (🏰 family, ⚙️ settings, 👤 members) with Lucide icons (Castle, Settings, Users). Size contextually appropriate (16-24px).
