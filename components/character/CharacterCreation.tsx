@@ -227,7 +227,7 @@ export default function CharacterCreation({
                         Bonuses on ALL quests:
                       </div>
                       {characterClass.bonuses.xp > 1.0 && (
-                        <div className="text-primary-400 flex items-center gap-1 justify-center">
+                        <div className="text-xp-500 flex items-center gap-1 justify-center">
                           <Zap size={14} aria-hidden="true" />
                           <span>{formatBonusPercentage(characterClass.bonuses.xp)} XP</span>
                         </div>

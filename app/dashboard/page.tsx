@@ -399,7 +399,7 @@ function DashboardContent() {
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
             <div className="flex items-center justify-center gap-1 mb-1 sm:mb-2">
-              <Zap size={20} aria-hidden="true" className="text-primary-400" />
+              <Zap size={20} aria-hidden="true" className="text-xp-500" />
               <span className="text-xl sm:text-3xl xp-text" data-testid="character-xp">{character.xp}</span>
             </div>
             <div className="text-xs sm:text-sm text-gray-400">Experience</div>

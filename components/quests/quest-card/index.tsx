@@ -113,7 +113,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               {quest.difficulty}
             </span>
             <span className="flex items-center gap-1">
-              <Zap size={14} aria-hidden="true" className="text-primary-400" />
+              <Zap size={14} aria-hidden="true" className="text-xp-500" />
               {quest.xp_reward} XP
             </span>
             <span className="flex items-center gap-1">
