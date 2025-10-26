@@ -7,7 +7,7 @@
 import { supabase } from "@/lib/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
-import { QuestInstance, QuestTemplate } from "@/lib/types/database";
+import { QuestInstance, QuestTemplate, Character } from "@/lib/types/database";
 import { StreakService } from "@/lib/streak-service";
 import { RewardCalculator } from "@/lib/reward-calculator";
 
@@ -314,18 +314,34 @@ export class QuestInstanceService {
       throw new Error("Quest is not assigned to a hero");
     }
 
-    let characterQuery = this.client.from("characters").select("*");
+    let character: Character | null = null;
+    let characterError: Error | null = null;
 
     // Prioritize the specific character ID if available (from claim or new assignment logic)
     if (quest.volunteered_by) {
-      characterQuery = characterQuery.eq("id", quest.volunteered_by);
+      const result = await this.client
+        .from("characters")
+        .select("*")
+        .eq("id", quest.volunteered_by)
+        .single();
+      character = result.data;
+      characterError = result.error;
     } else {
-      // Fallback for legacy assigned quests: find a character by user ID.
-      // Using limit(1) to prevent errors if a user has multiple characters.
-      characterQuery = characterQuery.eq("user_id", quest.assigned_to_id).limit(1);
-    }
+      // Fallback for legacy assigned quests: find the first character by user ID
+      const result = await this.client
+        .from("characters")
+        .select("*")
+        .eq("user_id", quest.assigned_to_id)
+        .order("created_at", { ascending: true });
 
-    const { data: character, error: characterError } = await characterQuery.single();
+      if (result.data && result.data.length > 0) {
+        character = result.data[0];
+      } else if (result.error) {
+        characterError = result.error;
+      } else {
+        characterError = new Error("No characters found for assigned user");
+      }
+    }
 
     if (characterError || !character) {
       throw new Error(`Failed to fetch assigned character: ${characterError?.message || "Character not found"}`);
