@@ -17,25 +17,25 @@
 
 ## Tasks
 
-- [ ] 1.0 Fix mapFamilyCharactersToAssignmentDisplay to map by user_id
-  - [ ] 1.1 Update `mapFamilyCharactersToAssignmentDisplay()` in quest-helpers.ts to return `{ id: char.user_id, name: displayName }` instead of `{ id: char.id, name: displayName }`
-  - [ ] 1.2 Add JSDoc comment explaining that the function maps characters by user_id for quest assignment lookup
-  - [ ] 1.3 Verify the function handles edge cases (missing user_id, null values)
+- [x] 1.0 Fix mapFamilyCharactersToAssignmentDisplay to map by user_id
+  - [x] 1.1 Update `mapFamilyCharactersToAssignmentDisplay()` in quest-helpers.ts to return `{ id: char.user_id, name: displayName }` instead of `{ id: char.id, name: displayName }`
+  - [x] 1.2 Add JSDoc comment explaining that the function maps characters by user_id for quest assignment lookup
+  - [x] 1.3 Verify the function handles edge cases (missing user_id, null values)
 
-- [ ] 2.0 Add comprehensive unit tests for getAssignedHeroName
-  - [ ] 2.1 Add test: "returns hero name when quest.assigned_to_id matches a character's user_id"
-  - [ ] 2.2 Add test: "returns undefined when quest.assigned_to_id does not match any character"
-  - [ ] 2.3 Add test: "returns undefined when quest.assigned_to_id is null"
-  - [ ] 2.4 Add test: "handles empty assignmentOptions array"
-  - [ ] 2.5 Add test: "uses character name from mapFamilyCharactersToAssignmentDisplay output"
+- [x] 2.0 Add comprehensive unit tests for getAssignedHeroName
+  - [x] 2.1 Add test: "returns hero name when quest.assigned_to_id matches a character's user_id"
+  - [x] 2.2 Add test: "returns undefined when quest.assigned_to_id does not match any character"
+  - [x] 2.3 Add test: "returns undefined when quest.assigned_to_id is null"
+  - [x] 2.4 Add test: "handles empty assignmentOptions array"
+  - [x] 2.5 Add test: "uses character name from mapFamilyCharactersToAssignmentDisplay output"
 
-- [ ] 3.0 Update existing tests that may be affected by the change
-  - [ ] 3.1 Review quest-helpers.test.ts for any tests using mapFamilyCharactersToAssignmentDisplay with character.id
-  - [ ] 3.2 Update test fixtures to use user_id in assignment options if needed
-  - [ ] 3.3 Run all quest-helpers tests and fix any failures
+- [x] 3.0 Update existing tests that may be affected by the change
+  - [x] 3.1 Review quest-helpers.test.ts for any tests using mapFamilyCharactersToAssignmentDisplay with character.id
+  - [x] 3.2 Update test fixtures to use user_id in assignment options if needed
+  - [x] 3.3 Run all quest-helpers tests and fix any failures
 
-- [ ] 4.0 Manual verification and quality gate
-  - [ ] 4.1 Run `npm run build` - ensure zero compilation errors
-  - [ ] 4.2 Run `npm run lint` - ensure zero linting errors/warnings
-  - [ ] 4.3 Run `npx jest components/quests/quest-dashboard/quest-helpers.test.ts` - all tests pass
-  - [ ] 4.4 Run `npm run test` - all unit tests pass across the codebase
+- [x] 4.0 Manual verification and quality gate
+  - [x] 4.1 Run `npm run build` - ensure zero compilation errors
+  - [x] 4.2 Run `npm run lint` - ensure zero linting errors/warnings
+  - [x] 4.3 Run `npx jest components/quests/quest-dashboard/quest-helpers.test.ts` - all tests pass
+  - [x] 4.4 Run `npm run test` - all unit tests pass across the codebase
