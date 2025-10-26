@@ -60,7 +60,7 @@ export default function CreateFamilyPage() {
 
         {family && (
           <div className="mt-6 p-4 bg-gold-900/20 border border-gold-500/30 rounded-lg">
-            <p className="text-gold-400 text-sm font-semibold mb-2">🏰 Guild Successfully Founded!</p>
+            <p className="text-gold-400 text-sm font-semibold mb-2">Guild Successfully Founded!</p>
             <p className="text-gray-300 text-sm">
               Your guild code: <span className="font-mono text-gold-300">{family.code}</span>
             </p>

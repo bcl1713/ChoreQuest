@@ -18,7 +18,7 @@ adults)
 
 ---
 
-## 🎯 Executive Summary
+## Executive Summary
 
 ChoreQuest transforms household chores into an epic fantasy RPG adventure where
 family members become heroes completing quests (chores) to gain experience,
@@ -38,7 +38,7 @@ everyone stays engaged.
 
 ---
 
-## 🔄 Core Game Loop
+## Core Game Loop
 
 ### Primary Loop (Daily)
 
@@ -74,7 +74,7 @@ everyone stays engaged.
 
 ---
 
-## 👥 Player Systems
+## Player Systems
 
 ### User Roles & Permissions
 
@@ -95,7 +95,7 @@ everyone stays engaged.
 - Can use advanced features like quest chaining and combo abilities
 - Access to competitive leaderboards and achievement tracking
 
-**🌟 Young Hero (Secondary Player - Ages 8-11)**
+**Young Hero (Secondary Player - Ages 8-11)**
 
 - Simplified UI with larger buttons and clearer instructions
 - Parental approval required for high-value rewards (Tier 3+)
@@ -105,11 +105,11 @@ everyone stays engaged.
 
 ### Character Creation & Classes
 
-**🎨 Avatar Customization**
+**Avatar Customization**
 
 Each player creates a unique fantasy avatar with:
 
-**🎨 Base Appearance**: Hair color, style, skin tone, facial features
+**Base Appearance**: Hair color, style, skin tone, facial features
 - **Unlockable Cosmetics**: Earned through gameplay achievements
 - **Seasonal Themes**: Special holiday and event-based appearance options
 - **Prestige Indicators**: Visual markers for high-level accomplishments
@@ -167,7 +167,7 @@ Each player creates a unique fantasy avatar with:
 
 ### Leveling & Progression System
 
-**📈 Experience Point & Reward Calculation**
+**Experience Point & Reward Calculation**
 
 The total XP required to reach a certain level is governed by the formula:
 `Total XP for Level = 50 * (level - 1) ** 2`
@@ -181,7 +181,7 @@ affected by two key multipliers:
 - **Class Bonus**: Each character class has a permanent bonus to earning
   specific types of rewards (see Class Selection below).
 
-**🎁 Level Unlock Rewards**
+**Level Unlock Rewards**
 
 Leveling up is a measure of a player's seniority, trust, and status within the
 family guild. It grants access to new privileges and powers, not new chores.
@@ -202,7 +202,7 @@ family guild. It grants access to new privileges and powers, not new chores.
     approval required).
   - **Level 40**: Unlock the ability to help design a family "Boss Battle."
 
-**🎭 Class Ability Unlock Schedule**
+**Class Ability Unlock Schedule**
 
 Class abilities are unlocked and upgraded at specific level milestones.
 
@@ -238,7 +238,7 @@ Class abilities are unlocked and upgraded at specific level milestones.
 - **Meal prep assistance** (100 XP, 45 gold, 60 minutes)
 - **Laundry cycle management** (80 XP, 35 gold, varies)
 
-**🎯 Bonus Objectives (Optional, Extra Rewards)**
+**Bonus Objectives (Optional, Extra Rewards)**
 
 - **Speed Bonus**: Complete 25% faster than estimated time (+50% XP)
 - **Excellence Bonus**: Go above and beyond minimum requirements (+25% XP, +2
@@ -333,7 +333,7 @@ Class abilities are unlocked and upgraded at specific level milestones.
 - **Legendary Cosmetics** (500+ gold + rare gems): Exclusive boss battle rewards
 - **Avatar Pets** (200 gold + gems): Companions that follow your character
 
-**⚡ Planned Consumable Items**
+**Planned Consumable Items**
 
 As a future addition, players may be able to purchase single-use items from the
 marketplace to provide strategic advantages:
@@ -437,7 +437,7 @@ marketplace to provide strategic advantages:
 - **Victory Shouts**: Celebrate others' achievements with emoji reactions and
   supportive messages
 
-**🎯 Shared Objectives & Benefits**
+**Shared Objectives & Benefits**
 
 - **Guild Bonuses**: Family-wide XP multipliers when everyone participates daily
 - **Emergency Quests**: "All hands on deck" situations requiring teamwork for
@@ -473,7 +473,7 @@ implementation to help players who have fallen behind.
 
 ---
 
-## 📈 Progression & Content
+## Progression & Content
 
 ### Seasonal Content Strategy
 
@@ -529,7 +529,7 @@ progress on essential household management.
 
 ### Content Accessibility & Catch-Up
 
-**🎁 Evergreen Reward System**
+**Evergreen Reward System**
 
 - **Core Seasonal Cosmetics**: Remain earnable year-round at reduced drop rates
 - **Seasonal Vault**: Missed content cycles back every 2-3 years for new
@@ -539,7 +539,7 @@ progress on essential household management.
 - **New Family Integration**: "Legendary Tales" versions allow newcomers to
   experience past content
 
-**📚 Content Scaling & Difficulty**
+**Content Scaling & Difficulty**
 
 - **Adaptive Quest Suggestions**: AI-driven recommendations based on family
   completion patterns
@@ -551,7 +551,7 @@ progress on essential household management.
 
 ---
 
-## 🔧 Technical Requirements
+## Technical Requirements
 
 ### Core Technology Stack
 
@@ -645,7 +645,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 ### Performance & Scalability
 
-**⚡ Optimization Strategies**
+**Optimization Strategies**
 
 - **Database Indexing**: Optimized queries for family-based data access patterns
 - **Redis Caching**: Frequently accessed leaderboards and family statistics
@@ -664,13 +664,13 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 ---
 
-## 🚀 Implementation Phases
+## Implementation Phases
 
 ### Phase 1: Core Foundation (3-4 weeks)
 
 **MVP: "It Actually Works" Release**
 
-**🎯 Core Functionality**
+**Core Functionality**
 
 - [x] User authentication with family grouping
 - [x] Basic character creation (name, class selection)
@@ -680,7 +680,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [x] Mobile-responsive interface with touch-friendly controls
 - [x] Parent dashboard for quest management and completion approval
 
-**🔧 Technical Deliverables**
+**Technical Deliverables**
 
 - [x] Database schema implementation with core tables
 - [x] REST API endpoints for all basic functionality
@@ -688,7 +688,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [x] Docker development environment setup
 - [x] Basic authentication and authorization system
 
-**✅ Success Criteria**
+**Success Criteria**
 
 - Family can register, create characters, and start completing basic
   daily/weekly quests
@@ -710,7 +710,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [ ] Basic boss battle system with persistent HP and group participation
 - [ ] Achievement system with progress tracking and celebrations
 
-**🎨 Visual & Audio Polish**
+**Visual & Audio Polish**
 
 - [ ] Professional fantasy UI design with consistent theming
 - [ ] Character avatar system with equipment display
@@ -718,7 +718,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [ ] Sound effects and background music (optional, toggleable)
 - [ ] Responsive design testing across multiple device sizes
 
-**✅ Success Criteria**
+**Success Criteria**
 
 - Application feels like a cohesive game rather than a utility
 - Real-time family interactions create engagement and excitement
@@ -729,7 +729,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 **The "Family Competition & Cooperation" Release**
 
-**👥 Family Interaction Features**
+**Family Interaction Features**
 
 - [ ] Dual leaderboard system (individual excellence + family unity)
 - [ ] SOS help request system with push notifications
@@ -747,7 +747,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [ ] Family progress reports and milestone tracking
 - [ ] Custom quest difficulty scaling and personalization
 
-**✅ Success Criteria**
+**Success Criteria**
 
 - Family members actively help each other and communicate through the app
 - Competitive elements motivate without creating negative dynamics
@@ -758,7 +758,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 **The "Full Featured Experience" Release**
 
-**🌟 Advanced Functionality**
+**Advanced Functionality**
 
 - [ ] Home Assistant API integration with webhook support
 - [ ] Seasonal event system with rotating themed content
@@ -767,7 +767,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [ ] Machine learning recommendations for optimal quest timing
 - [ ] Advanced customization options for family-specific workflows
 
-**🔧 Performance & Optimization**
+**Performance & Optimization**
 
 - [ ] Database query optimization and indexing improvements
 - [ ] Frontend performance optimization with bundle splitting
@@ -775,7 +775,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - [ ] Automated testing suite with comprehensive coverage
 - [ ] Production monitoring and error tracking systems
 
-**🎯 Expansion Features**
+**Expansion Features**
 
 - [ ] IoT integration for automatic quest detection
 - [ ] Voice assistant integration for hands-free interaction
@@ -789,7 +789,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 
 ### Key Performance Indicators
 
-**👥 Family Engagement Metrics**
+**Family Engagement Metrics**
 
 - **Daily Active Users**: Percentage of family members active each day
   (target: >80%)
@@ -815,7 +815,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - **Social Feature Usage**: Help requests, messaging, and family interaction
   rates
 
-**📈 Household Impact Metrics**
+**Household Impact Metrics**
 
 - **Chore Completion Consistency**: Long-term improvement in household task
   management
@@ -890,7 +890,7 @@ WebSocket / api / ha / events; // Real-time updates for HA dashboard
 - **Natural Language Processing**: Voice commands and conversational quest
   management
 
-**📚 Educational Integration**
+**Educational Integration**
 
 - **School Partnership Program**: Homework and educational goal integration
 - **Life Skills Curriculum**: Age-appropriate responsibility and independence

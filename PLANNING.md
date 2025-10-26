@@ -461,4 +461,4 @@ npm run dev
 
 ---
 
-_Ready to transform chores into epic family adventures! 🏰⚔️_
+_Ready to transform chores into epic family adventures!_

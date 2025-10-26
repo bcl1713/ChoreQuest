@@ -16,7 +16,7 @@ tags: []
 
 ---
 
-## 🏗️ System Architecture Overview
+## System Architecture Overview
 
 ### High-Level Architecture
 
@@ -46,14 +46,14 @@ tags: []
 
 ### Core Components
 
-**🖥️ Frontend (Client-Side)**
+**Frontend (Client-Side)**
 
 - **React 19 + Next.js 15 (App Router)**: Hybrid SSR/ISR rendering with streaming support
 - **Progressive Web App**: Installable web application with offline capabilities
 - **Real-Time UI**: Supabase Realtime channels for live updates and notifications
 - **Mobile-First Design**: Responsive across all device sizes using Tailwind CSS 4
 
-**⚙️ Backend (Server-Side)**
+**Backend (Server-Side)**
 
 - **Next.js API Routes**: Type-safe handlers backed by Supabase
 - **Supabase PostgreSQL**: Row Level Security and RPC functions for business logic
@@ -66,7 +66,7 @@ tags: []
 - **Redis (optional)**: Session storage and caching (legacy support while Supabase Auth rollout completes)
 - **Supabase Storage**: Avatar images and achievement badges (migrating from local filesystem)
 
-**🔧 Infrastructure**
+**Infrastructure**
 
 - **Docker Compose**: Containerized deployment and development
 - **NGINX**: Reverse proxy, static file serving, and SSL termination
@@ -74,7 +74,7 @@ tags: []
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend Technologies
 
@@ -147,7 +147,7 @@ tags: []
 - nginx (Reverse Proxy)
 ```
 
-## ♻️ Recurring Quest System (2025-10 Update)
+## Recurring Quest System (2025-10 Update)
 
 ### Data Model Changes
 - `supabase/migrations/20251014000001_cache_recurrence_on_quest_instances.sql` caches `recurrence_pattern` on `quest_instances` to keep streak calculations local to the instance record.
@@ -207,7 +207,7 @@ tags: []
 
 ---
 
-## 🗄️ Database Design
+## Database Design
 
 ### Core Schema Structure
 
@@ -503,7 +503,7 @@ CREATE INDEX idx_user_achievements_user_unlocked ON user_achievements(user_id, u
 
 ---
 
-## 🚀 API Design
+## API Design
 
 ### RESTful API Structure
 
@@ -865,7 +865,7 @@ const QuestCompletionAnimation = ({ quest, onComplete }) => {
           animate={{ scale: 1 }}
           transition={{ delay: 0.2 }}
         >
-          ⚔️ Quest Complete! ⚔️
+          Quest Complete!
         </motion.div>
 
         <motion.div
@@ -927,7 +927,7 @@ const LevelUpCelebration = ({ newLevel, newAbilities }) => {
 
 ---
 
-## ⚡ Real-Time Features
+## Real-Time Features
 
 ### Socket.io Implementation
 
@@ -1404,7 +1404,7 @@ CMD ["npm", "start"]
 
 ---
 
-## ⚡ Performance Considerations
+## Performance Considerations
 
 ### Database Optimization
 
@@ -1502,7 +1502,7 @@ export const cacheManager = new CacheManager();
 
 ---
 
-## 🔧 Development Workflow
+## Development Workflow
 
 ### Test Driven Development (TDD) Approach
 
@@ -1587,7 +1587,7 @@ describe('QuestCard Component', () => {
 });
 ```
 
-**📊 Database/Service TDD Process**
+**Database/Service TDD Process**
 
 ```typescript
 // Example TDD cycle for quest service
@@ -1853,7 +1853,7 @@ test.describe("Quest Completion Flow", () => {
 
 ---
 
-## 📊 Monitoring & Maintenance
+## Monitoring & Maintenance
 
 ### Application Monitoring
 
@@ -1937,7 +1937,7 @@ ENABLE_HOME_ASSISTANT=true
 
 ---
 
-## 📝 Conclusion
+## Conclusion
 
 This Technical Design Document provides a comprehensive blueprint for building
 ChoreQuest, a gamified family chore management system. The architecture balances
@@ -1946,11 +1946,11 @@ experience across all devices.
 
 ### Key Technical Highlights
 
-**🏗️ Architecture**: Modern full-stack design with React/Next.js frontend,
+**Architecture**: Modern full-stack design with React/Next.js frontend,
 Node.js/Express backend, PostgreSQL database, and Redis caching, all
 containerized with Docker.
 
-**⚡ Performance**: Optimized with database indexing, Redis caching, code
+**Performance**: Optimized with database indexing, Redis caching, code
 splitting, and efficient asset management.
 
 **🔒 Security**: Comprehensive security measures including JWT authentication,
@@ -1965,7 +1965,7 @@ collaborative boss battles.
 **🧪 Quality Assurance**: Robust testing strategy with unit, integration, and
 end-to-end testing.
 
-**📊 Monitoring**: Built-in health checks, performance monitoring, and automated
+**Monitoring**: Built-in health checks, performance monitoring, and automated
 maintenance.
 
 ### Development Readiness
@@ -1991,4 +1991,4 @@ gradually adding advanced features.
 
 ---
 
-_Ready to transform chores into epic family adventures! 🏰⚔️_
+_Ready to transform chores into epic family adventures!_
