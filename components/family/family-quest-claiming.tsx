@@ -1,4 +1,5 @@
 import React from 'react';
+import { Users } from 'lucide-react';
 import { QuestInstance, Character } from '@/lib/types/database';
 import QuestCard from '@/components/quests/quest-card';
 import { motion } from 'framer-motion';
@@ -19,8 +20,9 @@ const FamilyQuestClaiming: React.FC<FamilyQuestClaimingProps> = ({ quests, chara
 
   return (
     <section>
-      <h3 className="text-xl font-fantasy text-gray-200 mb-6">
-        👥 Available Family Quests
+      <h3 className="flex items-center gap-2 text-xl font-fantasy text-gray-200 mb-6">
+        <Users size={24} />
+        Available Family Quests
       </h3>
 
       {heroHasActiveFamilyQuest && (
