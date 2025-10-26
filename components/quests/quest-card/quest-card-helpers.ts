@@ -5,17 +5,20 @@ import { QuestStatus, RecurrencePattern } from '@/lib/types/database';
  *
  * @param status - The quest status
  * @param viewMode - Whether the viewer is a 'hero' or 'gm'
+ * @param questType - The quest type ('INDIVIDUAL' or 'FAMILY')
  * @returns Object with boolean flags for button visibility
  */
 export const getButtonVisibility = (
   status: QuestStatus | null | undefined,
-  viewMode: 'hero' | 'gm'
+  viewMode: 'hero' | 'gm',
+  questType?: 'INDIVIDUAL' | 'FAMILY' | null | undefined
 ) => {
   const buttonVis = {
     // Hero mode buttons
     canStart: false,
     canComplete: false,
     canPickup: false,
+    canAbandon: false,
 
     // GM mode buttons
     canApprove: false,
@@ -30,13 +33,17 @@ export const getButtonVisibility = (
     // PENDING = GM-assigned quest without volunteer bonus
     // CLAIMED = Hero-claimed quest with volunteer bonus
     // AVAILABLE = Unassigned individual quests
-    buttonVis.canStart = status === 'PENDING' || status === 'CLAIMED' || status === 'AVAILABLE';
+    buttonVis.canStart = ['PENDING', 'CLAIMED', 'AVAILABLE'].includes(status as QuestStatus);
 
     // Hero can complete quests that are IN_PROGRESS
     buttonVis.canComplete = status === 'IN_PROGRESS';
 
     // Hero can pick up AVAILABLE quests (unassigned quests)
     buttonVis.canPickup = status === 'AVAILABLE';
+
+    // Hero can abandon FAMILY quests that are PENDING, CLAIMED, or IN_PROGRESS
+    buttonVis.canAbandon = questType === 'FAMILY' &&
+      ['PENDING', 'CLAIMED', 'IN_PROGRESS'].includes(status as QuestStatus);
   } else if (viewMode === 'gm') {
     // GM can approve completed quests
     buttonVis.canApprove = status === 'COMPLETED';
@@ -45,25 +52,13 @@ export const getButtonVisibility = (
     buttonVis.canDeny = status === 'COMPLETED';
 
     // GM can cancel quests that are not yet approved or expired
-    buttonVis.canCancel =
-      status === 'PENDING' ||
-      status === 'IN_PROGRESS' ||
-      status === 'AVAILABLE' ||
-      status === 'CLAIMED';
+    buttonVis.canCancel = ['PENDING', 'IN_PROGRESS', 'AVAILABLE', 'CLAIMED'].includes(status as QuestStatus);
 
     // GM can toggle pause on active quests
-    buttonVis.canTogglePause =
-      status === 'PENDING' ||
-      status === 'IN_PROGRESS' ||
-      status === 'AVAILABLE' ||
-      status === 'CLAIMED';
+    buttonVis.canTogglePause = ['PENDING', 'IN_PROGRESS', 'AVAILABLE', 'CLAIMED'].includes(status as QuestStatus);
 
     // GM can assign unassigned quests or reassign in progress quests
-    buttonVis.showAssignment =
-      status === 'PENDING' ||
-      status === 'AVAILABLE' ||
-      status === 'IN_PROGRESS' ||
-      status === 'CLAIMED';
+    buttonVis.showAssignment = ['PENDING', 'AVAILABLE', 'IN_PROGRESS', 'CLAIMED'].includes(status as QuestStatus);
   }
 
   return buttonVis;

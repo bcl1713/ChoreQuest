@@ -152,7 +152,7 @@ describe('Quest Helpers', () => {
   });
 
   describe('filterInProgressQuests', () => {
-    it('returns assigned quests with IN_PROGRESS or CLAIMED status', () => {
+    it('returns assigned quests with IN_PROGRESS, CLAIMED, or PENDING status', () => {
       const quests = [
         createMockQuest({ id: 'quest-1', assigned_to_id: 'user-1', status: 'IN_PROGRESS' as QuestStatus }),
         createMockQuest({ id: 'quest-2', assigned_to_id: 'user-1', status: 'CLAIMED' as QuestStatus }),
@@ -166,6 +166,19 @@ describe('Quest Helpers', () => {
       expect(result.map(q => q.id)).toEqual(['quest-1', 'quest-2', 'quest-3']);
     });
 
+    it('includes assigned PENDING quests (GM-denied quests awaiting hero action)', () => {
+      const quests = [
+        createMockQuest({ id: 'quest-1', assigned_to_id: 'user-1', status: 'PENDING' as QuestStatus }),
+        createMockQuest({ id: 'quest-2', assigned_to_id: 'user-2', status: 'PENDING' as QuestStatus }),
+        createMockQuest({ id: 'quest-3', assigned_to_id: null, status: 'PENDING' as QuestStatus }),
+      ];
+
+      const result = filterInProgressQuests(quests);
+
+      expect(result).toHaveLength(2);
+      expect(result.map(q => q.id)).toEqual(['quest-1', 'quest-2']);
+    });
+
     it('excludes unassigned quests', () => {
       const quests = [
         createMockQuest({ id: 'quest-1', assigned_to_id: null, status: 'IN_PROGRESS' as QuestStatus }),
@@ -176,15 +189,29 @@ describe('Quest Helpers', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('excludes assigned quests with other statuses', () => {
+    it('excludes assigned quests with other statuses (COMPLETED, AVAILABLE, etc)', () => {
       const quests = [
-        createMockQuest({ id: 'quest-1', assigned_to_id: 'user-1', status: 'PENDING' as QuestStatus }),
-        createMockQuest({ id: 'quest-2', assigned_to_id: 'user-1', status: 'COMPLETED' as QuestStatus }),
+        createMockQuest({ id: 'quest-1', assigned_to_id: 'user-1', status: 'COMPLETED' as QuestStatus }),
+        createMockQuest({ id: 'quest-2', assigned_to_id: 'user-1', status: 'AVAILABLE' as QuestStatus }),
+        createMockQuest({ id: 'quest-3', assigned_to_id: 'user-1', status: 'APPROVED' as QuestStatus }),
       ];
 
       const result = filterInProgressQuests(quests);
 
       expect(result).toHaveLength(0);
+    });
+
+    it('handles mix of PENDING, CLAIMED, and IN_PROGRESS assigned quests', () => {
+      const quests = [
+        createMockQuest({ id: 'quest-1', assigned_to_id: 'user-1', status: 'PENDING' as QuestStatus }),
+        createMockQuest({ id: 'quest-2', assigned_to_id: 'user-1', status: 'CLAIMED' as QuestStatus }),
+        createMockQuest({ id: 'quest-3', assigned_to_id: 'user-1', status: 'IN_PROGRESS' as QuestStatus }),
+      ];
+
+      const result = filterInProgressQuests(quests);
+
+      expect(result).toHaveLength(3);
+      expect(result.map(q => q.id)).toEqual(['quest-1', 'quest-2', 'quest-3']);
     });
   });
 

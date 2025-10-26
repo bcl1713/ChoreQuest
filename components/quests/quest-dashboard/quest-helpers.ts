@@ -193,10 +193,11 @@ export function filterUnassignedActiveQuests(quests: QuestInstance[]): QuestInst
 }
 
 /**
- * Filter in-progress quests (assigned and IN_PROGRESS or CLAIMED status)
+ * Filter in-progress quests (assigned and IN_PROGRESS, CLAIMED, or PENDING status)
+ * PENDING quests are included to show GM-denied quests that are awaiting hero action
  */
 export function filterInProgressQuests(quests: QuestInstance[]): QuestInstance[] {
-  const inProgressStatuses: QuestStatus[] = ["IN_PROGRESS", "CLAIMED"];
+  const inProgressStatuses: QuestStatus[] = ["IN_PROGRESS", "CLAIMED", "PENDING"];
   const inProgressSet = new Set<QuestStatus>(inProgressStatuses);
 
   return quests.filter((quest) => {
