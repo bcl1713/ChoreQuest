@@ -52,17 +52,17 @@
   - [x] 2.12 Test abandon button does NOT appear in GM view for any quest type or status
   - [x] 2.13 Run `npx jest quest-card/index.test.tsx` and ensure all tests pass
 
-- [ ] 3.0 Update GM dashboard filtering to include PENDING quests in "In Progress" section
-  - [ ] 3.1 Open `quest-helpers.ts` and locate `filterInProgressQuests()` function (lines 198-206)
-  - [ ] 3.2 Add 'PENDING' to the `inProgressStatuses` array: `["IN_PROGRESS", "CLAIMED", "PENDING"]`
-  - [ ] 3.3 Update JSDoc comment to reflect that PENDING quests are included in the filter
-  - [ ] 3.4 Write unit tests for `filterInProgressQuests()` with PENDING quests
-  - [ ] 3.5 Test that PENDING quest with `assigned_to_id` is included in results
-  - [ ] 3.6 Test that PENDING quest without `assigned_to_id` is NOT included in results
-  - [ ] 3.7 Test that IN_PROGRESS and CLAIMED quests with `assigned_to_id` are still included
-  - [ ] 3.8 Test that quests without `assigned_to_id` are excluded regardless of status
-  - [ ] 3.9 Run existing tests: `npx jest quest-helpers.test.ts` and update any failing tests
-  - [ ] 3.10 Verify GM dashboard displays PENDING quests after denial in "In Progress" section (manual verification or E2E test)
+- [x] 3.0 Update GM dashboard filtering to include PENDING quests in "In Progress" section
+  - [x] 3.1 Open `quest-helpers.ts` and locate `filterInProgressQuests()` function (lines 198-206)
+  - [x] 3.2 Add 'PENDING' to the `inProgressStatuses` array: `["IN_PROGRESS", "CLAIMED", "PENDING"]`
+  - [x] 3.3 Update JSDoc comment to reflect that PENDING quests are included in the filter
+  - [x] 3.4 Write unit tests for `filterInProgressQuests()` with PENDING quests
+  - [x] 3.5 Test that PENDING quest with `assigned_to_id` is included in results
+  - [x] 3.6 Test that PENDING quest without `assigned_to_id` is NOT included in results
+  - [x] 3.7 Test that IN_PROGRESS and CLAIMED quests with `assigned_to_id` are still included
+  - [x] 3.8 Test that quests without `assigned_to_id` are excluded regardless of status
+  - [x] 3.9 Run existing tests: `npx jest quest-helpers.test.ts` and update any failing tests
+  - [x] 3.10 Verify GM dashboard displays PENDING quests after denial in "In Progress" section (manual verification or E2E test)
 
 - [ ] 4.0 Verify and document anti-hoarding enforcement in claim endpoint
   - [ ] 4.1 Review `QuestInstanceService.claimQuest()` to confirm anti-hoarding check exists (line 72: `character.active_family_quest_id`)
