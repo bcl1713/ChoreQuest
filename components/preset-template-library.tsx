@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { presetTemplateApiService } from '@/lib/preset-template-api-service';
 import { questTemplateApiService } from '@/lib/quest-template-api-service';
-import { QuestTemplateForm } from '@/components/quest-template-manager';
+import { QuestTemplateForm } from '@/components/quests/quest-template-manager';
 import type { TemplateFormData } from '@/lib/types/quest-templates';
 import { presetTemplates, type PresetTemplateCollection, type PresetTemplateDefinition } from '@/lib/preset-templates';
+import { Button } from '@/components/ui';
 
 interface PresetTemplateLibraryProps {
   onClose: () => void;
@@ -93,12 +94,9 @@ const PresetTemplateLibrary: React.FC<PresetTemplateLibraryProps> = ({ onClose }
                         <span className="text-gray-300">{template.gold_reward} Gold</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleAddClick(template)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
-                    >
+                    <Button onClick={() => handleAddClick(template)}>
                       Add to Family
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -106,9 +104,9 @@ const PresetTemplateLibrary: React.FC<PresetTemplateLibraryProps> = ({ onClose }
           ))}
         </div>
         <div className="flex justify-end mt-6">
-          <button onClick={onClose} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">
+          <Button onClick={onClose} variant="secondary">
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>

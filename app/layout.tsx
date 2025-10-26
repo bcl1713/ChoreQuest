@@ -4,6 +4,8 @@ import { NetworkReadyProvider } from "@/lib/network-ready-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { CharacterProvider } from "@/lib/character-context";
 import { RealtimeProvider } from "@/lib/realtime-context";
+import SiteFooter from "@/components/layout/site-footer";
+import { getGitReferenceMetadata } from "@/lib/git-metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,6 +40,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gitReference = getGitReferenceMetadata();
+
   return (
     <html lang="en">
       <body
@@ -47,7 +51,10 @@ export default function RootLayout({
           <AuthProvider>
             <RealtimeProvider>
               <CharacterProvider>
-                {children}
+                <div className="flex min-h-screen flex-col">
+                  <main className="flex-1">{children}</main>
+                  <SiteFooter gitReference={gitReference} />
+                </div>
               </CharacterProvider>
             </RealtimeProvider>
           </AuthProvider>

@@ -3,7 +3,7 @@
  * Tests rendering, role management, and real-time updates
  */
 
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { supabase } from "@/lib/supabase";
 
 // Mock framer-motion BEFORE importing component
@@ -53,7 +53,7 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 // NOW import the component (after all mocks are set up)
-import GuildMasterManager from "@/components/guild-master-manager";
+import GuildMasterManager from "@/components/admin/guild-master-manager";
 
 describe("GuildMasterManager", () => {
   const mockMembers = [
@@ -376,24 +376,41 @@ describe("GuildMasterManager", () => {
 
     it("should show loading state during promotion", async () => {
       const mockFetch = jest.fn(
-        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 100))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  ok: true,
+                  json: jest.fn().mockResolvedValue({ message: "Promoted" }),
+                }),
+              100,
+            ),
+          ),
       );
       global.fetch = mockFetch;
 
       render(<GuildMasterManager />);
 
       await waitFor(() => {
-        const promoteButton = screen.getByRole("button", { name: "Promote" });
+        const memberRow = screen.getByTestId("member-row-user-3");
+        const promoteButton = within(memberRow).getByTestId("promote-button");
         fireEvent.click(promoteButton);
       });
 
-      const confirmButton = screen.getAllByRole("button", { name: "Promote" })[1];
+      const confirmButton = screen.getByTestId("confirm-promote-button");
       fireEvent.click(confirmButton);
 
-      // Should show loading state
-      await waitFor(() => {
-        expect(screen.getByText("⟳ Promoting...")).toBeInTheDocument();
-      });
+      const loadingText = await screen.findByText("Promoting...");
+      const loadingButton = loadingText.closest("button");
+
+      if (!(loadingButton instanceof HTMLButtonElement)) {
+        throw new Error("Expected loading state button to be present");
+      }
+
+      expect(loadingButton).toBeDisabled();
+      expect(loadingButton).toHaveAttribute("aria-busy", "true");
+      expect(screen.getByLabelText("Loading")).toBeInTheDocument();
     });
 
     it("should handle promotion API error", async () => {

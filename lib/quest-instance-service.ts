@@ -7,7 +7,7 @@
 import { supabase } from "@/lib/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
-import { QuestInstance, QuestTemplate } from "@/lib/types/database";
+import { QuestInstance, QuestTemplate, Character } from "@/lib/types/database";
 import { StreakService } from "@/lib/streak-service";
 import { RewardCalculator } from "@/lib/reward-calculator";
 
@@ -25,14 +25,15 @@ export class QuestInstanceService {
   }
 
   /**
-   * Claim a family quest for a hero
+   * Claim a family quest for a hero (hero volunteers for the quest)
    * - Validates quest is AVAILABLE and FAMILY type
    * - Checks hero doesn't already have an active family quest (anti-hoarding)
-   * - Sets assigned_to_id, volunteered_by, and calculates volunteer_bonus
+   * - Sets assigned_to_id, volunteered_by, and calculates 20% volunteer_bonus
+   * - Sets status to CLAIMED (indicates volunteer bonus applies)
    * - Updates character.active_family_quest_id
    * @param questId - The quest instance ID to claim
    * @param characterId - The character claiming the quest
-   * @returns The claimed quest instance
+   * @returns The claimed quest instance with CLAIMED status and volunteer bonus
    */
   async claimQuest(questId: string, characterId: string): Promise<QuestInstance> {
     // Fetch the quest to validate it's available and a family quest
@@ -138,8 +139,8 @@ export class QuestInstanceService {
       throw new Error(`Failed to fetch quest: ${fetchError?.message || "Quest not found"}`);
     }
 
-    // Validate quest is CLAIMED or AVAILABLE status
-    if (quest.status !== "CLAIMED" && quest.status !== "AVAILABLE") {
+    // Validate quest is PENDING, CLAIMED, IN_PROGRESS, or AVAILABLE status
+    if (quest.status !== "PENDING" && quest.status !== "CLAIMED" && quest.status !== "IN_PROGRESS" && quest.status !== "AVAILABLE") {
       throw new Error(`Quest cannot be released (status: ${quest.status})`);
     }
 
@@ -188,14 +189,15 @@ export class QuestInstanceService {
   }
 
   /**
-   * Assign a family quest to a specific hero (GM manual assignment)
+   * Assign a family quest to a specific hero (GM manual assignment, not volunteer)
    * - No volunteer bonus applied (only for self-claimed quests)
-   * - Sets assigned_to_id without setting volunteered_by
+   * - Sets assigned_to_id and volunteered_by for tracking
+   * - Sets status to PENDING (indicates no volunteer bonus applies)
    * - Updates character.active_family_quest_id
    * @param questId - The quest instance ID to assign
    * @param characterId - The character to assign the quest to
    * @param _gmId - The GM user ID performing the assignment (unused, kept for API compatibility)
-   * @returns The assigned quest instance
+   * @returns The assigned quest instance with PENDING status and no volunteer bonus
    */
   async assignQuest(questId: string, characterId: string, _gmId: string): Promise<QuestInstance> {
     void _gmId;
@@ -243,7 +245,7 @@ export class QuestInstanceService {
         assigned_to_id: character.user_id, // Assign to the user
         volunteered_by: characterId, // Store the specific character being assigned
         volunteer_bonus: null, // No volunteer bonus for GM assignments
-        status: "CLAIMED",
+        status: "PENDING",
       })
       .eq("id", questId)
       .select()
@@ -279,12 +281,16 @@ export class QuestInstanceService {
 
   /**
    * Approve a completed quest and distribute rewards
-   * - Validates quest is in a completable state (CLAIMED)
+   * - Validates quest is in a completable state (COMPLETED, IN_PROGRESS, or CLAIMED)
    * - Fetches assigned character and quest template
    * - Calculates total rewards (base + volunteer bonus + streak bonus)
    * - Updates character stats (gold, xp, level)
    * - Increments quest streak for recurring quests
    * - Sets quest status to APPROVED
+   *
+   * Note: CLAIMED status quests keep their volunteer bonus when approved
+   * PENDING status quests have no volunteer bonus
+   *
    * @param questId - The quest instance ID to approve
    * @returns The approved quest instance
   */
@@ -299,7 +305,8 @@ export class QuestInstanceService {
       throw new Error(`Failed to fetch quest: ${fetchError?.message || "Quest not found"}`);
     }
 
-    if (quest.status !== "CLAIMED" && quest.status !== "COMPLETED") {
+    // Quest must be COMPLETED to approve (or IN_PROGRESS/CLAIMED for special cases)
+    if (quest.status !== "CLAIMED" && quest.status !== "IN_PROGRESS" && quest.status !== "COMPLETED") {
       throw new Error(`Quest cannot be approved (status: ${quest.status})`);
     }
 
@@ -307,18 +314,34 @@ export class QuestInstanceService {
       throw new Error("Quest is not assigned to a hero");
     }
 
-    let characterQuery = this.client.from("characters").select("*");
+    let character: Character | null = null;
+    let characterError: Error | null = null;
 
     // Prioritize the specific character ID if available (from claim or new assignment logic)
     if (quest.volunteered_by) {
-      characterQuery = characterQuery.eq("id", quest.volunteered_by);
+      const result = await this.client
+        .from("characters")
+        .select("*")
+        .eq("id", quest.volunteered_by)
+        .single();
+      character = result.data;
+      characterError = result.error;
     } else {
-      // Fallback for legacy assigned quests: find a character by user ID.
-      // Using limit(1) to prevent errors if a user has multiple characters.
-      characterQuery = characterQuery.eq("user_id", quest.assigned_to_id).limit(1);
-    }
+      // Fallback for legacy assigned quests: find the first character by user ID
+      const result = await this.client
+        .from("characters")
+        .select("*")
+        .eq("user_id", quest.assigned_to_id)
+        .order("created_at", { ascending: true });
 
-    const { data: character, error: characterError } = await characterQuery.single();
+      if (result.data && result.data.length > 0) {
+        character = result.data[0];
+      } else if (result.error) {
+        characterError = result.error;
+      } else {
+        characterError = new Error("No characters found for assigned user");
+      }
+    }
 
     if (characterError || !character) {
       throw new Error(`Failed to fetch assigned character: ${characterError?.message || "Character not found"}`);

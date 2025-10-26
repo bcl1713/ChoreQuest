@@ -1,23 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase';
-import { Character, CharacterClass } from '@/lib/types/database';
-import { CHARACTER_CLASSES, formatBonusPercentage } from '@/lib/constants/character-classes';
-import { motion } from 'framer-motion';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
+import { Character, CharacterClass } from "@/lib/types/database";
+import {
+  CHARACTER_CLASSES,
+  formatBonusPercentage,
+} from "@/lib/constants/character-classes";
+import { motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { FantasyButton } from "@/components/ui";
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
   initialCharacterName?: string;
 }
 
-export default function CharacterCreation({ onCharacterCreated, initialCharacterName = '' }: CharacterCreationProps) {
+export default function CharacterCreation({
+  onCharacterCreated,
+  initialCharacterName = "",
+}: CharacterCreationProps) {
   const [name, setName] = useState(initialCharacterName);
-  const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
+  const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { user } = useAuth();
   const prefersReducedMotion = useReducedMotion();
 
@@ -25,23 +34,23 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
     e.preventDefault();
 
     if (!name.trim() || !selectedClass) {
-      setError('Please enter a character name and select a class');
+      setError("Please enter a character name and select a class");
       return;
     }
 
     if (!user) {
-      setError('Authentication required. Please log in again.');
+      setError("Authentication required. Please log in again.");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      console.log('Attempting to create character for user:', user.id);
+      console.log("Attempting to create character for user:", user.id);
 
       // First, verify the user profile exists with retry logic for timing issues
-      console.log('Checking for user profile...');
+      console.log("Checking for user profile...");
       let profileData = null;
       let profileError = null;
       let retryCount = 0;
@@ -50,19 +59,24 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
       // Retry loop to handle Supabase timing issues
       while (retryCount < maxRetries && !profileData) {
         const { data, error } = await supabase
-          .from('user_profiles')
-          .select('id, name, role, family_id')
-          .eq('id', user.id)
+          .from("user_profiles")
+          .select("id, name, role, family_id")
+          .eq("id", user.id)
           .single();
 
         profileData = data;
         profileError = error;
 
-        console.log(`Profile query attempt ${retryCount + 1}:`, { profileData, profileError });
+        console.log(`Profile query attempt ${retryCount + 1}:`, {
+          profileData,
+          profileError,
+        });
 
         if (!profileData && retryCount < maxRetries - 1) {
-          console.log(`Retrying profile lookup in 2 seconds (attempt ${retryCount + 1}/${maxRetries})...`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          console.log(
+            `Retrying profile lookup in 2 seconds (attempt ${retryCount + 1}/${maxRetries})...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           retryCount++;
         } else {
           break;
@@ -70,30 +84,32 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
       }
 
       if (profileError || !profileData) {
-        console.error('User profile not found after retries:', profileError);
-        console.error('Profile error details:', {
+        console.error("User profile not found after retries:", profileError);
+        console.error("Profile error details:", {
           message: profileError?.message,
           details: profileError?.details,
           hint: profileError?.hint,
-          code: profileError?.code
+          code: profileError?.code,
         });
 
         // Let's also check what profiles exist
         const { data: allProfiles, error: allProfilesError } = await supabase
-          .from('user_profiles')
-          .select('id, name, role')
+          .from("user_profiles")
+          .select("id, name, role")
           .limit(5);
 
-        console.log('All user profiles (first 5):', allProfiles);
-        console.log('All profiles query error:', allProfilesError);
+        console.log("All user profiles (first 5):", allProfiles);
+        console.log("All profiles query error:", allProfilesError);
 
-        throw new Error('User profile not found. This may be a timing issue - please wait a moment and try refreshing the page.');
+        throw new Error(
+          "User profile not found. This may be a timing issue - please wait a moment and try refreshing the page.",
+        );
       }
 
-      console.log('User profile verified, creating character...');
+      console.log("User profile verified, creating character...");
 
       const { data, error: dbError } = await supabase
-        .from('characters')
+        .from("characters")
         .insert({
           user_id: user.id,
           name: name.trim(),
@@ -103,15 +119,17 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
         .single();
 
       if (dbError) {
-        console.error('Character creation failed:', dbError);
-        throw new Error(dbError.message || 'Failed to create character');
+        console.error("Character creation failed:", dbError);
+        throw new Error(dbError.message || "Failed to create character");
       }
 
-      console.log('Character created successfully:', data);
+      console.log("Character created successfully:", data);
       onCharacterCreated(data);
     } catch (err) {
-      console.error('Character creation error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create character');
+      console.error("Character creation error:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to create character",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +150,10 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Character Name */}
           <div>
-            <label htmlFor="characterName" className="block text-sm font-medium text-gray-300 mb-3">
+            <label
+              htmlFor="characterName"
+              className="block text-sm font-medium text-gray-300 mb-3"
+            >
               Hero Name
             </label>
             <input
@@ -160,8 +181,8 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
                   data-testid={`class-${characterClass.name.toLowerCase()}`}
                   className={`fantasy-card p-4 cursor-pointer min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
                     selectedClass === characterClass.id
-                      ? 'ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50'
-                      : 'hover:border-gold-500/30'
+                      ? "ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50"
+                      : "hover:border-gold-500/30"
                   }`}
                   onClick={() => setSelectedClass(characterClass.id)}
                   whileHover={
@@ -169,7 +190,7 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
                       ? {}
                       : {
                           scale: 1.05,
-                          boxShadow: '0 10px 30px rgba(251, 191, 36, 0.2)',
+                          boxShadow: "0 10px 30px rgba(251, 191, 36, 0.2)",
                         }
                   }
                   whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
@@ -177,21 +198,42 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
                 >
                   <div className="text-center">
                     <div className="text-3xl mb-2">{characterClass.icon}</div>
-                    <h3 className="text-lg font-semibold text-gold-300 mb-2">{characterClass.name}</h3>
-                    <p className="text-sm text-gray-400 mb-3">{characterClass.description}</p>
+                    <h3 className="text-lg font-semibold text-gold-300 mb-2">
+                      {characterClass.name}
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-3">
+                      {characterClass.description}
+                    </p>
                     <div className="text-xs space-y-1">
-                      <div className="font-semibold text-gold-400 mb-2">Bonuses on ALL quests:</div>
+                      <div className="font-semibold text-gold-400 mb-2">
+                        Bonuses on ALL quests:
+                      </div>
                       {characterClass.bonuses.xp > 1.0 && (
-                        <div className="text-primary-400">⚡ {formatBonusPercentage(characterClass.bonuses.xp)} XP</div>
+                        <div className="text-primary-400">
+                          ⚡ {formatBonusPercentage(characterClass.bonuses.xp)}{" "}
+                          XP
+                        </div>
                       )}
                       {characterClass.bonuses.gold > 1.0 && (
-                        <div className="text-gold-400">💰 {formatBonusPercentage(characterClass.bonuses.gold)} Gold</div>
+                        <div className="text-gold-400">
+                          💰{" "}
+                          {formatBonusPercentage(characterClass.bonuses.gold)}{" "}
+                          Gold
+                        </div>
                       )}
                       {characterClass.bonuses.honor > 1.0 && (
-                        <div className="text-purple-400">🎖️ {formatBonusPercentage(characterClass.bonuses.honor)} Honor</div>
+                        <div className="text-purple-400">
+                          🎖️{" "}
+                          {formatBonusPercentage(characterClass.bonuses.honor)}{" "}
+                          Honor
+                        </div>
                       )}
                       {characterClass.bonuses.gems > 1.0 && (
-                        <div className="text-gem-400">💎 {formatBonusPercentage(characterClass.bonuses.gems)} Gems</div>
+                        <div className="text-gem-400">
+                          💎{" "}
+                          {formatBonusPercentage(characterClass.bonuses.gems)}{" "}
+                          Gems
+                        </div>
                       )}
                     </div>
                   </div>
@@ -202,27 +244,25 @@ export default function CharacterCreation({ onCharacterCreated, initialCharacter
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4" data-testid="character-creation-error">
+            <div
+              className="bg-red-900/50 border border-red-500/50 rounded-lg p-4"
+              data-testid="character-creation-error"
+            >
               <p className="text-red-300 text-sm">{error}</p>
             </div>
           )}
 
           {/* Submit Button */}
           <div className="text-center">
-            <button
+            <FantasyButton
               type="submit"
               disabled={isLoading || !name.trim() || !selectedClass}
-              className="fantasy-button fantasy-button-primary px-8 py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed min-w-48"
+              isLoading={isLoading}
+              size="lg"
+              className="min-w-48 justify-center"
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Creating Hero...
-                </div>
-              ) : (
-                'Begin Your Quest'
-              )}
-            </button>
+              {isLoading ? "Creating Hero..." : "Begin Your Quest"}
+            </FantasyButton>
           </div>
         </form>
       </div>

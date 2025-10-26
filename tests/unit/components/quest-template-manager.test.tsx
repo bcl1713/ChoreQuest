@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { QuestTemplateManager } from '@/components/quest-template-manager';
+import { QuestTemplateManager } from '@/components/quests/quest-template-manager';
 import React from 'react';
 import type { QuestTemplate } from '@/lib/types/database';
 
@@ -177,7 +177,7 @@ describe('QuestTemplateManager', () => {
       });
     });
 
-    it('should display PAUSED badge for paused templates', async () => {
+    it('should display Unavailable badge for paused templates', async () => {
       mockSelect.mockReturnValueOnce({
         eq: jest.fn(() => ({
           order: jest.fn(() => Promise.resolve({ data: [mockPausedTemplate], error: null })),
@@ -187,11 +187,11 @@ describe('QuestTemplateManager', () => {
       render(<QuestTemplateManager />);
 
       await waitFor(() => {
-        expect(screen.getByText('PAUSED')).toBeInTheDocument();
+        expect(screen.getByText('Unavailable')).toBeInTheDocument();
       });
     });
 
-    it('should not display PAUSED badge for active templates', async () => {
+    it('should not display Unavailable badge for active templates', async () => {
       mockSelect.mockReturnValueOnce({
         eq: jest.fn(() => ({
           order: jest.fn(() => Promise.resolve({ data: [mockActiveTemplate], error: null })),
@@ -204,7 +204,7 @@ describe('QuestTemplateManager', () => {
         expect(screen.getByText('Active Quest')).toBeInTheDocument();
       });
 
-      expect(screen.queryByText('PAUSED')).not.toBeInTheDocument();
+      expect(screen.queryByText('Unavailable')).not.toBeInTheDocument();
     });
 
     it('should handle error when toggling pause state fails', async () => {

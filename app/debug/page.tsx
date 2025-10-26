@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui';
 
 export default function DebugPage() {
   const [result, setResult] = useState<string>('');
@@ -120,13 +121,13 @@ export default function DebugPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Database Debug Page</h1>
 
-        <button
+        <Button
           onClick={testFamilyCreation}
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded disabled:opacity-50 mb-4"
+          isLoading={isLoading}
+          className="mb-4"
         >
           {isLoading ? 'Testing...' : 'Test Family Creation Process'}
-        </button>
+        </Button>
 
         <div className="bg-gray-800 p-4 rounded-lg">
           <h2 className="text-xl font-semibold mb-2">Debug Output:</h2>

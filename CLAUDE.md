@@ -75,3 +75,5 @@ npm run lint         # Check code quality
 
 - Do not run the dev server. If you need it to be running, ask the user to run
   it.
+- You MUST ask permission before using any eslint-disable comments and justify
+  why it is necessary.

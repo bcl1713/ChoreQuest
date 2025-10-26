@@ -9,9 +9,24 @@ class QuestInstanceApiService {
   private async getAuthToken(): Promise<string | null> {
     if (typeof window === 'undefined') return null;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session?.access_token || null;
-    } catch {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Failed to fetch auth session:', error);
+      }
+
+      if (session?.access_token) {
+        return session.access_token;
+      }
+
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Failed to refresh auth session:', refreshError);
+        return null;
+      }
+
+      return refreshData.session?.access_token ?? null;
+    } catch (err) {
+      console.error('Unexpected error in getAuthToken:', err);
       return null;
     }
   }
@@ -34,27 +49,6 @@ class QuestInstanceApiService {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to claim quest');
-    }
-  }
-
-  async releaseQuest(questId: string): Promise<void> {
-    const token = await this.getAuthToken();
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`/api/quests/${questId}/release`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to release quest');
     }
   }
 
@@ -96,6 +90,67 @@ class QuestInstanceApiService {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Failed to assign quest' }));
       throw new Error(errorData.error || 'Failed to assign quest');
+    }
+  }
+
+  async cancelQuest(questId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to cancel quest' }));
+      throw new Error(errorData.error || 'Failed to cancel quest');
+    }
+  }
+
+  async releaseQuest(questId: string, characterId?: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/release`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ characterId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to release quest' }));
+      throw new Error(errorData.error || 'Failed to release quest');
+    }
+  }
+
+  async denyQuest(questId: string): Promise<void> {
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`/api/quest-instances/${questId}/deny`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to deny quest' }));
+      throw new Error(errorData.error || 'Failed to deny quest');
     }
   }
 }

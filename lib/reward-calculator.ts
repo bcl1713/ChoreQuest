@@ -109,4 +109,34 @@ export class RewardCalculator {
     // Simple quadratic formula for XP required per level
     return 50 * (level - 1) ** 2;
   }
+
+  static getLevelProgress(level: number, totalXP: number): {
+    current: number;
+    required: number;
+    percentage: number;
+  } {
+    const safeLevel = Number.isFinite(level) && level > 0 ? Math.floor(level) : 1;
+    const safeTotalXP = Number.isFinite(totalXP) ? Math.max(0, Math.floor(totalXP)) : 0;
+
+    const currentLevelFloor = this.getXPRequiredForLevel(safeLevel);
+    const nextLevelRequirement = this.getXPRequiredForLevel(safeLevel + 1);
+    const requiredForNextLevel = Math.max(1, nextLevelRequirement - currentLevelFloor);
+
+    const rawProgress = safeTotalXP - currentLevelFloor;
+    const currentProgress = Math.min(
+      Math.max(0, rawProgress),
+      requiredForNextLevel,
+    );
+
+    const percentage =
+      requiredForNextLevel > 0
+        ? Math.min(100, Math.max(0, (currentProgress / requiredForNextLevel) * 100))
+        : 0;
+
+    return {
+      current: currentProgress,
+      required: requiredForNextLevel,
+      percentage,
+    };
+  }
 }

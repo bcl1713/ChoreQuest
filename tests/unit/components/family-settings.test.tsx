@@ -54,7 +54,7 @@ jest.mock("@/lib/family-service", () => ({
 }));
 
 // NOW import the component (after all mocks are set up)
-import FamilySettings from "@/components/family-settings";
+import FamilySettings from "@/components/family/family-settings";
 
 describe("FamilySettings", () => {
   const mockFamilyInfo = {

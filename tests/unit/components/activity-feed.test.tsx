@@ -50,7 +50,7 @@ jest.mock("@/lib/activity-service", () => {
 });
 
 // NOW import the component (after all mocks are set up)
-import ActivityFeed from "@/components/activity-feed";
+import ActivityFeed from "@/components/admin/activity-feed";
 import { ActivityService } from "@/lib/activity-service";
 
 describe("ActivityFeed", () => {
@@ -235,7 +235,7 @@ describe("ActivityFeed", () => {
     render(<ActivityFeed />);
 
     await waitFor(() => {
-      const reviewButton = screen.getByText("Review");
+      const reviewButton = screen.getByRole("button", { name: /review/i });
       expect(reviewButton).toBeInTheDocument();
     });
   });
@@ -244,7 +244,7 @@ describe("ActivityFeed", () => {
     render(<ActivityFeed />);
 
     await waitFor(() => {
-      const reviewButton = screen.getByText("Review");
+      const reviewButton = screen.getByRole("button", { name: /review/i });
       expect(reviewButton).toBeInTheDocument();
       expect(reviewButton.tagName).toBe("BUTTON");
     });
@@ -254,7 +254,7 @@ describe("ActivityFeed", () => {
     render(<ActivityFeed />);
 
     await waitFor(() => {
-      expect(screen.getByText("🔄 Refresh")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
     });
   });
 

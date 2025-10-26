@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, waitFor, screen } from '@testing-library/react';
-import QuestDashboard from '../quest-dashboard';
+import QuestDashboard from '../quests/quest-dashboard';
 import { useAuth } from '@/lib/auth-context';
 import { useRealtime } from '@/lib/realtime-context';
 import { supabase } from '@/lib/supabase';
@@ -53,10 +53,10 @@ describe('QuestDashboard - Realtime DELETE Events', () => {
     difficulty: 'EASY' as const,
     xp_reward: 100,
     gold_reward: 50,
-    status: 'AVAILABLE' as const,
-    quest_type: 'FAMILY' as const,
+    status: 'PENDING' as const,
+    quest_type: 'INDIVIDUAL' as const,
     family_id: 'family-456',
-    assigned_to_id: null,
+    assigned_to_id: 'user-123',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

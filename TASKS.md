@@ -5,6 +5,31 @@
 ChoreQuest is a fantasy RPG-themed family chore management system that
 transforms household tasks into epic adventures.
 
+## Release 0.4.0 - Code Quality & UI Polish
+
+### Issue #82 - XP Progress Bar Shows Level Progress
+
+- [x] Review existing XP/level progress calculation logic for the dashboard progress bar
+- [x] Add Jest coverage capturing expected level-based progress behavior
+- [x] Update UI/component logic so the progress bar reflects current level progress
+- [x] Surface total lifetime XP below the progress bar for quick reference
+- [x] Manually verify visual behavior across breakpoints after code changes
+
+### Issue #95 - Restore Guild Master Quest Approvals on Main Dashboard
+
+- [x] Analyze existing GM approval workflows and identify shared logic candidates
+- [x] Add Jest coverage for a shared PendingApprovalsSection component reused across surfaces
+- [x] Refactor `components/admin/quest-management-tab.tsx` to consume the shared component
+- [x] Render the shared pending approvals section on the main Quest Dashboard for Guild Masters
+- [x] Verify quest approval, deny, assign, and release actions still trigger reload flows
+
+### Issue #61 - Display Current Git Branch or Tag in Layout Footer
+
+- [x] Decide on branch/tag metadata source and expose it via build/runtime configuration
+- [x] Update the main layout footer to surface the current branch or tag when available
+- [x] Cover the footer logic with unit tests for branch, tag, and fallback scenarios
+- [x] Manually verify the footer output in the local development environment
+
 ## Phase 1: Core Foundation (MVP) - COMPLETED
 
 - [x] Authentication and user management system
