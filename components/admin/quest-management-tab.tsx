@@ -212,7 +212,7 @@ export function QuestManagementTab() {
   }
 
   // Section renderer
-  const renderSection = (section: QuestSection) => {
+  const renderSection = (section: QuestSection, hideAssignment: boolean = false) => {
     const sectionQuests = section.quests;
 
     return (
@@ -251,6 +251,7 @@ export function QuestManagementTab() {
                 onDeny={handleDenyQuest}
                 onCancel={handleCancelQuest}
                 onRelease={handleReleaseQuest}
+                hideAssignment={hideAssignment}
               />
             ))}
           </motion.div>
@@ -295,7 +296,7 @@ export function QuestManagementTab() {
         <hr className="border-dark-600" />
 
         {/* In Progress Section */}
-        {renderSection(questSections.inProgress)}
+        {renderSection(questSections.inProgress, true)}
       </div>
     </>
   );

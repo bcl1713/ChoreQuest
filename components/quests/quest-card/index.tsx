@@ -35,6 +35,7 @@ export interface QuestCardProps {
 
   // Styling options
   isPaused?: boolean;
+  hideAssignment?: boolean;
 
   // Template-specific actions (optional)
   isTemplate?: boolean;
@@ -59,6 +60,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   selectedAssignee = '',
   onAssigneeChange,
   isPaused = false,
+  hideAssignment = false,
   isTemplate = false,
   onEditTemplate,
   onTogglePauseTemplate,
@@ -191,7 +193,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
       {viewMode === 'gm' && (
         <div className="space-y-3">
           {/* Assignment dropdown */}
-          {buttonVis.showAssignment && familyMembers.length > 0 && (
+          {buttonVis.showAssignment && !hideAssignment && familyMembers.length > 0 && (
             <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
               <label className="block text-xs font-medium text-gray-300 mb-2">
                 👑 Assign to Hero
