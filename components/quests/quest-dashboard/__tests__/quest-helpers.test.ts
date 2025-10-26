@@ -98,7 +98,7 @@ describe('Quest Helpers', () => {
     });
 
     it('handles character with missing user_id by falling back to character.id', () => {
-      const charWithoutUserId = { ...baseCharacter, id: 'char-3', user_id: undefined as unknown as string };
+      const charWithoutUserId = { ...baseCharacter, id: 'char-3', user_id: null };
 
       const result = mapFamilyCharactersToAssignmentDisplay([charWithoutUserId]);
 
