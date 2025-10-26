@@ -155,6 +155,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               variant="primary"
               size="sm"
               onClick={() => onStart(quest.id)}
+              disabled={isPaused}
               data-testid="hero-start-quest"
             >
               Start Quest
@@ -167,6 +168,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               variant="gold"
               size="sm"
               onClick={() => onComplete(quest.id)}
+              disabled={isPaused}
               data-testid="hero-complete-quest"
             >
               Complete Quest
@@ -179,6 +181,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               variant="success"
               size="sm"
               onClick={() => onPickup(quest)}
+              disabled={isPaused}
               data-testid="hero-pickup-quest"
             >
               Pick Up Quest
@@ -192,6 +195,7 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
               variant="secondary"
               size="sm"
               onClick={() => onRelease(quest.id)}
+              disabled={isPaused}
               data-testid="hero-release-quest"
             >
               Abandon Quest

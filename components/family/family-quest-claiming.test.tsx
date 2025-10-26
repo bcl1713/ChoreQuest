@@ -13,7 +13,7 @@ jest.mock('framer-motion', () => ({
 
 // Mock QuestCard component
 jest.mock('@/components/quests/quest-card', () => {
-  return function MockQuestCard({ quest, onPickup }: { quest: QuestInstance; onPickup?: (quest: QuestInstance) => void }) {
+  return function MockQuestCard({ quest, onPickup, isPaused }: { quest: QuestInstance; onPickup?: (quest: QuestInstance) => void; isPaused?: boolean }) {
     return (
       <div data-testid={`quest-card-${quest.id}`}>
         <h4>{quest.title}</h4>
@@ -24,6 +24,7 @@ jest.mock('@/components/quests/quest-card', () => {
         {onPickup && (
           <button
             data-testid={`pickup-button-${quest.id}`}
+            disabled={isPaused}
             onClick={() => onPickup(quest)}
           >
             Pick Up Quest
@@ -126,11 +127,12 @@ describe('FamilyQuestClaiming', () => {
       expect(screen.getByTestId('quest-card-3')).toBeInTheDocument();
     });
 
-    it('should still call onClaimQuest when clicking pick up button (parent component handles disabling)', () => {
+    it('should not call onClaimQuest when pick up button is disabled', () => {
       render(<FamilyQuestClaiming quests={mockQuests} character={mockCharacterWithActiveQuest} onClaimQuest={onClaimQuest} />);
-      const pickupButtons = screen.getAllByText('Pick Up Quest');
+      const pickupButtons = screen.getAllByTestId(/^pickup-button-/);
+      expect(pickupButtons[0]).toBeDisabled();
       fireEvent.click(pickupButtons[0]);
-      expect(onClaimQuest).toHaveBeenCalledWith('1');
+      expect(onClaimQuest).not.toHaveBeenCalled();
     });
   });
 });

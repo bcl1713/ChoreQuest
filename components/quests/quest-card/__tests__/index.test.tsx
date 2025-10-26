@@ -284,6 +284,92 @@ describe('QuestCard Component', () => {
         fireEvent.click(screen.getByTestId('hero-pickup-quest'));
         expect(onPickup).toHaveBeenCalledWith(quest);
       });
+
+      describe('When isPaused is true', () => {
+        it('disables Start button when isPaused is true', () => {
+          const quest = createMockQuest({ status: 'PENDING' as QuestStatus });
+          const onStart = jest.fn();
+
+          render(
+            <QuestCard
+              quest={quest}
+              viewMode="hero"
+              onStart={onStart}
+              isPaused={true}
+            />
+          );
+
+          expect(screen.getByTestId('hero-start-quest')).toBeDisabled();
+        });
+
+        it('disables Complete button when isPaused is true', () => {
+          const quest = createMockQuest({ status: 'IN_PROGRESS' as QuestStatus });
+          const onComplete = jest.fn();
+
+          render(
+            <QuestCard
+              quest={quest}
+              viewMode="hero"
+              onComplete={onComplete}
+              isPaused={true}
+            />
+          );
+
+          expect(screen.getByTestId('hero-complete-quest')).toBeDisabled();
+        });
+
+        it('disables Pick Up button when isPaused is true', () => {
+          const quest = createMockQuest({ status: 'AVAILABLE' as QuestStatus });
+          const onPickup = jest.fn();
+
+          render(
+            <QuestCard
+              quest={quest}
+              viewMode="hero"
+              onPickup={onPickup}
+              isPaused={true}
+            />
+          );
+
+          expect(screen.getByTestId('hero-pickup-quest')).toBeDisabled();
+        });
+
+        it('does not call onPickup when disabled button is clicked', () => {
+          const quest = createMockQuest({ status: 'AVAILABLE' as QuestStatus });
+          const onPickup = jest.fn();
+
+          render(
+            <QuestCard
+              quest={quest}
+              viewMode="hero"
+              onPickup={onPickup}
+              isPaused={true}
+            />
+          );
+
+          fireEvent.click(screen.getByTestId('hero-pickup-quest'));
+          expect(onPickup).not.toHaveBeenCalled();
+        });
+
+        it('disables Abandon Quest button when isPaused is true', () => {
+          const quest = createMockQuest({
+            status: 'IN_PROGRESS' as QuestStatus,
+            quest_type: 'FAMILY'
+          });
+          const onRelease = jest.fn();
+
+          render(
+            <QuestCard
+              quest={quest}
+              viewMode="hero"
+              onRelease={onRelease}
+              isPaused={true}
+            />
+          );
+
+          expect(screen.getByTestId('hero-release-quest')).toBeDisabled();
+        });
+      });
     });
   });
 
