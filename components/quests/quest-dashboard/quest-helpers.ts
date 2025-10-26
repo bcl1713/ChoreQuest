@@ -164,15 +164,22 @@ export function filterPendingApprovalQuests(quests: QuestInstance[]): QuestInsta
 
 /**
  * Map family characters to lightweight assignment display objects (id + name).
+ * Maps characters by user_id (not character.id) because quest.assigned_to_id references user_profiles.id.
  * Ensures every character has a readable label, falling back to a shortened id.
+ *
+ * @param familyCharacters - Array of Character objects to map
+ * @returns Array of objects with user_id and character name for assignment lookup
+ * @throws Will still return data if char.user_id is missing, using char.id as fallback
  */
 export function mapFamilyCharactersToAssignmentDisplay(
   familyCharacters: Character[]
 ): Array<{ id: string; name: string }> {
   return familyCharacters.map((char) => {
     const displayName = (char.name && char.name.trim()) || `Hero (${char.id.substring(0, 8)})`;
+    // Use char.user_id for the id since quest.assigned_to_id references user_profiles.id
+    const userId = char.user_id || char.id; // Fallback to char.id if user_id is missing (defensive)
     return {
-      id: char.id,
+      id: userId,
       name: displayName,
     };
   });

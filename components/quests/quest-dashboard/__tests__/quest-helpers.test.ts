@@ -63,12 +63,13 @@ describe('Quest Helpers', () => {
       active_family_quest_id: null,
     };
 
-    it('maps characters to id/name pairs preserving names', () => {
+    it('maps characters by user_id (not character.id) for quest assignment lookup', () => {
       const result = mapFamilyCharactersToAssignmentDisplay([baseCharacter]);
 
+      // IMPORTANT: Should use user_id, not character.id, because quest.assigned_to_id references user_profiles.id
       expect(result).toEqual([
         {
-          id: 'char-1',
+          id: 'user-1',
           name: 'Knight Nova',
         },
       ]);
@@ -79,7 +80,31 @@ describe('Quest Helpers', () => {
         { ...baseCharacter, id: 'char-2', name: '   ' },
       ]);
 
+      // Even with blank name, should use user_id for the id
+      expect(result[0].id).toBe('user-1');
       expect(result[0].name).toBe('Hero (char-2)');
+    });
+
+    it('handles multiple characters mapping to different user_ids', () => {
+      const char1 = { ...baseCharacter, id: 'char-1', user_id: 'user-1', name: 'Knight Nova' };
+      const char2 = { ...baseCharacter, id: 'char-2', user_id: 'user-2', name: 'Mage Spark' };
+
+      const result = mapFamilyCharactersToAssignmentDisplay([char1, char2]);
+
+      expect(result).toEqual([
+        { id: 'user-1', name: 'Knight Nova' },
+        { id: 'user-2', name: 'Mage Spark' },
+      ]);
+    });
+
+    it('handles character with missing user_id by falling back to character.id', () => {
+      const charWithoutUserId = { ...baseCharacter, id: 'char-3', user_id: undefined as unknown as string };
+
+      const result = mapFamilyCharactersToAssignmentDisplay([charWithoutUserId]);
+
+      // Should fall back to character.id when user_id is missing
+      expect(result[0].id).toBe('char-3');
+      expect(result[0].name).toBe('Knight Nova');
     });
   });
 
@@ -382,37 +407,106 @@ describe('Quest Helpers', () => {
   });
 
   describe('getAssignedHeroName', () => {
-    it('returns hero name when found', () => {
+    // Test 2.1: returns hero name when quest.assigned_to_id matches a character's user_id
+    it('returns hero name when quest.assigned_to_id matches a character\'s user_id', () => {
       const quest = createMockQuest({ assigned_to_id: 'user-1' });
-      const familyMembers = [
-        { id: 'user-1', name: 'Alice', email: 'alice@example.com', family_id: 'family-1', role: 'HERO', created_at: null, updated_at: null },
+      const assignmentOptions = [
+        { id: 'user-1', name: 'Knight Nova' },
+        { id: 'user-2', name: 'Mage Spark' },
       ];
 
-      const result = getAssignedHeroName(quest, familyMembers);
+      const result = getAssignedHeroName(quest, assignmentOptions);
 
-      expect(result).toBe('Alice');
+      expect(result).toBe('Knight Nova');
     });
 
-    it('returns undefined when hero not found', () => {
+    // Test 2.2: returns undefined when quest.assigned_to_id does not match any character
+    it('returns undefined when quest.assigned_to_id does not match any character', () => {
       const quest = createMockQuest({ assigned_to_id: 'user-unknown' });
-      const familyMembers = [
-        { id: 'user-1', name: 'Alice', email: 'alice@example.com', family_id: 'family-1', role: 'HERO', created_at: null, updated_at: null },
+      const assignmentOptions = [
+        { id: 'user-1', name: 'Knight Nova' },
+        { id: 'user-2', name: 'Mage Spark' },
       ];
 
-      const result = getAssignedHeroName(quest, familyMembers);
+      const result = getAssignedHeroName(quest, assignmentOptions);
 
       expect(result).toBeUndefined();
     });
 
-    it('returns undefined when quest has no assigned user', () => {
+    // Test 2.3: returns undefined when quest.assigned_to_id is null
+    it('returns undefined when quest.assigned_to_id is null', () => {
       const quest = createMockQuest({ assigned_to_id: null });
-      const familyMembers = [
-        { id: 'user-1', name: 'Alice', email: 'alice@example.com', family_id: 'family-1', role: 'HERO', created_at: null, updated_at: null },
+      const assignmentOptions = [
+        { id: 'user-1', name: 'Knight Nova' },
+        { id: 'user-2', name: 'Mage Spark' },
       ];
 
-      const result = getAssignedHeroName(quest, familyMembers);
+      const result = getAssignedHeroName(quest, assignmentOptions);
 
       expect(result).toBeUndefined();
+    });
+
+    // Test 2.4: handles empty assignmentOptions array
+    it('handles empty assignmentOptions array', () => {
+      const quest = createMockQuest({ assigned_to_id: 'user-1' });
+      const assignmentOptions: Array<{ id: string; name: string }> = [];
+
+      const result = getAssignedHeroName(quest, assignmentOptions);
+
+      expect(result).toBeUndefined();
+    });
+
+    // Test 2.5: uses character name from mapFamilyCharactersToAssignmentDisplay output
+    it('uses character name from mapFamilyCharactersToAssignmentDisplay output', () => {
+      const character: Character = {
+        id: 'char-1',
+        user_id: 'user-1',
+        name: 'Paladin Light',
+        class: 'PALADIN',
+        level: 5,
+        xp: 1000,
+        gold: 500,
+        gems: 10,
+        honor_points: 50,
+        avatar_url: null,
+        created_at: '2025-01-01',
+        updated_at: '2025-01-01',
+        active_family_quest_id: null,
+      };
+
+      const quest = createMockQuest({ assigned_to_id: 'user-1' });
+      // Simulate the output from mapFamilyCharactersToAssignmentDisplay
+      const assignmentOptions = mapFamilyCharactersToAssignmentDisplay([character]);
+
+      const result = getAssignedHeroName(quest, assignmentOptions);
+
+      expect(result).toBe('Paladin Light');
+    });
+
+    // Additional edge case: multiple characters with same user_id (should return first match)
+    it('returns first match when multiple characters have same user_id', () => {
+      const quest = createMockQuest({ assigned_to_id: 'user-1' });
+      const assignmentOptions = [
+        { id: 'user-1', name: 'Knight Nova' },
+        { id: 'user-1', name: 'Duplicate Hero' }, // This shouldn't happen in practice, but test it
+      ];
+
+      const result = getAssignedHeroName(quest, assignmentOptions);
+
+      expect(result).toBe('Knight Nova');
+    });
+
+    // Additional edge case: quest.assigned_to_id with whitespace (should still match)
+    it('matches assigned_to_id exactly (no trimming)', () => {
+      const quest = createMockQuest({ assigned_to_id: 'user-1' });
+      const assignmentOptions = [
+        { id: 'user-1', name: 'Knight Nova' },
+        { id: ' user-1', name: 'Different Hero' },
+      ];
+
+      const result = getAssignedHeroName(quest, assignmentOptions);
+
+      expect(result).toBe('Knight Nova');
     });
   });
 });
