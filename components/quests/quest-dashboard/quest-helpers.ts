@@ -169,7 +169,7 @@ export function filterPendingApprovalQuests(quests: QuestInstance[]): QuestInsta
  *
  * @param familyCharacters - Array of Character objects to map
  * @returns Array of objects with user_id and character name for assignment lookup
- * @throws Will still return data if char.user_id is missing, using char.id as fallback
+ * @description This function will still return data if a character's `user_id` is missing, using `char.id` as a fallback.
  */
 export function mapFamilyCharactersToAssignmentDisplay(
   familyCharacters: Character[]
