@@ -85,8 +85,8 @@ describe('QuestCard Component', () => {
           />
         );
 
-        expect(screen.getByText('⚡ 150 XP')).toBeInTheDocument();
-        expect(screen.getByText('💰 75 Gold')).toBeInTheDocument();
+        expect(screen.getByText('150 XP')).toBeInTheDocument();
+        expect(screen.getByText('75 Gold')).toBeInTheDocument();
         expect(screen.getByText('HARD')).toBeInTheDocument();
       });
 
@@ -101,7 +101,7 @@ describe('QuestCard Component', () => {
           />
         );
 
-        expect(screen.getByText('📅 Weekly')).toBeInTheDocument();
+        expect(screen.getByText('Weekly')).toBeInTheDocument();
       });
 
       it('displays assigned hero name when provided', () => {
@@ -114,7 +114,7 @@ describe('QuestCard Component', () => {
           />
         );
 
-        expect(screen.getByText('👤 Alice')).toBeInTheDocument();
+        expect(screen.getByText('Alice')).toBeInTheDocument();
       });
 
       it('displays streak bonus when present', () => {
@@ -129,7 +129,7 @@ describe('QuestCard Component', () => {
           />
         );
 
-        expect(screen.getByText('🔥 5-day streak (+20%)')).toBeInTheDocument();
+        expect(screen.getByText('5-day streak (+20%)')).toBeInTheDocument();
       });
 
       it('displays volunteer bonus when present', () => {

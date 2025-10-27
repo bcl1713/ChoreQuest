@@ -46,11 +46,17 @@ The application uses the `FantasyIcon` component wrapper with standardized sizes
 
 | Emoji | Lucide Icon | Component | Usage |
 |-------|-------------|-----------|-------|
-| ✓ | `CheckCircle` | Quest Card | Completed quest status |
-| ⏳ | `Clock` | Quest Card | In-progress quest status |
-| ❌ | `XCircle` | Quest Card | Failed quest status |
-| 📊 | `BarChart` | Quest Stats | Statistics display |
-| 🎯 | `Target` | Quest Stats | Goal/objective marker |
+| ⚡ | `Zap` | Quest Card | XP reward indicator |
+| 💰 | `Coins` | Quest Card | Gold reward indicator |
+| 🔥 | `Flame` | Quest Card | Streak bonus indicator |
+| 👤 | `User` | Quest Card | Assigned hero indicator |
+| 👑 | `Crown` | Quest Card | Assignment dropdown label |
+| 📊 | `BarChart3` | Quest Stats | Total quests count |
+| ⏳ | `Clock` | Quest Stats | Pending quests count |
+| 🔄 | `RotateCw` | Quest Stats | In-progress quests count |
+| ✅ | `CheckCircle` | Quest Stats | Completed quests count |
+| 📈 | `TrendingUp` | Quest Stats | Completion rate percentage |
+| 👥 | `Users` | Template List | Family quest templates header |
 
 ### UI Components & Animations
 

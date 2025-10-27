@@ -2,6 +2,7 @@
 
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
+import { Zap, Coins, Flame, User, Crown } from 'lucide-react';
 import { QuestInstance } from '@/lib/types/database';
 import { getDifficultyColor, getStatusColor } from '@/lib/utils/colors';
 import { formatDueDate, formatPercent } from '@/lib/utils/formatting';
@@ -113,19 +114,27 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
             <span className={getDifficultyColor(quest.difficulty)}>
               {quest.difficulty}
             </span>
-            <span>⚡ {quest.xp_reward} XP</span>
-            <span>💰 {quest.gold_reward} Gold</span>
+            <span className="flex items-center gap-1">
+              <Zap size={16} className="inline" /> {quest.xp_reward} XP
+            </span>
+            <span className="flex items-center gap-1">
+              <Coins size={16} className="inline" /> {quest.gold_reward} Gold
+            </span>
             {recurrenceLabel && <span>{recurrenceLabel}</span>}
             {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
             {volunteerBonusPercent && (
               <span className="text-emerald-300">+{volunteerBonusPercent} Volunteer Bonus</span>
             )}
             {streakBonusPercent && quest.streak_count && (
-              <span className="text-amber-300">
-                🔥 {quest.streak_count}-day streak (+{streakBonusPercent})
+              <span className="text-amber-300 flex items-center gap-1">
+                <Flame size={16} className="inline" /> {quest.streak_count}-day streak (+{streakBonusPercent})
               </span>
             )}
-            {assignedHeroName && <span className="text-purple-300">👤 {assignedHeroName}</span>}
+            {assignedHeroName && (
+              <span className="text-purple-300 flex items-center gap-1">
+                <User size={16} className="inline" /> {assignedHeroName}
+              </span>
+            )}
           </div>
         </div>
 
@@ -195,8 +204,8 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
           {/* Assignment dropdown */}
           {buttonVis.showAssignment && !hideAssignment && familyMembers.length > 0 && (
             <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
-              <label className="block text-xs font-medium text-gray-300 mb-2">
-                👑 Assign to Hero
+              <label className="block text-xs font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <Crown size={16} /> Assign to Hero
               </label>
               <div className="flex gap-2">
                 <select
