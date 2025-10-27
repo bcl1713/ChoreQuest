@@ -74,28 +74,28 @@
   - [x] 1.6 Create initial tracking document at `docs/emoji-to-icon-mapping.md` with header structure
   - [x] 1.7 Commit initial setup: `git add -A && git commit -m "Setup: Create branch and documentation structure for emoji replacement"`
 
-- [ ] 2.0 Phase 1: Replace character class emojis with Lucide icons
-  - [ ] 2.1 Open `lib/constants/character-classes.ts` and locate the CHARACTER_CLASSES array
-  - [ ] 2.2 Change MAGE icon from "🔮" to "Sparkles" (string, not component)
-  - [ ] 2.3 Change ROGUE icon from "🗡️" to "Sword" (string, not component)
-  - [ ] 2.4 Change KNIGHT icon from "🛡️" to "Shield" (string, not component)
-  - [ ] 2.5 Change HEALER icon from "✨" to "Heart" (string, not component)
-  - [ ] 2.6 Change RANGER icon from "🏹" to "Target" (string, not component)
-  - [ ] 2.7 Update `CharacterClassInfo` interface to clarify icon type (change comment to "Lucide icon name")
-  - [ ] 2.8 Document these 5 mappings in `docs/emoji-to-icon-mapping.md`
-  - [ ] 2.9 Open `components/character/CharacterCreation.tsx` and find where character icons are rendered
-  - [ ] 2.10 Import required Lucide icons at top: `import { Sparkles, Sword, Shield, Heart, Target } from 'lucide-react'`
-  - [ ] 2.11 Create icon mapping object: `const CLASS_ICONS = { Sparkles, Sword, Shield, Heart, Target }`
-  - [ ] 2.12 Replace emoji rendering with: `const IconComponent = CLASS_ICONS[classInfo.icon as keyof typeof CLASS_ICONS]; return <IconComponent size={32} />`
-  - [ ] 2.13 Run character class tests: `npx jest lib/constants/character-classes.test.ts`
-  - [ ] 2.14 Open `lib/constants/character-classes.test.ts` and update assertions to check for icon names instead of emoji
-  - [ ] 2.15 Run tests again to ensure they pass: `npx jest lib/constants/character-classes.test.ts`
-  - [ ] 2.16 Run character creation component tests: `npx jest components/character/CharacterCreation.test.tsx`
-  - [ ] 2.17 Update test file to check for Lucide icon components instead of emoji strings
-  - [ ] 2.18 Run tests again to ensure they pass: `npx jest components/character/CharacterCreation.test.tsx`
-  - [ ] 2.19 Check `app/character/create/page.tsx` for any emoji usage, update if needed
-  - [ ] 2.20 Run all tests: `npm run test` to ensure nothing broke
-  - [ ] 2.21 Commit Phase 1: `git add -A && git commit -m "Phase 1: Replace character class emojis with Lucide icons"`
+- [x] 2.0 Phase 1: Replace character class emojis with Lucide icons
+  - [x] 2.1 Open `lib/constants/character-classes.ts` and locate the CHARACTER_CLASSES array
+  - [x] 2.2 Change MAGE icon from "🔮" to "Sparkles" (string, not component)
+  - [x] 2.3 Change ROGUE icon from "🗡️" to "Sword" (string, not component)
+  - [x] 2.4 Change KNIGHT icon from "🛡️" to "Shield" (string, not component)
+  - [x] 2.5 Change HEALER icon from "✨" to "Heart" (string, not component)
+  - [x] 2.6 Change RANGER icon from "🏹" to "Target" (string, not component)
+  - [x] 2.7 Update `CharacterClassInfo` interface to clarify icon type (change comment to "Lucide icon name")
+  - [x] 2.8 Document these 5 mappings in `docs/emoji-to-icon-mapping.md`
+  - [x] 2.9 Open `components/character/CharacterCreation.tsx` and find where character icons are rendered
+  - [x] 2.10 Import required Lucide icons at top: `import { Sparkles, Sword, Shield, Heart, Target } from 'lucide-react'`
+  - [x] 2.11 Create icon mapping object: `const CLASS_ICONS = { Sparkles, Sword, Shield, Heart, Target }`
+  - [x] 2.12 Replace emoji rendering with: `const IconComponent = CLASS_ICONS[classInfo.icon as keyof typeof CLASS_ICONS]; return <IconComponent size={32} />`
+  - [x] 2.13 Run character class tests: `npx jest lib/constants/character-classes.test.ts`
+  - [x] 2.14 Open `lib/constants/character-classes.test.ts` and update assertions to check for icon names instead of emoji
+  - [x] 2.15 Run tests again to ensure they pass: `npx jest lib/constants/character-classes.test.ts`
+  - [x] 2.16 Run character creation component tests: `npx jest components/character/CharacterCreation.test.tsx`
+  - [x] 2.17 Update test file to check for Lucide icon components instead of emoji strings
+  - [x] 2.18 Run tests again to ensure they pass: `npx jest components/character/CharacterCreation.test.tsx`
+  - [x] 2.19 Check `app/character/create/page.tsx` for any emoji usage, update if needed
+  - [x] 2.20 Run all tests: `npm run test` to ensure nothing broke
+  - [x] 2.21 Commit Phase 1: `git add -A && git commit -m "Phase 1: Replace character class emojis with Lucide icons"`
 
 - [ ] 3.0 Phase 2: Replace reward system emojis with Lucide icons
   - [ ] 3.1 Open `components/rewards/reward-store/reward-card.tsx`
