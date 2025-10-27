@@ -181,7 +181,7 @@ export default function CharacterCreation({
                   data-testid={`class-${characterClass.name.toLowerCase()}`}
                   className={`fantasy-card p-4 cursor-pointer min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
                     selectedClass === characterClass.id
-                      ? "ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50"
+                      ? "ring-4 ring-gold-500 bg-gold-900/40 border-gold-500/50 glow-effect-gold"
                       : "hover:border-gold-500/30"
                   }`}
                   onClick={() => setSelectedClass(characterClass.id)}
