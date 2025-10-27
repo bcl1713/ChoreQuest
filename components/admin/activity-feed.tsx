@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { CheckCircle, Clock, Gift, Sparkles, XCircle, PartyPopper, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
@@ -9,46 +10,61 @@ import { Button } from "@/components/ui";
 
 const activityService = new ActivityService();
 
+const EVENT_ICONS = {
+  CheckCircle,
+  Clock,
+  Gift,
+  Sparkles,
+  XCircle,
+  PartyPopper,
+  Plus,
+};
+
 // Event type icons and colors
-const EVENT_CONFIG = {
+const EVENT_CONFIG: Record<string, {
+  icon: keyof typeof EVENT_ICONS;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}> = {
   QUEST_COMPLETED: {
-    icon: "✅",
+    icon: "CheckCircle",
     color: "text-green-400",
     bgColor: "bg-green-500/10",
     borderColor: "border-green-500/30",
   },
   QUEST_SUBMITTED: {
-    icon: "⏳",
+    icon: "Clock",
     color: "text-orange-400",
     bgColor: "bg-orange-500/10",
     borderColor: "border-orange-500/30",
   },
   REWARD_REDEEMED: {
-    icon: "🎁",
+    icon: "Gift",
     color: "text-purple-400",
     bgColor: "bg-purple-500/10",
     borderColor: "border-purple-500/30",
   },
   REWARD_APPROVED: {
-    icon: "✨",
+    icon: "Sparkles",
     color: "text-cyan-400",
     bgColor: "bg-cyan-500/10",
     borderColor: "border-cyan-500/30",
   },
   REWARD_DENIED: {
-    icon: "❌",
+    icon: "XCircle",
     color: "text-red-400",
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/30",
   },
   LEVEL_UP: {
-    icon: "🎉",
+    icon: "PartyPopper",
     color: "text-yellow-400",
     bgColor: "bg-yellow-500/10",
     borderColor: "border-yellow-500/30",
   },
   CHARACTER_CREATED: {
-    icon: "🆕",
+    icon: "Plus",
     color: "text-blue-400",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/30",
@@ -254,6 +270,7 @@ export default function ActivityFeed() {
           <AnimatePresence initial={false}>
             {events.map((event, index) => {
               const config = EVENT_CONFIG[event.type];
+              const IconComponent = EVENT_ICONS[config.icon];
 
               return (
                 <motion.div
@@ -266,9 +283,9 @@ export default function ActivityFeed() {
                 >
                   {/* Icon */}
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl ${config.bgColor}`}
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${config.bgColor}`}
                   >
-                    {config.icon}
+                    <IconComponent size={20} className={config.color} />
                   </div>
 
                   {/* Content */}

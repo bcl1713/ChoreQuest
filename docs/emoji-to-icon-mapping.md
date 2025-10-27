@@ -74,9 +74,21 @@ The application uses the `FantasyIcon` component wrapper with standardized sizes
 
 | Emoji | Lucide Icon | Component | Usage |
 |-------|-------------|-----------|-------|
-| 🎉 | `PartyPopper` | Activity Feed | User celebration/achievement |
-| ⚔️ | `Swords` | Activity Feed | PvP/battle indicator |
-| 🏆 | `Trophy` | Activity Feed | Achievement/ranking |
+| 📊 | `BarChart3` | Admin Dashboard | Overview tab |
+| ⚔️ | `Swords` | Admin Dashboard | Quest Management tab |
+| 📜 | `ScrollText` | Admin Dashboard | Quest Templates tab |
+| 🏆 | `Trophy` | Admin Dashboard / Statistics | Rewards tab / Character Progress |
+| 👑 | `Crown` | Admin Dashboard | Guild Masters tab |
+| ⚙️ | `Settings` | Admin Dashboard | Family Settings tab |
+| ⏳ | `Clock` | Activity Feed / Statistics Panel | Pending status / Pending Approvals |
+| ✅ | `CheckCircle` | Activity Feed | Quest completed event |
+| 🎁 | `Gift` | Activity Feed | Reward redeemed event |
+| ✨ | `Sparkles` | Activity Feed | Reward approved event |
+| ❌ | `XCircle` | Activity Feed | Reward denied event |
+| 🎉 | `PartyPopper` | Activity Feed / Level Up | Level up event |
+| 🆕 | `Plus` | Activity Feed | Character created event |
+| 💰 | `Coins` | Statistics Panel | Total Gold section |
+| ⭐ | `Star` | Statistics Panel | Total XP section |
 
 ## Adding New Icons
 
