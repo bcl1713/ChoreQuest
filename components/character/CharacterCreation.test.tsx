@@ -11,10 +11,22 @@ jest.mock("@/lib/supabase", () => ({
     from: jest.fn(),
   },
 }));
+
+interface MockMotionDivProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  whileHover?: object;
+  whileTap?: object;
+  transition?: object;
+}
+
+interface MockFantasyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  isLoading?: boolean;
+}
+
 jest.mock("framer-motion", () => ({
   motion: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    div: ({ children, className, onClick, ...props }: any) => (
+    div: ({ children, className, onClick, ...props }: MockMotionDivProps) => (
       <div className={className} onClick={onClick} {...props}>
         {children}
       </div>
@@ -25,8 +37,7 @@ jest.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: () => false,
 }));
 jest.mock("@/components/ui", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  FantasyButton: ({ children, className, disabled, type, isLoading, ...props }: any) => (
+  FantasyButton: ({ children, className, disabled, type, isLoading, ...props }: MockFantasyButtonProps) => (
     <button className={className} disabled={disabled} type={type} {...props}>
       {isLoading ? "Loading..." : children}
     </button>
@@ -186,8 +197,9 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
         }),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mockSupabase.from.mockImplementation((table: string): any => {
+      type SupabaseFromReturnType = { select?: typeof mockSelect; insert?: typeof mockInsert };
+
+      mockSupabase.from.mockImplementation((table: string): SupabaseFromReturnType => {
         if (table === "user_profiles") {
           return { select: mockSelect };
         }
