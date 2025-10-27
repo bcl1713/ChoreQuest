@@ -111,7 +111,7 @@ describe('RewardItem', () => {
 
     it('should show inactive badge when reward is inactive', () => {
       const reward = createMockReward({ is_active: false });
-      render(
+      const { container } = render(
         <RewardItem
           reward={reward}
           onEdit={mockOnEdit}
@@ -120,7 +120,10 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('Inactive')).toBeInTheDocument();
+      // Check for the badge specifically (has gray styling)
+      const badge = container.querySelector('.bg-gray-700');
+      expect(badge).toBeInTheDocument();
+      expect(badge?.textContent).toBe('Inactive');
     });
 
     it('should not show inactive badge when reward is active', () => {
@@ -194,7 +197,9 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('Inactive')).toBeInTheDocument();
+      // Check for the button specifically
+      const button = screen.getByRole('button', { name: /Inactive/i });
+      expect(button).toBeInTheDocument();
     });
 
     it('should apply green styling when reward is active', () => {

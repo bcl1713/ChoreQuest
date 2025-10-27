@@ -223,7 +223,7 @@ describe('RewardCard', () => {
     });
 
     it('shows APPROVED badge when status is APPROVED', () => {
-      render(
+      const { container } = render(
         <RewardCard
           reward={mockReward}
           canAfford={true}
@@ -233,7 +233,10 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('Approved')).toBeInTheDocument();
+      // Check for the badge specifically (has green styling)
+      const badge = container.querySelector('.bg-green-900\\/30');
+      expect(badge).toBeInTheDocument();
+      expect(badge?.textContent).toBe('Approved');
     });
 
     it('does not show badge when no redemption status', () => {
