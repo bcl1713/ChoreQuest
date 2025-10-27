@@ -61,7 +61,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('📱')).toBeInTheDocument();
+      expect(screen.getByLabelText('SCREEN_TIME reward type')).toBeInTheDocument();
     });
 
     it('should display correct icon for PRIVILEGE type', () => {
@@ -75,7 +75,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('⭐')).toBeInTheDocument();
+      expect(screen.getByLabelText('PRIVILEGE reward type')).toBeInTheDocument();
       expect(screen.getByText('Privilege')).toBeInTheDocument();
     });
 
@@ -105,7 +105,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('🎈')).toBeInTheDocument();
+      expect(screen.getByLabelText('EXPERIENCE reward type')).toBeInTheDocument();
       expect(screen.getByText('Experience')).toBeInTheDocument();
     });
 

@@ -268,8 +268,8 @@ describe('RewardList', () => {
         />
       );
 
-      expect(screen.getByText('✓ Active')).toBeInTheDocument();
-      expect(screen.getByText('○ Inactive')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
+      expect(screen.getByText('Inactive')).toBeInTheDocument();
     });
   });
 
