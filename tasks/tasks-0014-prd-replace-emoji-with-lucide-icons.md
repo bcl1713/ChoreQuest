@@ -123,25 +123,25 @@
   - [x] 3.23 Run full test suite: `npm run test`
   - [x] 3.24 Commit Phase 2: `git add -A && git commit -m "Phase 2: Replace reward system emojis with Lucide icons"`
 
-- [ ] 4.0 Phase 3: Replace quest system emojis with Lucide icons
-  - [ ] 4.1 Search for emoji in quest components: `grep -r "[\p{Emoji}]" components/quests/ --include="*.tsx" | grep -v test`
-  - [ ] 4.2 Open `components/quests/quest-card/index.tsx` and search for emoji characters
-  - [ ] 4.3 Replace any status emoji (✓, ⏳, ❌, etc.) with appropriate Lucide icons (CheckCircle, Clock, XCircle)
-  - [ ] 4.4 Import needed icons from 'lucide-react' at top of file
-  - [ ] 4.5 Document replacements in `docs/emoji-to-icon-mapping.md`
-  - [ ] 4.6 Run tests: `npx jest components/quests/quest-card/index.test.tsx`
-  - [ ] 4.7 Update test assertions for icon components
-  - [ ] 4.8 Open `components/quests/quest-dashboard/quest-stats.tsx` and replace emoji
-  - [ ] 4.9 Look for stat emoji like 📊, 🎯, ⭐ and replace with BarChart, Target, Star icons
-  - [ ] 4.10 Run tests: `npx jest components/quests/quest-dashboard/quest-stats.test.tsx`
-  - [ ] 4.11 Update test assertions
-  - [ ] 4.12 Open `components/quests/quest-create-modal/index.tsx` and replace emoji
-  - [ ] 4.13 Common modal emoji: ➕ (Plus), ✏️ (Edit), 🗑️ (Trash2) - replace with Lucide equivalents
-  - [ ] 4.14 Open `components/quests/quest-template-manager/template-item.tsx` and replace emoji
-  - [ ] 4.15 Run all quest tests: `npx jest components/quests/`
-  - [ ] 4.16 Fix any failing tests
-  - [ ] 4.17 Run full test suite: `npm run test`
-  - [ ] 4.18 Commit Phase 3: `git add -A && git commit -m "Phase 3: Replace quest system emojis with Lucide icons"`
+- [x] 4.0 Phase 3: Replace quest system emojis with Lucide icons
+  - [x] 4.1 Search for emoji in quest components: `grep -r "[\p{Emoji}]" components/quests/ --include="*.tsx" | grep -v test`
+  - [x] 4.2 Open `components/quests/quest-card/index.tsx` and search for emoji characters
+  - [x] 4.3 Replace any status emoji (✓, ⏳, ❌, etc.) with appropriate Lucide icons (CheckCircle, Clock, XCircle)
+  - [x] 4.4 Import needed icons from 'lucide-react' at top of file
+  - [x] 4.5 Document replacements in `docs/emoji-to-icon-mapping.md`
+  - [x] 4.6 Run tests: `npx jest components/quests/quest-card/index.test.tsx`
+  - [x] 4.7 Update test assertions for icon components
+  - [x] 4.8 Open `components/quests/quest-dashboard/quest-stats.tsx` and replace emoji
+  - [x] 4.9 Look for stat emoji like 📊, 🎯, ⭐ and replace with BarChart, Target, Star icons
+  - [x] 4.10 Run tests: `npx jest components/quests/quest-dashboard/quest-stats.test.tsx`
+  - [x] 4.11 Update test assertions
+  - [x] 4.12 Open `components/quests/quest-create-modal/index.tsx` and replace emoji
+  - [x] 4.13 Common modal emoji: ➕ (Plus), ✏️ (Edit), 🗑️ (Trash2) - replace with Lucide equivalents
+  - [x] 4.14 Open `components/quests/quest-template-manager/template-item.tsx` and replace emoji
+  - [x] 4.15 Run all quest tests: `npx jest components/quests/`
+  - [x] 4.16 Fix any failing tests
+  - [x] 4.17 Run full test suite: `npm run test`
+  - [x] 4.18 Commit Phase 3: `git add -A && git commit -m "Phase 3: Replace quest system emojis with Lucide icons"`
 
 - [ ] 5.0 Phase 4: Replace remaining UI component emojis with Lucide icons
   - [ ] 5.1 Open `components/admin/admin-dashboard.tsx` and search for emoji
