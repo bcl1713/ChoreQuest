@@ -4,6 +4,8 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RewardRedemption, UserProfile } from '@/lib/types/database';
 import { Button } from '@/components/ui';
+import { FantasyIcon } from '@/components/icons/FantasyIcon';
+import { Smartphone, Star, Coins, Lightbulb, Scroll, CheckCircle, XCircle, Target } from 'lucide-react';
 
 interface RewardRedemptionWithDetails extends RewardRedemption {
   user_profiles: UserProfile;
@@ -20,13 +22,25 @@ interface RedemptionHistoryProps {
   onFulfill?: (redemptionId: string) => void;
 }
 
-// Constants defined outside component for performance
-const REWARD_TYPE_ICONS: Record<string, string> = {
-  SCREEN_TIME: '📱',
-  PRIVILEGE: '⭐',
-  PURCHASE: '💰',
-  EXPERIENCE: '🎈',
+// Map reward types to Lucide icon names
+const REWARD_TYPE_ICON_NAMES: Record<string, string> = {
+  SCREEN_TIME: 'Smartphone',
+  PRIVILEGE: 'Star',
+  PURCHASE: 'Coins',
+  EXPERIENCE: 'Lightbulb',
 } as const;
+
+// Map icon names to Lucide components
+const ICON_COMPONENT_MAP = {
+  Smartphone: Smartphone,
+  Star: Star,
+  Coins: Coins,
+  Lightbulb: Lightbulb,
+  Scroll: Scroll,
+  CheckCircle: CheckCircle,
+  XCircle: XCircle,
+  Target: Target,
+};
 
 /**
  * RedemptionHistory - User's redemption history component
@@ -48,11 +62,13 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
   if (redemptions.length === 0) {
     return (
       <div className="fantasy-card p-6">
-        <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center">
-          📜 Recent Redemptions
+        <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center gap-2">
+          <Scroll size={24} /> Recent Redemptions
         </h3>
         <div className="text-center py-8">
-          <div className="text-6xl mb-4">📜</div>
+          <div className="flex justify-center mb-4">
+            <Scroll size={60} className="text-gray-400" />
+          </div>
           <p className="text-gray-400 text-lg">No redemption history yet.</p>
           <p className="text-gray-500 text-sm mt-2">Your reward requests will appear here.</p>
         </div>
@@ -62,8 +78,8 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
 
   return (
     <div className="fantasy-card p-6">
-      <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center">
-        📜 Recent Redemptions
+      <h3 className="text-xl font-fantasy text-gray-200 mb-6 flex items-center gap-2">
+        <Scroll size={24} /> Recent Redemptions
       </h3>
       <div className="space-y-4">
         {displayRedemptions.map((redemption) => (
@@ -77,10 +93,14 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
-                  <span className="text-lg">{REWARD_TYPE_ICONS[redemption.reward_type]}</span>
+                  <FantasyIcon
+                    icon={ICON_COMPONENT_MAP[REWARD_TYPE_ICON_NAMES[redemption.reward_type] as keyof typeof ICON_COMPONENT_MAP]}
+                    size="md"
+                    aria-label={`${redemption.reward_type} reward type`}
+                  />
                   <span className="font-medium text-gray-100">{redemption.reward_name}</span>
                   <div className="flex items-center space-x-1">
-                    <span className="text-gold-400">🪙</span>
+                    <Coins size={16} className="text-gold-400" />
                     <span className="text-sm font-bold gold-text">{redemption.cost}</span>
                   </div>
                 </div>
@@ -117,7 +137,7 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
                   size="sm"
                   data-testid={`approve-${redemption.id}`}
                 >
-                  ✅ Approve
+                  Approve
                 </Button>
                 <Button
                   onClick={() => onDeny(redemption.id)}
@@ -125,7 +145,7 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
                   size="sm"
                   data-testid={`deny-${redemption.id}`}
                 >
-                  ❌ Deny
+                  Deny
                 </Button>
               </div>
             )}
@@ -139,7 +159,7 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(({
                   size="sm"
                   data-testid={`fulfill-${redemption.id}`}
                 >
-                  🎯 Mark as Fulfilled
+                  Mark as Fulfilled
                 </Button>
               </div>
             )}

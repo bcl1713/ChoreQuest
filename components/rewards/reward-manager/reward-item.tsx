@@ -4,12 +4,23 @@ import React from "react";
 import { Reward } from "@/lib/types/database";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui";
+import { FantasyIcon } from "@/components/icons/FantasyIcon";
+import { Smartphone, Star, Coins, Lightbulb, Edit, Check, Circle, Trash2 } from "lucide-react";
 
-const REWARD_TYPE_ICONS = {
-  SCREEN_TIME: "📱",
-  PRIVILEGE: "⭐",
-  PURCHASE: "💰",
-  EXPERIENCE: "🎈",
+// Map reward types to Lucide icon names
+const REWARD_TYPE_ICON_NAMES = {
+  SCREEN_TIME: "Smartphone",
+  PRIVILEGE: "Star",
+  PURCHASE: "Coins",
+  EXPERIENCE: "Lightbulb",
+};
+
+// Map icon names to Lucide components
+const ICON_COMPONENT_MAP = {
+  Smartphone: Smartphone,
+  Star: Star,
+  Coins: Coins,
+  Lightbulb: Lightbulb,
 };
 
 const REWARD_TYPE_LABELS = {
@@ -45,7 +56,11 @@ export const RewardItem = React.memo(function RewardItem({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>
+          <FantasyIcon
+            icon={ICON_COMPONENT_MAP[REWARD_TYPE_ICON_NAMES[reward.type] as keyof typeof ICON_COMPONENT_MAP]}
+            size="lg"
+            aria-label={`${reward.type} reward type`}
+          />
           <div>
             <h3 className="font-fantasy text-lg text-gray-100">
               {reward.name}
@@ -65,9 +80,10 @@ export const RewardItem = React.memo(function RewardItem({
       <p className="text-sm text-gray-400 mb-4">{reward.description}</p>
 
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xl font-bold gold-text">
-          💰 {reward.cost} gold
-        </span>
+        <div className="flex items-center gap-2 text-xl font-bold gold-text">
+          <Coins size={20} />
+          {reward.cost} gold
+        </div>
       </div>
 
       <div className="flex gap-2 flex-wrap">
@@ -78,7 +94,7 @@ export const RewardItem = React.memo(function RewardItem({
           size="sm"
           className="flex-1"
         >
-          ✏️Edit
+          Edit
         </Button>
         <Button
           onClick={() => onToggleActive(reward)}
@@ -87,7 +103,7 @@ export const RewardItem = React.memo(function RewardItem({
           size="sm"
           className="flex-1"
         >
-          {reward.is_active ? "✓ Active" : "○ Inactive"}
+          {reward.is_active ? "Active" : "Inactive"}
         </Button>
         <Button
           onClick={() => onDelete(reward)}
@@ -96,7 +112,7 @@ export const RewardItem = React.memo(function RewardItem({
           size="icon-sm"
           aria-label="Delete reward"
         >
-          🗑️
+          <Trash2 size={16} />
         </Button>
       </div>
     </motion.div>

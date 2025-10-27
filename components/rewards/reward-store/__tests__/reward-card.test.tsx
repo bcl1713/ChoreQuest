@@ -49,7 +49,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('📱')).toBeInTheDocument();
+      expect(screen.getByLabelText('SCREEN_TIME reward type')).toBeInTheDocument();
       expect(screen.getByText('Screen Time')).toBeInTheDocument();
     });
 
@@ -65,7 +65,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('⭐')).toBeInTheDocument();
+      expect(screen.getByLabelText('PRIVILEGE reward type')).toBeInTheDocument();
       expect(screen.getByText('Privilege')).toBeInTheDocument();
     });
 
@@ -81,7 +81,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('💰')).toBeInTheDocument();
+      expect(screen.getByLabelText('PURCHASE reward type')).toBeInTheDocument();
       expect(screen.getByText('Purchase')).toBeInTheDocument();
     });
 
@@ -97,7 +97,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('🎈')).toBeInTheDocument();
+      expect(screen.getByLabelText('EXPERIENCE reward type')).toBeInTheDocument();
       expect(screen.getByText('Experience')).toBeInTheDocument();
     });
 
@@ -112,7 +112,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByText('💰 50 gold')).toBeInTheDocument();
+      expect(screen.getByText('50 gold')).toBeInTheDocument();
     });
 
     it('has correct test id', () => {
@@ -142,7 +142,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('⚡ Redeem Reward');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Redeem Reward');
       expect(screen.getByTestId('reward-store-redeem-button')).not.toBeDisabled();
     });
 
@@ -157,7 +157,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('🔒 Insufficient Gold');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Insufficient Gold');
       expect(screen.getByTestId('reward-store-redeem-button')).toBeDisabled();
     });
 
@@ -172,7 +172,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('⏳ Request Pending');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Request Pending');
       expect(screen.getByTestId('reward-store-redeem-button')).toBeDisabled();
     });
 
@@ -187,7 +187,7 @@ describe('RewardCard', () => {
         />
       );
 
-      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('✓ Approved');
+      expect(screen.getByTestId('reward-store-redeem-button')).toHaveTextContent('Approved');
       expect(screen.getByTestId('reward-store-redeem-button')).toBeDisabled();
     });
 

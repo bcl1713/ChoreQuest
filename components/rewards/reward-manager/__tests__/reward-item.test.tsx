@@ -47,7 +47,7 @@ describe('RewardItem', () => {
       expect(screen.getByText('Extra Screen Time')).toBeInTheDocument();
       expect(screen.getByText('30 minutes of extra screen time')).toBeInTheDocument();
       expect(screen.getByText('Screen Time')).toBeInTheDocument();
-      expect(screen.getByText('💰 100 gold')).toBeInTheDocument();
+      expect(screen.getByText('100 gold')).toBeInTheDocument();
     });
 
     it('should display correct icon for SCREEN_TIME type', () => {
@@ -90,7 +90,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('💰')).toBeInTheDocument();
+      expect(screen.getByLabelText(/reward type/)).toBeInTheDocument();
       expect(screen.getByText('Purchase')).toBeInTheDocument();
     });
 
@@ -169,7 +169,7 @@ describe('RewardItem', () => {
   });
 
   describe('Toggle Active Button', () => {
-    it('should show "✓ Active" when reward is active', () => {
+    it('should show "Active" when reward is active', () => {
       const reward = createMockReward({ is_active: true });
       render(
         <RewardItem
@@ -180,10 +180,10 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('✓ Active')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
     });
 
-    it('should show "○ Inactive" when reward is inactive', () => {
+    it('should show "Inactive" when reward is inactive', () => {
       const reward = createMockReward({ is_active: false });
       render(
         <RewardItem
@@ -194,7 +194,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('○ Inactive')).toBeInTheDocument();
+      expect(screen.getByText('Inactive')).toBeInTheDocument();
     });
 
     it('should apply green styling when reward is active', () => {
@@ -330,7 +330,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('💰 999999 gold')).toBeInTheDocument();
+      expect(screen.getByText('999999 gold')).toBeInTheDocument();
     });
 
     it('should handle zero cost', () => {
@@ -344,7 +344,7 @@ describe('RewardItem', () => {
         />
       );
 
-      expect(screen.getByText('💰 0 gold')).toBeInTheDocument();
+      expect(screen.getByText('0 gold')).toBeInTheDocument();
     });
 
     it('should render with testid attribute', () => {
