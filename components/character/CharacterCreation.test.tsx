@@ -206,7 +206,7 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
         if (table === "characters") {
           return { insert: mockInsert };
         }
-        return {};
+        throw new Error(`Unexpected table access in test: "${table}". Please add a mock for this table.`);
       });
 
       render(<CharacterCreation onCharacterCreated={mockOnCharacterCreated} />);
