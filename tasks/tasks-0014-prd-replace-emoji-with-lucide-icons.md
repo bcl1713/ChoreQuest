@@ -97,31 +97,31 @@
   - [x] 2.20 Run all tests: `npm run test` to ensure nothing broke
   - [x] 2.21 Commit Phase 1: `git add -A && git commit -m "Phase 1: Replace character class emojis with Lucide icons"`
 
-- [ ] 3.0 Phase 2: Replace reward system emojis with Lucide icons
-  - [ ] 3.1 Open `components/rewards/reward-store/reward-card.tsx`
-  - [ ] 3.2 Locate REWARD_TYPE_ICONS constant (around line 17)
-  - [ ] 3.3 Import Lucide icons: `import { Smartphone, Star, Coins, PartyPopper } from 'lucide-react'`
-  - [ ] 3.4 Replace REWARD_TYPE_ICONS object to use React components instead of emoji strings
-  - [ ] 3.5 Update line 65 rendering from `<span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>` to render icon component with size={24}
-  - [ ] 3.6 Find emoji at line 45: "⏳ Request Pending" - add Clock icon before text
-  - [ ] 3.7 Find emoji at line 47: "🔒 Insufficient Gold" - add Lock icon before text
-  - [ ] 3.8 Find emoji at line 48: "⚡ Redeem Reward" - add Zap icon before text
-  - [ ] 3.9 Find emoji at line 88: "💰 {reward.cost} gold" - replace with <Coins size={20} /> component
-  - [ ] 3.10 Document these 7 emoji replacements in `docs/emoji-to-icon-mapping.md`
-  - [ ] 3.11 Run tests: `npx jest components/rewards/reward-store/reward-card.test.tsx`
-  - [ ] 3.12 Update test file assertions to check for icon components instead of emoji
-  - [ ] 3.13 Run tests again to verify: `npx jest components/rewards/reward-store/reward-card.test.tsx`
-  - [ ] 3.14 Open `components/rewards/reward-store/redemption-history.tsx`
-  - [ ] 3.15 Replace REWARD_TYPE_ICONS (lines 25-28) with same Lucide icon components
-  - [ ] 3.16 Update rendering to use icon components instead of emoji spans
-  - [ ] 3.17 Run tests: `npx jest components/rewards/reward-store/redemption-history.test.tsx`
-  - [ ] 3.18 Update test assertions and re-run tests
-  - [ ] 3.19 Open `components/rewards/reward-manager/reward-form.tsx` and replace any emoji
-  - [ ] 3.20 Open `components/rewards/reward-manager/reward-item.tsx` and replace any emoji
-  - [ ] 3.21 Run all reward tests: `npx jest components/rewards/`
-  - [ ] 3.22 Fix any failing tests by updating assertions
-  - [ ] 3.23 Run full test suite: `npm run test`
-  - [ ] 3.24 Commit Phase 2: `git add -A && git commit -m "Phase 2: Replace reward system emojis with Lucide icons"`
+- [x] 3.0 Phase 2: Replace reward system emojis with Lucide icons
+  - [x] 3.1 Open `components/rewards/reward-store/reward-card.tsx`
+  - [x] 3.2 Locate REWARD_TYPE_ICONS constant (around line 17)
+  - [x] 3.3 Import Lucide icons: `import { Smartphone, Star, Coins, PartyPopper } from 'lucide-react'`
+  - [x] 3.4 Replace REWARD_TYPE_ICONS object to use React components instead of emoji strings
+  - [x] 3.5 Update line 65 rendering from `<span className="text-3xl">{REWARD_TYPE_ICONS[reward.type]}</span>` to render icon component with size={24}
+  - [x] 3.6 Find emoji at line 45: "⏳ Request Pending" - add Clock icon before text
+  - [x] 3.7 Find emoji at line 47: "🔒 Insufficient Gold" - add Lock icon before text
+  - [x] 3.8 Find emoji at line 48: "⚡ Redeem Reward" - add Zap icon before text
+  - [x] 3.9 Find emoji at line 88: "💰 {reward.cost} gold" - replace with <Coins size={20} /> component
+  - [x] 3.10 Document these 7 emoji replacements in `docs/emoji-to-icon-mapping.md`
+  - [x] 3.11 Run tests: `npx jest components/rewards/reward-store/reward-card.test.tsx`
+  - [x] 3.12 Update test file assertions to check for icon components instead of emoji
+  - [x] 3.13 Run tests again to verify: `npx jest components/rewards/reward-store/reward-card.test.tsx`
+  - [x] 3.14 Open `components/rewards/reward-store/redemption-history.tsx`
+  - [x] 3.15 Replace REWARD_TYPE_ICONS (lines 25-28) with same Lucide icon components
+  - [x] 3.16 Update rendering to use icon components instead of emoji spans
+  - [x] 3.17 Run tests: `npx jest components/rewards/reward-store/redemption-history.test.tsx`
+  - [x] 3.18 Update test assertions and re-run tests
+  - [x] 3.19 Open `components/rewards/reward-manager/reward-form.tsx` and replace any emoji
+  - [x] 3.20 Open `components/rewards/reward-manager/reward-item.tsx` and replace any emoji
+  - [x] 3.21 Run all reward tests: `npx jest components/rewards/`
+  - [x] 3.22 Fix any failing tests by updating assertions
+  - [x] 3.23 Run full test suite: `npm run test`
+  - [x] 3.24 Commit Phase 2: `git add -A && git commit -m "Phase 2: Replace reward system emojis with Lucide icons"`
 
 - [ ] 4.0 Phase 3: Replace quest system emojis with Lucide icons
   - [ ] 4.1 Search for emoji in quest components: `grep -r "[\p{Emoji}]" components/quests/ --include="*.tsx" | grep -v test`
