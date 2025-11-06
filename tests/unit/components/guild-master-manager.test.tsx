@@ -139,7 +139,7 @@ describe("GuildMasterManager", () => {
     it("should render loading state initially", () => {
       render(<GuildMasterManager />);
 
-      expect(screen.getByText("👑 Guild Master Management")).toBeInTheDocument();
+      expect(screen.getByText("Guild Master Management")).toBeInTheDocument();
       const skeletons = screen
         .getAllByRole("generic")
         .filter((el) => el.className.includes("animate-pulse"));

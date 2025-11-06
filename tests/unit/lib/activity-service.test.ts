@@ -36,7 +36,7 @@ describe("ActivityService", () => {
       characters: {
         name: "Bob the Mage",
         level: 3,
-        created_at: "2025-10-01T10:00:00Z", // Recent character (within 30 days)
+        created_at: "2025-11-01T10:00:00Z", // Recent character (within 30 days)
       },
     },
   ];
@@ -352,7 +352,7 @@ describe("ActivityService", () => {
         (e) => e.type === "CHARACTER_CREATED"
       );
 
-      // Only Bob's character is recent (Oct 1, within 30 days)
+      // Only Bob's character is recent (Nov 1, within 30 days)
       expect(characterEvents).toHaveLength(1);
       expect(characterEvents[0]).toMatchObject({
         id: "character-created-user-2",
@@ -360,7 +360,7 @@ describe("ActivityService", () => {
         characterName: "Bob the Mage",
         displayName: "Bob",
         userId: "user-2",
-        timestamp: "2025-10-01T10:00:00Z",
+        timestamp: "2025-11-01T10:00:00Z",
       });
     });
 
