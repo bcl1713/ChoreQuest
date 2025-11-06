@@ -476,8 +476,9 @@ function DashboardContent() {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6">
-            <p className="text-red-200">⚠️ {error}</p>
+          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle size={20} className="flex-shrink-0 mt-0.5 text-red-400" />
+            <p className="text-red-200">{error}</p>
           </div>
         )}
 

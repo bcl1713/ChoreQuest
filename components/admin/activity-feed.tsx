@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, Clock, Gift, Sparkles, XCircle, PartyPopper, Plus, Wifi, RefreshCw, Volume2Off } from "lucide-react";
+import { CheckCircle, Clock, Gift, Sparkles, XCircle, PartyPopper, Plus, Wifi, RefreshCw, VolumeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
@@ -262,7 +262,7 @@ export default function ActivityFeed() {
       {events.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           <div className="text-4xl mb-2 flex justify-center">
-            <Volume2Off size={48} className="text-gray-500" />
+            <VolumeOff size={48} className="text-gray-500" />
           </div>
           <p>No recent activity</p>
           <p className="text-sm mt-1">
