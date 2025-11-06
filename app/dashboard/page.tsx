@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } from '@/components/animations';
 import { RewardCalculator } from '@/lib/reward-calculator';
-import { LoadingSpinner, Button } from '@/components/ui';
+import { LoadingSpinner, Button, IconWithLabel } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { Sword, Store, Crown, Swords, Shield, Sparkles, Target, Heart, Clock, Settings, Zap, AlertCircle, Coins, Gem, Award } from 'lucide-react';
 
@@ -304,16 +304,11 @@ function DashboardContent() {
                 <p className="text-gray-300 font-medium">{character.name}</p>
                 {character.class ? (
                   <p className="text-sm text-gray-400 flex sm:justify-end items-center gap-1" data-testid="character-level">
-                    {(() => {
-                      const classDisplay = getClassDisplay(character.class);
-                      const Icon = classDisplay.icon;
-                      return (
-                        <>
-                          <Icon size={16} />
-                          {classDisplay.label}
-                        </>
-                      );
-                    })()}
+                    <IconWithLabel
+                      icon={getClassDisplay(character.class).icon}
+                      label={getClassDisplay(character.class).label}
+                      size={16}
+                    />
                     • Level {character.level}
                   </p>
                 ) : (
@@ -321,16 +316,11 @@ function DashboardContent() {
                 )}
                 {profile?.role && (
                   <p className="text-xs text-gray-500 flex sm:justify-end items-center gap-1">
-                    {(() => {
-                      const roleDisplay = getRoleDisplay(profile.role);
-                      const Icon = roleDisplay.icon;
-                      return (
-                        <>
-                          <Icon size={14} />
-                          {roleDisplay.label}
-                        </>
-                      );
-                    })()}
+                    <IconWithLabel
+                      icon={getRoleDisplay(profile.role).icon}
+                      label={getRoleDisplay(profile.role).label}
+                      size={14}
+                    />
                   </p>
                 )}
               </div>
