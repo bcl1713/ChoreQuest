@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BarChart3, Clock, Coins, Star, Trophy } from "lucide-react";
+import { BarChart3, Clock, Coins, Star, Trophy, Gift, Award } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { StatisticsService, FamilyStatistics } from "@/lib/statistics-service";
@@ -235,7 +235,7 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.5 }}
             className="bg-gradient-to-br from-pink-900/50 to-pink-800/30 border border-pink-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">🎁 Redemptions (Week)</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-1"><Gift size={16} /> Redemptions (Week)</p>
             <p className="text-3xl font-bold text-pink-400">
               {statistics.rewardRedemptionsThisWeek}
             </p>
@@ -248,7 +248,7 @@ export default function StatisticsPanel() {
             transition={{ delay: 0.6 }}
             className="bg-gradient-to-br from-green-900/50 to-green-800/30 border border-green-500/30 rounded-lg p-6"
           >
-            <p className="text-sm text-gray-400 mb-1">🎁 Redemptions (Month)</p>
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-1"><Gift size={16} /> Redemptions (Month)</p>
             <p className="text-3xl font-bold text-green-400">
               {statistics.rewardRedemptionsThisMonth}
             </p>
@@ -346,7 +346,7 @@ export default function StatisticsPanel() {
             className="mt-4 bg-gradient-to-br from-amber-900/50 to-amber-800/30 border border-amber-500/30 rounded-lg p-6"
           >
             <div className="flex items-center gap-4">
-              <div className="text-4xl">🏅</div>
+              <Award size={40} className="text-amber-500" />
               <div>
                 <p className="text-sm text-gray-400 mb-1">Most Active Member</p>
                 <p className="text-xl font-bold text-white">
