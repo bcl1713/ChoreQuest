@@ -214,27 +214,27 @@ describe("formatDueDate", () => {
 
   it("should show overdue status for past dates", () => {
     const result = formatDueDate("2025-01-09T10:00:00");
-    expect(result).toContain("🚨");
+    expect(result).toContain("AlertCircle");
     expect(result).toContain("Overdue");
   });
 
   it("should show 'Due Today' for today's dates", () => {
     // Use a time slightly before "now" (12:00) to ensure diffDays rounds to 0
     const result = formatDueDate("2025-01-10T11:00:00");
-    expect(result).toContain("⏰");
+    expect(result).toContain("Clock");
     expect(result).toContain("Due Today");
   });
 
   it("should show 'Due Tomorrow' for tomorrow's dates", () => {
     // Use a time that's clearly tomorrow
     const result = formatDueDate("2025-01-11T12:00:00");
-    expect(result).toContain("📅");
+    expect(result).toContain("Calendar");
     expect(result).toContain("Due Tomorrow");
   });
 
   it("should show formatted date for future dates", () => {
     const result = formatDueDate("2025-01-15T14:00:00");
-    expect(result).toContain("📅");
+    expect(result).toContain("Calendar");
     expect(result).toContain("Due");
     expect(result).toContain("1/15");
   });
@@ -251,13 +251,13 @@ describe("formatDueDate", () => {
 
   it("should handle dates far in the past", () => {
     const result = formatDueDate("2024-12-01T10:00:00");
-    expect(result).toContain("🚨");
+    expect(result).toContain("AlertCircle");
     expect(result).toContain("Overdue");
   });
 
   it("should handle dates far in the future", () => {
     const result = formatDueDate("2025-12-31T10:00:00");
-    expect(result).toContain("📅");
+    expect(result).toContain("Calendar");
     expect(result).toContain("Due");
   });
 

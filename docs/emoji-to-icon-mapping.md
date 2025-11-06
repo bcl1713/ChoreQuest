@@ -90,6 +90,14 @@ The application uses the `FantasyIcon` component wrapper with standardized sizes
 | 💰 | `Coins` | Statistics Panel | Total Gold section |
 | ⭐ | `Star` | Statistics Panel | Total XP section |
 
+### Utility Functions
+
+| Emoji | Icon Name | Function | Usage |
+|-------|-----------|----------|-------|
+| 🚨 | `AlertCircle` | `formatDueDate` | Overdue status display |
+| ⏰ | `Clock` | `formatDueDate` | Due today status display |
+| 📅 | `Calendar` | `formatDueDate` | Future due date display |
+
 ## Adding New Icons
 
 When adding new icons to the application:
