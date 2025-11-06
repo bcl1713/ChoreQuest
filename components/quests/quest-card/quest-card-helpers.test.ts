@@ -232,19 +232,19 @@ describe('getButtonVisibility', () => {
 });
 
 describe('getRecurrenceLabel', () => {
-  it('should return "📅 Daily" for DAILY pattern', () => {
+  it('should return "Daily" for DAILY pattern', () => {
     const result = getRecurrenceLabel('DAILY');
-    expect(result).toBe('📅 Daily');
+    expect(result).toBe('Daily');
   });
 
-  it('should return "📅 Weekly" for WEEKLY pattern', () => {
+  it('should return "Weekly" for WEEKLY pattern', () => {
     const result = getRecurrenceLabel('WEEKLY');
-    expect(result).toBe('📅 Weekly');
+    expect(result).toBe('Weekly');
   });
 
-  it('should return "📅 Custom" for CUSTOM pattern', () => {
+  it('should return "Custom" for CUSTOM pattern', () => {
     const result = getRecurrenceLabel('CUSTOM');
-    expect(result).toBe('📅 Custom');
+    expect(result).toBe('Custom');
   });
 
   it('should return null for undefined pattern', () => {

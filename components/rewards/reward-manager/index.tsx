@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { RewardService } from "@/lib/reward-service";
 import { Reward } from "@/lib/types/database";
@@ -217,8 +218,9 @@ export default function RewardManager() {
     <div className="space-y-6" data-testid="reward-manager">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-fantasy text-gray-100">
-          🏆 Reward Management
+        <h2 className="text-2xl font-fantasy text-gray-100 flex items-center gap-2">
+          <Trophy size={28} />
+          Reward Management
         </h2>
         <Button
           onClick={handleCreate}

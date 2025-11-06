@@ -11,11 +11,22 @@ import {
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { FantasyButton } from "@/components/ui";
+import { FantasyIcon } from "@/components/icons/FantasyIcon";
+import { Sparkles, Sword, Shield, Heart, Target, Zap, Coins, Medal, Gem } from "lucide-react";
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
   initialCharacterName?: string;
 }
+
+// Map character class icon names to Lucide icon components
+const CLASS_ICON_MAP = {
+  Sparkles: Sparkles,
+  Sword: Sword,
+  Shield: Shield,
+  Heart: Heart,
+  Target: Target,
+};
 
 export default function CharacterCreation({
   onCharacterCreated,
@@ -181,7 +192,7 @@ export default function CharacterCreation({
                   data-testid={`class-${characterClass.name.toLowerCase()}`}
                   className={`fantasy-card p-4 cursor-pointer min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
                     selectedClass === characterClass.id
-                      ? "ring-2 ring-gold-500 bg-gold-900/20 border-gold-500/50"
+                      ? "ring-4 ring-gold-500 bg-gold-900/40 border-gold-500/50 glow-effect-gold"
                       : "hover:border-gold-500/30"
                   }`}
                   onClick={() => setSelectedClass(characterClass.id)}
@@ -197,7 +208,13 @@ export default function CharacterCreation({
                   transition={{ duration: 0.2 }}
                 >
                   <div className="text-center">
-                    <div className="text-3xl mb-2">{characterClass.icon}</div>
+                    <div className="flex justify-center mb-2">
+                      <FantasyIcon
+                        icon={CLASS_ICON_MAP[characterClass.icon as keyof typeof CLASS_ICON_MAP]}
+                        size="xl"
+                        aria-label={`${characterClass.name} class icon`}
+                      />
+                    </div>
                     <h3 className="text-lg font-semibold text-gold-300 mb-2">
                       {characterClass.name}
                     </h3>
@@ -209,28 +226,28 @@ export default function CharacterCreation({
                         Bonuses on ALL quests:
                       </div>
                       {characterClass.bonuses.xp > 1.0 && (
-                        <div className="text-primary-400">
-                          ⚡ {formatBonusPercentage(characterClass.bonuses.xp)}{" "}
+                        <div className="text-primary-400 flex items-center justify-center gap-1">
+                          <Zap size={14} /> {formatBonusPercentage(characterClass.bonuses.xp)}{" "}
                           XP
                         </div>
                       )}
                       {characterClass.bonuses.gold > 1.0 && (
-                        <div className="text-gold-400">
-                          💰{" "}
+                        <div className="text-gold-400 flex items-center justify-center gap-1">
+                          <Coins size={14} />{" "}
                           {formatBonusPercentage(characterClass.bonuses.gold)}{" "}
                           Gold
                         </div>
                       )}
                       {characterClass.bonuses.honor > 1.0 && (
-                        <div className="text-purple-400">
-                          🎖️{" "}
+                        <div className="text-purple-400 flex items-center justify-center gap-1">
+                          <Medal size={14} />{" "}
                           {formatBonusPercentage(characterClass.bonuses.honor)}{" "}
                           Honor
                         </div>
                       )}
                       {characterClass.bonuses.gems > 1.0 && (
-                        <div className="text-gem-400">
-                          💎{" "}
+                        <div className="text-gem-400 flex items-center justify-center gap-1">
+                          <Gem size={14} />{" "}
                           {formatBonusPercentage(characterClass.bonuses.gems)}{" "}
                           Gems
                         </div>

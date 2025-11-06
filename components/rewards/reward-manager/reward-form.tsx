@@ -3,12 +3,14 @@
 import React, { useMemo } from "react";
 import { RewardType } from "@/lib/types/database";
 import { Button } from "@/components/ui";
+import { Coins } from "lucide-react";
 
-export const REWARD_TYPE_ICONS = {
-  SCREEN_TIME: "📱",
-  PRIVILEGE: "⭐",
-  PURCHASE: "💰",
-  EXPERIENCE: "🎈",
+// Map reward types to Lucide icon names
+export const REWARD_TYPE_ICON_NAMES = {
+  SCREEN_TIME: "Smartphone",
+  PRIVILEGE: "Star",
+  PURCHASE: "Coins",
+  EXPERIENCE: "Lightbulb",
 };
 
 export const REWARD_TYPE_LABELS = {
@@ -42,12 +44,12 @@ export const RewardForm = React.memo(function RewardForm({
 }: RewardFormProps) {
   // Memoize computed values to prevent recalculation on every render
   const title = useMemo(
-    () => (mode === "create" ? "⚡ Create New Reward" : "✏️ Edit Reward"),
+    () => (mode === "create" ? "Create New Reward" : "Edit Reward"),
     [mode],
   );
 
   const submitButtonText = useMemo(
-    () => (mode === "create" ? "💾 Create Reward" : "💾 Save Changes"),
+    () => (mode === "create" ? "Create Reward" : "Save Changes"),
     [mode],
   );
 
@@ -115,8 +117,8 @@ export const RewardForm = React.memo(function RewardForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-200 mb-2">
-              💰 Cost (gold)
+            <label className="block text-sm font-medium text-gray-200 mb-2 flex items-center gap-2">
+              <Coins size={16} /> Cost (gold)
             </label>
             <input
               type="number"

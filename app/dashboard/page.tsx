@@ -13,9 +13,9 @@ import { supabase } from '@/lib/supabase';
 import { useSearchParams } from 'next/navigation';
 import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } from '@/components/animations';
 import { RewardCalculator } from '@/lib/reward-calculator';
-import { LoadingSpinner, Button } from '@/components/ui';
+import { LoadingSpinner, Button, IconWithLabel } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { Sword, Store } from 'lucide-react';
+import { Sword, Store, Crown, Swords, Shield, Sparkles, Target, Heart, Clock, Settings, Zap, AlertCircle, Coins, Gem, Award } from 'lucide-react';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -254,21 +254,21 @@ function DashboardContent() {
 
   const getRoleDisplay = (role: string) => {
     switch (role) {
-      case 'GUILD_MASTER': return '👑 Guild Master';
-      case 'HERO': return '⚔️ Hero';
-      case 'YOUNG_HERO': return '🛡️ Young Hero';
-      default: return role;
+      case 'GUILD_MASTER': return { icon: Crown, label: 'Guild Master' };
+      case 'HERO': return { icon: Swords, label: 'Hero' };
+      case 'YOUNG_HERO': return { icon: Shield, label: 'Young Hero' };
+      default: return { icon: Shield, label: role };
     }
   };
 
   const getClassDisplay = (characterClass: string) => {
     switch (characterClass) {
-      case 'KNIGHT': return '🛡️ Knight';
-      case 'MAGE': return '🔮 Mage';
-      case 'RANGER': return '🏹 Ranger';
-      case 'ROGUE': return '🗡️ Rogue';
-      case 'HEALER': return '💚 Healer';
-      default: return characterClass;
+      case 'KNIGHT': return { icon: Shield, label: 'Knight' };
+      case 'MAGE': return { icon: Sparkles, label: 'Mage' };
+      case 'RANGER': return { icon: Target, label: 'Ranger' };
+      case 'ROGUE': return { icon: Sword, label: 'Rogue' };
+      case 'HEALER': return { icon: Heart, label: 'Healer' };
+      default: return { icon: Shield, label: characterClass };
     }
   };
 
@@ -292,8 +292,9 @@ function DashboardContent() {
                   Guild: <span className="text-gold-400">{family.name}</span> ({family.code})
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
-                🕐 {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
+              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <Clock size={14} />
+                {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
               </p>
             </div>
 
@@ -301,8 +302,27 @@ function DashboardContent() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <div className="text-left sm:text-right">
                 <p className="text-gray-300 font-medium">{character.name}</p>
-                <p className="text-sm text-gray-400" data-testid="character-level">{character.class ? getClassDisplay(character.class) : 'Unknown Class'} • Level {character.level}</p>
-                <p className="text-xs text-gray-500">{profile?.role ? getRoleDisplay(profile.role) : ''}</p>
+                {character.class ? (
+                  <p className="text-sm text-gray-400 flex sm:justify-end items-center gap-1" data-testid="character-level">
+                    <IconWithLabel
+                      icon={getClassDisplay(character.class).icon}
+                      label={getClassDisplay(character.class).label}
+                      size={16}
+                    />
+                    • Level {character.level}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400">Unknown Class • Level {character.level}</p>
+                )}
+                {profile?.role && (
+                  <p className="text-xs text-gray-500 flex sm:justify-end items-center gap-1">
+                    <IconWithLabel
+                      icon={getRoleDisplay(profile.role).icon}
+                      label={getRoleDisplay(profile.role).label}
+                      size={14}
+                    />
+                  </p>
+                )}
               </div>
 
               {/* Action buttons - mobile-optimized */}
@@ -315,9 +335,9 @@ function DashboardContent() {
                       size="sm"
                       className="touch-target"
                       data-testid="admin-dashboard-button"
+                      startIcon={<Settings size={16} />}
                     >
-                      <span className="hidden sm:inline">⚙️ Admin</span>
-                      <span className="sm:hidden">⚙️</span>
+                      <span className="hidden sm:inline">Admin</span>
                     </Button>
                     <Button
                       onClick={() => setShowCreateQuest(true)}
@@ -325,9 +345,10 @@ function DashboardContent() {
                       size="sm"
                       className="touch-target"
                       data-testid="create-quest-button"
+                      startIcon={<Zap size={16} />}
                     >
-                      <span className="hidden sm:inline">⚡ Create Quest</span>
-                      <span className="sm:hidden">⚡ Quest</span>
+                      <span className="hidden sm:inline">Create Quest</span>
+                      <span className="sm:hidden">Quest</span>
                     </Button>
                   </>
                 )}
@@ -349,8 +370,9 @@ function DashboardContent() {
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         {/* Authorization Error Banner */}
         {authError && (
-          <div className="mb-6 bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
-            <p className="font-medium">🚫 {authError}</p>
+          <div className="mb-6 bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200 flex items-start gap-3">
+            <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+            <p className="font-medium">{authError}</p>
           </div>
         )}
 
@@ -366,19 +388,31 @@ function DashboardContent() {
         {/* Character Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2" data-testid="character-gold">💰 {character.gold}</div>
+            <div className="text-xl sm:text-3xl gold-text mb-1 sm:mb-2 flex items-center justify-center gap-1" data-testid="character-gold">
+              <Coins size={24} />
+              {character.gold}
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Gold</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2" data-testid="character-xp">⚡ {character.xp}</div>
+            <div className="text-xl sm:text-3xl xp-text mb-1 sm:mb-2 flex items-center justify-center gap-1" data-testid="character-xp">
+              <Zap size={24} />
+              {character.xp}
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Experience</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2" data-testid="character-gems">💎 {character.gems}</div>
+            <div className="text-xl sm:text-3xl gem-text mb-1 sm:mb-2 flex items-center justify-center gap-1" data-testid="character-gems">
+              <Gem size={24} />
+              {character.gems}
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Gems</div>
           </div>
           <div className="fantasy-card p-3 sm:p-6 text-center">
-            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2" data-testid="character-honor-points">🏅 {character.honor_points}</div>
+            <div className="text-xl sm:text-3xl text-primary-400 mb-1 sm:mb-2 flex items-center justify-center gap-1" data-testid="character-honor-points">
+              <Award size={24} />
+              {character.honor_points}
+            </div>
             <div className="text-xs sm:text-sm text-gray-400">Honor Points</div>
           </div>
         </div>
@@ -432,8 +466,9 @@ function DashboardContent() {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6">
-            <p className="text-red-200">⚠️ {error}</p>
+          <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle size={20} className="flex-shrink-0 mt-0.5 text-red-400" />
+            <p className="text-red-200">{error}</p>
           </div>
         )}
 

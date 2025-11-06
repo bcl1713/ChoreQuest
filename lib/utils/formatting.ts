@@ -123,19 +123,19 @@ export const formatDateTime = (value: string | null | undefined): string | null 
 };
 
 /**
- * Formats a due date with contextual emoji and relative time information.
+ * Formats a due date with contextual icon names and relative time information.
  * Shows different formatting based on how soon the date is due.
  *
  * @param dueDate - ISO date string representing the due date
- * @returns A formatted string with emoji and relative time, or null if no date provided
+ * @returns A formatted string with Lucide icon name and relative time, or null if no date provided
  *
  * @example
  * ```ts
  * // If today is Jan 10
- * formatDueDate("2025-01-09T10:00:00Z") // "🚨 Overdue (1/9)"
- * formatDueDate("2025-01-10T14:00:00Z") // "⏰ Due Today 02:00 PM"
- * formatDueDate("2025-01-11T14:00:00Z") // "📅 Due Tomorrow 02:00 PM"
- * formatDueDate("2025-01-15T14:00:00Z") // "📅 Due 1/15 02:00 PM"
+ * formatDueDate("2025-01-09T10:00:00Z") // "AlertCircle Overdue (1/9)"
+ * formatDueDate("2025-01-10T14:00:00Z") // "Clock Due Today 02:00 PM"
+ * formatDueDate("2025-01-11T14:00:00Z") // "Calendar Due Tomorrow 02:00 PM"
+ * formatDueDate("2025-01-15T14:00:00Z") // "Calendar Due 1/15 02:00 PM"
  * formatDueDate(null) // null
  * ```
  */
@@ -153,13 +153,13 @@ export const formatDueDate = (dueDate: string | null): string | null => {
   });
 
   if (diffDays < 0) {
-    return `🚨 Overdue (${formattedDate})`;
+    return `AlertCircle Overdue (${formattedDate})`;
   }
   if (diffDays === 0) {
-    return `⏰ Due Today ${formattedTime}`;
+    return `Clock Due Today ${formattedTime}`;
   }
   if (diffDays === 1) {
-    return `📅 Due Tomorrow ${formattedTime}`;
+    return `Calendar Due Tomorrow ${formattedTime}`;
   }
-  return `📅 Due ${formattedDate} ${formattedTime}`;
+  return `Calendar Due ${formattedDate} ${formattedTime}`;
 };

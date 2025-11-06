@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Castle, Lock, Zap, BarChart3, FileText, Crown, Swords } from 'lucide-react';
 import { Button } from '@/components/ui';
 
 interface UserMigrationNoticeProps {
@@ -12,7 +13,9 @@ export default function UserMigrationNotice({ onDismiss }: UserMigrationNoticePr
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="fantasy-card p-6 w-full max-w-lg">
         <div className="text-center mb-6">
-          <div className="text-4xl mb-4">🏰</div>
+          <div className="text-4xl mb-4 flex justify-center">
+            <Castle size={48} className="text-gold-400" />
+          </div>
           <h2 className="text-2xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold mb-2">
             Guild System Upgrade Complete
           </h2>
@@ -23,21 +26,30 @@ export default function UserMigrationNotice({ onDismiss }: UserMigrationNoticePr
 
         <div className="space-y-4 mb-6">
           <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-            <h3 className="text-blue-400 font-semibold mb-2">🔒 Enhanced Security</h3>
+            <h3 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+              <Lock size={20} />
+              Enhanced Security
+            </h3>
             <p className="text-gray-300 text-sm">
               For your security, all users need to create new accounts with our upgraded authentication system.
             </p>
           </div>
 
           <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
-            <h3 className="text-green-400 font-semibold mb-2">⚡ Real-time Updates</h3>
+            <h3 className="text-green-400 font-semibold mb-2 flex items-center gap-2">
+              <Zap size={20} />
+              Real-time Updates
+            </h3>
             <p className="text-gray-300 text-sm">
               Experience instant updates when family members complete quests, earn rewards, and level up!
             </p>
           </div>
 
           <div className="p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg">
-            <h3 className="text-purple-400 font-semibold mb-2">📊 Better Performance</h3>
+            <h3 className="text-purple-400 font-semibold mb-2 flex items-center gap-2">
+              <BarChart3 size={20} />
+              Better Performance
+            </h3>
             <p className="text-gray-300 text-sm">
               Enjoy faster loading times and improved reliability across all devices.
             </p>
@@ -45,7 +57,10 @@ export default function UserMigrationNotice({ onDismiss }: UserMigrationNoticePr
         </div>
 
         <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-6">
-          <h3 className="text-yellow-400 font-semibold mb-2">📝 What You Need to Do</h3>
+          <h3 className="text-yellow-400 font-semibold mb-2 flex items-center gap-2">
+            <FileText size={20} />
+            What You Need to Do
+          </h3>
           <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
             <li>If you&apos;re the Guild Master: Create a new family with the same name</li>
             <li>Share the new guild code with your family members</li>
@@ -57,16 +72,18 @@ export default function UserMigrationNotice({ onDismiss }: UserMigrationNoticePr
         <div className="space-y-3">
           <Link
             href="/auth/create-family"
-            className="w-full fantasy-button block text-center py-3 text-lg font-semibold"
+            className="w-full fantasy-button block text-center py-3 text-lg font-semibold flex items-center justify-center gap-2"
           >
-            👑 Create New Guild (Guild Masters)
+            <Crown size={20} />
+            Create New Guild (Guild Masters)
           </Link>
 
           <Link
             href="/auth/register"
-            className="w-full bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-500 hover:to-gem-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg border border-gem-500/50 transition-all block text-center"
+            className="w-full bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-500 hover:to-gem-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg border border-gem-500/50 transition-all block text-center flex items-center justify-center gap-2"
           >
-            ⚔️ Join Existing Guild
+            <Swords size={20} />
+            Join Existing Guild
           </Link>
 
           {onDismiss && (

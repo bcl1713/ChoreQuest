@@ -2,6 +2,7 @@
 
 import { useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { Crown } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { Button } from '@/components/ui';
@@ -91,8 +92,9 @@ export default function AdminPage() {
           <div className="container mx-auto px-4 py-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold">
-                  👑 Admin Dashboard
+                <h1 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold flex items-center gap-2">
+                  <Crown size={32} />
+                  Admin Dashboard
                 </h1>
                 {family && (
                   <p className="text-sm text-gray-400">

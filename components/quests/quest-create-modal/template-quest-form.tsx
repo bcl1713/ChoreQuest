@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { Coins, Zap } from "lucide-react";
 import { QuestTemplate } from "@/lib/types/database";
 
 export interface TemplateQuestFormProps {
@@ -54,18 +55,18 @@ const TemplateQuestForm = React.memo(function TemplateQuestForm({
           <p className="text-gray-400 text-sm mb-3">
             {selectedTemplate.description}
           </p>
-          <div className="flex gap-4 text-sm">
+          <div className="flex gap-4 text-sm flex-wrap">
             <span className="text-yellow-400">
               {selectedTemplate.difficulty}
             </span>
             <span className="text-blue-400">
               {selectedTemplate.category}
             </span>
-            <span className="text-gold-400">
-              💰 {selectedTemplate.gold_reward}
+            <span className="text-gold-400 flex items-center gap-1">
+              <Coins size={16} className="inline" /> {selectedTemplate.gold_reward}
             </span>
-            <span className="xp-text">
-              ⚡ {selectedTemplate.xp_reward} XP
+            <span className="xp-text flex items-center gap-1">
+              <Zap size={16} className="inline" /> {selectedTemplate.xp_reward} XP
             </span>
           </div>
         </div>
