@@ -6,6 +6,7 @@ import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
+import { Crown, Info, Sword } from "lucide-react";
 import { Button } from "@/components/ui";
 
 interface FamilyMemberWithCharacter extends UserProfile {
@@ -153,7 +154,8 @@ export default function GuildMasterManager() {
     return (
       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
         <h3 className="text-xl font-semibold text-white mb-4">
-          👑 Guild Master Management
+          <Crown size={20} className="mr-2" />
+          Guild Master Management
         </h3>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -180,7 +182,8 @@ export default function GuildMasterManager() {
     return (
       <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
         <h3 className="text-xl font-semibold text-white mb-4">
-          👑 Guild Master Management
+          <Crown size={20} className="mr-2" />
+          Guild Master Management
         </h3>
         <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 text-red-200">
           {error}
@@ -197,7 +200,8 @@ export default function GuildMasterManager() {
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-white mb-2">
-          👑 Guild Master Management
+          <Crown size={20} className="mr-2" />
+          Guild Master Management
         </h3>
         <p className="text-sm text-gray-400">Family Members</p>
         <p className="text-sm text-gray-400">
@@ -205,7 +209,7 @@ export default function GuildMasterManager() {
           quests, approve rewards, and promote other members.
         </p>
         <div className="mt-2 inline-flex items-center gap-2 text-xs bg-blue-500/10 text-blue-400 px-3 py-1 rounded border border-blue-500/30">
-          <span>ℹ️</span>
+          <Info size={16} />
           <span>
             {guildMasterCount} Guild Master{guildMasterCount !== 1 ? "s" : ""}{" "}
             in family
@@ -239,11 +243,15 @@ export default function GuildMasterManager() {
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   {/* Avatar/Icon */}
                   <div
-                    className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
+                    className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
                       isGuildMaster ? "bg-gold-500/20" : "bg-gray-600/50"
                     }`}
                   >
-                    {isGuildMaster ? "👑" : "🗡️"}
+                    {isGuildMaster ? (
+                      <Crown size={24} className="text-gold-400" />
+                    ) : (
+                      <Sword size={24} className="text-gray-400" />
+                    )}
                   </div>
 
                   {/* Names and Role */}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { z } from "zod";
+import { Castle, Swords, Crown } from "lucide-react";
 import { FantasyButton } from "@/components/ui";
 
 const loginSchema = z.object({
@@ -236,9 +237,24 @@ export default function AuthForm({
             "Processing..."
           ) : (
             <>
-              {type === "login" && "🏰 Enter Realm"}
-              {type === "register" && "⚔️ Join Guild"}
-              {type === "create-family" && "👑 Found Guild"}
+              {type === "login" && (
+                <>
+                  <Castle size={18} className="mr-2" />
+                  Enter Realm
+                </>
+              )}
+              {type === "register" && (
+                <>
+                  <Swords size={18} className="mr-2" />
+                  Join Guild
+                </>
+              )}
+              {type === "create-family" && (
+                <>
+                  <Crown size={18} className="mr-2" />
+                  Found Guild
+                </>
+              )}
             </>
           )}
         </FantasyButton>

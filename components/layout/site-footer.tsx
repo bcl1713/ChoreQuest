@@ -1,4 +1,5 @@
 import type { GitReferenceMetadata } from '@/lib/git-metadata';
+import { Tag, GitBranch } from 'lucide-react';
 
 interface SiteFooterProps {
   gitReference: GitReferenceMetadata | null;
@@ -6,9 +7,9 @@ interface SiteFooterProps {
 
 const getReferenceLabel = (metadata: GitReferenceMetadata | null) => {
   if (!metadata) return null;
-  return metadata.type === 'tag'
-    ? `🏷️ Tag: ${metadata.value}`
-    : `🌿 Branch: ${metadata.value}`;
+  const Icon = metadata.type === 'tag' ? Tag : GitBranch;
+  const label = metadata.type === 'tag' ? 'Tag' : 'Branch';
+  return { Icon, label, value: metadata.value };
 };
 
 export default function SiteFooter({ gitReference }: SiteFooterProps) {
@@ -23,7 +24,10 @@ export default function SiteFooter({ gitReference }: SiteFooterProps) {
         Ready for your family&apos;s epic adventure? The quest begins soon...
       </p>
       {referenceLabel && (
-        <p className="text-xs mt-4 text-gray-500 font-mono">{referenceLabel}</p>
+        <p className="text-xs mt-4 text-gray-500 font-mono flex items-center justify-center gap-1">
+          <referenceLabel.Icon size={14} />
+          {referenceLabel.label}: {referenceLabel.value}
+        </p>
       )}
     </footer>
   );
