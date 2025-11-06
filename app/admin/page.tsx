@@ -2,7 +2,7 @@
 
 import { useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Crown, ArrowLeft } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { Button } from '@/components/ui';

@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { RewardType } from "@/lib/types/database";
 import { Button } from "@/components/ui";
-import { Zap, Edit, Save, Coins } from "lucide-react";
+import { Coins } from "lucide-react";
 
 // Map reward types to Lucide icon names
 export const REWARD_TYPE_ICON_NAMES = {

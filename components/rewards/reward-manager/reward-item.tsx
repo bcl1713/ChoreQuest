@@ -5,7 +5,7 @@ import { Reward } from "@/lib/types/database";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui";
 import { FantasyIcon } from "@/components/icons/FantasyIcon";
-import { Smartphone, Star, Coins, Lightbulb, Edit, Check, Circle, Trash2 } from "lucide-react";
+import { Smartphone, Star, Coins, Lightbulb, Trash2 } from "lucide-react";
 
 // Map reward types to Lucide icon names
 const REWARD_TYPE_ICON_NAMES = {
