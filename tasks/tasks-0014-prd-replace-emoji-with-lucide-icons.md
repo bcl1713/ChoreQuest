@@ -171,23 +171,23 @@
   - [x] 5.25 Run full test suite: `npm run test` (1560 tests passing)
   - [x] 5.26 Commit Phase 4: `git add -A && git commit -m "Phase 4: Replace UI component emojis with Lucide icons"`
 
-- [ ] 6.0 Phase 5: Replace utility and helper function emojis with Lucide icons
-  - [ ] 6.1 Open `lib/utils/formatting.ts` and search for emoji
-  - [ ] 6.2 If formatters return emoji strings, consider returning icon names instead
-  - [ ] 6.3 Document approach for utility functions in mapping file
-  - [ ] 6.4 Run tests: `npx jest lib/utils/formatting.test.ts`
-  - [ ] 6.5 Update tests to verify icon names/components instead of emoji
-  - [ ] 6.6 Open `hooks/useNotification.ts` and check for emoji in notification messages
-  - [ ] 6.7 Replace emoji with Lucide icon references
-  - [ ] 6.8 Run tests: `npx jest hooks/useNotification.test.ts`
-  - [ ] 6.9 Check `lib/utils/validation.ts` for emoji (validators might use emoji in error messages)
-  - [ ] 6.10 Check `lib/utils/data.ts` for emoji
-  - [ ] 6.11 Check `lib/utils/colors.ts` for emoji
-  - [ ] 6.12 Run all utility tests: `npx jest lib/utils/`
-  - [ ] 6.13 Run all hook tests: `npx jest hooks/`
-  - [ ] 6.14 Fix any failing tests
-  - [ ] 6.15 Run full test suite: `npm run test`
-  - [ ] 6.16 Commit Phase 5: `git add -A && git commit -m "Phase 5: Replace utility and hook emojis with Lucide icons"`
+- [x] 6.0 Phase 5: Replace utility and helper function emojis with Lucide icons
+  - [x] 6.1 Open `lib/utils/formatting.ts` and search for emoji
+  - [x] 6.2 If formatters return emoji strings, consider returning icon names instead
+  - [x] 6.3 Document approach for utility functions in mapping file
+  - [x] 6.4 Run tests: `npx jest lib/utils/formatting.test.ts`
+  - [x] 6.5 Update tests to verify icon names/components instead of emoji
+  - [x] 6.6 Open `hooks/useNotification.ts` and check for emoji in notification messages
+  - [x] 6.7 Replace emoji with Lucide icon references
+  - [x] 6.8 Run tests: `npx jest hooks/useNotification.test.ts`
+  - [x] 6.9 Check `lib/utils/validation.ts` for emoji (validators might use emoji in error messages)
+  - [x] 6.10 Check `lib/utils/data.ts` for emoji
+  - [x] 6.11 Check `lib/utils/colors.ts` for emoji
+  - [x] 6.12 Run all utility tests: `npx jest lib/utils/`
+  - [x] 6.13 Run all hook tests: `npx jest hooks/`
+  - [x] 6.14 Fix any failing tests
+  - [x] 6.15 Run full test suite: `npm run test`
+  - [x] 6.16 Commit Phase 5: `git add -A && git commit -m "Phase 5: Replace utility and hook emojis with Lucide icons"`
 
 - [ ] 7.0 Phase 6: Scan for remaining emojis and update all test files
   - [ ] 7.1 Run comprehensive emoji search: `grep -r "[\p{Emoji_Presentation}\p{Emoji}]" . --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=.next > emoji-scan.txt`
