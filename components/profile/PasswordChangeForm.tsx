@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ProfileService } from '@/lib/profile-service';
+import { useAuth } from '@/lib/auth-context';
 import { FantasyButton } from '@/components/ui';
 import { Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ type PasswordStrength = 'weak' | 'medium' | 'strong';
 export default function PasswordChangeForm({
   onSuccess,
 }: PasswordChangeFormProps) {
+  const { updatePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -97,7 +98,7 @@ export default function PasswordChangeForm({
     setIsLoading(true);
 
     try {
-      await ProfileService.updatePassword(currentPassword, newPassword);
+      await updatePassword(currentPassword, newPassword);
       onSuccess('Password updated successfully!');
       setCurrentPassword('');
       setNewPassword('');

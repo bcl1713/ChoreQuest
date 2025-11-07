@@ -6,11 +6,14 @@ import CharacterNameForm from './CharacterNameForm';
 import ClassChangeForm from './ClassChangeForm';
 import PasswordChangeForm from './PasswordChangeForm';
 import ChangeHistoryList from './ChangeHistoryList';
+import { NotificationContainer } from '@/components/ui/NotificationContainer';
+import { useNotification } from '@/hooks/useNotification';
 import { User, Wand2, Lock, History, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProfileSettingsProps {
   character: Character;
+  onRefreshNeeded?: () => Promise<void>;
 }
 
 type TabType = 'name' | 'class' | 'password' | 'history';
@@ -21,13 +24,16 @@ interface Tab {
   icon: LucideIcon;
 }
 
-export default function ProfileSettings({ character }: ProfileSettingsProps) {
+export default function ProfileSettings({ character, onRefreshNeeded }: ProfileSettingsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('name');
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { notifications, success, dismiss } = useNotification();
 
-  const handleSuccess = (message: string) => {
-    setSuccessMessage(message);
-    setTimeout(() => setSuccessMessage(null), 3000);
+  const handleSuccess = async (message: string) => {
+    success(message);
+    // Refresh character data after successful change
+    if (onRefreshNeeded) {
+      await onRefreshNeeded();
+    }
   };
 
   const tabs: Tab[] = [
@@ -39,6 +45,8 @@ export default function ProfileSettings({ character }: ProfileSettingsProps) {
 
   return (
     <div className="space-y-6">
+      <NotificationContainer notifications={notifications} onDismiss={dismiss} />
+
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold mb-2">
@@ -46,13 +54,6 @@ export default function ProfileSettings({ character }: ProfileSettingsProps) {
         </h1>
         <p className="text-gray-300">Manage your character&apos;s profile and preferences</p>
       </div>
-
-      {/* Success Message */}
-      {successMessage && (
-        <div className="bg-green-900/50 border border-green-500/50 rounded-lg p-4 text-green-300 animate-pulse">
-          {successMessage}
-        </div>
-      )}
 
       {/* Tabs */}
       <div className="fantasy-card p-0 overflow-hidden">

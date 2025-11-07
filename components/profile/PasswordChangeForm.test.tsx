@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PasswordChangeForm from './PasswordChangeForm';
-import { ProfileService } from '@/lib/profile-service';
+import { useAuth } from '@/lib/auth-context';
 
-jest.mock('@/lib/profile-service');
+jest.mock('@/lib/auth-context');
+
+const mockUpdatePassword = jest.fn();
 
 describe('PasswordChangeForm', () => {
   const mockOnSuccess = jest.fn();
@@ -11,7 +13,11 @@ describe('PasswordChangeForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnSuccess.mockClear();
-    (ProfileService.updatePassword as jest.Mock).mockResolvedValue(true);
+    mockUpdatePassword.mockClear();
+    mockUpdatePassword.mockResolvedValue(true);
+    (useAuth as jest.Mock).mockReturnValue({
+      updatePassword: mockUpdatePassword,
+    });
   });
 
   it('renders all three password input fields', () => {
@@ -180,7 +186,7 @@ describe('PasswordChangeForm', () => {
     expect(button).not.toBeDisabled();
   });
 
-  it('calls ProfileService.updatePassword on valid submission', async () => {
+  it('calls updatePassword from useAuth on valid submission', async () => {
     render(<PasswordChangeForm onSuccess={mockOnSuccess} />);
 
     const currentPasswordInput = screen.getByPlaceholderText(
@@ -199,7 +205,7 @@ describe('PasswordChangeForm', () => {
     await userEvent.click(button);
 
     await waitFor(() => {
-      expect(ProfileService.updatePassword).toHaveBeenCalledWith(
+      expect(mockUpdatePassword).toHaveBeenCalledWith(
         'Current1!',
         'ValidPass1!'
       );
@@ -259,7 +265,7 @@ describe('PasswordChangeForm', () => {
   });
 
   it('shows error message on failure', async () => {
-    (ProfileService.updatePassword as jest.Mock).mockRejectedValue(
+    mockUpdatePassword.mockRejectedValue(
       new Error('Invalid current password')
     );
 
@@ -286,7 +292,7 @@ describe('PasswordChangeForm', () => {
   });
 
   it('shows loading state during submission', async () => {
-    (ProfileService.updatePassword as jest.Mock).mockImplementation(
+    mockUpdatePassword.mockImplementation(
       () =>
         new Promise((resolve) => setTimeout(() => resolve(true), 100))
     );

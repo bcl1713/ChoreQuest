@@ -4,13 +4,14 @@ import { useAuth } from '@/lib/auth-context';
 import { useCharacter } from '@/lib/character-context';
 import { LoadingSpinner } from '@/components/ui';
 import ProfileSettings from '@/components/profile/ProfileSettings';
+import ProfileErrorBoundary from '@/components/profile/ProfileErrorBoundary';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { character, isLoading: characterLoading, error: characterError } = useCharacter();
+  const { character, isLoading: characterLoading, error: characterError, refreshCharacter } = useCharacter();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -66,10 +67,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 py-8 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto">
-        <ProfileSettings character={character} />
+    <ProfileErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900 py-8 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          <ProfileSettings character={character} onRefreshNeeded={refreshCharacter} />
+        </div>
       </div>
-    </div>
+    </ProfileErrorBoundary>
   );
 }

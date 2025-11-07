@@ -17,6 +17,7 @@ interface AuthContextType {
   register: (data: { name: string; email: string; password: string; familyCode: string }) => Promise<void>;
   createFamily: (data: { name: string; email: string; password: string; userName: string }) => Promise<void>;
   logout: () => Promise<void>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
   characterName: string;
@@ -553,6 +554,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    clearError();
+    setIsLoading(true);
+
+    try {
+      if (!user || !user.email) {
+        throw new Error('No user logged in');
+      }
+
+      // First, verify the current password is correct by attempting to sign in
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (verifyError) {
+        throw new Error('Current password is incorrect');
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Password updated successfully
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Password update failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -563,6 +602,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       createFamily,
       logout,
+      updatePassword,
       isLoading,
       error,
       characterName,
