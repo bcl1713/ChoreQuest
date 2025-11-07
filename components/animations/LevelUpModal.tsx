@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ParticleEffect } from './ParticleEffect';
-import { FantasyButton } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { modalBackdrop, celebrationBurst } from '@/lib/animations/variants';
 import { useEffect, useRef } from 'react';
@@ -208,7 +208,7 @@ export function LevelUpModal({
                 </p>
 
                 {/* Dismiss button */}
-                <FantasyButton
+                <Button
                   ref={dismissButtonRef}
                   variant="primary"
                   size="lg"
@@ -216,7 +216,7 @@ export function LevelUpModal({
                   className="w-full"
                 >
                   Continue Your Journey
-                </FantasyButton>
+                </Button>
               </div>
             </motion.div>
           </div>

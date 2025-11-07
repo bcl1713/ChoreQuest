@@ -35,22 +35,28 @@ jest.mock('next/navigation', () => ({
 }))
 
 // Mock framer-motion to avoid issues with animation testing
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }) => <div {...props}>{children}</div>,
-    span: ({ children, ...props }) => <span {...props}>{children}</span>,
-    button: ({ children, ...props }) => <button {...props}>{children}</button>,
-    h1: ({ children, ...props }) => <h1 {...props}>{children}</h1>,
-    h2: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
-    p: ({ children, ...props }) => <p {...props}>{children}</p>,
-  },
-  AnimatePresence: ({ children }) => children,
-  useAnimation: () => ({
-    start: jest.fn(),
-    stop: jest.fn(),
-    set: jest.fn(),
-  }),
-}))
+jest.mock('framer-motion', () => {
+  const React = require('react');
+  return {
+    motion: {
+      div: ({ children, ...props }) => React.createElement('div', props, children),
+      span: ({ children, ...props }) => React.createElement('span', props, children),
+      button: React.forwardRef(({ children, ...props }, ref) =>
+        React.createElement('button', { ref, ...props }, children)
+      ),
+      h1: ({ children, ...props }) => React.createElement('h1', props, children),
+      h2: ({ children, ...props }) => React.createElement('h2', props, children),
+      p: ({ children, ...props }) => React.createElement('p', props, children),
+    },
+    AnimatePresence: ({ children }) => children,
+    useAnimation: () => ({
+      start: jest.fn(),
+      stop: jest.fn(),
+      set: jest.fn(),
+    }),
+  };
+})
+
 
 // Setup global test environment
 global.ResizeObserver = jest.fn().mockImplementation(() => ({

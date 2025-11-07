@@ -332,34 +332,33 @@ function DashboardContent() {
                     <Button
                       onClick={() => router.push('/admin')}
                       variant="primary"
-                      size="sm"
-                      className="touch-target"
+                      size="icon-sm"
+                      className="touch-target sm:w-auto sm:px-4 sm:py-2.5 sm:h-auto"
                       data-testid="admin-dashboard-button"
-                      startIcon={<Settings size={16} />}
                     >
+                      <Settings size={16} className="sm:mr-2" />
                       <span className="hidden sm:inline">Admin</span>
                     </Button>
                     <Button
                       onClick={() => setShowCreateQuest(true)}
                       variant="gold"
-                      size="sm"
-                      className="touch-target"
+                      size="icon-sm"
+                      className="touch-target sm:w-auto sm:px-4 sm:py-2.5 sm:h-auto"
                       data-testid="create-quest-button"
-                      startIcon={<Zap size={16} />}
                     >
+                      <Zap size={16} className="sm:mr-2" />
                       <span className="hidden sm:inline">Create Quest</span>
-                      <span className="sm:hidden">Quest</span>
                     </Button>
                   </>
                 )}
                 <Button
                   onClick={() => router.push('/profile')}
                   variant="primary"
-                  size="sm"
-                  className="touch-target"
+                  size="icon-sm"
+                  className="touch-target sm:w-auto sm:px-4 sm:py-2.5 sm:h-auto"
                   data-testid="profile-button"
-                  startIcon={<User size={16} />}
                 >
+                  <User size={16} className="sm:mr-2" />
                   <span className="hidden sm:inline">Profile</span>
                 </Button>
                 <Button
@@ -367,6 +366,7 @@ function DashboardContent() {
                   variant="destructive"
                   size="sm"
                   className="touch-target"
+                  data-testid="logout-button"
                 >
                   Logout
                 </Button>

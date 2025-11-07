@@ -314,7 +314,7 @@ describe("ProfileService", () => {
         error: null,
       });
 
-      const result = await ProfileService.changeCharacterClass("char-1", "MAGE");
+      await ProfileService.changeCharacterClass("char-1", "MAGE");
 
       expect(mockRpc).toHaveBeenCalledWith(
         "fn_change_character_class",

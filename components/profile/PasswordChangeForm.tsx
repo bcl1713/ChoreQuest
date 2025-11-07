@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { FantasyButton } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -303,7 +303,7 @@ export default function PasswordChangeForm({
         )}
 
         {/* Submit Button */}
-        <FantasyButton
+        <Button
           type="submit"
           disabled={
             isLoading ||
@@ -319,7 +319,7 @@ export default function PasswordChangeForm({
           className="w-full justify-center"
         >
           {isLoading ? 'Updating Password...' : 'Update Password'}
-        </FantasyButton>
+        </Button>
       </form>
     </div>
   );

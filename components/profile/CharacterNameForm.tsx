@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Character } from '@/lib/types/database';
 import { ProfileService } from '@/lib/profile-service';
-import { FantasyButton } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { AlertCircle } from 'lucide-react';
 
 interface CharacterNameFormProps {
@@ -105,14 +105,14 @@ export default function CharacterNameForm({
         )}
 
         {/* Submit Button */}
-        <FantasyButton
+        <Button
           type="submit"
           disabled={isLoading || !name.trim() || name === character.name}
           isLoading={isLoading}
           className="w-full justify-center"
         >
           {isLoading ? 'Updating Name...' : 'Update Character Name'}
-        </FantasyButton>
+        </Button>
       </form>
     </div>
   );

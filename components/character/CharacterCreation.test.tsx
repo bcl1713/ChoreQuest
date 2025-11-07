@@ -37,6 +37,11 @@ jest.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: () => false,
 }));
 jest.mock("@/components/ui", () => ({
+  Button: ({ children, className, disabled, type, isLoading, ...props }: MockFantasyButtonProps) => (
+    <button className={className} disabled={disabled} type={type} {...props}>
+      {isLoading ? "Loading..." : children}
+    </button>
+  ),
   FantasyButton: ({ children, className, disabled, type, isLoading, ...props }: MockFantasyButtonProps) => (
     <button className={className} disabled={disabled} type={type} {...props}>
       {isLoading ? "Loading..." : children}

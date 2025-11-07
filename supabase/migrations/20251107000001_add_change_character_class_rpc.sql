@@ -8,25 +8,25 @@ RETURNS TABLE (
   id UUID,
   user_id UUID,
   name TEXT,
-  class TEXT,
+  class character_class,
   level INTEGER,
   gold INTEGER,
-  experience INTEGER,
-  health INTEGER,
-  max_health INTEGER,
+  xp INTEGER,
+  gems INTEGER,
+  honor_points INTEGER,
   last_class_change_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) AS $$
 DECLARE
-  v_character RECORD;
+  v_character characters%ROWTYPE;
   v_cost INTEGER;
   v_now TIMESTAMP WITH TIME ZONE;
 BEGIN
   v_now := NOW();
 
   -- Lock and fetch character data to prevent race conditions
-  SELECT * INTO v_character FROM characters WHERE id = p_character_id FOR UPDATE;
+  SELECT * INTO v_character FROM characters WHERE characters.id = p_character_id FOR UPDATE;
 
   IF v_character IS NULL THEN
     RAISE EXCEPTION 'Character not found';
@@ -55,26 +55,26 @@ BEGIN
   -- Update character class and gold
   UPDATE characters
   SET
-    class = p_new_class,
-    gold = gold - v_cost,
+    class = p_new_class::character_class,
+    gold = characters.gold - v_cost,
     last_class_change_at = v_now,
     updated_at = v_now
-  WHERE id = p_character_id;
+  WHERE characters.id = p_character_id;
 
   -- Record transaction
   INSERT INTO transactions (
     user_id,
-    character_id,
     type,
-    amount,
+    gold_change,
     description,
+    related_id,
     created_at
   ) VALUES (
     v_character.user_id,
-    p_character_id,
-    'CLASS_CHANGE',
+    'STORE_PURCHASE'::transaction_type,
     -v_cost,
-    FORMAT('Class change from %s to %s', v_character.class, p_new_class),
+    FORMAT('Class change from %s to %s', v_character.class, p_new_class::text),
+    p_character_id,
     v_now
   );
 
@@ -89,13 +89,13 @@ BEGIN
   ) VALUES (
     p_character_id,
     'class',
-    v_character.class,
+    v_character.class::text,
     p_new_class,
     v_cost,
     v_now
   );
 
-  -- Return updated character data
+  -- Return updated character data by re-fetching from database
   RETURN QUERY
   SELECT
     c.id,
@@ -104,9 +104,9 @@ BEGIN
     c.class,
     c.level,
     c.gold,
-    c.experience,
-    c.health,
-    c.max_health,
+    c.xp,
+    c.gems,
+    c.honor_points,
     c.last_class_change_at,
     c.created_at,
     c.updated_at

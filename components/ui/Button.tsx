@@ -116,7 +116,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) {
     const isDisabled = disabled || isLoading;
     const showStartSlot = Boolean(startIcon) || isLoading;
-    const showEndSlot = Boolean(endIcon);
+    const showEndSlot = Boolean(endIcon) && !isLoading;
     const iconSizeStyle: CSSProperties = {
       width: "var(--btn-icon-size, 1.3rem)",
       height: "var(--btn-icon-size, 1.3rem)",
@@ -129,7 +129,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isDisabled}
         aria-busy={isLoading || undefined}
         className={cn(
-          "relative inline-flex items-center justify-center gap-[var(--btn-gap,0.65rem)] rounded-lg font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60",
+          "relative inline-flex items-center justify-center gap-[var(--btn-gap,0.65rem)] rounded-lg font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:scale-105 active:scale-95",
           baseFocus,
           variantClasses[variant],
           sizeClasses[size],

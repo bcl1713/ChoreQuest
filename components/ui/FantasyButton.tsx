@@ -26,6 +26,25 @@ export interface FantasyButtonProps extends Omit<HTMLMotionProps<'button'>, 'chi
  * Fantasy-themed button component with animations and variants.
  * Supports multiple variants, sizes, loading states, and hover animations.
  * Respects user's motion preferences for accessibility.
+ *
+ * @deprecated Use the `Button` component from `@/components/ui/button` instead.
+ * This component will be removed in v1.0.0. See the migration guide:
+ * https://github.com/chore-quest/chore-quest/wiki/Button-Migration-Guide
+ *
+ * Migration path:
+ * - Replace `<FantasyButton>` with `<Button>`
+ * - The `Button` component has similar props and better accessibility
+ * - `icon` prop → use `startIcon` prop instead
+ * - `variant` prop works the same way
+ *
+ * Example:
+ * ```tsx
+ * // Before
+ * <FantasyButton variant="primary" icon={<IconComponent />}>Click me</FantasyButton>
+ *
+ * // After
+ * <Button variant="primary" startIcon={<IconComponent />}>Click me</Button>
+ * ```
  */
 export const FantasyButton = forwardRef<HTMLButtonElement, FantasyButtonProps>(function FantasyButton({
   variant = 'primary',
@@ -37,6 +56,15 @@ export const FantasyButton = forwardRef<HTMLButtonElement, FantasyButtonProps>(f
   className,
   ...props
 }, ref) {
+  // Development warning for deprecated component
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '[DEPRECATION] FantasyButton is deprecated and will be removed in v1.0.0. ' +
+      'Please use the Button component from @/components/ui/button instead. ' +
+      'See https://github.com/chore-quest/chore-quest/wiki/Button-Migration-Guide for migration details.'
+    );
+  }
+
   const prefersReducedMotion = useReducedMotion();
 
   // Variant styles
