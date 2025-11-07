@@ -70,10 +70,10 @@ export default function ProfileSettings({ character, onRefreshNeeded }: ProfileS
                     ? 'text-gold-400 border-gold-500 bg-dark-700/50'
                     : 'text-gray-400 border-transparent hover:text-gold-300'
                 )}
+                title={tab.label}
               >
                 <Icon size={18} className="flex-shrink-0" />
                 <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
               </button>
             );
           })}

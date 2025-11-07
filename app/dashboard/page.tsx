@@ -333,21 +333,21 @@ function DashboardContent() {
                       onClick={() => router.push('/admin')}
                       variant="primary"
                       size="icon-sm"
-                      className="touch-target"
+                      className="touch-target sm:w-auto sm:px-4 sm:py-2.5 sm:h-auto"
                       data-testid="admin-dashboard-button"
-                      title="Admin Dashboard"
                     >
-                      <Settings size={16} />
+                      <Settings size={16} className="sm:mr-2" />
+                      <span className="hidden sm:inline">Admin</span>
                     </Button>
                     <Button
                       onClick={() => setShowCreateQuest(true)}
                       variant="gold"
-                      size="sm"
-                      className="touch-target"
+                      size="icon-sm"
+                      className="touch-target sm:w-auto sm:px-4 sm:py-2.5 sm:h-auto"
                       data-testid="create-quest-button"
-                      startIcon={<Zap size={16} />}
                     >
-                      Create Quest
+                      <Zap size={16} className="sm:mr-2" />
+                      <span className="hidden sm:inline">Create Quest</span>
                     </Button>
                   </>
                 )}
@@ -355,11 +355,11 @@ function DashboardContent() {
                   onClick={() => router.push('/profile')}
                   variant="primary"
                   size="icon-sm"
-                  className="touch-target"
+                  className="touch-target sm:w-auto sm:px-4 sm:py-2.5 sm:h-auto"
                   data-testid="profile-button"
-                  title="Profile"
                 >
-                  <User size={16} />
+                  <User size={16} className="sm:mr-2" />
+                  <span className="hidden sm:inline">Profile</span>
                 </Button>
                 <Button
                   onClick={logout}
