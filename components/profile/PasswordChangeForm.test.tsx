@@ -61,8 +61,6 @@ describe('PasswordChangeForm', () => {
   it('shows password requirements checklist', async () => {
     render(<PasswordChangeForm onSuccess={mockOnSuccess} />);
 
-    const newPasswordInput = screen.getByPlaceholderText('Enter new password...');
-
     expect(screen.getByText(/At least 8 characters/)).toBeInTheDocument();
     expect(screen.getByText(/One uppercase letter/)).toBeInTheDocument();
     expect(screen.getByText(/One number or special character/)).toBeInTheDocument();

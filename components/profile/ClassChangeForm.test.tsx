@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import ClassChangeForm from './ClassChangeForm';
 import { ProfileService } from '@/lib/profile-service';
 import { Character } from '@/lib/types/database';
