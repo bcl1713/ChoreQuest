@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+# claude
+.claude/tsc-cache/*
+
 # testing
 /coverage
 /playwright-report
