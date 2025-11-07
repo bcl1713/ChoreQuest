@@ -22,7 +22,8 @@ describe("QuestInstanceService Integration Tests", () => {
   beforeAll(async () => {
     // Mock the auth methods to prevent real network calls
     const signUpMock = async (credentials: { email: string; password: string }) => {
-      const userId = `test-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      // Generate a valid UUID v4 for test users
+      const userId = crypto.randomUUID();
       const user = { id: userId, email: credentials.email };
       mockUserFixtures.set(credentials.email, user);
       return { data: { user }, error: null };
