@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
   dir: './',
 })
 
-// Custom Jest configuration
+// Custom Jest configuration for unit tests (excludes integration tests)
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.js'],
   testEnvironment: 'jsdom',
