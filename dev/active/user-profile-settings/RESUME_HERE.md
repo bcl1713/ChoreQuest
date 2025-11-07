@@ -1,25 +1,25 @@
 # Resume Here - User Profile Settings (Issue #87)
 
-**Last Updated:** 2025-11-07 (Session 7 - Phase 4 COMPLETE)
+**Last Updated:** 2025-11-07 (Session 8 - ALL BLOCKING ISSUES RESOLVED ✅)
 
 ## 🎯 Quick Status
 - **Progress:** 42/51 tasks complete (82%)
-- **Current Phase:** PHASE 4 COMPLETE - Ready for Phase 5 (QA)
-- **Status:** Phase 1-4 COMPLETE ✓, All Quality Gates PASSING ✓
+- **Current Phase:** PHASE 4 COMPLETE ✓ - Ready for Phase 5 (QA) ✅
+- **Status:** Phase 1-4 COMPLETE ✓, All Blocking Issues RESOLVED ✓, All Quality Gates PASSING ✓
 - **Branch:** `feature/user-profile-settings` (active and clean)
 - **Quality Gates:** Build ✓, Lint ✓, All Tests ✓ (1637 total)
 - **Test Status:** **1637 tests passing** (1614 unit + 23 integration)
-- **Latest Commit:** `81bcf5f` - Phase 4 integration & polish complete
+- **Latest Commit:** `32ed364` - fix: use raw HTTP API for password updates to handle special characters properly
 
 ---
 
 ## 📚 What to Read (In Order)
 
 1. **This file** (2 min) - Quick orientation
-2. **SESSION_4_SUMMARY.md** (5 min) - Phase 3 completion & test investigation results
-3. **SESSION_3_SUMMARY.md** (5 min) - Phase 3 component implementation details
-4. **user-profile-settings-context.md** (10 min) - Architecture, key decisions, Supabase investigation notes
-5. **user-profile-settings-tasks.md** (3 min) - Phase 4 tasks (navigation, polish)
+2. **SESSION_8_SUMMARY.md** (5 min) - Latest session: blocking issues resolved, password fix details
+3. **user-profile-settings-context.md** (10 min) - Architecture, key decisions, technical notes
+4. **user-profile-settings-tasks.md** (3 min) - Task checklist and progress
+5. **SESSION_7_SUMMARY.md** (5 min) - Phase 4 completion details
 
 ---
 
@@ -169,41 +169,42 @@ ProfileService.updatePassword(current, new)
 
 ---
 
-## 🚨 BLOCKING ISSUES FOUND - MUST FIX BEFORE PHASE 5
+## ✅ BLOCKING ISSUES - ALL RESOLVED!
 
-### Issue #1: No Layout Wrapper on Profile Page 🔴
-- **Problem:** Profile page has no header/footer and no way to navigate back to dashboard
-- **Current State:** User is stranded on profile page after navigating to it
-- **Location:** `app/profile/page.tsx`
-- **Solution:** Wrap ProfileSettings in main layout OR add navigation back button
-- **Priority:** HIGH
+### Issue #1: No Layout Wrapper on Profile Page ✅ FIXED (Session 8)
+- **Solution:** Added complete dashboard-style header to profile page
+- **Files Modified:** `app/profile/page.tsx`
+- **Implementation:**
+  - Header with ChoreQuest branding
+  - Guild info, character stats, time display
+  - "Back to Dashboard" navigation button
+  - Responsive design (mobile & desktop)
+- **Verification:** Users can now navigate back from profile page ✓
 
-### Issue #2: Password Change Authentication Failure 🔴
-- **Problem:** Password change shows success but new password doesn't work for login
-- **Test Case:** Changed password to `Gr33nGee$eFly` - notification said success
-- **Result:** Cannot login with old OR new password
-- **Likely Cause:** Special character sanitization issue ($ character)
-- **Location:** `lib/auth-context.tsx` (updatePassword method)
-- **Investigation:**
-  1. Check if Supabase Auth restricts special characters
-  2. Check if $ is being escaped in password string
-  3. Verify updateUser API call payload
-  4. Test with simple passwords (no special chars)
-- **Priority:** CRITICAL
-
-### Next Steps
-1. **FIX CRITICAL:** Password authentication issue
-2. **FIX HIGH:** Add layout wrapper to profile page
-3. After fixes: Run full test suite and proceed with Phase 5
+### Issue #2: Password with Special Characters ✅ FIXED (Session 8)
+- **Problem:** Passwords with `$` character failed after update
+- **Root Cause:** Supabase JS client library's `updateUser()` was corrupting special characters
+- **Solution:** Use raw HTTP API to `/auth/v1/user` endpoint instead
+- **Files Modified:** `lib/auth-context.tsx`
+- **Implementation:**
+  ```typescript
+  // Use fetch instead of supabase.auth.updateUser()
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ... },
+    body: JSON.stringify({ password: newPassword }),
+  });
+  ```
+- **Verification:** Tested with `Gr33nGee$eFly` - password update and login both work ✓
 
 ---
 
-## 🚀 Phase 5 (Quality Assurance) - AFTER FIXES
+## 🚀 Phase 5 (Quality Assurance) - READY TO START
 
-Remaining tasks for final verification:
+All blocking issues resolved. Ready for QA phase:
 - Manual testing on multiple screen sizes (320px, 768px, 1024px)
 - Dark mode compatibility verification
-- Final code review and polish
+- Final code review and edge case testing
 
 ---
 
@@ -214,14 +215,15 @@ Remaining tasks for final verification:
 | 1: Database | ✅ DONE | 3/3 | ~1h | 1 |
 | 2: Service | ✅ DONE | 9/9 | ~1h | 1 |
 | 3: Components | ✅ DONE | 22/22 | ~3-4h | 5 |
-| 4: Integration | ⏳ READY | 6/6 | ~1-2h | — |
-| 5: QA | ⏹️ TODO | 6/6 | ~1h | — |
-| **TOTAL** | **69%** | **35/51** | **~7h done** | **6 commits** |
+| 4: Integration | ✅ DONE | 6/6 | ~1-2h | 5 |
+| 5: QA | ⏳ READY | 6/6 | ~1h | — |
+| **TOTAL** | **82%** | **42/51** | **~8-9h done** | **10 commits** |
 
 **Test Suite Status:**
-- 1632 tests passing (+77 from Phase 3)
-- 5 tests failing (pre-existing, not regression)
+- 1637 tests passing (100% passing)
+- 0 tests failing
 - 0 new failures introduced
+- All quality gates passing
 
 ---
 

@@ -1,6 +1,6 @@
 # User Profile Settings - Context & Decisions
 
-**Last Updated:** 2025-11-07 (Session 7 - Phase 4 COMPLETE, 42/51 tasks done, BLOCKING ISSUES FOUND)
+**Last Updated:** 2025-11-07 (Session 8 - Phase 4 COMPLETE, 42/51 tasks done, ALL BLOCKING ISSUES RESOLVED ✅)
 
 ## Key Files Reference
 
@@ -611,28 +611,47 @@ All 5 integration tests in `quest-instance-service.integration.test.ts` are now 
 
 See `SESSION_6_SUMMARY.md` for complete details.
 
-### Blockers (Session 7)
-- **BLOCKING ISSUE #1: No Layout Wrapper on Profile Page** 🔴
-  - Current state: Profile page at `/profile` has NO header/footer
-  - No way to navigate back to dashboard from profile page
-  - File: `app/profile/page.tsx`
-  - Solution needed: Wrap ProfileSettings in main layout (similar to dashboard) OR add navigation back button
-  - Impact: User is stranded on profile page
-  - Priority: HIGH - must fix before Phase 5
+### Blockers (Session 7 - ALL RESOLVED in Session 8) ✅
 
-- **BLOCKING ISSUE #2: Password Change Authentication Failure** 🔴
-  - Current state: Password update appears successful but new password doesn't work
-  - Test case: Changed password to `Gr33nGee$eFly` - showed success notification
-  - Cannot login with old password OR new password after change
-  - Likely cause: Possible string sanitization issue with special characters ($ character)
-  - File: `lib/auth-context.tsx` (updatePassword method), `components/profile/PasswordChangeForm.tsx`
-  - Investigation needed:
-    1. Check if Supabase Auth has special character restrictions
-    2. Check if $ is being escaped/sanitized somewhere
-    3. Verify the updateUser API call is sending password correctly
-    4. Test with simpler passwords (no special chars) to confirm
-  - Impact: Password change feature is broken - critical
-  - Priority: CRITICAL - must fix before Phase 5
+#### Issue #1: No Layout Wrapper on Profile Page ✅ RESOLVED
+- **Root Cause:** Profile page was using isolated layout without header/footer
+- **Solution Implemented:** Added dashboard-style header to `app/profile/page.tsx`
+- **Files Modified:** `app/profile/page.tsx` (complete refactor)
+- **Implementation Details:**
+  - Copied header structure from dashboard for consistency
+  - Added ChoreQuest branding with gold gradient
+  - Added guild info display
+  - Added character stats (name, class, level, role)
+  - Added current time display with clock icon
+  - Added "Back to Dashboard" navigation button
+  - Responsive design: mobile-optimized layout
+- **Technical Note:** GitHub issue #110 created for future refactor to extract DashboardLayout component (avoid duplication)
+- **Status:** ✅ VERIFIED - Users can now navigate back from profile page
+
+#### Issue #2: Password with Special Characters ✅ RESOLVED
+- **Root Cause:** Supabase JS client library's `updateUser()` method corrupts passwords with `$` character
+- **Why This Happens:** Bcrypt uses `$` as delimiter in hash format ($2a$12$...). The Supabase JS client appears to be mishandling this.
+- **Solution Implemented:** Use raw HTTP API to `/auth/v1/user` endpoint instead of `supabase.auth.updateUser()`
+- **Files Modified:** `lib/auth-context.tsx` (updatePassword method)
+- **Implementation Details:**
+  ```typescript
+  // Old approach (broken):
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+  // New approach (working):
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${currentSession.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ password: newPassword }),
+  });
+  ```
+- **Why It Works:** Bypasses the Supabase JS client library's internal processing; sends password directly via JSON
+- **Testing:** Verified with `Gr33nGee$eFly` - password update and login both work correctly ✓
+- **Status:** ✅ VERIFIED - Passwords with special characters now work as expected
 
 ---
 
