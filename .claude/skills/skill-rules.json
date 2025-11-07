@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "skills": {
+    "frontend-dev-guidelines": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "component",
+          "render",
+          "useState",
+          "useEffect",
+          "className",
+          "styling",
+          "layout",
+          "responsive",
+          "page",
+          "route",
+          "fetch",
+          "API",
+          "props",
+          "hook",
+          "suspense",
+          "loading"
+        ],
+        "intentPatterns": [
+          "create.*component",
+          "build.*page",
+          "add.*feature",
+          "style.*component",
+          "responsive.*design",
+          "fetch.*data",
+          "async.*component",
+          "loading.*state",
+          "error.*handling",
+          "typescript.*component"
+        ]
+      }
+    }
+  }
+}

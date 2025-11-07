@@ -107,7 +107,7 @@ describe('RedemptionHistory', () => {
         />
       );
 
-      expect(screen.getByText('📜 Recent Redemptions')).toBeInTheDocument();
+      expect(screen.getByText('Recent Redemptions')).toBeInTheDocument();
     });
 
     it('displays redemption name and cost', () => {
@@ -165,10 +165,10 @@ describe('RedemptionHistory', () => {
         />
       );
 
-      expect(screen.getByText('📱')).toBeInTheDocument(); // SCREEN_TIME
-      expect(screen.getByText('⭐')).toBeInTheDocument(); // PRIVILEGE
-      expect(screen.getByText('💰')).toBeInTheDocument(); // PURCHASE
-      expect(screen.getByText('🎈')).toBeInTheDocument(); // EXPERIENCE
+      expect(screen.getByLabelText('SCREEN_TIME reward type')).toBeInTheDocument(); // SCREEN_TIME
+      expect(screen.getByLabelText('PRIVILEGE reward type')).toBeInTheDocument(); // PRIVILEGE
+      expect(screen.getByLabelText('PURCHASE reward type')).toBeInTheDocument(); // PURCHASE
+      expect(screen.getByLabelText('EXPERIENCE reward type')).toBeInTheDocument(); // EXPERIENCE
     });
   });
 

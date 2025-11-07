@@ -43,9 +43,9 @@ jest.mock('./quest-card-helpers', () => ({
     return buttonVis;
   }),
   getRecurrenceLabel: jest.fn((pattern) => {
-    if (pattern === 'DAILY') return '📅 Daily';
-    if (pattern === 'WEEKLY') return '📅 Weekly';
-    if (pattern === 'CUSTOM') return '📅 Custom';
+    if (pattern === 'DAILY') return 'Daily';
+    if (pattern === 'WEEKLY') return 'Weekly';
+    if (pattern === 'CUSTOM') return 'Custom';
     return null;
   }),
 }));

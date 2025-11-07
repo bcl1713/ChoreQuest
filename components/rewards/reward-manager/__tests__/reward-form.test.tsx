@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RewardForm, RewardFormData, REWARD_TYPE_ICONS, REWARD_TYPE_LABELS } from '../reward-form';
+import { RewardForm, RewardFormData, REWARD_TYPE_LABELS } from '../reward-form';
 import { RewardType } from '@/lib/types/database';
 
 describe('RewardForm', () => {
@@ -27,15 +27,6 @@ describe('RewardForm', () => {
   });
 
   describe('Constants', () => {
-    it('should export REWARD_TYPE_ICONS', () => {
-      expect(REWARD_TYPE_ICONS).toEqual({
-        SCREEN_TIME: "📱",
-        PRIVILEGE: "⭐",
-        PURCHASE: "💰",
-        EXPERIENCE: "🎈",
-      });
-    });
-
     it('should export REWARD_TYPE_LABELS', () => {
       expect(REWARD_TYPE_LABELS).toEqual({
         SCREEN_TIME: "Screen Time",
@@ -58,7 +49,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('⚡ Create New Reward')).toBeInTheDocument();
+      expect(screen.getByText('Create New Reward')).toBeInTheDocument();
     });
 
     it('should have create-reward-modal testid in create mode', () => {
@@ -86,7 +77,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('💾 Create Reward')).toBeInTheDocument();
+      expect(screen.getByText('Create Reward')).toBeInTheDocument();
     });
 
     it('should show placeholder text in create mode', () => {
@@ -117,7 +108,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('✏️ Edit Reward')).toBeInTheDocument();
+      expect(screen.getByText('Edit Reward')).toBeInTheDocument();
     });
 
     it('should have edit-reward-modal testid in edit mode', () => {
@@ -145,7 +136,7 @@ describe('RewardForm', () => {
         />
       );
 
-      expect(screen.getByText('💾 Save Changes')).toBeInTheDocument();
+      expect(screen.getByText('Save Changes')).toBeInTheDocument();
     });
 
     it('should not show placeholder text in edit mode', () => {
@@ -425,7 +416,7 @@ describe('RewardForm', () => {
       expect(screen.getByText('Reward Name')).toBeInTheDocument();
       expect(screen.getByText('Description')).toBeInTheDocument();
       expect(screen.getByText('Type')).toBeInTheDocument();
-      expect(screen.getByText('💰 Cost (gold)')).toBeInTheDocument();
+      expect(screen.getByText('Cost (gold)')).toBeInTheDocument();
     });
   });
 
@@ -546,7 +537,7 @@ describe('RewardForm', () => {
       );
 
       // Component should still be rendered correctly
-      expect(screen.getByText('⚡ Create New Reward')).toBeInTheDocument();
+      expect(screen.getByText('Create New Reward')).toBeInTheDocument();
     });
   });
 });

@@ -21,7 +21,7 @@ import {
   createAdhocQuest,
   validateDueDate,
 } from "./quest-modal-helpers";
-import { X } from "lucide-react";
+import { X, Zap } from "lucide-react";
 
 interface QuestCreateModalProps {
   isOpen: boolean;
@@ -282,8 +282,9 @@ export default function QuestCreateModal({
             className="fantasy-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-fantasy text-gray-100">
-                ⚡ Create New Quest
+              <h2 className="text-2xl font-fantasy text-gray-100 flex items-center gap-2">
+                <Zap size={28} className="text-yellow-400" />
+                Create New Quest
               </h2>
               <Button
                 onClick={handleClose}
@@ -431,9 +432,10 @@ export default function QuestCreateModal({
                   data-testid="submit-quest-button"
                   disabled={loading}
                   variant="gold-solid"
-                  className="px-6 py-2 text-white font-medium"
+                  className="px-6 py-2 text-white font-medium flex items-center gap-2"
                 >
-                  {loading ? "Creating..." : "⚡ Create Quest"}
+                  {!loading && <Zap size={18} />}
+                  {loading ? "Creating..." : "Create Quest"}
                 </Button>
               </div>
             </form>

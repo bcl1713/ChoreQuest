@@ -132,7 +132,7 @@ describe("ActivityFeed", () => {
   it("should render loading state initially", () => {
     render(<ActivityFeed />);
 
-    expect(screen.getByText("📡 Recent Activity")).toBeInTheDocument();
+    expect(screen.getByText("Recent Activity")).toBeInTheDocument();
     const skeletons = screen.getAllByRole("generic").filter((el) =>
       el.className.includes("animate-pulse")
     );
@@ -269,7 +269,7 @@ describe("ActivityFeed", () => {
       // Clear call count
       getRecentActivityMock.mockClear();
 
-      const refreshButton = screen.getByText("🔄 Refresh");
+      const refreshButton = screen.getByText("Refresh");
       fireEvent.click(refreshButton);
     });
 
@@ -286,7 +286,7 @@ describe("ActivityFeed", () => {
 
     // Wait for initial load
     await waitFor(() => {
-      const refreshButton = screen.getByText("🔄 Refresh");
+      const refreshButton = screen.getByText("Refresh");
       expect(refreshButton).toBeInTheDocument();
       expect(refreshButton).not.toBeDisabled();
     });
@@ -332,7 +332,7 @@ describe("ActivityFeed", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("🔄 Retry")).toBeInTheDocument();
+        expect(screen.getByText("Retry")).toBeInTheDocument();
       },
       { timeout: 3000 }
     );

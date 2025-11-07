@@ -232,19 +232,19 @@ describe('getButtonVisibility', () => {
 });
 
 describe('getRecurrenceLabel', () => {
-  it('should return "📅 Daily" for DAILY pattern', () => {
+  it('should return label and icon for DAILY pattern', () => {
     const result = getRecurrenceLabel('DAILY');
-    expect(result).toBe('📅 Daily');
+    expect(result).toEqual({ label: 'Daily', icon: 'Calendar' });
   });
 
-  it('should return "📅 Weekly" for WEEKLY pattern', () => {
+  it('should return label and icon for WEEKLY pattern', () => {
     const result = getRecurrenceLabel('WEEKLY');
-    expect(result).toBe('📅 Weekly');
+    expect(result).toEqual({ label: 'Weekly', icon: 'CalendarDays' });
   });
 
-  it('should return "📅 Custom" for CUSTOM pattern', () => {
+  it('should return label and icon for CUSTOM pattern', () => {
     const result = getRecurrenceLabel('CUSTOM');
-    expect(result).toBe('📅 Custom');
+    expect(result).toEqual({ label: 'Custom', icon: 'Clock' });
   });
 
   it('should return null for undefined pattern', () => {

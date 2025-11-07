@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/brian/Projects/ChoreQuest/.claude/hooks/skill-activation-prompt.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/brian/Projects/ChoreQuest/.claude/hooks/post-tool-use-tracker.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

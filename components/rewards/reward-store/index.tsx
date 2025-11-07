@@ -6,7 +6,7 @@ import { useCharacter as useCharacterContext } from "@/lib/character-context";
 import { supabase } from "@/lib/supabase";
 import { Reward } from "@/lib/types/database";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Star, Bell, Coins, XCircle } from "lucide-react";
 import { useRewards } from "@/hooks/useRewards";
 import { Button } from "@/components/ui";
 import RewardCatalog from "./reward-catalog";
@@ -211,21 +211,23 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <h2
-            className="text-2xl font-bold text-yellow-800"
+            className="text-2xl font-bold text-yellow-800 flex items-center gap-2"
             data-testid="reward-store-title"
           >
-            ⭐ Reward Store
+            <Star size={24} className="text-yellow-700" />
+            Reward Store
           </h2>
           <div className="flex items-center space-x-4">
             {hasPendingRedemptions && (
               <div className="flex items-center space-x-2 bg-orange-100 px-3 py-1 rounded-full">
+                <Bell size={16} className="text-orange-600" />
                 <span className="text-orange-600 font-medium">
-                  🔔 {pendingRedemptions.length} pending
+                  {pendingRedemptions.length} pending
                 </span>
               </div>
             )}
             <div className="flex items-center space-x-2">
-              <span className="text-2xl">🪙</span>
+              <Coins size={24} className="text-yellow-700" />
               <span
                 className="text-xl font-bold text-yellow-700"
                 data-testid="gold-balance"
@@ -253,8 +255,9 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       {/* Pending Requests Section for Guild Masters */}
       {hasPendingRedemptions && (
         <div className="border-2 border-orange-200 bg-orange-50 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-orange-800 mb-4 flex items-center">
-            🔔 Pending Approval Requests
+          <h3 className="text-xl font-bold text-orange-800 mb-4 flex items-center gap-2">
+            <Bell size={20} className="text-orange-800" />
+            Pending Approval Requests
           </h3>
           <div className="space-y-4">
             {pendingRedemptions.map((redemption) => (
@@ -269,7 +272,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                         {redemption.reward_name}
                       </span>
                       <div className="flex items-center space-x-1">
-                        <span className="text-sm">🪙</span>
+                        <Coins size={14} className="text-yellow-600" />
                         <span className="text-sm font-bold text-yellow-600">
                           {redemption.cost}
                         </span>
@@ -299,14 +302,16 @@ export default function RewardStore({ onError }: RewardStoreProps) {
                     variant="success"
                     size="sm"
                   >
-                    ✅ Approve
+                    <CheckCircle size={16} className="mr-1" />
+                    Approve
                   </Button>
                   <Button
                     onClick={() => handleApproval(redemption.id, "DENIED")}
                     variant="destructive"
                     size="sm"
                   >
-                    ❌ Deny
+                    <XCircle size={16} className="mr-1" />
+                    Deny
                   </Button>
                 </div>
               </div>

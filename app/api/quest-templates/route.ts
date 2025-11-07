@@ -79,7 +79,6 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const body = await request.json();
-    console.log('Received body for quest template creation:', body);
     const validatedData = createQuestTemplateSchema.parse(body);
 
     // Verify the family_id matches the user's family
@@ -125,18 +124,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error('Zod Validation Error:', error.issues);
       return NextResponse.json(
         { error: 'Validation failed', details: error.issues },
         { status: 400 }
       );
     }
 
-    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
-      console.error('Unexpected error in POST /api/quest-templates: data=', error.data, 'error=', error.error);
-    } else {
-      console.error('Unexpected error in POST /api/quest-templates:', error);
-    }
+    console.error('Unexpected error in POST /api/quest-templates:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -235,11 +229,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
-      console.error('Unexpected error in GET /api/quest-templates: data=', error.data, 'error=', error.error);
-    } else {
-      console.error('Unexpected error in GET /api/quest-templates:', error);
-    }
+    console.error('Unexpected error in GET /api/quest-templates:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

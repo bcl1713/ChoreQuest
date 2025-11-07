@@ -8,7 +8,7 @@ export interface CharacterClassInfo {
   id: CharacterClass;
   name: string;
   description: string;
-  icon: string;
+  icon: string;      // Lucide icon name (e.g., "Sparkles", "Sword")
   bonuses: {
     xp: number;      // Multiplier (1.0 = no bonus, 1.2 = +20%)
     gold: number;    // Multiplier
@@ -28,7 +28,7 @@ export const CHARACTER_CLASSES: CharacterClassInfo[] = [
     id: "MAGE",
     name: "Mage",
     description: "Masters of arcane knowledge and wisdom",
-    icon: "🔮",
+    icon: "Sparkles",
     bonuses: {
       xp: 1.2,      // +20% XP on all quests
       gold: 1.0,    // No gold bonus
@@ -40,7 +40,7 @@ export const CHARACTER_CLASSES: CharacterClassInfo[] = [
     id: "ROGUE",
     name: "Rogue",
     description: "Masters of cunning and fortune",
-    icon: "🗡️",
+    icon: "Sword",
     bonuses: {
       xp: 1.0,      // No XP bonus
       gold: 1.15,   // +15% Gold on all quests
@@ -52,7 +52,7 @@ export const CHARACTER_CLASSES: CharacterClassInfo[] = [
     id: "KNIGHT",
     name: "Knight",
     description: "Balanced warriors of honor",
-    icon: "🛡️",
+    icon: "Shield",
     bonuses: {
       xp: 1.05,     // +5% XP on all quests
       gold: 1.05,   // +5% Gold on all quests
@@ -64,7 +64,7 @@ export const CHARACTER_CLASSES: CharacterClassInfo[] = [
     id: "HEALER",
     name: "Healer",
     description: "Supportive heroes who strengthen the family",
-    icon: "✨",
+    icon: "Heart",
     bonuses: {
       xp: 1.1,      // +10% XP on all quests
       gold: 1.0,    // No gold bonus
@@ -76,7 +76,7 @@ export const CHARACTER_CLASSES: CharacterClassInfo[] = [
     id: "RANGER",
     name: "Ranger",
     description: "Seekers of rare treasures",
-    icon: "🏹",
+    icon: "Target",
     bonuses: {
       xp: 1.0,      // No XP bonus
       gold: 1.0,    // No gold bonus

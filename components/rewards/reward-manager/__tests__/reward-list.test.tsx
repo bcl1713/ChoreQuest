@@ -268,8 +268,11 @@ describe('RewardList', () => {
         />
       );
 
-      expect(screen.getByText('✓ Active')).toBeInTheDocument();
-      expect(screen.getByText('○ Inactive')).toBeInTheDocument();
+      // Check for buttons with Active and Inactive text
+      const activeButtons = screen.getAllByRole('button', { name: /Active/i });
+      const inactiveButtons = screen.getAllByRole('button', { name: /Inactive/i });
+      expect(activeButtons.length).toBeGreaterThan(0);
+      expect(inactiveButtons.length).toBeGreaterThan(0);
     });
   });
 

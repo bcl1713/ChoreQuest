@@ -149,14 +149,14 @@ describe("TemplateQuestForm", () => {
       render(<TemplateQuestForm {...mockProps} selectedTemplateId="template1" />);
 
       const preview = screen.getByTestId("template-preview");
-      expect(preview).toHaveTextContent("⚡ 50 XP");
+      expect(preview).toHaveTextContent("50 XP");
     });
 
     it("should display selected template gold reward", () => {
       render(<TemplateQuestForm {...mockProps} selectedTemplateId="template1" />);
 
       const preview = screen.getByTestId("template-preview");
-      expect(preview).toHaveTextContent("💰 10");
+      expect(preview).toHaveTextContent("10");
     });
 
     it("should update preview when different template is selected", () => {

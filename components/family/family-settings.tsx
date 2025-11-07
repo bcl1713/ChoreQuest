@@ -12,6 +12,8 @@ import {
   Shield,
   User,
   Globe,
+  Info,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui";
 
@@ -232,8 +234,9 @@ export default function FamilySettings() {
 
       {/* Family Info Card */}
       <div className="fantasy-card p-6">
-        <h3 className="text-lg font-fantasy text-gray-100 mb-6">
-          👥 Family Information
+        <h3 className="text-lg font-fantasy text-gray-100 mb-6 flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Family Information
         </h3>
 
         <div className="space-y-6">
@@ -298,11 +301,12 @@ export default function FamilySettings() {
                 {updatingTimezone ? "Updating..." : "Update Timezone"}
               </Button>
             </div>
-            <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
-              <span className="text-blue-400 font-medium">ℹ️ Info:</span> Quest
+            <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3 flex items-start gap-2">
+              <Info size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
+              <span><span className="text-blue-400 font-medium">Info:</span> Quest
               recurrence (daily/weekly resets) will align to this timezone. This
               ensures quests reset at midnight in your local time, not server
-              time.
+              time.</span>
             </p>
           </div>
 
@@ -317,10 +321,11 @@ export default function FamilySettings() {
             >
               {regenerating ? "Regenerating..." : "Regenerate Invite Code"}
             </Button>
-            <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3">
-              <span className="text-orange-400 font-medium">⚠️ Warning:</span>{" "}
+            <p className="mt-3 text-sm text-gray-400 bg-dark-700/50 border border-dark-600 rounded-lg p-3 flex items-start gap-2">
+              <AlertTriangle size={16} className="text-orange-400 flex-shrink-0 mt-0.5" />
+              <span><span className="text-orange-400 font-medium">Warning:</span>{" "}
               Regenerating will invalidate the current invite code. Existing
-              members will not be affected.
+              members will not be affected.</span>
             </p>
           </div>
         </div>
@@ -383,8 +388,9 @@ export default function FamilySettings() {
               className="fantasy-card max-w-md w-full p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-fantasy text-orange-400 mb-3">
-                ⚠️ Regenerate Invite Code?
+              <h3 className="text-lg font-fantasy text-orange-400 mb-3 flex items-center gap-2">
+                <AlertTriangle size={20} />
+                Regenerate Invite Code?
               </h3>
               <p className="text-gray-300 mb-6">
                 This will create a new invite code and invalidate the current
@@ -406,8 +412,9 @@ export default function FamilySettings() {
                   variant="gold"
                   size="sm"
                   fullWidth
+                  startIcon={<RefreshCw className="h-4 w-4" />}
                 >
-                  {regenerating ? "Regenerating..." : "🔄 Regenerate"}
+                  {regenerating ? "Regenerating..." : "Regenerate"}
                 </Button>
               </div>
             </motion.div>
