@@ -67,6 +67,7 @@ describe("QuestInstanceService Integration Tests", () => {
       .single();
 
     if (familyError) throw new Error(`Failed to create test family: ${familyError.message}`);
+
     testFamilyId = family.id;
 
     // Create GM profile

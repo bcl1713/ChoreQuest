@@ -11,7 +11,7 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/jest.integration.setup.js'],
+  setupFiles: ['<rootDir>/tests/jest.integration.setup.js'],
   testTimeout: 30000,
 }
 
