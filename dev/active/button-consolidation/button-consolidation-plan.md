@@ -224,7 +224,6 @@ AuthForm.tsx has icons that need to move from children to `startIcon` prop.
 **New code (fixed):**
 ```tsx
 <Button
-  variant="primary"
   className="w-full justify-center"
   size="lg"
   startIcon={

@@ -119,7 +119,7 @@
   - [ ] Create Family: "Found Guild"
 
 #### 2.2.2 Update Button Structure
-- [ ] Change `<FantasyButton>` → `<Button variant="primary">`
+- [ ] Change `<FantasyButton>` → `<Button>` (primary is default variant)
 - [ ] Move icon logic to startIcon prop
 - [ ] Move text logic to children
 - [ ] Remove className="mr-2" from icons
