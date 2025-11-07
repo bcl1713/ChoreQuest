@@ -98,7 +98,8 @@ export default function PasswordChangeForm({
     setIsLoading(true);
 
     try {
-      await updatePassword(currentPassword, newPassword);
+      // Trim whitespace from passwords before sending
+      await updatePassword(currentPassword.trim(), newPassword.trim());
       onSuccess('Password updated successfully!');
       setCurrentPassword('');
       setNewPassword('');
