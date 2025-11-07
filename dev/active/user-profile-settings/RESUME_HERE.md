@@ -169,7 +169,36 @@ ProfileService.updatePassword(current, new)
 
 ---
 
-## 🚀 Phase 5 (Quality Assurance) - READY TO START
+## 🚨 BLOCKING ISSUES FOUND - MUST FIX BEFORE PHASE 5
+
+### Issue #1: No Layout Wrapper on Profile Page 🔴
+- **Problem:** Profile page has no header/footer and no way to navigate back to dashboard
+- **Current State:** User is stranded on profile page after navigating to it
+- **Location:** `app/profile/page.tsx`
+- **Solution:** Wrap ProfileSettings in main layout OR add navigation back button
+- **Priority:** HIGH
+
+### Issue #2: Password Change Authentication Failure 🔴
+- **Problem:** Password change shows success but new password doesn't work for login
+- **Test Case:** Changed password to `Gr33nGee$eFly` - notification said success
+- **Result:** Cannot login with old OR new password
+- **Likely Cause:** Special character sanitization issue ($ character)
+- **Location:** `lib/auth-context.tsx` (updatePassword method)
+- **Investigation:**
+  1. Check if Supabase Auth restricts special characters
+  2. Check if $ is being escaped in password string
+  3. Verify updateUser API call payload
+  4. Test with simple passwords (no special chars)
+- **Priority:** CRITICAL
+
+### Next Steps
+1. **FIX CRITICAL:** Password authentication issue
+2. **FIX HIGH:** Add layout wrapper to profile page
+3. After fixes: Run full test suite and proceed with Phase 5
+
+---
+
+## 🚀 Phase 5 (Quality Assurance) - AFTER FIXES
 
 Remaining tasks for final verification:
 - Manual testing on multiple screen sizes (320px, 768px, 1024px)
