@@ -1,6 +1,6 @@
 # User Profile Settings - Context & Decisions
 
-**Last Updated:** 2025-11-06 (Session 4 - Phase 3 Complete, 35/51 tasks done, Integration Test Investigation)
+**Last Updated:** 2025-11-07 (Session 6 - ALL Integration Tests FIXED, Phase 4 Ready, 36/51 tasks done)
 
 ## Key Files Reference
 
@@ -582,6 +582,34 @@ Before context reset, ensure:
    - If tests should be passing, determine correct Supabase configuration
    - Or mock database operations as well if tests are meant to be unit-style
 
+### Session 6 - INTEGRATION TESTS COMPLETELY FIXED (2025-11-07)
+
+**BLOCKER RESOLVED** ✓
+
+All 5 integration tests in `quest-instance-service.integration.test.ts` are now passing!
+
+**Problems Fixed:**
+1. **Jest Network Isolation** - Removed `nextJest()` wrapper, switched to plain `ts-jest`
+2. **Invalid UUID IDs** - Changed to `crypto.randomUUID()` for test user IDs
+3. **RLS Policy Violations** - Used `adminSupabase` client for setup, created real auth users
+4. **Missing Tests** - Updated `npm run test` to run both unit AND integration tests
+
+**Key Architecture Decisions:**
+- Integration tests use separate Jest config (Node.js/ts-jest)
+- Unit tests use Next.js Jest config (jsdom/React)
+- Tests instantiate `QuestInstanceService` with admin Supabase client
+- Fixtures created with `adminSupabase` to bypass RLS
+- Real auth users created via `adminSupabase.auth.admin.createUser()`
+- Service operations use admin client during tests, auth-based client in production
+
+**Test Results:**
+- 1614 unit tests: ✅ PASS
+- 23 integration tests: ✅ PASS (including 5 quest-instance-service tests)
+- Build: ✅ PASS
+- Lint: ✅ PASS
+- Total: **1637 tests passing**
+
+See `SESSION_6_SUMMARY.md` for complete details.
+
 ### Blockers
-- **None currently** - Profile feature is complete and working
-- **Note:** 5 integration tests need investigation but don't block profile feature completion
+- **None** - Profile feature complete, all tests passing, Phase 4 ready
