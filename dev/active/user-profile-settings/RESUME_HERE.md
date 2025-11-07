@@ -1,14 +1,14 @@
 # Resume Here - User Profile Settings (Issue #87)
 
-**Last Updated:** 2025-11-06 (End of Session 4)
+**Last Updated:** 2025-11-07 (End of Session 5 - Integration Test Investigation Required)
 
 ## 🎯 Quick Status
 - **Progress:** 35/51 tasks complete (69%)
-- **Current Phase:** Phase 3 (UI Components) - ✅ COMPLETE
-- **Status:** Phase 3 DONE. Phase 4 ready: Add navigation, error boundaries, toasts
+- **Current Phase:** BLOCKED - Integration Tests Must Pass First
+- **Status:** Phase 3 COMPLETE but Phase 4 BLOCKED by integration test failures
 - **Branch:** `feature/user-profile-settings` (active and clean)
-- **Quality Gates:** All passing ✓
-- **Test Status:** 1632 passing (77 new from phase 3), 5 failing (pre-existing since Oct 13)
+- **Quality Gates:** Unit tests ✓, Build ✓, Lint ✓, BUT Integration Tests ✗ BLOCKING
+- **Test Status:** 1614 unit tests passing (77 new from phase 3), 5 integration tests FAILING - MUST FIX
 
 ---
 
@@ -83,9 +83,47 @@ ProfileService.updatePassword(current, new)
 - User confirmed tests were passing before switching setups
 - See SESSION_4_SUMMARY.md and user-profile-settings-context.md for investigation notes
 
-## 🚀 Next: Phase 4 (Integration & Polish)
+## ⚠️ CRITICAL BLOCKER: Integration Tests Must Pass
 
-After fixing the 5 integration tests:
+**Status:** 5 integration tests failing after Docker → local npx supabase migration
+**Location:** `tests/integration/quest-instance-service.integration.test.ts`
+**Error:** `TypeError: fetch failed` when Jest tries to reach Supabase
+
+### Root Cause Analysis (Session 5)
+- Tests passed with Docker Supabase setup
+- Tests fail with local `npx supabase` (localhost:54321)
+- Direct Node + undici fetch to Supabase works ✓
+- Jest + undici fetch to Supabase fails ✗
+- Issue is Jest environment preventing network access, not code
+
+### Investigation Done
+✓ Verified undici polyfill loads correctly
+✓ Confirmed global.fetch is set up properly
+✓ Tested direct fetch calls work
+✓ Identified Jest config issue (next/jest wrapper may be blocking)
+✓ Tried both `localhost` and `127.0.0.1` - both fail
+✓ Updated jest.integration.config.js with setupFiles
+
+### Next Session Actions
+1. **Try removing next/jest wrapper** from jest.integration.config.js
+   - Current: Uses `nextJest()` which may add restrictions
+   - Try: Plain Jest config with ts-jest transformer
+2. **Check Jest network sandbox settings**
+   - Investigate if Jest is isolating network access
+   - Look for any security policies
+3. **Try different Jest environment**
+   - Test with `testEnvironment: 'node'` without next/jest
+4. **Verify Supabase is accessible from Jest context**
+   - Add explicit test for fetch from within Jest
+5. **As last resort:** Mock Supabase responses in integration tests
+
+**PHASE 4 IS BLOCKED UNTIL THIS IS RESOLVED**
+
+---
+
+## 🚀 Phase 4 (Integration & Polish) - BLOCKED UNTIL TESTS PASS
+
+When integration tests are fixed, proceed with:
 
 ### Phase 4 Tasks (6 tasks)
 

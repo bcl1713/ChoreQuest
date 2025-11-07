@@ -465,6 +465,50 @@ Before context reset, ensure:
 
 ## Session 4 - Integration Test Investigation (2025-11-06)
 
+## Session 5 - Docker to Local Supabase Migration Issue (2025-11-07)
+
+### Critical Finding: Integration Tests Fail After Docker Migration
+
+**Problem:** 5 integration tests fail with `TypeError: fetch failed` after switching from Docker Supabase to local `npx supabase`
+
+**Key Facts:**
+- Tests PASSED with Docker setup
+- Tests FAIL with local `npx supabase` setup
+- Direct Node.js + undici fetch works: ✓
+- Jest + undici fetch fails: ✗
+- Error is in Jest environment, not application code
+
+**Diagnosis:**
+1. Confirmed undici is loaded correctly in jest.integration.setup.js
+2. Confirmed global.fetch and globalThis.fetch are set to undici.fetch
+3. Created test that calls undici.fetch directly from Node - WORKS
+4. Same code called from Jest - FAILS
+5. Tried both `localhost` and `127.0.0.1` - both fail
+6. Verified Supabase is running and accessible: `curl http://127.0.0.1:54321` works
+
+**Root Cause Hypothesis:**
+- Jest's `next/jest` wrapper may be adding network sandbox restrictions
+- Jest environment may be isolating network access for security
+- The testEnvironment: 'node' still doesn't have proper network access
+
+**Files Changed This Session:**
+- jest.config.js - Separated integration tests from unit tests
+- jest.integration.config.js - Created with setupFiles for undici
+- tests/jest.integration.setup.js - Created to polyfill fetch
+- .env.local - Tried changing localhost to 127.0.0.1
+- Investigated lib/supabase.ts fetch wrapper (reverted changes)
+
+**Next Session Must Fix:**
+1. Remove next/jest wrapper from jest.integration.config.js and use plain Jest
+2. Configure ts-jest transformer explicitly
+3. Check if Jest has built-in network restrictions
+4. Create minimal test case to verify Jest can make HTTP requests
+5. Consider mocking Supabase if real requests cannot be made in Jest
+
+**THIS IS A HARD BLOCKER FOR PHASE 4**
+
+### Session 4 - Integration Test Investigation (2025-11-06)
+
 ### What Was Accomplished
 1. **Fixed Auth Mocking in Integration Tests**
    - Added auth mocking in `beforeAll()` hook of `tests/integration/quest-instance-service.integration.test.ts`
