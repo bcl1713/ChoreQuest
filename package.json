@@ -9,11 +9,11 @@
     "lint": "eslint",
     "docker:dev": "docker compose up -d postgres redis || echo 'Docker not available - using local development setup'",
     "docker:down": "docker compose down || true",
-    "test": "jest",
+    "test": "npm run test:unit && npm run test:integration",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:integration": "jest --config jest.integration.config.js",
-    "test:unit": "jest --testPathIgnorePatterns=tests/integration"
+    "test:unit": "jest",
+    "test:integration": "jest --config jest.integration.config.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
