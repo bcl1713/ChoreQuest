@@ -332,12 +332,12 @@ function DashboardContent() {
                     <Button
                       onClick={() => router.push('/admin')}
                       variant="primary"
-                      size="sm"
+                      size="icon-sm"
                       className="touch-target"
                       data-testid="admin-dashboard-button"
-                      startIcon={<Settings size={16} />}
+                      title="Admin Dashboard"
                     >
-                      <span className="hidden sm:inline">Admin</span>
+                      <Settings size={16} />
                     </Button>
                     <Button
                       onClick={() => setShowCreateQuest(true)}
@@ -355,20 +355,22 @@ function DashboardContent() {
                 <Button
                   onClick={() => router.push('/profile')}
                   variant="primary"
-                  size="sm"
+                  size="icon-sm"
                   className="touch-target"
                   data-testid="profile-button"
-                  startIcon={<User size={16} />}
+                  title="Profile"
                 >
-                  <span className="hidden sm:inline">Profile</span>
+                  <User size={16} />
                 </Button>
                 <Button
                   onClick={logout}
                   variant="destructive"
                   size="sm"
                   className="touch-target"
+                  data-testid="logout-button"
+                  startIcon={<Zap size={16} />}
                 >
-                  Logout
+                  <span className="hidden sm:inline">Logout</span>
                 </Button>
               </div>
             </div>
