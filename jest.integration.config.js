@@ -9,6 +9,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   setupFiles: ['<rootDir>/tests/jest.integration.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.integration.setup-after-env.js'],
   testTimeout: 30000,
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
