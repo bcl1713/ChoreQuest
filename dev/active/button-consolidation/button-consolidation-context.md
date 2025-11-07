@@ -77,14 +77,17 @@
 - **Duration:** ANIMATION_DURATION.QUICK constant
 - **Performance:** Scale transforms are GPU-accelerated
 
-### Variant Strategy
-- Create "fantasy" variant that matches FantasyButton's appearance
-- Keep all existing Button variants unchanged
-- Users choose variant based on visual weight needed:
-  - "fantasy" = important actions, special interactions
-  - "primary" = standard primary actions
+### Animation Enhancement Strategy
+- Add Framer Motion animations to ALL Button variants
+- All buttons now have consistent tactile feedback (scale 1.05 on hover, 0.95 on tap)
+- No need for separate "fantasy" variant - all buttons are enhanced equally
+- Users choose variant based on semantic meaning:
+  - "primary" = primary/default actions
   - "secondary" = secondary actions
+  - "success" = success confirmations
   - "destructive" = dangerous actions
+  - "gold" = special/reward actions
+  - etc.
 
 ### Icon Architecture
 - **startIcon prop:** Icon before text (left-aligned)

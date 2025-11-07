@@ -16,26 +16,16 @@
 - [ ] Handle disabled state (no animations when disabled)
 - [ ] Verify animations trigger correctly
 
-### 1.2 Create Fantasy Variant
-- [ ] Add "fantasy" to ButtonVariant type union
-- [ ] Create fantasy variant styling in variantClasses
-- [ ] Match FantasyButton appearance:
-  - [ ] Gradient background colors
-  - [ ] Shadow transitions (md → xl on hover)
-  - [ ] Border radius
-  - [ ] Color scheme
-- [ ] Test fantasy variant renders correctly
-- [ ] Compare visually with FantasyButton
-
-### 1.3 Add Accessibility
-- [ ] Add touch-target class support
-- [ ] Verify focus states are visible
-- [ ] Ensure keyboard navigation works
-- [ ] Check aria attributes
+### 1.2 Add Accessibility Features
+- [ ] Add touch-target class support for mobile accessibility
+- [ ] Verify all variants have visible focus rings
+- [ ] Ensure keyboard navigation works on all variants
+- [ ] Check aria attributes are appropriate
+- [ ] Verify focus order is logical
 - [ ] Test with screen reader (if available)
 - [ ] Verify WCAG 2.1 AA compliance
 
-### 1.4 Write Animation Tests
+### 1.3 Write Animation Tests
 - [ ] Test whileHover animation triggers
 - [ ] Test whileTap animation triggers
 - [ ] Verify animation scale values (1.05, 0.95)
@@ -45,7 +35,7 @@
 - [ ] Test loading state behavior
 - [ ] Add 100% coverage for animation code
 
-### 1.5 Quality Gates for Phase 1
+### 1.4 Quality Gates for Phase 1
 - [ ] npm run build - Zero errors
 - [ ] npm run lint - Zero warnings
 - [ ] npm run test - All tests pass
@@ -53,10 +43,11 @@
 - [ ] Button.test.tsx updated with animation tests
 
 **Acceptance Criteria Met:**
-- [ ] Button has Framer Motion animations
-- [ ] Animations respect reduced motion
-- [ ] Fantasy variant exists and matches FantasyButton
-- [ ] All tests pass
+- [ ] Button has Framer Motion animations on ALL variants
+- [ ] Animations respect reduced motion preference
+- [ ] All existing Button tests pass
+- [ ] New animation tests pass for all variants
+- [ ] Accessibility enhancements verified
 - [ ] Zero build/lint errors
 
 ---
@@ -67,50 +58,50 @@
 
 #### 2.1.1 CharacterNameForm.tsx
 - [ ] Update import: FantasyButton → Button
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button>`
 - [ ] Verify button text unchanged
 - [ ] Test form submission
-- [ ] Verify styling matches before
+- [ ] Verify styling matches before (now has animations)
 - [ ] Commit changes
 
 #### 2.1.2 ClassChangeForm.tsx
 - [ ] Update import: FantasyButton → Button
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button>`
 - [ ] Verify button text unchanged
 - [ ] Test form submission
-- [ ] Verify styling matches before
+- [ ] Verify styling matches before (now has animations)
 - [ ] Commit changes
 
 #### 2.1.3 PasswordChangeForm.tsx
 - [ ] Update import: FantasyButton → Button
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button>`
 - [ ] Verify button text unchanged
 - [ ] Test form submission
-- [ ] Verify styling matches before
+- [ ] Verify styling matches before (now has animations)
 - [ ] Commit changes
 
 #### 2.1.4 CharacterCreation.tsx
 - [ ] Update import: FantasyButton → Button
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button>`
 - [ ] Verify button text unchanged
 - [ ] Test form submission
-- [ ] Verify styling matches before
+- [ ] Verify styling matches before (now has animations)
 - [ ] Commit changes
 
 #### 2.1.5 LevelUpModal.tsx
 - [ ] Update import: FantasyButton → Button
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button>`
 - [ ] Verify button text unchanged
 - [ ] Test modal dismiss functionality
-- [ ] Verify styling matches before
+- [ ] Verify styling matches before (now has animations)
 - [ ] Commit changes
 
 #### 2.1.6 QuestCompleteOverlay.tsx
 - [ ] Update import: FantasyButton → Button
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button>`
 - [ ] Verify button text unchanged
 - [ ] Test overlay dismiss functionality
-- [ ] Verify styling matches before
+- [ ] Verify styling matches before (now has animations)
 - [ ] Commit changes
 
 ### 2.2 Complex Migration: AuthForm.tsx (2-3 hours)
@@ -128,7 +119,7 @@
   - [ ] Create Family: "Found Guild"
 
 #### 2.2.2 Update Button Structure
-- [ ] Change `<FantasyButton>` → `<Button variant="fantasy">`
+- [ ] Change `<FantasyButton>` → `<Button variant="primary">`
 - [ ] Move icon logic to startIcon prop
 - [ ] Move text logic to children
 - [ ] Remove className="mr-2" from icons

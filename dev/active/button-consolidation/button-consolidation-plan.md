@@ -82,11 +82,11 @@ ChoreQuest currently uses two button components: `Button` (generic UI) and `Fant
 
 ### Enhanced Button Component
 - ✅ Retains all current Button features (props, variants, sizing)
-- ✨ **NEW:** Framer Motion animations (whileHover, whileTap)
-- ✨ **NEW:** `useReducedMotion` hook integration
-- ✨ **NEW:** Fantasy variant with enhanced shadow transitions
-- ✨ **NEW:** Touch-target accessibility class
-- ✨ **NEW:** Proper icon positioning with startIcon/endIcon
+- ✨ **NEW:** Framer Motion animations on ALL variants (whileHover: scale 1.05x, whileTap: scale 0.95x)
+- ✨ **NEW:** `useReducedMotion` hook integration for accessibility
+- ✨ **NEW:** Tactile feedback across all buttons in the app
+- ✨ **NEW:** Touch-target accessibility class support
+- ✨ **NEW:** Proper icon positioning with startIcon/endIcon (already existed, now properly used)
 
 ### Migration Complete
 - ✅ All 7 FantasyButton usages migrated to Button
@@ -106,53 +106,46 @@ ChoreQuest currently uses two button components: `Button` (generic UI) and `Fant
 
 ### Phase 1: Enhance Button Component (2-3 hours)
 
-**Goal:** Add Framer Motion support and fantasy styling to Button
+**Goal:** Add Framer Motion animations and accessibility enhancements to ALL Button variants
 
-#### 1.1 Add Motion Support
+#### 1.1 Add Motion Support to All Buttons
 - Import Framer Motion in Button.tsx
 - Wrap button element with `motion.button`
 - Implement `useReducedMotion` hook integration
-- Add animation variants (whileHover, whileTap)
+- Add animation variants (whileHover, whileTap) for ALL buttons
 - Ensure animations match FantasyButton behavior:
   - Hover: scale 1.05x
   - Tap: scale 0.95x
   - Duration: Use ANIMATION_DURATION.QUICK constant
   - Only animate if NOT disabled
-- Handle reduced motion gracefully (no animations)
+- Handle reduced motion gracefully (no animations when prefers-reduced-motion is set)
 
-#### 1.2 Create Fantasy Variant
-- Add `"fantasy"` to ButtonVariant type
-- Create fantasy styling in variantClasses
-- Match FantasyButton's visual appearance:
-  - Gradient background colors
-  - Shadow transitions (md → xl)
-  - Enhanced border radius
-- Add CSS classes to `globals.css` if needed, or use Tailwind utilities
-
-#### 1.3 Add Accessibility
-- Add touch-target class support
-- Ensure button meets WCAG 2.1 AA standards
+#### 1.2 Add Accessibility Enhancements
+- Add touch-target class support to all buttons
+- Ensure all variants meet WCAG 2.1 AA standards
+- Verify focus states are visible on all variants
+- Ensure keyboard navigation works correctly
 - Test with assistive technologies
-- Verify focus states work correctly
 
-#### 1.4 Write Tests
-- Test animation behavior:
+#### 1.3 Write Tests
+- Test animation behavior across all variants:
   - Verify whileHover triggers
   - Verify whileTap triggers
   - Verify scaling values (1.05, 0.95)
 - Test reduced motion:
   - Verify no animations when `prefers-reduced-motion` is set
-- Test all variants render correctly
+- Test all variants (primary, secondary, success, destructive, gold, gold-solid, outline, ghost)
 - Test loading state
-- Test disabled state
+- Test disabled state (no animations)
+- Test accessibility features
 
 **Acceptance Criteria:**
-- [ ] Button component has Framer Motion animations
+- [ ] Button component has Framer Motion animations on ALL variants
 - [ ] Animations respect reduced motion preference
-- [ ] Fantasy variant exists and matches FantasyButton styling
 - [ ] All existing Button tests pass
-- [ ] New animation tests pass
+- [ ] New animation tests pass for all variants
 - [ ] Button.test.tsx has 100% coverage of animation code
+- [ ] Accessibility enhancements verified
 - [ ] `npm run build` passes with zero errors
 - [ ] `npm run lint` passes with zero warnings
 
@@ -175,14 +168,14 @@ These files have no icons, just text buttons. Simple prop swap.
 
 **Migration steps for each:**
 - Change: `import FantasyButton from "..."` → `import Button from "..."`
-- Change: `<FantasyButton>` → `<Button variant="fantasy">`
-- Update variant mapping:
-  - `variant="primary"` → `variant="fantasy"` (or keep primary if appropriate)
-  - `variant="danger"` → `variant="destructive"`
+- Change: `<FantasyButton>` → `<Button>` (use same variant as before)
+- Update variant mapping if needed:
+  - `variant="danger"` → `variant="destructive"` (if any exist)
   - `variant="success"` → `variant="success"` (no change)
+  - `variant="primary"` → `variant="primary"` (no change)
 - Remove any FantasyButton-specific props
 - Test form submission/modal interaction
-- Verify visual appearance matches before
+- Verify visual appearance matches before (enhanced Button now has same animations as FantasyButton)
 
 **Acceptance Criteria for Simple Migrations:**
 - [ ] All 6 files import Button instead of FantasyButton
@@ -231,7 +224,7 @@ AuthForm.tsx has icons that need to move from children to `startIcon` prop.
 **New code (fixed):**
 ```tsx
 <Button
-  variant="fantasy"
+  variant="primary"
   className="w-full justify-center"
   size="lg"
   startIcon={
@@ -380,12 +373,12 @@ npm run test     # All tests pass
 - **Spacing:** Automatic gap handling via CSS variables
 - **Sizing:** Icons scale with button size via CSS variables
 
-### Variant Selection
-- **"fantasy" variant:** For important actions (auth, modals)
-- **"primary" variant:** For standard primary actions
-- **"secondary" variant:** For secondary actions
-- **"destructive" variant:** For destructive actions (delete, cancel)
-- **"success" variant:** For success confirmations
+### Consistent Animation Behavior
+- **All variants** now have Framer Motion animations (scale 1.05 on hover, 0.95 on tap)
+- **All variants** respect reduced motion preference
+- **Animations provide tactile feedback** across the entire app
+- No need for separate "fantasy" variant - all buttons are enhanced equally
+- Developers simply use the appropriate variant for the action (primary, secondary, destructive, etc.)
 
 ### Accessibility
 - Touch targets: Minimum 44px for mobile (via touch-target class)
