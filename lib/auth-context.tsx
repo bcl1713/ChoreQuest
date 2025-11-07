@@ -563,6 +563,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No user logged in');
       }
 
+      // SECURITY: Verify current password before allowing update
+      // This ensures only the user who knows the current password can change it
+      console.log('Verifying current password...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        console.error('Current password verification failed:', signInError.message);
+        throw new Error('Current password is incorrect');
+      }
+
+      console.log('Current password verified successfully');
+
       // Get the current session to use for authorization
       const { data: { session: currentSession } } = await supabase.auth.getSession();
 
@@ -590,6 +605,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Password updated successfully
       // User remains logged in with the new password
+      console.log('Password updated successfully');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Password update failed';
       setError(message);

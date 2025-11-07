@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Coins, Flame, User, Crown } from 'lucide-react';
+import { Zap, Coins, Flame, User, Crown, Calendar, CalendarDays, Clock } from 'lucide-react';
 import { QuestInstance } from '@/lib/types/database';
 import { getDifficultyColor, getStatusColor } from '@/lib/utils/colors';
 import { formatDueDate, formatPercent } from '@/lib/utils/formatting';
@@ -67,6 +67,16 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
   onTogglePauseTemplate,
   onDeleteTemplate,
 }) => {
+  // Helper function to get icon component by name
+  const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, React.ComponentType<{ size: number; className: string }>> = {
+      'Calendar': Calendar,
+      'CalendarDays': CalendarDays,
+      'Clock': Clock,
+    };
+    return iconMap[iconName];
+  };
+
   // Get button visibility based on quest status and type
   const buttonVis = getButtonVisibility(quest.status, viewMode, quest.quest_type);
 
@@ -120,7 +130,15 @@ const QuestCard: React.FC<QuestCardProps> = memo(({
             <span className="flex items-center gap-1">
               <Coins size={16} className="inline" /> {quest.gold_reward} Gold
             </span>
-            {recurrenceLabel && <span>{recurrenceLabel}</span>}
+            {recurrenceLabel && (
+              <span className="flex items-center gap-1">
+                {(() => {
+                  const IconComponent = getIconComponent(recurrenceLabel.icon);
+                  return IconComponent ? <IconComponent size={16} className="inline" /> : null;
+                })()}
+                {recurrenceLabel.label}
+              </span>
+            )}
             {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
             {volunteerBonusPercent && (
               <span className="text-emerald-300">+{volunteerBonusPercent} Volunteer Bonus</span>

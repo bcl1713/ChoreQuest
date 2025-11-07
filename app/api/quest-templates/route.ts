@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.error('Unexpected error in POST /api/quest-templates:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -227,7 +228,8 @@ export async function GET(request: NextRequest) {
       count: templates.length,
     });
 
-  } catch {
+  } catch (error) {
+    console.error('Unexpected error in GET /api/quest-templates:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

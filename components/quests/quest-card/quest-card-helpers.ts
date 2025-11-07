@@ -65,21 +65,30 @@ export const getButtonVisibility = (
 };
 
 /**
- * Formats a recurrence pattern into a human-readable label
+ * Recurrence label with icon metadata
+ */
+export interface RecurrenceLabelWithIcon {
+  label: string;
+  icon: string;
+}
+
+/**
+ * Formats a recurrence pattern into a human-readable label with icon
+ * Uses Lucide icon names for consistency with the app's design system
  *
  * @param pattern - The recurrence pattern enum value
- * @returns Formatted label or null if not provided
+ * @returns Object with label and Lucide icon name, or null if not provided
  */
-export const getRecurrenceLabel = (pattern: RecurrencePattern | null | undefined): string | null => {
+export const getRecurrenceLabel = (pattern: RecurrencePattern | null | undefined): RecurrenceLabelWithIcon | null => {
   if (!pattern) return null;
 
   switch (pattern) {
     case 'DAILY':
-      return 'Daily';
+      return { label: 'Daily', icon: 'Calendar' };
     case 'WEEKLY':
-      return 'Weekly';
+      return { label: 'Weekly', icon: 'CalendarDays' };
     case 'CUSTOM':
-      return 'Custom';
+      return { label: 'Custom', icon: 'Clock' };
     default:
       return null;
   }

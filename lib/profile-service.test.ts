@@ -240,66 +240,18 @@ describe("ProfileService", () => {
 
     it("should successfully change class with sufficient gold", async () => {
       const cost = 250; // 25 * 10
+      const mockRpc = supabase.rpc as jest.Mock;
 
-      // Mock for fetching character
-      const eqMock1 = jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
-          data: characterData,
-          error: null,
-        }),
-      });
-
-      // Mock for updating character
-      const eqMock2 = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: {
-              ...characterData,
-              class: "MAGE",
-              gold: characterData.gold - cost,
-              last_class_change_at: new Date().toISOString(),
-            },
-            error: null,
-          }),
-        }),
-      });
-
-      mockFrom.mockImplementation((table: string) => {
-        if (table === "characters") {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: eqMock1,
-            }),
-            update: jest.fn().mockReturnValue({
-              eq: eqMock2,
-            }),
-          };
-        }
-        if (table === "character_change_history") {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: { id: "history-1" },
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        if (table === "transactions") {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: { id: "txn-1" },
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        return {};
+      mockRpc.mockResolvedValue({
+        data: [
+          {
+            ...characterData,
+            class: "MAGE",
+            gold: characterData.gold - cost,
+            last_class_change_at: new Date().toISOString(),
+          },
+        ],
+        error: null,
       });
 
       const result = await ProfileService.changeCharacterClass(
@@ -309,22 +261,21 @@ describe("ProfileService", () => {
 
       expect(result.class).toBe("MAGE");
       expect(result.gold).toBe(characterData.gold - cost);
+      expect(mockRpc).toHaveBeenCalledWith(
+        "fn_change_character_class",
+        expect.objectContaining({
+          p_character_id: "char-1",
+          p_new_class: "MAGE",
+        })
+      );
     });
 
     it("should reject insufficient gold", async () => {
-      const poorCharacter = { ...characterData, gold: 100, level: 10 };
+      const mockRpc = supabase.rpc as jest.Mock;
 
-      const eqMock1 = jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
-          data: poorCharacter,
-          error: null,
-        }),
-      });
-
-      mockFrom.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: eqMock1,
-        }),
+      mockRpc.mockResolvedValue({
+        data: null,
+        error: new Error("Insufficient gold. Need 250, have 100"),
       });
 
       await expect(
@@ -333,24 +284,11 @@ describe("ProfileService", () => {
     });
 
     it("should reject if within cooldown", async () => {
-      const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      const recentChangeCharacter = {
-        ...characterData,
-        last_class_change_at: yesterday.toISOString(),
-      };
+      const mockRpc = supabase.rpc as jest.Mock;
 
-      const eqMock1 = jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
-          data: recentChangeCharacter,
-          error: null,
-        }),
-      });
-
-      mockFrom.mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: eqMock1,
-        }),
+      mockRpc.mockResolvedValue({
+        data: null,
+        error: new Error("Class change is on cooldown. Please try again in 7 days"),
       });
 
       await expect(
@@ -360,69 +298,33 @@ describe("ProfileService", () => {
 
     it("should record transaction and change history", async () => {
       const cost = 250;
+      const mockRpc = supabase.rpc as jest.Mock;
 
-      // Mock for fetching character
-      const eqMock1 = jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
-          data: characterData,
-          error: null,
-        }),
+      // When using RPC function, transaction and change history are recorded atomically
+      // so we just need to mock the RPC response
+      mockRpc.mockResolvedValue({
+        data: [
+          {
+            ...characterData,
+            class: "MAGE",
+            gold: characterData.gold - cost,
+            last_class_change_at: new Date().toISOString(),
+          },
+        ],
+        error: null,
       });
 
-      // Mock for updating character
-      const eqMock2 = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: {
-              ...characterData,
-              class: "MAGE",
-              gold: characterData.gold - cost,
-              last_class_change_at: new Date().toISOString(),
-            },
-            error: null,
-          }),
-        }),
-      });
+      const result = await ProfileService.changeCharacterClass("char-1", "MAGE");
 
-      const mockHistoryInsert = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { id: "history-1" },
-            error: null,
-          }),
-        }),
-      });
-
-      const mockTransactionInsert = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: { id: "txn-1" },
-            error: null,
-          }),
-        }),
-      });
-
-      mockFrom.mockImplementation((table: string) => {
-        if (table === "characters") {
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: eqMock1,
-            }),
-            update: jest.fn().mockReturnValue({
-              eq: eqMock2,
-            }),
-          };
-        }
-        if (table === "character_change_history")
-          return { insert: mockHistoryInsert };
-        if (table === "transactions") return { insert: mockTransactionInsert };
-        return {};
-      });
-
-      await ProfileService.changeCharacterClass("char-1", "MAGE");
-
-      expect(mockHistoryInsert).toHaveBeenCalled();
-      expect(mockTransactionInsert).toHaveBeenCalled();
+      expect(mockRpc).toHaveBeenCalledWith(
+        "fn_change_character_class",
+        expect.objectContaining({
+          p_character_id: "char-1",
+          p_new_class: "MAGE",
+        })
+      );
+      // Verify the RPC call was made (transaction and history are handled server-side)
+      expect(mockRpc).toHaveBeenCalled();
     });
   });
 

@@ -179,92 +179,29 @@ export class ProfileService {
     characterId: string,
     newClass: string
   ): Promise<Character> {
-    // Fetch character data
-    const { data: character, error: fetchError } = await supabase
-      .from("characters")
-      .select("*")
-      .eq("id", characterId)
-      .single();
+    // Use RPC function to ensure atomic transaction
+    // All database operations (character update, transaction insert, history insert)
+    // succeed together or fail together - no partial updates possible
+    console.log(`Calling RPC function to change character class (atomic transaction)...`);
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch character: ${fetchError.message}`);
+    const { data, error } = await supabase.rpc(
+      "fn_change_character_class",
+      {
+        p_character_id: characterId,
+        p_new_class: newClass,
+      }
+    );
+
+    if (error) {
+      throw new Error(error.message);
     }
 
-    if (!character) {
-      throw new Error("Character not found");
-    }
-
-    // Check cooldown
-    const canChange = await this.canChangeClass(characterId);
-    if (!canChange) {
-      throw new Error("Class change is on cooldown. Please try again in 7 days");
-    }
-
-    // Calculate cost
-    const cost = this.getClassChangeCost(character.level);
-
-    // Check gold balance
-    if (character.gold < cost) {
-      throw new Error(
-        `Insufficient gold. Need ${cost}, have ${character.gold}`
-      );
-    }
-
-    // Update character
-    const now = new Date().toISOString();
-    const { data: updatedChar, error: updateError } = await supabase
-      .from("characters")
-      .update({
-        class: newClass,
-        gold: character.gold - cost,
-        last_class_change_at: now,
-      })
-      .eq("id", characterId)
-      .select("*")
-      .single();
-
-    if (updateError) {
-      throw new Error(`Failed to update character class: ${updateError.message}`);
-    }
-
-    if (!updatedChar) {
+    if (!data || data.length === 0) {
       throw new Error("Failed to retrieve updated character");
     }
 
-    // Record transaction
-    const { error: txnError } = await supabase
-      .from("transactions")
-      .insert({
-        user_id: character.user_id,
-        character_id: characterId,
-        type: "CLASS_CHANGE",
-        amount: -cost,
-        description: `Class change from ${character.class} to ${newClass}`,
-      })
-      .select()
-      .single();
-
-    if (txnError) {
-      // Log but don't fail - change is already recorded
-      console.error("Failed to record transaction:", txnError);
-    }
-
-    // Record change history
-    const { error: historyError } = await supabase
-      .from("character_change_history")
-      .insert({
-        character_id: characterId,
-        change_type: "class",
-        old_value: character.class,
-        new_value: newClass,
-        gold_cost: cost,
-      })
-      .select()
-      .single();
-
-    if (historyError) {
-      throw new Error(`Failed to record change history: ${historyError.message}`);
-    }
+    const updatedChar = data[0] as Character;
+    console.log(`Class change completed successfully via atomic transaction`);
 
     return updatedChar;
   }
@@ -297,68 +234,4 @@ export class ProfileService {
     return (data || []) as ChangeHistoryEntry[];
   }
 
-  /**
-   * Update user password via Auth
-   * @param currentPassword - Current password for verification
-   * @param newPassword - New password to set
-   * @returns Success status
-   * @throws Error if password update fails
-   */
-  static async updatePassword(
-    currentPassword: string,
-    newPassword: string
-  ): Promise<boolean> {
-    // Validate new password
-    if (!newPassword || newPassword.length < 8) {
-      throw new Error("Password must be at least 8 characters");
-    }
-
-    if (!/[A-Z]/.test(newPassword)) {
-      throw new Error("Password must contain at least one uppercase letter");
-    }
-
-    if (!/[0-9!@#$%^&*]/.test(newPassword)) {
-      throw new Error("Password must contain at least one number or special character");
-    }
-
-    // Update password via Supabase Auth
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      throw new Error(`Failed to update password: ${error.message}`);
-    }
-
-    // Record password change in history (without storing actual password)
-    const { data: user } = await supabase.auth.getUser();
-    if (user?.user?.id) {
-      // Get user's first character for the change history
-      const { data: characters } = await supabase
-        .from("characters")
-        .select("id")
-        .eq("user_id", user.user.id)
-        .limit(1);
-
-      if (characters && characters.length > 0) {
-        const { error: historyError } = await supabase
-          .from("character_change_history")
-          .insert({
-            character_id: characters[0].id,
-            change_type: "password",
-            old_value: null, // Don't store passwords
-            new_value: null, // Don't store passwords
-            gold_cost: null,
-          })
-          .select()
-          .single();
-
-        if (historyError) {
-          console.error("Failed to record password change:", historyError);
-        }
-      }
-    }
-
-    return true;
-  }
 }
