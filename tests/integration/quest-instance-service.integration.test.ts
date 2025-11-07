@@ -16,7 +16,34 @@ describe("QuestInstanceService Integration Tests", () => {
   let testHeroCharacterId: string;
   let testFamilyQuestId: string;
 
+  // Track mocked test users
+  const mockUserFixtures = new Map<string, { id: string; email: string }>();
+
   beforeAll(async () => {
+    // Mock the auth methods to prevent real network calls
+    (supabase.auth.signUp as any) = async (credentials: { email: string; password: string }) => {
+      const userId = `test-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const user = { id: userId, email: credentials.email };
+      mockUserFixtures.set(credentials.email, user);
+      return { data: { user }, error: null };
+    };
+
+    (supabase.auth.signInWithPassword as any) = async (credentials: { email: string; password: string }) => {
+      const user = mockUserFixtures.get(credentials.email);
+      if (!user) {
+        return { data: { session: null }, error: new Error("Invalid credentials") };
+      }
+      return {
+        data: {
+          session: {
+            access_token: `mock-token-${user.id}`,
+            user,
+          },
+        },
+        error: null,
+      };
+    };
+
     // Create GM user
     const { data: gmAuthUser, error: gmAuthError } = await supabase.auth.signUp({
       email: `gm${Date.now()}@example.com`,
