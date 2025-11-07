@@ -563,14 +563,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No user logged in');
       }
 
-      // Simply update the password without verifying first
-      // The user is already authenticated (required by updateUser)
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
+      // Get the current session to use for authorization
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+      if (!currentSession) {
+        throw new Error('No active session');
+      }
+
+      // Make a raw HTTP request to updateUser endpoint to ensure proper encoding
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          password: newPassword,
+        }),
       });
 
-      if (updateError) {
-        throw updateError;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Password update failed with status ${response.status}`);
       }
 
       // Password updated successfully
