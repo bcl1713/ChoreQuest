@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
       count: templates.length,
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
