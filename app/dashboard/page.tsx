@@ -347,8 +347,7 @@ function DashboardContent() {
                       data-testid="create-quest-button"
                       startIcon={<Zap size={16} />}
                     >
-                      <span className="hidden sm:inline">Create Quest</span>
-                      <span className="sm:hidden">Quest</span>
+                      Create Quest
                     </Button>
                   </>
                 )}
@@ -368,9 +367,8 @@ function DashboardContent() {
                   size="sm"
                   className="touch-target"
                   data-testid="logout-button"
-                  startIcon={<Zap size={16} />}
                 >
-                  <span className="hidden sm:inline">Logout</span>
+                  Logout
                 </Button>
               </div>
             </div>
