@@ -1,14 +1,15 @@
 # Resume Here - User Profile Settings (Issue #87)
 
-**Last Updated:** 2025-11-07 (Session 6 - Integration Test Blocker RESOLVED, Phase 4 Ready)
+**Last Updated:** 2025-11-07 (Session 6 - ALL Integration Tests Fixed, Phase 4 Ready)
 
 ## 🎯 Quick Status
 - **Progress:** 36/51 tasks complete (71%)
 - **Current Phase:** READY FOR PHASE 4 - Integration & Polish
-- **Status:** Phase 3 COMPLETE, Integration Test Blocker RESOLVED ✓
+- **Status:** Phase 3 COMPLETE, All Integration Tests FIXED & PASSING ✓
 - **Branch:** `feature/user-profile-settings` (active and clean)
-- **Quality Gates:** Unit tests ✓, Build ✓, Lint ✓, Integration Tests ✓ FIXED
-- **Test Status:** 1614 unit tests passing, 5 integration tests now executing (hitting database)
+- **Quality Gates:** Build ✓, Lint ✓, All Tests ✓ (1637 total)
+- **Test Status:** **1637 tests passing** (1614 unit + 23 integration)
+- **Test Command:** `npm run test` runs both unit AND integration tests automatically
 
 ---
 
@@ -44,7 +45,7 @@
 - File: `components/profile/PasswordChangeForm.tsx` (310+ lines)
 - File: `components/profile/ChangeHistoryList.tsx` (150+ lines)
 - Tests: 60 component tests (all passing)
-- Quality: build ✓ lint ✓ test ✓ (+ 5 unrelated integration test failures)
+- Quality: build ✓ lint ✓ test ✓
 
 **Ready-to-use methods:**
 ```typescript
@@ -83,31 +84,44 @@ ProfileService.updatePassword(current, new)
 - User confirmed tests were passing before switching setups
 - See SESSION_4_SUMMARY.md and user-profile-settings-context.md for investigation notes
 
-## ✅ FIXED: Integration Tests Now Running!
+## ✅ FIXED: All 5 Integration Tests Now Passing!
 
-**Status:** RESOLVED - Tests now execute successfully ✓
+**Status:** COMPLETELY RESOLVED - All 23 integration tests passing ✓
 
-### The Problem (Session 5)
-- Tests failed with `TypeError: fetch failed` when Jest tried to reach Supabase
-- Tests worked with Docker Supabase but failed with local `npx supabase`
-- Root cause: `nextJest()` wrapper in jest.integration.config.js was adding network restrictions
+### Problems Fixed (Session 6)
 
-### The Solution (Session 6)
-**Commit:** `3e8de85` - "fix: resolve integration test network failures by using plain ts-jest config"
+**Problem 1: Network Failures (TypeError: fetch failed)**
+- Root cause: `nextJest()` wrapper adding restrictions
+- Solution: Switched to plain `ts-jest` preset for Node.js environment
+- Commit: `3e8de85` - Replace nextJest with ts-jest
 
-**Changes Made:**
-1. ✅ Removed `nextJest()` wrapper from `jest.integration.config.js`
-2. ✅ Switched to plain `ts-jest` preset for Node.js environment
-3. ✅ Added `dotenv` config to load `.env.local` variables
-4. ✅ Installed `ts-jest` as dev dependency
+**Problem 2: Invalid UUID Test User IDs**
+- Root cause: String-based IDs didn't match database FK constraints
+- Solution: Used `crypto.randomUUID()` for test user IDs
+- Commit: `b4297f0` - Use valid UUID format for test users
 
-### Results
-- ✅ Integration tests now successfully execute and hit Supabase database
-- ✅ All 1614 unit tests pass (no regressions)
-- ✅ Build ✓ Lint ✓ Test ✓ (all quality gates pass)
-- ✅ Tests now reveal actual database-related issues (UUID format in fixtures) instead of network errors
+**Problem 3: Row-Level Security (RLS) Policy Violations**
+- Root cause: Mock auth methods didn't establish real authentication context
+- Solution: Used `adminSupabase.auth.admin.createUser()` for real users + admin client for fixture setup
+- Details:
+  - Created real auth users via admin auth API
+  - Used adminSupabase client for test fixture setup/teardown
+  - Instantiated QuestInstanceService with admin client to bypass RLS
+- Commit: `9a8410a` - Proper RLS handling with admin client
 
-**PHASE 4 IS NOW UNBLOCKED - READY TO PROCEED**
+**Problem 4: Test Command Integration**
+- Root cause: Integration tests weren't running by default
+- Solution: Combined `npm run test` to run both unit AND integration tests
+- Commit: `e74f224` - Combine test commands
+
+### Final Results
+- ✅ All 23 integration tests passing (including 5 in quest-instance-service)
+- ✅ All 1614 unit tests passing (zero regressions)
+- ✅ Build ✓ Lint ✓ All Tests ✓ (1637 total passing)
+- ✅ Combined test suite runs in ~11 seconds
+- ✅ `npm run test` automatically runs both unit and integration tests
+
+**PHASE 4 IS NOW UNBLOCKED - ALL BLOCKERS RESOLVED** ✓
 
 ---
 
