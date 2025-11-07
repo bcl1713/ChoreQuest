@@ -15,7 +15,7 @@ import { ProgressBar, LevelUpModal, QuestCompleteOverlay, type QuestReward } fro
 import { RewardCalculator } from '@/lib/reward-calculator';
 import { LoadingSpinner, Button, IconWithLabel } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { Sword, Store, Crown, Swords, Shield, Sparkles, Target, Heart, Clock, Settings, Zap, AlertCircle, Coins, Gem, Award } from 'lucide-react';
+import { Sword, Store, Crown, Swords, Shield, Sparkles, Target, Heart, Clock, Settings, Zap, AlertCircle, Coins, Gem, Award, User } from 'lucide-react';
 
 // Component to handle search params (must be wrapped in Suspense)
 function AuthErrorHandler({ onAuthError }: { onAuthError: (error: string | null) => void }) {
@@ -352,6 +352,16 @@ function DashboardContent() {
                     </Button>
                   </>
                 )}
+                <Button
+                  onClick={() => router.push('/profile')}
+                  variant="primary"
+                  size="sm"
+                  className="touch-target"
+                  data-testid="profile-button"
+                  startIcon={<User size={16} />}
+                >
+                  <span className="hidden sm:inline">Profile</span>
+                </Button>
                 <Button
                   onClick={logout}
                   variant="destructive"

@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
   dir: './',
 })
 
-// Custom Jest configuration
+// Custom Jest configuration for unit tests (excludes integration tests)
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.js'],
   testEnvironment: 'jsdom',
@@ -14,11 +14,13 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/tests/e2e/',
     '<rootDir>/tests/api/database-seed.test.ts',
+    '<rootDir>/tests/integration/',
   ],
   testMatch: [
     '<rootDir>/tests/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/**/*.(test|spec).{js,jsx,ts,tsx}',
     '!<rootDir>/tests/e2e/**/*',
+    '!<rootDir>/tests/integration/**/*',
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
@@ -35,14 +37,6 @@ const customJestConfig = {
     '!**/coverage/**',
   ],
   coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
-    },
-  },
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

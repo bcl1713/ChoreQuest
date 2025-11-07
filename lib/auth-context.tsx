@@ -17,6 +17,7 @@ interface AuthContextType {
   register: (data: { name: string; email: string; password: string; familyCode: string }) => Promise<void>;
   createFamily: (data: { name: string; email: string; password: string; userName: string }) => Promise<void>;
   logout: () => Promise<void>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
   characterName: string;
@@ -553,6 +554,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    clearError();
+    setIsLoading(true);
+
+    try {
+      if (!user || !user.email) {
+        throw new Error('No user logged in');
+      }
+
+      // SECURITY: Verify current password before allowing update
+      // This ensures only the user who knows the current password can change it
+      console.log('Verifying current password...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        console.error('Current password verification failed:', signInError.message);
+        throw new Error('Current password is incorrect');
+      }
+
+      console.log('Current password verified successfully');
+
+      // Get the current session to use for authorization
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+      if (!currentSession) {
+        throw new Error('No active session');
+      }
+
+      // Make a raw HTTP request to updateUser endpoint to ensure proper encoding
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          password: newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Password update failed with status ${response.status}`);
+      }
+
+      // Password updated successfully
+      // User remains logged in with the new password
+      console.log('Password updated successfully');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Password update failed';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -563,6 +625,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       createFamily,
       logout,
+      updatePassword,
       isLoading,
       error,
       characterName,
