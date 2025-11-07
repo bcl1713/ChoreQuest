@@ -171,7 +171,10 @@ describe('ChangeHistoryList', () => {
   });
 
   it('enables next button when full page of results', async () => {
-    const fullPage = Array(10).fill(mockHistory[0]);
+    const fullPage = Array(10).fill(null).map((_, i) => ({
+      ...mockHistory[0],
+      id: `entry-${i}`,
+    }));
     (ProfileService.getChangeHistory as jest.Mock).mockResolvedValue(fullPage);
 
     render(<ChangeHistoryList character={mockCharacter} />);
