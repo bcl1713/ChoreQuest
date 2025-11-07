@@ -12,6 +12,7 @@
 
 # claude
 .claude/tsc-cache/*
+.claude/hooks/node_modules/*
 
 # testing
 /coverage
