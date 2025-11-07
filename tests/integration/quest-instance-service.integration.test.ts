@@ -21,14 +21,14 @@ describe("QuestInstanceService Integration Tests", () => {
 
   beforeAll(async () => {
     // Mock the auth methods to prevent real network calls
-    (supabase.auth.signUp as any) = async (credentials: { email: string; password: string }) => {
+    const signUpMock = async (credentials: { email: string; password: string }) => {
       const userId = `test-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const user = { id: userId, email: credentials.email };
       mockUserFixtures.set(credentials.email, user);
       return { data: { user }, error: null };
     };
 
-    (supabase.auth.signInWithPassword as any) = async (credentials: { email: string; password: string }) => {
+    const signInMock = async (credentials: { email: string; password: string }) => {
       const user = mockUserFixtures.get(credentials.email);
       if (!user) {
         return { data: { session: null }, error: new Error("Invalid credentials") };
@@ -43,6 +43,9 @@ describe("QuestInstanceService Integration Tests", () => {
         error: null,
       };
     };
+
+    (supabase.auth.signUp as unknown) = signUpMock;
+    (supabase.auth.signInWithPassword as unknown) = signInMock;
 
     // Create GM user
     const { data: gmAuthUser, error: gmAuthError } = await supabase.auth.signUp({
