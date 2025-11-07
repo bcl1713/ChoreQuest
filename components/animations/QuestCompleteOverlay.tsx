@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ParticleEffect } from './ParticleEffect';
-import { FantasyButton, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { Trophy, Coins, Star, Gem, Sparkles, X } from 'lucide-react';
 import { modalBackdrop, modalContent } from '@/lib/animations/variants';
 
@@ -204,14 +204,14 @@ export function QuestCompleteOverlay({
 
               {/* Dismiss button */}
               <div className="mt-8">
-                <FantasyButton
+                <Button
                   variant="primary"
                   size="lg"
                   onClick={handleDismiss}
                   className="w-full"
                 >
                   Continue Adventure
-                </FantasyButton>
+                </Button>
               </div>
             </motion.div>
           </div>

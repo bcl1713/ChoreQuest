@@ -10,7 +10,7 @@ import {
 } from "@/lib/constants/character-classes";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { FantasyButton } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { FantasyIcon } from "@/components/icons/FantasyIcon";
 import { Sparkles, Sword, Shield, Heart, Target, Zap, Coins, Medal, Gem } from "lucide-react";
 
@@ -271,7 +271,7 @@ export default function CharacterCreation({
 
           {/* Submit Button */}
           <div className="text-center">
-            <FantasyButton
+            <Button
               type="submit"
               disabled={isLoading || !name.trim() || !selectedClass}
               isLoading={isLoading}
@@ -279,7 +279,7 @@ export default function CharacterCreation({
               className="min-w-48 justify-center"
             >
               {isLoading ? "Creating Hero..." : "Begin Your Quest"}
-            </FantasyButton>
+            </Button>
           </div>
         </form>
       </div>

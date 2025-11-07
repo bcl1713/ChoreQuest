@@ -20,6 +20,7 @@ const eslintConfig = [
       "next-env.d.ts",
       "lib/generated/**",
       "jest.config.js",
+      "tests/jest.setup.js",
       "*.config.js",
       "coverage/**",
       "dist/**",

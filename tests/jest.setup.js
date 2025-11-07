@@ -41,7 +41,7 @@ jest.mock('framer-motion', () => {
     motion: {
       div: ({ children, ...props }) => React.createElement('div', props, children),
       span: ({ children, ...props }) => React.createElement('span', props, children),
-      button: React.forwardRef(({ children, whileHover, whileTap, transition, ...props }, ref) =>
+      button: React.forwardRef(({ children, ...props }, ref) =>
         React.createElement('button', { ref, ...props }, children)
       ),
       h1: ({ children, ...props }) => React.createElement('h1', props, children),

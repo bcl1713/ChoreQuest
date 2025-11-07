@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Castle, Swords, Zap, Trophy, Coins, Gem, Award, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { Button } from '@/components/ui';
 
 export default function Home() {
   const { user } = useAuth();
@@ -31,19 +32,22 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             {user ? (
-              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="enter-realm-button">
-                <Castle size={20} />
-                Enter Your Realm
+              <Link href="/dashboard">
+                <Button variant="gold" size="lg" startIcon={<Castle size={20} />} data-testid="enter-realm-button">
+                  Enter Your Realm
+                </Button>
               </Link>
             ) : (
               <>
-                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="create-family-button">
-                  <Castle size={20} />
-                  Create Family Guild
+                <Link href="/auth/create-family">
+                  <Button variant="gold" size="lg" startIcon={<Castle size={20} />} data-testid="create-family-button">
+                    Create Family Guild
+                  </Button>
                 </Link>
-                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block flex items-center gap-2" data-testid="join-guild-button">
-                  <Swords size={20} />
-                  Join Existing Guild
+                <Link href="/auth/register">
+                  <Button variant="secondary" size="lg" startIcon={<Swords size={20} />} data-testid="join-guild-button">
+                    Join Existing Guild
+                  </Button>
                 </Link>
               </>
             )}

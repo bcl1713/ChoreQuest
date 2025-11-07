@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Character, CharacterClass } from '@/lib/types/database';
 import { ProfileService } from '@/lib/profile-service';
-import { FantasyButton } from '@/components/ui';
+import { Button } from '@/components/ui';
 import {
   CHARACTER_CLASSES,
   formatBonusPercentage,
@@ -320,14 +320,14 @@ export default function ClassChangeForm({
 
       {/* Submit Button */}
       {canChange && selectedClass && selectedClass !== character.class && (
-        <FantasyButton
+        <Button
           onClick={() => setShowConfirmation(true)}
           disabled={isLoading || (character.gold ?? 0) < cost}
           isLoading={isLoading}
           className="w-full justify-center"
         >
           {isLoading ? 'Changing Class...' : 'Confirm Class Change'}
-        </FantasyButton>
+        </Button>
       )}
 
       {/* Confirmation Modal */}
