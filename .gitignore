@@ -32,6 +32,9 @@ debug-*.png
 # production
 /build
 
+# claude
+.claude/tsc-cache
+
 # misc
 .DS_Store
 *.pem
