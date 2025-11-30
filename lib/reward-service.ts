@@ -164,8 +164,9 @@ export class RewardService {
    * Refund gold to a character when redemption is denied
    * @param userId - User ID whose character should receive refund
    * @param goldAmount - Amount of gold to refund
+   * @param redemptionId - Optional redemption ID for transaction tracking
    */
-  async refundGold(userId: string, goldAmount: number): Promise<void> {
+  async refundGold(userId: string, goldAmount: number, redemptionId?: string): Promise<void> {
     // Get current gold
     const { data: characterData, error: characterError } = await supabase
       .from("characters")
@@ -187,6 +188,22 @@ export class RewardService {
 
     if (refundError) {
       throw new Error(`Failed to refund gold: ${refundError.message}`);
+    }
+
+    // Log transaction
+    const { error: transactionError } = await supabase
+      .from("transactions")
+      .insert({
+        user_id: userId,
+        type: "REWARD_REFUND",
+        gold_change: goldAmount,
+        description: `Refund for denied reward redemption`,
+        related_id: redemptionId || null,
+      });
+
+    if (transactionError) {
+      console.error("Failed to log refund transaction:", transactionError);
+      // Don't throw, as the refund itself succeeded
     }
   }
 

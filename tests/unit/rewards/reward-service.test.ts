@@ -415,10 +415,21 @@ describe("RewardService", () => {
       mockUpdate.mockReturnValueOnce({ eq: mockEq });
       mockEq.mockResolvedValueOnce({ data: null, error: null });
 
+      // Third query to insert transaction
+      mockInsert.mockResolvedValueOnce({ error: null });
+
       await service.refundGold(mockUserId, mockGoldAmount);
 
       expect(mockFrom).toHaveBeenCalledWith("characters");
       expect(mockUpdate).toHaveBeenCalledWith({ gold: expectedGold });
+      
+      // Verify transaction logging
+      expect(mockFrom).toHaveBeenCalledWith("transactions");
+      expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+        user_id: mockUserId,
+        type: "REWARD_REFUND",
+        gold_change: mockGoldAmount,
+      }));
     });
 
     it("should throw error when character fetch fails", async () => {

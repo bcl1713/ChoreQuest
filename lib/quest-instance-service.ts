@@ -460,6 +460,23 @@ export class QuestInstanceService {
       throw new Error(`Failed to update character stats: ${characterUpdateError.message}`);
     }
 
+    // Log transaction
+    const { error: transactionError } = await this.client
+      .from("transactions")
+      .insert({
+        user_id: character.user_id,
+        type: "QUEST_REWARD",
+        xp_change: updatedXp,
+        gold_change: updatedGold,
+        description: `Quest Reward: ${quest.title}`,
+        related_id: questId,
+      });
+
+    if (transactionError) {
+      console.error("Failed to log transaction:", transactionError);
+      // Proceed without throwing to ensure quest approval isn't blocked by logging failure
+    }
+
     // Update quest status to APPROVED
     const { data: approvedQuest, error: questUpdateError } = await this.client
       .from("quest_instances")
