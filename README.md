@@ -137,6 +137,20 @@ docker compose up -d
 - `npm run test:e2e` – End-to-end flow (Playwright).
 - `npm run db:seed` – Seeds demo data; rerun after `db:reset`.
 
+## Admin Scripts
+
+A set of utility scripts are available in `scripts/` for administrative tasks and auditing. These can be run via `npx tsx scripts/<script-name>.ts`.
+
+- **Audit Gold (Reconstruction)**: Reconstructs a user's theoretical gold balance by summing all approved quests and redemptions, comparing it to their current stored balance.
+  ```bash
+  npx tsx scripts/audit-gold-recalc.ts "Username"
+  ```
+
+- **Set Gold Balance**: Manually sets a user's gold balance and logs a transaction record (type: `BONUS_AWARD`).
+  ```bash
+  npx tsx scripts/admin-set-gold.ts "Username" <amount> "Reason for change"
+  ```
+
 ## License
 
 MIT © Brian Lucas. See `LICENSE` for details.
