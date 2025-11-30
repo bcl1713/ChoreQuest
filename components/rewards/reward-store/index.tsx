@@ -18,7 +18,7 @@ interface RewardStoreProps {
 }
 
 export default function RewardStore({ onError }: RewardStoreProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { character, refreshCharacter } = useCharacterContext();
   const { rewards, redemptions, loading } = useRewards();
   const [redeeming, setRedeeming] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
 
   const handleRedeem = useCallback(
     async (reward: Reward) => {
-      if (!user || !character) return;
+      if (!user || !character || !session) return;
 
       if ((character.gold || 0) < reward.cost) {
         onError?.("Insufficient gold to redeem this reward");
@@ -62,31 +62,18 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       setRedeeming(reward.id);
 
       try {
-        const { error: redemptionError } = await supabase
-          .from("reward_redemptions")
-          .insert({
-            user_id: user.id,
-            reward_id: reward.id,
-            cost: reward.cost,
-            reward_name: reward.name,
-            reward_description: reward.description,
-            reward_type: reward.type,
-            status: "PENDING",
-            notes: null,
-          });
+        const response = await fetch('/api/rewards/redeem', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ rewardId: reward.id })
+        });
 
-        if (redemptionError) {
-          throw redemptionError;
-        }
-
-        const newGold = (character.gold || 0) - reward.cost;
-        const { error: characterError } = await supabase
-          .from("characters")
-          .update({ gold: newGold })
-          .eq("user_id", user.id);
-
-        if (characterError) {
-          throw characterError;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Redemption failed: ${response.statusText}`);
         }
 
         await refreshCharacter();
@@ -104,7 +91,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         setRedeeming(null);
       }
     },
-    [user, character, onError, refreshCharacter],
+    [user, character, session, onError, refreshCharacter],
   );
 
   const handleApproval = useCallback(
