@@ -75,26 +75,44 @@ export type Database = {
       }
       boss_battle_participants: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          awarded_gold: number
+          awarded_xp: number
           boss_battle_id: string | null
           created_at: string | null
           damage_dealt: number | null
+          honor_awarded: number
           id: string
+          participation_status: string
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_gold?: number
+          awarded_xp?: number
           boss_battle_id?: string | null
           created_at?: string | null
           damage_dealt?: number | null
+          honor_awarded?: number
           id?: string
+          participation_status?: string
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          awarded_gold?: number
+          awarded_xp?: number
           boss_battle_id?: string | null
           created_at?: string | null
           damage_dealt?: number | null
+          honor_awarded?: number
           id?: string
+          participation_status?: string
           updated_at?: string | null
           user_id?: string | null
         }
@@ -117,43 +135,64 @@ export type Database = {
       }
       boss_battles: {
         Row: {
+          defeated_at: string | null
           created_at: string | null
           current_hp: number
           description: string
           end_date: string
           family_id: string | null
           gem_reward: number | null
+          honor_reward: number | null
           id: string
+          join_window_expires_at: string
+          join_window_minutes: number
           name: string
+          reward_gold: number
+          reward_xp: number
           start_date: string | null
+          rewards_distributed: boolean
           status: Database["public"]["Enums"]["boss_battle_status"] | null
           total_hp: number
           updated_at: string | null
         }
         Insert: {
+          defeated_at?: string | null
           created_at?: string | null
           current_hp: number
           description: string
           end_date: string
           family_id?: string | null
           gem_reward?: number | null
+          honor_reward?: number | null
           id?: string
+          join_window_expires_at?: string
+          join_window_minutes?: number
           name: string
+          reward_gold?: number
+          reward_xp?: number
           start_date?: string | null
+          rewards_distributed?: boolean
           status?: Database["public"]["Enums"]["boss_battle_status"] | null
           total_hp: number
           updated_at?: string | null
         }
         Update: {
+          defeated_at?: string | null
           created_at?: string | null
           current_hp?: number
           description?: string
           end_date?: string
           family_id?: string | null
           gem_reward?: number | null
+          honor_reward?: number | null
           id?: string
+          join_window_expires_at?: string
+          join_window_minutes?: number
           name?: string
+          reward_gold?: number
+          reward_xp?: number
           start_date?: string | null
+          rewards_distributed?: boolean
           status?: Database["public"]["Enums"]["boss_battle_status"] | null
           total_hp?: number
           updated_at?: string | null

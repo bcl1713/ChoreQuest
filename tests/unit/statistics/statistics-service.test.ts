@@ -17,6 +17,8 @@ describe("StatisticsService", () => {
   let service: StatisticsService;
   let mockFrom: jest.Mock;
   let mockSelect: jest.Mock;
+  let mockEq: jest.Mock;
+  let mockIn: jest.Mock;
 
   const mockFamilyId = "family-123";
   const now = new Date("2025-10-15T12:00:00Z"); // Wednesday, Oct 15, 2025
@@ -31,6 +33,9 @@ describe("StatisticsService", () => {
         level: 5,
         xp: 1200,
         gold: 500,
+        gems: 50,
+        honor_points: 12,
+        class: "KNIGHT",
       },
     },
     {
@@ -41,6 +46,9 @@ describe("StatisticsService", () => {
         level: 3,
         xp: 600,
         gold: 300,
+        gems: 30,
+        honor_points: 8,
+        class: "MAGE",
       },
     },
     {
@@ -51,6 +59,9 @@ describe("StatisticsService", () => {
         level: 4,
         xp: 900,
         gold: 450,
+        gems: 40,
+        honor_points: 10,
+        class: "ROGUE",
       },
     },
   ];
@@ -103,6 +114,51 @@ describe("StatisticsService", () => {
     { id: "r3", requested_at: "2025-10-05T10:00:00Z", user_id: "user-1" },
   ];
 
+  // Mock boss battles (one this week, one earlier in month)
+  const mockBossBattles = [
+    {
+      id: "boss-week",
+      defeated_at: "2025-10-14T09:00:00Z",
+      reward_gold: 60,
+      reward_xp: 120,
+      rewards_distributed: true,
+      status: "DEFEATED",
+    },
+    {
+      id: "boss-month",
+      defeated_at: "2025-10-03T12:00:00Z",
+      reward_gold: 100,
+      reward_xp: 200,
+      rewards_distributed: true,
+      status: "DEFEATED",
+    },
+  ];
+
+  // Mock boss participants with partial weighting
+  const mockBossParticipants = [
+    {
+      boss_battle_id: "boss-week",
+      user_id: "user-1",
+      participation_status: "APPROVED",
+      awarded_gold: 63, // KNIGHT gold bonus 1.05 -> full ~63
+      awarded_xp: 126,  // KNIGHT xp bonus 1.05 -> full ~126
+    },
+    {
+      boss_battle_id: "boss-week",
+      user_id: "user-2",
+      participation_status: "PARTIAL",
+      awarded_gold: 30, // Full would be 100 (gold bonus 1.0)
+      awarded_xp: 120,  // Full would be 240 (MAGE xp bonus 1.2)
+    },
+    {
+      boss_battle_id: "boss-month",
+      user_id: "user-2",
+      participation_status: "APPROVED",
+      awarded_gold: 100,
+      awarded_xp: 240,
+    },
+  ];
+
   beforeEach(() => {
     service = new StatisticsService();
 
@@ -129,6 +185,7 @@ describe("StatisticsService", () => {
       // Track call counts for tables that are called multiple times
       const questInstancesCalls = { count: 0 };
       const redemptionsCalls = { count: 0 };
+      const bossBattleCalls = { count: 0 };
 
       // Setup mock chain for all queries
       mockFrom.mockImplementation((table: string) => {
@@ -190,6 +247,21 @@ describe("StatisticsService", () => {
               })
             };
           }
+        } else if (table === "boss_battles") {
+          bossBattleCalls.count++;
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: mockBossBattles, error: null })
+              })
+            })
+          };
+        } else if (table === "boss_battle_participants") {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: mockBossParticipants, error: null })
+            })
+          };
         }
 
         return { select: mockSelect };
@@ -220,6 +292,12 @@ describe("StatisticsService", () => {
 
       // Total XP: 1200 + 600 + 900 = 2700
       expect(result.totalXpEarned).toBe(2700);
+
+      // Total Gems: 50 + 30 + 40 = 120
+      expect(result.totalGemsEarned).toBe(120);
+
+      // Total Honor: 12 + 8 + 10 = 30
+      expect(result.totalHonorEarned).toBe(30);
     });
 
     it("should calculate character progress with completion rates", async () => {
@@ -236,6 +314,8 @@ describe("StatisticsService", () => {
         level: 5,
         xp: 1200,
         gold: 500,
+        gems: 50,
+        honor: 12,
         questsCompleted: 4,
         completionRate: 80,
       });
@@ -296,6 +376,22 @@ describe("StatisticsService", () => {
       expect(result.rewardRedemptionsThisMonth).toBe(3);
     });
 
+    it("should calculate boss battle summary with weighted participation", async () => {
+      const result = await service.getFamilyStatistics(mockFamilyId);
+
+      expect(result.bossBattleSummary.battlesThisWeek).toBe(1);
+      expect(result.bossBattleSummary.battlesThisMonth).toBe(2);
+
+      expect(result.bossBattleSummary.topParticipantWeek).toMatchObject({
+        userId: "user-1",
+        displayName: "Alice",
+        participationScore: 1,
+      });
+
+      expect(result.bossBattleSummary.topParticipantMonth?.userId).toBe("user-2");
+      expect(result.bossBattleSummary.topParticipantMonth?.participationScore).toBeCloseTo(1.67, 2);
+    });
+
     it("should handle family with no members gracefully", async () => {
       const questInstancesCalls = { count: 0 };
       const redemptionsCalls = { count: 0 };
@@ -353,6 +449,20 @@ describe("StatisticsService", () => {
               })
             };
           }
+        } else if (table === "boss_battles") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: [], error: null })
+              })
+            })
+          };
+        } else if (table === "boss_battle_participants") {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: [], error: null })
+            })
+          };
         }
         return { select: mockSelect };
       });
@@ -362,10 +472,18 @@ describe("StatisticsService", () => {
       expect(result.questsCompletedThisWeek).toBe(0);
       expect(result.totalGoldEarned).toBe(0);
       expect(result.totalXpEarned).toBe(0);
+      expect(result.totalGemsEarned).toBe(0);
+      expect(result.totalHonorEarned).toBe(0);
       expect(result.characterProgress).toEqual([]);
       expect(result.mostActiveMember).toBeNull();
       expect(result.pendingQuestApprovals).toBe(0);
       expect(result.pendingRewardRedemptions).toBe(0);
+      expect(result.bossBattleSummary).toMatchObject({
+        battlesThisWeek: 0,
+        battlesThisMonth: 0,
+        topParticipantWeek: null,
+        topParticipantMonth: null,
+      });
     });
 
     it("should throw error when family members query fails", async () => {
@@ -474,6 +592,20 @@ describe("StatisticsService", () => {
               })
             };
           }
+        } else if (table === "boss_battles") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockResolvedValue({ data: [], error: null })
+              })
+            })
+          };
+        } else if (table === "boss_battle_participants") {
+          return {
+            select: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: [], error: null })
+            })
+          };
         }
         return { select: mockSelect };
       });

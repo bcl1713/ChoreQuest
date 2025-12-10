@@ -31,18 +31,20 @@ export class RewardCalculator {
     gainedXP: number,
     currentLevel: number,
   ): { newLevel: number; previousLevel: number } | null {
-    let newLevel = currentLevel;
-    while (this.getXPRequiredForLevel(newLevel + 1) <= gainedXP + currentXP) {
-      newLevel += 1;
-    }
-    if (newLevel == currentLevel) {
+    const safeCurrentLevel =
+      Number.isFinite(currentLevel) && currentLevel > 0
+        ? Math.floor(currentLevel)
+        : 1;
+    const totalXP = Math.max(0, Math.floor((currentXP || 0) + (gainedXP || 0)));
+    const nextLevel = this.calculateLevelFromTotalXP(totalXP);
+    if (nextLevel === safeCurrentLevel) {
       return null;
-    } else {
-      return {
-        newLevel: newLevel,
-        previousLevel: currentLevel,
-      };
     }
+
+    return {
+      newLevel: nextLevel,
+      previousLevel: safeCurrentLevel,
+    };
   }
 
   static getDifficultyMultiplier(difficulty: QuestDifficulty): number {
@@ -110,6 +112,15 @@ export class RewardCalculator {
     return 50 * (level - 1) ** 2;
   }
 
+  static calculateLevelFromTotalXP(totalXP: number): number {
+    const safeTotal = Number.isFinite(totalXP) ? Math.max(0, Math.floor(totalXP)) : 0;
+    let level = 1;
+    while (this.getXPRequiredForLevel(level + 1) <= safeTotal) {
+      level += 1;
+    }
+    return level;
+  }
+
   static getLevelProgress(level: number, totalXP: number): {
     current: number;
     required: number;
@@ -118,8 +129,13 @@ export class RewardCalculator {
     const safeLevel = Number.isFinite(level) && level > 0 ? Math.floor(level) : 1;
     const safeTotalXP = Number.isFinite(totalXP) ? Math.max(0, Math.floor(totalXP)) : 0;
 
-    const currentLevelFloor = this.getXPRequiredForLevel(safeLevel);
-    const nextLevelRequirement = this.getXPRequiredForLevel(safeLevel + 1);
+    const derivedLevel = Math.max(
+      safeLevel,
+      this.calculateLevelFromTotalXP(safeTotalXP)
+    );
+
+    const currentLevelFloor = this.getXPRequiredForLevel(derivedLevel);
+    const nextLevelRequirement = this.getXPRequiredForLevel(derivedLevel + 1);
     const requiredForNextLevel = Math.max(1, nextLevelRequirement - currentLevelFloor);
 
     const rawProgress = safeTotalXP - currentLevelFloor;

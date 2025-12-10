@@ -22,7 +22,9 @@ export type RealtimeEventType =
   | 'character_updated'
   | 'reward_updated'
   | 'reward_redemption_updated'
-  | 'family_member_updated';
+  | 'family_member_updated'
+  | 'boss_quest_updated'
+  | 'boss_participant_updated';
 
 export interface RealtimeEvent {
   type: RealtimeEventType;
@@ -43,6 +45,8 @@ export interface RealtimeContextType {
   onRewardUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   onRewardRedemptionUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   onFamilyMemberUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
+  onBossQuestUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
+  onBossParticipantUpdate: (callback: (event: RealtimeEvent) => void) => () => void;
   // Manual refresh triggers
   refreshQuests: () => void;
   refreshQuestTemplates: () => void;
@@ -55,7 +59,24 @@ const RealtimeContext = createContext<RealtimeContextType | undefined>(undefined
 export const useRealtime = () => {
   const context = useContext(RealtimeContext);
   if (context === undefined) {
-    throw new Error('useRealtime must be used within a RealtimeProvider');
+    // Provide no-op fallback to keep non-provider test renders safe
+    return {
+      isConnected: false,
+      connectionError: "Realtime provider missing",
+      lastEvent: null,
+      onQuestUpdate: () => () => {},
+      onQuestTemplateUpdate: () => () => {},
+      onCharacterUpdate: () => () => {},
+      onRewardUpdate: () => () => {},
+      onRewardRedemptionUpdate: () => () => {},
+      onFamilyMemberUpdate: () => () => {},
+      onBossQuestUpdate: () => () => {},
+      onBossParticipantUpdate: () => () => {},
+      refreshQuests: () => {},
+      refreshQuestTemplates: () => {},
+      refreshCharacters: () => {},
+      refreshRewards: () => {},
+    } satisfies RealtimeContextType;
   }
   return context;
 };
@@ -83,6 +104,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
   const rewardUpdateListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const rewardRedemptionListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
   const familyMemberListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
+  const bossQuestListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
+  const bossParticipantListeners = useRef<Set<(event: RealtimeEvent) => void>>(new Set());
 
   // Setup realtime connection when user and family are available
   useEffect(() => {
@@ -289,6 +312,58 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
           familyMemberListeners.current.forEach(listener => listener(event));
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'boss_battles',
+          filter: `family_id=eq.${familyId}`
+        },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          const event: RealtimeEvent = {
+            type: 'boss_quest_updated',
+            table: 'boss_battles',
+            action: payload.eventType,
+            record: payload.new,
+            old_record: payload.old,
+          };
+          setLastEvent(event);
+          bossQuestListeners.current.forEach((listener) => listener(event));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'boss_battle_participants'
+        },
+        async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          // Validate family membership by checking the related boss battle
+          const battleId = (payload.new as Record<string, unknown>)?.boss_battle_id
+            || (payload.old as Record<string, unknown>)?.boss_battle_id;
+          if (!battleId) return;
+
+          const { data: boss } = await supabase
+            .from('boss_battles')
+            .select('family_id')
+            .eq('id', battleId as string)
+            .maybeSingle();
+
+          if (boss?.family_id !== familyId) return;
+
+          const event: RealtimeEvent = {
+            type: 'boss_participant_updated',
+            table: 'boss_battle_participants',
+            action: payload.eventType,
+            record: payload.new,
+            old_record: payload.old
+          };
+          setLastEvent(event);
+          bossParticipantListeners.current.forEach(listener => listener(event));
+        }
+      )
       .subscribe(async (status) => {
         const statusTimestamp = new Date().toISOString();
         console.log(`[${statusTimestamp}] RealtimeContext: Subscription status:`, status);
@@ -384,6 +459,20 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     };
   }, []);
 
+  const onBossQuestUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
+    bossQuestListeners.current.add(callback);
+    return () => {
+      bossQuestListeners.current.delete(callback);
+    };
+  }, []);
+
+  const onBossParticipantUpdate = useCallback((callback: (event: RealtimeEvent) => void) => {
+    bossParticipantListeners.current.add(callback);
+    return () => {
+      bossParticipantListeners.current.delete(callback);
+    };
+  }, []);
+
   // Manual refresh triggers (for fallback scenarios)
   const refreshQuests = useCallback(() => {
     window.dispatchEvent(new CustomEvent('refreshQuests'));
@@ -411,6 +500,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({ children }) 
     onRewardUpdate,
     onRewardRedemptionUpdate,
     onFamilyMemberUpdate,
+    onBossQuestUpdate,
+    onBossParticipantUpdate,
     refreshQuests,
     refreshQuestTemplates,
     refreshCharacters,

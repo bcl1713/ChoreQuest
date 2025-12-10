@@ -61,6 +61,8 @@ describe("StatisticsPanel", () => {
     questsCompletedLastMonth: 30,
     totalGoldEarned: 5000,
     totalXpEarned: 12000,
+    totalGemsEarned: 200,
+    totalHonorEarned: 80,
     pendingQuestApprovals: 2,
     pendingRewardRedemptions: 3,
     rewardRedemptionsThisWeek: 4,
@@ -73,6 +75,8 @@ describe("StatisticsPanel", () => {
         level: 5,
         xp: 1200,
         gold: 500,
+        gems: 25,
+        honor: 12,
         questsCompleted: 10,
         completionRate: 80,
       },
@@ -83,6 +87,8 @@ describe("StatisticsPanel", () => {
         level: 3,
         xp: 600,
         gold: 300,
+        gems: 15,
+        honor: 9,
         questsCompleted: 5,
         completionRate: 60,
       },
@@ -92,6 +98,26 @@ describe("StatisticsPanel", () => {
       characterName: "Alice the Knight",
       displayName: "Alice",
       questsCompleted: 10,
+    },
+    bossBattleSummary: {
+      battlesThisWeek: 2,
+      battlesThisMonth: 5,
+      topParticipantWeek: {
+        userId: "user-1",
+        displayName: "Alice",
+        characterName: "Alice the Knight",
+        participationScore: 1,
+        totalXp: 300,
+        totalGold: 150,
+      },
+      topParticipantMonth: {
+        userId: "user-2",
+        displayName: "Bob",
+        characterName: "Bob the Mage",
+        participationScore: 1.5,
+        totalXp: 420,
+        totalGold: 180,
+      },
     },
   };
 
@@ -167,6 +193,26 @@ describe("StatisticsPanel", () => {
     await waitFor(() => {
       expect(screen.getByText("Total Gold")).toBeInTheDocument();
       expect(screen.getByText("Total XP")).toBeInTheDocument();
+    });
+  });
+
+  it("should display boss battle summary", async () => {
+    render(<StatisticsPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Boss Battles")).toBeInTheDocument();
+      expect(screen.getByText("Battles This Week")).toBeInTheDocument();
+      expect(screen.getByText("Battles This Month")).toBeInTheDocument();
+      expect(screen.getByText(/Top Participant \(This Week\)/)).toBeInTheDocument();
+    });
+  });
+
+  it("should display gems and honor in character progress", async () => {
+    render(<StatisticsPanel />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Gems")).toBeInTheDocument();
+      expect(screen.getByText("Honor")).toBeInTheDocument();
     });
   });
 

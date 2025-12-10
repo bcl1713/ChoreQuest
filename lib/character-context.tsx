@@ -6,6 +6,7 @@ import { useRealtime } from './realtime-context';
 import { useNetworkReady } from './network-ready-context';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
 import { Character } from '@/lib/types/database';
+import { RewardCalculator } from '@/lib/reward-calculator';
 
 // Using Character type from @/lib/types/database
 
@@ -200,9 +201,17 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.log('CharacterContext: Character fetched successfully:', data);
 
-        const currentLevel = typeof (data as { level?: number | string | null }).level === 'number'
+        const rawLevel = typeof (data as { level?: number | string | null }).level === 'number'
           ? (data as { level: number }).level
           : Number((data as { level?: number | string | null }).level ?? 0);
+        const derivedLevel = RewardCalculator.calculateLevelFromTotalXP(
+          Number((data as { xp?: number | null }).xp ?? 0)
+        );
+        const currentLevel = Math.max(
+          1,
+          Number.isFinite(rawLevel) ? Math.floor(rawLevel) : 1,
+          derivedLevel
+        );
 
         if (previousLevelRef.current !== null && currentLevel > previousLevelRef.current) {
           console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${currentLevel}`);

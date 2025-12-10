@@ -182,6 +182,21 @@ describe("RewardCalculator", () => {
     });
   });
 
+  describe("calculateLevelFromTotalXP", () => {
+    it("returns level one for zero XP", () => {
+      expect(RewardCalculator.calculateLevelFromTotalXP(0)).toBe(1);
+    });
+
+    it("calculates the correct level for accumulated XP (multi-level jump)", () => {
+      expect(RewardCalculator.calculateLevelFromTotalXP(815)).toBe(5); // Level 5 starts at 800 XP
+    });
+
+    it("handles non-finite and negative XP safely", () => {
+      expect(RewardCalculator.calculateLevelFromTotalXP(Number.NaN)).toBe(1);
+      expect(RewardCalculator.calculateLevelFromTotalXP(-100)).toBe(1);
+    });
+  });
+
   describe("getDifficultyMultiplier", () => {
     it("should return correct multipliers for each difficulty", () => {
       expect(RewardCalculator.getDifficultyMultiplier("EASY")).toBe(1.0);
@@ -251,19 +266,21 @@ describe("RewardCalculator", () => {
       expect(progress.percentage).toBeCloseTo(20, 5);
     });
 
-    it("clamps progress when XP exceeds the next level requirement", () => {
-      // This can happen temporarily if the level up event hasn't processed yet.
+    it("recalculates level when XP exceeds the stored level", () => {
+      // Stored level is stale; XP is enough for level 11 (5,000 XP floor).
       const progress = RewardCalculator.getLevelProgress(2, 5000);
 
-      expect(progress.current).toBe(progress.required);
-      expect(progress.percentage).toBe(100);
+      expect(progress.current).toBe(0);
+      expect(progress.required).toBe(1050); // Level 12 requires 6,050
+      expect(progress.percentage).toBe(0);
     });
 
     it("floors non-integer levels and clamps progress", () => {
       const progress = RewardCalculator.getLevelProgress(1.5, 75);
 
-      expect(progress.current).toBe(progress.required);
-      expect(progress.percentage).toBe(100);
+      expect(progress.current).toBe(25);
+      expect(progress.required).toBe(150);
+      expect(progress.percentage).toBeCloseTo(16.67, 2);
     });
 
     it("defaults negative levels to level one", () => {
@@ -277,8 +294,9 @@ describe("RewardCalculator", () => {
     it("treats non-finite level values as level one", () => {
       const progress = RewardCalculator.getLevelProgress(Number.NaN, 100);
 
-      expect(progress.current).toBe(progress.required);
-      expect(progress.percentage).toBe(100);
+      expect(progress.current).toBe(50);
+      expect(progress.required).toBe(150);
+      expect(progress.percentage).toBeCloseTo(33.333, 3);
     });
 
     it("resets non-finite XP values to zero", () => {
@@ -295,6 +313,15 @@ describe("RewardCalculator", () => {
       expect(progress.current).toBe(0);
       expect(progress.required).toBe(150);
       expect(progress.percentage).toBe(0);
+    });
+
+    it("shows progress for XP that implies a higher level than stored", () => {
+      // 815 XP should be level 5 with 15 XP into the level.
+      const progress = RewardCalculator.getLevelProgress(1, 815);
+
+      expect(progress.current).toBe(15);
+      expect(progress.required).toBe(450);
+      expect(progress.percentage).toBeCloseTo(3.333, 3);
     });
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BarChart3, Clock, Coins, Star, Trophy, Gift, Award } from "lucide-react";
+import { BarChart3, Clock, Coins, Star, Trophy, Gift, Award, Swords, Crown } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { StatisticsService, FamilyStatistics } from "@/lib/statistics-service";
@@ -94,6 +94,14 @@ export default function StatisticsPanel() {
     statistics.questsCompletedThisMonth,
     statistics.questsCompletedLastMonth
   );
+
+  const bossSummary = statistics.bossBattleSummary;
+  const topBossParticipant = bossSummary.topParticipantWeek || bossSummary.topParticipantMonth;
+  const topParticipantPeriodLabel = bossSummary.topParticipantWeek
+    ? "This Week"
+    : bossSummary.topParticipantMonth
+    ? "This Month"
+    : "This Week";
 
   return (
     <div className="space-y-6" data-testid="statistics-panel">
@@ -256,6 +264,84 @@ export default function StatisticsPanel() {
         </div>
       </div>
 
+      {/* Boss Battles */}
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Swords size={24} />
+          Boss Battles
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-indigo-900/50 to-indigo-800/30 border border-indigo-500/30 rounded-lg p-6"
+          >
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Swords size={16} />
+              Battles This Week
+            </p>
+            <p className="text-3xl font-bold text-indigo-200">
+              {bossSummary.battlesThisWeek}
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-rose-900/50 to-rose-800/30 border border-rose-500/30 rounded-lg p-6"
+          >
+            <p className="text-sm text-gray-400 mb-1 flex items-center gap-2">
+              <Crown size={16} />
+              Battles This Month
+            </p>
+            <p className="text-3xl font-bold text-rose-200">
+              {bossSummary.battlesThisMonth}
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-br from-amber-900/50 to-amber-800/30 border border-amber-500/30 rounded-lg p-6"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Award size={24} className="text-amber-400" />
+              <div>
+                <p className="text-xs text-amber-200/80 uppercase tracking-wide">
+                  Top Participant ({topParticipantPeriodLabel})
+                </p>
+                <p className="text-lg font-semibold text-white">
+                  {topBossParticipant ? topBossParticipant.displayName : "No battles yet"}
+                </p>
+                {topBossParticipant && (
+                  <p className="text-sm text-gray-300">
+                    {topBossParticipant.characterName}
+                  </p>
+                )}
+              </div>
+            </div>
+            {topBossParticipant ? (
+              <div className="text-sm text-gray-200 space-y-1">
+                <p>
+                  Participation Score:{" "}
+                  <span className="text-amber-300 font-semibold">
+                    {topBossParticipant.participationScore.toFixed(2)}
+                  </span>
+                </p>
+                <p className="text-gray-400">
+                  XP: <span className="text-white">{topBossParticipant.totalXp.toLocaleString()}</span>{" "}
+                  · Gold: <span className="text-white">{topBossParticipant.totalGold.toLocaleString()}</span>
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">Defeat a boss to see participation leaders.</p>
+            )}
+          </motion.div>
+        </div>
+      </div>
+
       {/* Character Progress */}
       <div>
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -271,6 +357,8 @@ export default function StatisticsPanel() {
                   <th className="px-6 py-3">Level</th>
                   <th className="px-6 py-3">XP</th>
                   <th className="px-6 py-3">Gold</th>
+                  <th className="px-6 py-3">Gems</th>
+                  <th className="px-6 py-3">Honor</th>
                   <th className="px-6 py-3">Quests Completed</th>
                   <th className="px-6 py-3">Completion Rate</th>
                 </tr>
@@ -301,6 +389,12 @@ export default function StatisticsPanel() {
                     <td className="px-6 py-4 text-yellow-400 font-medium">
                       {char.gold.toLocaleString()}
                     </td>
+                    <td className="px-6 py-4 text-purple-300 font-medium">
+                      {char.gems.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-amber-200 font-medium">
+                      {char.honor.toLocaleString()}
+                    </td>
                     <td className="px-6 py-4 text-white font-medium">
                       {char.questsCompleted}
                     </td>
@@ -327,7 +421,7 @@ export default function StatisticsPanel() {
                 ))}
                 {statistics.characterProgress.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
                       No family members yet
                     </td>
                   </tr>

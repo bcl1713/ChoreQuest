@@ -6,13 +6,16 @@ import { supabase } from "@/lib/supabase";
 import { QuestInstance, QuestStatus } from "@/lib/types/database";
 import { LoadingSpinner, Button } from "@/components/ui";
 import FamilyQuestClaiming from "@/components/family/family-quest-claiming";
+import { BossQuestPanel } from "@/components/boss/boss-quest-panel";
 import { questInstanceApiService } from "@/lib/quest-instance-api-service";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useCharacter } from "@/hooks/useCharacter";
 import { useQuests } from "@/hooks/useQuests";
+import { useBossQuests } from "@/hooks/useBossQuests";
 import QuestList from "./quest-list";
 import * as QuestHelpers from "./quest-helpers";
 import PendingApprovalsSection from "@/components/quests/pending-approvals-section";
+import { BossQuestHistoryList } from "@/components/boss/boss-quest-history-list";
 
 type QuestDashboardProps = {
   onError: (error: string) => void;
@@ -26,6 +29,7 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const { familyMembers, familyCharacters, loading: familyLoading, error: familyError, reload: reloadFamily } = useFamilyMembers();
   const { character, loading: characterLoading, error: characterError, reload: reloadCharacter } = useCharacter();
   const { quests: questInstances, loading: questsLoading, error: questsError, reload: reloadQuests } = useQuests();
+  const { bossQuests, loading: bossLoading, error: bossError, reload: reloadBossQuests } = useBossQuests();
 
   // Local state
   const [showQuestHistory, setShowQuestHistory] = useState(false);
@@ -34,13 +38,13 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
   const isGuildMaster = profile?.role === "GUILD_MASTER";
 
   // Combine loading and error states
-  const loading = familyLoading || characterLoading || questsLoading;
-  const error = familyError || characterError || questsError;
+  const loading = familyLoading || characterLoading || questsLoading || bossLoading;
+  const error = familyError || characterError || questsError || bossError;
 
   // Combined reload function
   const loadData = useCallback(async () => {
-    await Promise.all([reloadFamily(), reloadCharacter(), reloadQuests()]);
-  }, [reloadFamily, reloadCharacter, reloadQuests]);
+    await Promise.all([reloadFamily(), reloadCharacter(), reloadQuests(), reloadBossQuests()]);
+  }, [reloadFamily, reloadCharacter, reloadQuests, reloadBossQuests]);
 
   // Expose reload function to parent component
   useEffect(() => {
@@ -163,6 +167,11 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
     [myQuests]
   );
 
+  const bossHistoryQuests = useMemo(
+    () => bossQuests.filter((boss) => boss.status === "DEFEATED"),
+    [bossQuests]
+  );
+
   const claimableFamilyQuests = useMemo(
     () => QuestHelpers.filterClaimableFamilyQuests(questInstances),
     [questInstances]
@@ -217,6 +226,8 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
         </div>
       </div>
 
+      <BossQuestPanel />
+
       {isGuildMaster && pendingApprovalQuests.length > 0 && (
         <PendingApprovalsSection
           quests={pendingApprovalQuests}
@@ -236,14 +247,14 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       <section>
         <div className="mb-4">
           <h3 className="text-xl font-fantasy text-gray-200">🗡️ My Quests</h3>
-          {myHistoricalQuests.length > 0 && (
+          {(myHistoricalQuests.length + bossHistoryQuests.length) > 0 && (
             <p className="text-xs text-gray-500 mt-1">Completed adventures live in Quest History near the bottom of the page.</p>
           )}
         </div>
         <QuestList
           quests={myActiveQuests}
           emptyMessage="You have no active quests right now."
-          emptyHint={myHistoricalQuests.length > 0 ? "Check Quest History to revisit your completed quests." : undefined}
+          emptyHint={(myHistoricalQuests.length + bossHistoryQuests.length) > 0 ? "Check Quest History to revisit your completed quests." : undefined}
           onStartQuest={(id) => handleStatusUpdate(id, "IN_PROGRESS")}
           onCompleteQuest={(id) => handleStatusUpdate(id, "COMPLETED")}
           onReleaseQuest={handleReleaseQuest}
@@ -259,7 +270,7 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
       )}
 
       {/* Quest History */}
-      {myHistoricalQuests.length > 0 && (
+      {(myHistoricalQuests.length + bossHistoryQuests.length) > 0 && (
         <section>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <h3 className="text-xl font-fantasy text-gray-200">📜 Quest History</h3>
@@ -270,10 +281,15 @@ export default function QuestDashboard({ onError, onLoadQuestsRef }: QuestDashbo
               className="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-md border border-gray-700 text-sm text-gray-300 hover:bg-gray-800"
               onClick={() => setShowQuestHistory((prev) => !prev)}
             >
-              {showQuestHistory ? "Hide History" : `Show History (${myHistoricalQuests.length})`}
+              {showQuestHistory ? "Hide History" : `Show History (${myHistoricalQuests.length + bossHistoryQuests.length})`}
             </Button>
           </div>
-          {showQuestHistory && <QuestList quests={myHistoricalQuests} familyMembers={familyMembers} />}
+          {showQuestHistory && (
+            <div className="space-y-3">
+              <QuestList quests={myHistoricalQuests} familyMembers={familyMembers} />
+              <BossQuestHistoryList bossQuests={bossHistoryQuests} />
+            </div>
+          )}
         </section>
       )}
     </div>
