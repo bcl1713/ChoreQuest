@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/lib/realtime-context";
 import type { Tables } from "@/lib/types/database";
 
 type Character = Tables<"characters">;
@@ -21,6 +22,9 @@ interface UseCharacterReturn {
  * It handles the special case where no character exists yet (PGRST116 error code),
  * treating this as a valid state rather than an error.
  *
+ * The hook also subscribes to realtime updates for the character, so XP, gold,
+ * level, and other character attributes update immediately when changed.
+ *
  * @returns {UseCharacterReturn} Object containing:
  *   - character: The user's character object, or null if no character exists
  *   - loading: Boolean indicating if data is currently being fetched
@@ -38,9 +42,11 @@ interface UseCharacterReturn {
  */
 export function useCharacter(): UseCharacterReturn {
   const { user } = useAuth();
+  const { onCharacterUpdate } = useRealtime();
   const [character, setCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const loadCharacter = useCallback(async () => {
     if (!user?.id) {
@@ -65,13 +71,16 @@ export function useCharacter(): UseCharacterReturn {
         if (characterError.code === "PGRST116") {
           setCharacter(null);
         } else {
-          throw new Error(`Failed to fetch character: ${characterError.message}`);
+          throw new Error(
+            `Failed to fetch character: ${characterError.message}`,
+          );
         }
       } else {
         setCharacter(characterData);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load character";
+      const message =
+        err instanceof Error ? err.message : "Failed to load character";
       setError(message);
       setCharacter(null);
     } finally {
@@ -82,6 +91,40 @@ export function useCharacter(): UseCharacterReturn {
   useEffect(() => {
     void loadCharacter();
   }, [loadCharacter]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const unsubscribe = onCharacterUpdate((event) => {
+      setCharacter((prevCharacter) => {
+        if (!prevCharacter) {
+          return prevCharacter;
+        }
+
+        if (event.action === "DELETE") {
+          return null;
+        }
+
+        if (event.action === "INSERT" || event.action === "UPDATE") {
+          // Update the character with the new data from realtime event
+          return {
+            ...prevCharacter,
+            ...event.record,
+          } as Character;
+        }
+
+        return prevCharacter;
+      });
+    });
+
+    unsubscribeRef.current = unsubscribe;
+
+    return () => {
+      unsubscribeRef.current?.();
+    };
+  }, [user?.id, onCharacterUpdate]);
 
   return {
     character,
