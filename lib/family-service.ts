@@ -9,9 +9,9 @@ export interface FamilyMember {
   userId: string;
   email: string;
   displayName: string;
-  role: string;
+  role: string | null;
   characterName: string | null;
-  joinedAt: string;
+  joinedAt: string | null;
 }
 
 export interface FamilyInfo {
@@ -19,7 +19,7 @@ export interface FamilyInfo {
   name: string;
   code: string;
   timezone: string;
-  createdAt: string;
+  createdAt: string | null;
   members: FamilyMember[];
 }
 
@@ -48,7 +48,8 @@ export class FamilyService {
     // Fetch all family members with their character data
     const { data: members, error: membersError } = await supabase
       .from("user_profiles")
-      .select(`
+      .select(
+        `
         id,
         email,
         name,
@@ -57,16 +58,19 @@ export class FamilyService {
         characters (
           name
         )
-      `)
+      `,
+      )
       .eq("family_id", familyId)
       .order("created_at", { ascending: true });
 
     if (membersError) {
-      throw new Error(`Failed to fetch family members: ${membersError.message}`);
+      throw new Error(
+        `Failed to fetch family members: ${membersError.message}`,
+      );
     }
 
     // Transform members data
-    const familyMembers: FamilyMember[] = (members || []).map(member => {
+    const familyMembers: FamilyMember[] = (members || []).map((member) => {
       const character = Array.isArray(member.characters)
         ? member.characters[0]
         : member.characters;

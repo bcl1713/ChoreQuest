@@ -32,14 +32,6 @@ interface UseBossQuestsReturn {
 export function useBossQuests(): UseBossQuestsReturn {
   const { profile } = useAuth();
   const realtime = useRealtime();
-  const onBossQuestUpdate =
-    typeof realtime.onBossQuestUpdate === "function"
-      ? realtime.onBossQuestUpdate
-      : () => () => {};
-  const onBossParticipantUpdate =
-    typeof realtime.onBossParticipantUpdate === "function"
-      ? realtime.onBossParticipantUpdate
-      : () => () => {};
   const [bossQuests, setBossQuests] = useState<BossQuestWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,19 +71,25 @@ export function useBossQuests(): UseBossQuestsReturn {
     void loadBossQuests();
     if (!profile?.family_id) return;
 
-    const unsubscribeBoss = onBossQuestUpdate(() => {
-      void loadBossQuests();
-    });
+    const unsubscribeBoss =
+      typeof realtime.onBossQuestUpdate === "function"
+        ? realtime.onBossQuestUpdate(() => {
+            void loadBossQuests();
+          })
+        : undefined;
 
-    const unsubscribeParticipants = onBossParticipantUpdate(() => {
-      void loadBossQuests();
-    });
+    const unsubscribeParticipants =
+      typeof realtime.onBossParticipantUpdate === "function"
+        ? realtime.onBossParticipantUpdate(() => {
+            void loadBossQuests();
+          })
+        : undefined;
 
     return () => {
-      unsubscribeBoss();
-      unsubscribeParticipants();
+      unsubscribeBoss?.();
+      unsubscribeParticipants?.();
     };
-  }, [loadBossQuests, onBossParticipantUpdate, onBossQuestUpdate, profile?.family_id]);
+  }, [loadBossQuests, profile?.family_id, realtime]);
 
   return {
     bossQuests,

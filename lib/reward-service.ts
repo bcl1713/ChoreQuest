@@ -4,13 +4,19 @@
  */
 
 import { supabase } from "@/lib/supabase";
-import { Reward, CreateRewardInput, UpdateRewardInput, RewardRedemption, UserProfile } from "@/lib/types/database";
+import {
+  Reward,
+  CreateRewardInput,
+  UpdateRewardInput,
+  RewardRedemption,
+  UserProfile,
+} from "@/lib/types/database";
 
 export interface RewardRedemptionWithUser extends RewardRedemption {
   user_profiles: UserProfile;
   reward_name: string;
   reward_description: string;
-  reward_type: 'SCREEN_TIME' | 'PRIVILEGE' | 'PURCHASE' | 'EXPERIENCE';
+  reward_type: "SCREEN_TIME" | "PRIVILEGE" | "PURCHASE" | "EXPERIENCE";
 }
 
 export class RewardService {
@@ -59,7 +65,7 @@ export class RewardService {
    */
   async updateReward(
     rewardId: string,
-    input: UpdateRewardInput
+    input: UpdateRewardInput,
   ): Promise<Reward> {
     const { data, error } = await supabase
       .from("rewards")
@@ -97,13 +103,17 @@ export class RewardService {
    * @param familyId - The family ID to fetch redemptions for
    * @returns Array of redemptions with user details
    */
-  async getRedemptionsForFamily(familyId: string): Promise<RewardRedemptionWithUser[]> {
+  async getRedemptionsForFamily(
+    familyId: string,
+  ): Promise<RewardRedemptionWithUser[]> {
     const { data, error } = await supabase
       .from("reward_redemptions")
-      .select(`
+      .select(
+        `
         *,
         user_profiles:user_id(*)
-      `)
+      `,
+      )
       .eq("user_profiles.family_id", familyId)
       .order("requested_at", { ascending: false });
 
@@ -111,7 +121,7 @@ export class RewardService {
       throw new Error(`Failed to fetch redemptions: ${error.message}`);
     }
 
-    return data as RewardRedemptionWithUser[] || [];
+    return (data as unknown as RewardRedemptionWithUser[]) || [];
   }
 
   /**
@@ -124,9 +134,9 @@ export class RewardService {
    */
   async updateRedemptionStatus(
     redemptionId: string,
-    status: 'APPROVED' | 'DENIED' | 'FULFILLED',
+    status: "APPROVED" | "DENIED" | "FULFILLED",
     approvedBy?: string,
-    notes?: string
+    notes?: string,
   ): Promise<RewardRedemption> {
     const updateData: {
       status: string;
@@ -139,10 +149,10 @@ export class RewardService {
       notes: notes || undefined,
     };
 
-    if (status === 'APPROVED') {
+    if (status === "APPROVED") {
       updateData.approved_at = new Date().toISOString();
       updateData.approved_by = approvedBy;
-    } else if (status === 'FULFILLED') {
+    } else if (status === "FULFILLED") {
       updateData.fulfilled_at = new Date().toISOString();
     }
 
@@ -181,7 +191,7 @@ export class RewardService {
     const { error: refundError } = await supabase
       .from("characters")
       .update({
-        gold: characterData.gold + goldAmount
+        gold: (characterData.gold || 0) + goldAmount,
       })
       .eq("user_id", userId);
 
@@ -189,5 +199,4 @@ export class RewardService {
       throw new Error(`Failed to refund gold: ${refundError.message}`);
     }
   }
-
 }

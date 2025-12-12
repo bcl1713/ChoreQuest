@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { questTemplateService } from "@/lib/quest-template-service";
 import type { TemplateFormData } from "@/lib/types/quest-templates";
+import type { TablesInsert } from "@/lib/types/database";
 import { validateFutureDate } from "@/lib/utils/validation";
 
 export interface CreateQuestFromTemplateParams {
@@ -29,7 +30,7 @@ export interface CreateAdhocQuestParams {
 }
 
 export async function createQuestFromTemplate(
-  params: CreateQuestFromTemplateParams
+  params: CreateQuestFromTemplateParams,
 ): Promise<void> {
   const { selectedTemplateId, userId, assignedToId, dueDate } = params;
 
@@ -43,12 +44,12 @@ export async function createQuestFromTemplate(
     {
       assignedToId: assignedToId || undefined,
       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-    }
+    },
   );
 }
 
 export async function createRecurringTemplate(
-  params: CreateRecurringTemplateParams
+  params: CreateRecurringTemplateParams,
 ): Promise<void> {
   const { formData, familyId } = params;
 
@@ -71,7 +72,10 @@ export async function createRecurringTemplate(
     ...formData,
     title: formData.title.trim(),
     description: formData.description.trim(),
-    category: formData.recurrence_pattern === "WEEKLY" ? "WEEKLY" : "DAILY",
+    category:
+      formData.recurrence_pattern === "WEEKLY"
+        ? ("WEEKLY" as const)
+        : ("DAILY" as const),
     family_id: familyId,
     is_active: true,
     is_paused: false,
@@ -79,7 +83,7 @@ export async function createRecurringTemplate(
 
   const { error: templateError } = await supabase
     .from("quest_templates")
-    .insert(payload);
+    .insert(payload as TablesInsert<"quest_templates">);
 
   if (templateError) {
     throw templateError;
@@ -87,7 +91,7 @@ export async function createRecurringTemplate(
 }
 
 export async function createAdhocQuest(
-  params: CreateAdhocQuestParams
+  params: CreateAdhocQuestParams,
 ): Promise<void> {
   const {
     title,
@@ -112,25 +116,28 @@ export async function createAdhocQuest(
     xp_reward: xpReward,
     gold_reward: goldReward,
     difficulty,
-    category,
+    category: category as "DAILY" | "WEEKLY" | "BOSS_BATTLE",
     status: assignedToId ? "PENDING" : "AVAILABLE",
     family_id: familyId,
     created_by_id: userId,
     assigned_to_id: assignedToId || null,
     due_date: dueDate ? new Date(dueDate).toISOString() : null,
-    quest_type: "FAMILY",
+    quest_type: "FAMILY" as const,
   };
 
   const { error: insertError } = await supabase
     .from("quest_instances")
-    .insert(questData);
+    .insert(questData as TablesInsert<"quest_instances">);
 
   if (insertError) {
     throw insertError;
   }
 }
 
-export function validateDueDate(dueDate: string): { isValid: boolean; error: string | null } {
+export function validateDueDate(dueDate: string): {
+  isValid: boolean;
+  error: string | null;
+} {
   const validation = validateFutureDate(dueDate, "Due date");
   return {
     isValid: validation.isValid,

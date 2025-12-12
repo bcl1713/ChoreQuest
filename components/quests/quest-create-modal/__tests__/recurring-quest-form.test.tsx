@@ -254,34 +254,18 @@ describe("RecurringQuestForm", () => {
   });
 
   describe("Required Fields", () => {
-    it("should mark title as required", () => {
+    it("should mark required inputs", () => {
       render(<RecurringQuestForm {...mockProps} />);
-
-      const titleInput = screen.getByTestId("recurring-title-input");
-      expect(titleInput).toBeRequired();
-    });
-
-    it("should mark description as required", () => {
-      render(<RecurringQuestForm {...mockProps} />);
-
-      const descriptionInput = screen.getByTestId("recurring-description-input");
-      expect(descriptionInput).toBeRequired();
+      expect(screen.getByTestId("recurring-title-input")).toBeRequired();
+      expect(screen.getByTestId("recurring-description-input")).toBeRequired();
     });
   });
 
   describe("Input Constraints", () => {
-    it("should set minimum XP value to 0", () => {
+    it("should set minimum values to 0", () => {
       render(<RecurringQuestForm {...mockProps} />);
-
-      const xpInput = screen.getByTestId("recurring-xp-input");
-      expect(xpInput).toHaveAttribute("min", "0");
-    });
-
-    it("should set minimum gold value to 0", () => {
-      render(<RecurringQuestForm {...mockProps} />);
-
-      const goldInput = screen.getByTestId("recurring-gold-input");
-      expect(goldInput).toHaveAttribute("min", "0");
+      expect(screen.getByTestId("recurring-xp-input")).toHaveAttribute("min", "0");
+      expect(screen.getByTestId("recurring-gold-input")).toHaveAttribute("min", "0");
     });
   });
 

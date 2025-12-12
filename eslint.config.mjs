@@ -9,6 +9,13 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+// Temporary max-line waivers for legacy and generated files; see docs/frontend-architecture.md.
+const legacyMaxLineWaivers = [
+  "lib/types/database-generated.ts",
+  "lib/types/database.ts",
+  "lib/statistics-service.ts", // TODO: Refactor to reduce complexity and line count
+];
+
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
@@ -27,6 +34,34 @@ const eslintConfig = [
       "test-results/**",
       ".playwright-mcp/**",
     ],
+  },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["**/*.d.ts"],
+    rules: {
+      "max-lines": [
+        "error",
+        {
+          max: 300,
+          skipBlankLines: false,
+          skipComments: false,
+        },
+      ],
+    },
+  },
+  {
+    files: legacyMaxLineWaivers,
+    rules: {
+      "max-lines": "off",
+    },
+  },
+  // Test files: allow any and display-name for mocked components and fixtures
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**/*.ts", "**/__tests__/**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "react/display-name": "off",
+    },
   },
 ];
 

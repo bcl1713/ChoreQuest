@@ -7,7 +7,9 @@ class UserService {
     if (typeof window === "undefined") return null;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       return session?.access_token || null;
     } catch {
       return null;
@@ -36,8 +38,8 @@ class UserService {
       name: profile.name,
       familyId: profile.family_id,
       role: profile.role,
-      createdAt: new Date(profile.created_at),
-      updatedAt: new Date(profile.updated_at),
+      createdAt: profile.created_at ? new Date(profile.created_at) : new Date(),
+      updatedAt: profile.updated_at ? new Date(profile.updated_at) : new Date(),
     }));
   }
 

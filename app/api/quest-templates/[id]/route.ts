@@ -1,8 +1,3 @@
-/**
- * Individual Quest Template API Endpoint
- * Handles operations on specific quest templates
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { questTemplateService } from '@/lib/quest-template-service';
@@ -30,15 +25,11 @@ const updateQuestTemplateSchema = z.object({
   })).optional(),
 });
 
-/**
- * Helper function to verify Guild Master authorization for a template
- */
 async function verifyGuildMasterAccess(
   supabase: SupabaseClient<Database>,
   userId: string,
   templateId: string
 ): Promise<{ authorized: boolean; error?: string; template?: QuestTemplate }> {
-  // Get requester's profile
   const { data: requesterProfile, error: requesterError } = await supabase
     .from('user_profiles')
     .select('role, family_id')
@@ -53,7 +44,6 @@ async function verifyGuildMasterAccess(
     return { authorized: false, error: 'Only Guild Masters can manage quest templates' };
   }
 
-  // Get the template to verify family ownership
   const { data: template, error: templateError } = await supabase
     .from('quest_templates')
     .select('*')
@@ -71,225 +61,131 @@ async function verifyGuildMasterAccess(
   return { authorized: true, template };
 }
 
-/**
- * GET /api/quest-templates/[id]
- * Get a single quest template by ID
- */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+const extractToken = (request: NextRequest) => {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  return authHeader.substring(7);
+};
+
+const loadAuthContext = async (
+  token: string | null,
+  templateId: string
+): Promise<
+  | { response: NextResponse }
+  | { supabase: SupabaseClient<Database>; userId: string; template?: QuestTemplate; authorized: boolean; error?: string }
+> => {
+  if (!token) {
+    return { response: NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 }) };
+  }
+
+  const supabase = createServerSupabaseClient(token);
+  const { data, error: authError } = await supabase.auth.getUser(token);
+  const user = data?.user;
+
+  if (authError || !user) {
+    return { response: NextResponse.json({ error: 'Authentication failed' }, { status: 401 }) };
+  }
+
+  const access = await verifyGuildMasterAccess(supabase, user.id, templateId);
+  if (!access.authorized) {
+    return {
+      supabase,
+      userId: user.id,
+      authorized: false,
+      error: access.error,
+      template: access.template,
+    };
+  }
+
+  return { supabase, userId: user.id, authorized: true, template: access.template };
+};
+
+const isSupabaseLikeError = (error: unknown): error is { data?: unknown; error?: unknown } =>
+  typeof error === 'object' && error !== null && 'data' in error && 'error' in error;
+
+const handleUnexpectedError = (error: unknown, verb: string) => {
+  if (isSupabaseLikeError(error)) {
+    console.error(`Unexpected error in ${verb}: data=`, error.data, 'error=', error.error);
+  } else {
+    console.error(`Unexpected error in ${verb}:`, error);
+  }
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+};
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = extractToken(request);
+    const context = await loadAuthContext(token, templateId);
+    if ('response' in context) return context.response;
+    if (!context.authorized) {
       return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { error: context.error || 'Access denied' },
+        { status: context.error === 'Quest template not found' ? 404 : 403 }
       );
     }
 
-    const token = authHeader.substring(7);
-
-    // Create Supabase client with the user's token
-    const supabase = createServerSupabaseClient(token);
-
-    // Get the authenticated user
-    const { data, error: authError } = await supabase.auth.getUser(token);
-    const user = data?.user;
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
-
-    // Verify authorization and get template
-    const { authorized, error, template } = await verifyGuildMasterAccess(
-      supabase,
-      user.id,
-      templateId
-    );
-
-    if (!authorized) {
-      return NextResponse.json(
-        { error: error || 'Access denied' },
-        { status: error === 'Quest template not found' ? 404 : 403 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      template,
-    });
-
+    return NextResponse.json({ success: true, template: context.template });
   } catch (error) {
-    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
-      console.error('Unexpected error in GET /api/quest-templates/[id]: data=', error.data, 'error=', error.error);
-    } else {
-      console.error('Unexpected error in GET /api/quest-templates/[id]:', error);
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleUnexpectedError(error, 'GET /api/quest-templates/[id]');
   }
 }
 
-/**
- * PATCH /api/quest-templates/[id]
- * Update a quest template
- */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = extractToken(request);
+    const context = await loadAuthContext(token, templateId);
+    if ('response' in context) return context.response;
+    if (!context.authorized) {
       return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { error: context.error || 'Access denied' },
+        { status: context.error === 'Quest template not found' ? 404 : 403 }
       );
     }
 
-    const token = authHeader.substring(7);
-
-    // Create Supabase client with the user's token
-    const supabase = createServerSupabaseClient(token);
-
-    // Get the authenticated user
-    const { data, error: authError } = await supabase.auth.getUser(token);
-    const user = data?.user;
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
-
-    // Verify authorization
-    const { authorized, error } = await verifyGuildMasterAccess(
-      supabase,
-      user.id,
-      templateId
-    );
-
-    if (!authorized) {
-      return NextResponse.json(
-        { error: error || 'Access denied' },
-        { status: error === 'Quest template not found' ? 404 : 403 }
-      );
-    }
-
-    // Parse and validate request body
     const body = await request.json();
     const validatedData = updateQuestTemplateSchema.parse(body);
 
-    // Validate INDIVIDUAL quest requirements if quest_type is being updated
-    if (validatedData.quest_type === 'INDIVIDUAL' && validatedData.assigned_character_ids) {
-      if (validatedData.assigned_character_ids.length === 0) {
-        return NextResponse.json(
-          { error: 'INDIVIDUAL quests must have at least one assigned character' },
-          { status: 400 }
-        );
-      }
+    if (validatedData.quest_type === 'INDIVIDUAL' && validatedData.assigned_character_ids?.length === 0) {
+      return NextResponse.json(
+        { error: 'INDIVIDUAL quests must have at least one assigned character' },
+        { status: 400 }
+      );
     }
 
-    // Update the template using the service
-    const updatedTemplate = await questTemplateService.updateTemplate(
-      templateId,
-      validatedData
-    );
+    const updatedTemplate = await questTemplateService.updateTemplate(templateId, validatedData);
 
     return NextResponse.json({
       success: true,
       template: updatedTemplate,
       message: 'Quest template updated successfully',
     });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.issues },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
-
-    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
-      console.error('Unexpected error in PATCH /api/quest-templates/[id]: data=', error.data, 'error=', error.error);
-    } else {
-      console.error('Unexpected error in PATCH /api/quest-templates/[id]:', error);
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleUnexpectedError(error, 'PATCH /api/quest-templates/[id]');
   }
 }
 
-/**
- * DELETE /api/quest-templates/[id]
- * Soft delete a quest template by setting is_active to false
- */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = extractToken(request);
+    const context = await loadAuthContext(token, templateId);
+    if ('response' in context) return context.response;
+    if (!context.authorized) {
       return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+        { error: context.error || 'Access denied' },
+        { status: context.error === 'Quest template not found' ? 404 : 403 }
       );
     }
 
-    const token = authHeader.substring(7);
-
-    // Create Supabase client with the user's token
-    const supabase = createServerSupabaseClient(token);
-
-    // Get the authenticated user
-    const { data, error: authError } = await supabase.auth.getUser(token);
-    const user = data?.user;
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
-
-    // Verify authorization
-    const { authorized, error } = await verifyGuildMasterAccess(
-      supabase,
-      user.id,
-      templateId
-    );
-
-    if (!authorized) {
-      return NextResponse.json(
-        { error: error || 'Access denied' },
-        { status: error === 'Quest template not found' ? 404 : 403 }
-      );
-    }
-
-    // Get cleanup option from request body
     const body = await request.json();
     const cleanup = body.cleanup || false;
-
-    // Soft delete the template using the service
     const deletedTemplate = await questTemplateService.deleteTemplate(templateId, cleanup);
 
     return NextResponse.json({
@@ -297,16 +193,7 @@ export async function DELETE(
       template: deletedTemplate,
       message: 'Quest template deleted successfully',
     });
-
   } catch (error) {
-    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
-      console.error('Unexpected error in DELETE /api/quest-templates/[id]: data=', error.data, 'error=', error.error);
-    } else {
-      console.error('Unexpected error in DELETE /api/quest-templates/[id]:', error);
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleUnexpectedError(error, 'DELETE /api/quest-templates/[id]');
   }
 }
