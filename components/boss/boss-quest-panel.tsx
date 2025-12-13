@@ -7,7 +7,6 @@ import { Button, LoadingSpinner } from "@/components/ui";
 import { Swords, RefreshCw } from "lucide-react";
 import { useBossQuests } from "@/hooks/useBossQuests";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
-import { supabase } from "@/lib/supabase";
 import { BossQuestCreateModal } from "./boss-quest-create-modal";
 import { BossQuestActiveCard } from "./boss-quest-active-card";
 import {
@@ -137,7 +136,6 @@ export function BossQuestPanel() {
 
   const handleCancelBoss = useCallback(async () => {
     if (!activeBossQuest) return;
-    if (!profile?.family_id) return;
     if (
       !window.confirm(
         "Cancel this boss quest? Participants will see it closed.",
@@ -147,12 +145,7 @@ export function BossQuestPanel() {
     setSubmitting(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
-        .from("boss_battles")
-        .update({ status: "EXPIRED" })
-        .eq("id", activeBossQuest.id)
-        .eq("family_id", profile.family_id);
-      if (updateError) throw new Error(updateError.message);
+      await bossQuestApiService.cancelBossQuest(activeBossQuest.id);
       setStatusMessage("Boss quest canceled.");
       await reload();
     } catch (err) {
@@ -162,7 +155,7 @@ export function BossQuestPanel() {
     } finally {
       setSubmitting(false);
     }
-  }, [activeBossQuest, profile?.family_id, reload]);
+  }, [activeBossQuest, reload]);
 
   const handleReopenJoinWindow = useCallback(async () => {
     if (!activeBossQuest) return;

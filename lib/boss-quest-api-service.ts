@@ -93,7 +93,7 @@ export class BossQuestApiService {
       gold?: number;
       xp?: number;
       honor?: number;
-    }>
+    }>,
   ): Promise<void> {
     const token = await this.getAuthToken();
 
@@ -127,6 +127,23 @@ export class BossQuestApiService {
     if (!response.ok) {
       const payload = await response.json().catch(() => null);
       const message = payload?.error || "Failed to reopen join window";
+      throw new Error(message);
+    }
+  }
+
+  async cancelBossQuest(bossQuestId: string): Promise<void> {
+    const token = await this.getAuthToken();
+
+    const response = await fetch(`/api/boss-quests/${bossQuestId}/cancel`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      const message = payload?.error || "Failed to cancel boss quest";
       throw new Error(message);
     }
   }

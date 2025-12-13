@@ -13,7 +13,8 @@ type ChannelRegistries = {
   bossParticipant: ListenerRegistry;
 };
 
-const mapEvent = (type: RealtimeEvent["type"], table: string) =>
+const mapEvent =
+  (type: RealtimeEvent["type"], table: string) =>
   (payload: SubscriptionPayload): RealtimeEvent => ({
     type,
     table,
@@ -26,18 +27,18 @@ const subscribeTable = (
   channel: RealtimeChannel,
   table: string,
   familyId: string,
-  handler: (payload: SubscriptionPayload) => void
+  handler: (payload: SubscriptionPayload) => void,
 ) =>
   channel.on(
     "postgres_changes",
     { event: "*", schema: "public", table, filter: `family_id=eq.${familyId}` },
-    handler
+    handler,
   );
 
 export const createFamilyRealtimeChannel = (
   familyId: string,
   registries: ChannelRegistries,
-  setLastEvent: (event: RealtimeEvent) => void
+  setLastEvent: (event: RealtimeEvent) => void,
 ) => {
   const channel = supabase.channel(`family_${familyId}`);
 
@@ -48,7 +49,10 @@ export const createFamilyRealtimeChannel = (
   });
 
   subscribeTable(channel, "quest_templates", familyId, (payload) => {
-    const event = mapEvent("quest_template_updated", "quest_templates")(payload);
+    const event = mapEvent(
+      "quest_template_updated",
+      "quest_templates",
+    )(payload);
     setLastEvent(event);
     registries.questTemplate.emit(event);
   });
@@ -66,7 +70,10 @@ export const createFamilyRealtimeChannel = (
   });
 
   subscribeTable(channel, "reward_redemptions", familyId, (payload) => {
-    const event = mapEvent("reward_redemption_updated", "reward_redemptions")(payload);
+    const event = mapEvent(
+      "reward_redemption_updated",
+      "reward_redemptions",
+    )(payload);
     setLastEvent(event);
     registries.rewardRedemption.emit(event);
   });
@@ -83,11 +90,20 @@ export const createFamilyRealtimeChannel = (
     registries.bossQuest.emit(event);
   });
 
-  subscribeTable(channel, "boss_battle_participants", familyId, (payload) => {
-    const event = mapEvent("boss_participant_updated", "boss_battle_participants")(payload);
-    setLastEvent(event);
-    registries.bossParticipant.emit(event);
-  });
+  // Note: boss_battle_participants doesn't have family_id column directly,
+  // but changes are still relevant since boss_battles are family-scoped via the channel itself
+  channel.on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "boss_battle_participants" },
+    (payload) => {
+      const event = mapEvent(
+        "boss_participant_updated",
+        "boss_battle_participants",
+      )(payload);
+      setLastEvent(event);
+      registries.bossParticipant.emit(event);
+    },
+  );
 
   return channel;
 };

@@ -50,7 +50,7 @@ export function useQuestHandlers({
         await loadData();
       }
     },
-    [onError],
+    [loadData, onError],
   );
 
   const handleClaimQuest = useCallback(
