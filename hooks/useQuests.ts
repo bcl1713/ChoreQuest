@@ -87,6 +87,8 @@ export function useQuests(): UseQuestsReturn {
   // Note: We don't include onQuestUpdate in dependencies because it's a registration
   // function that doesn't change - it always adds to the same listener registry.
   // Including it would cause unnecessary re-subscriptions and race conditions.
+   
+
   useEffect(() => {
     if (!profile?.family_id) return;
 
@@ -117,7 +119,8 @@ export function useQuests(): UseQuestsReturn {
     });
 
     return unsubscribe;
-  }, [onQuestUpdate, profile?.family_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.family_id]);
 
   return {
     quests,

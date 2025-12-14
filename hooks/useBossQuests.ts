@@ -75,6 +75,10 @@ export function useBossQuests(): UseBossQuestsReturn {
   }, [loadBossQuests]);
 
   // Realtime subscriptions for boss quests and participants
+  // Note: We don't include onBossQuestUpdate or onBossParticipantUpdate in dependencies
+  // because they're registration functions that don't change - they always add to the
+  // same listener registries.
+
   useEffect(() => {
     if (!profile?.family_id) return;
 
@@ -90,12 +94,8 @@ export function useBossQuests(): UseBossQuestsReturn {
       unsubscribeBoss?.();
       unsubscribeParticipants?.();
     };
-  }, [
-    loadBossQuests,
-    profile?.family_id,
-    onBossQuestUpdate,
-    onBossParticipantUpdate,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadBossQuests, profile?.family_id]);
 
   return {
     bossQuests,

@@ -111,6 +111,9 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
   }, [loadFamilyMembers]);
 
   // Realtime subscription for family member updates
+  // Note: We don't include onFamilyMemberUpdate in dependencies because it's a registration
+  // function that doesn't change - it always adds to the same listener registry.
+
   useEffect(() => {
     if (!profile?.family_id) return;
 
@@ -120,7 +123,8 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
     });
 
     return unsubscribe;
-  }, [onFamilyMemberUpdate, loadFamilyMembers, profile?.family_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadFamilyMembers, profile?.family_id]);
 
   return {
     familyMembers,

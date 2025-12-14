@@ -90,6 +90,9 @@ export function useRewards(): UseRewardsReturn {
   }, [loadRewards]);
 
   // Realtime subscription for reward updates
+  // Note: We don't include onRewardUpdate in dependencies because it's a registration
+  // function that doesn't change - it always adds to the same listener registry.
+
   useEffect(() => {
     const unsubscribe = onRewardUpdate((event) => {
       if (!event?.action) return;
@@ -111,9 +114,13 @@ export function useRewards(): UseRewardsReturn {
     });
 
     return unsubscribe;
-  }, [onRewardUpdate, profile?.family_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.family_id]);
 
   // Realtime subscription for redemption updates
+  // Note: We don't include onRewardRedemptionUpdate in dependencies because it's a
+  // registration function that doesn't change - it always adds to the same listener registry.
+
   useEffect(() => {
     if (!profile?.family_id) return;
 
@@ -132,7 +139,8 @@ export function useRewards(): UseRewardsReturn {
     });
 
     return unsubscribe;
-  }, [profile?.family_id, onRewardRedemptionUpdate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.family_id]);
 
   return {
     rewards,
