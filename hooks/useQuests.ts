@@ -63,12 +63,15 @@ export function useQuests(): UseQuestsReturn {
         .order("created_at", { ascending: false });
 
       if (fetchError) {
-        throw new Error(`Failed to fetch quest instances: ${fetchError.message}`);
+        throw new Error(
+          `Failed to fetch quest instances: ${fetchError.message}`,
+        );
       }
 
       setQuests(deduplicateQuests((data as QuestInstance[]) ?? []));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load quests";
+      const message =
+        err instanceof Error ? err.message : "Failed to load quests";
       setError(message);
       setQuests([]);
     } finally {
@@ -81,6 +84,9 @@ export function useQuests(): UseQuestsReturn {
   }, [loadQuests]);
 
   // Realtime subscription for quest updates
+  // Note: We don't include onQuestUpdate in dependencies because it's a registration
+  // function that doesn't change - it always adds to the same listener registry.
+  // Including it would cause unnecessary re-subscriptions and race conditions.
   useEffect(() => {
     if (!profile?.family_id) return;
 
@@ -97,10 +103,8 @@ export function useQuests(): UseQuestsReturn {
         if (event.action === "UPDATE" && record.id) {
           return deduplicateQuests(
             current.map((quest) =>
-              quest.id === record.id
-                ? { ...quest, ...record }
-                : quest
-            )
+              quest.id === record.id ? { ...quest, ...record } : quest,
+            ),
           );
         }
 

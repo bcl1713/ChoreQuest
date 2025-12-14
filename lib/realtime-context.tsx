@@ -139,56 +139,81 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [setUpChannel]);
 
-  const refreshQuests = () =>
-    questListeners.current.emit({
-      type: "quest_updated",
-      table: "quest_instances",
-      action: "UPDATE",
-      record: {},
-    });
-  const refreshQuestTemplates = () =>
-    questTemplateListeners.current.emit({
-      type: "quest_template_updated",
-      table: "quest_templates",
-      action: "UPDATE",
-      record: {},
-    });
-  const refreshCharacters = () =>
-    characterListeners.current.emit({
-      type: "character_updated",
-      table: "characters",
-      action: "UPDATE",
-      record: {},
-    });
-  const refreshRewards = () =>
-    rewardListeners.current.emit({
-      type: "reward_updated",
-      table: "rewards",
-      action: "UPDATE",
-      record: {},
-    });
+  const refreshQuests = useCallback(
+    () =>
+      questListeners.current.emit({
+        type: "quest_updated",
+        table: "quest_instances",
+        action: "UPDATE",
+        record: {},
+      }),
+    [],
+  );
+  const refreshQuestTemplates = useCallback(
+    () =>
+      questTemplateListeners.current.emit({
+        type: "quest_template_updated",
+        table: "quest_templates",
+        action: "UPDATE",
+        record: {},
+      }),
+    [],
+  );
+  const refreshCharacters = useCallback(
+    () =>
+      characterListeners.current.emit({
+        type: "character_updated",
+        table: "characters",
+        action: "UPDATE",
+        record: {},
+      }),
+    [],
+  );
+  const refreshRewards = useCallback(
+    () =>
+      rewardListeners.current.emit({
+        type: "reward_updated",
+        table: "rewards",
+        action: "UPDATE",
+        record: {},
+      }),
+    [],
+  );
 
-  const value: RealtimeContextType = {
-    isConnected,
-    connectionError,
-    lastEvent,
-    onQuestUpdate: (cb: Listener) => questListeners.current.add(cb),
-    onQuestTemplateUpdate: (cb: Listener) =>
-      questTemplateListeners.current.add(cb),
-    onCharacterUpdate: (cb: Listener) => characterListeners.current.add(cb),
-    onRewardUpdate: (cb: Listener) => rewardListeners.current.add(cb),
-    onRewardRedemptionUpdate: (cb: Listener) =>
-      redemptionListeners.current.add(cb),
-    onFamilyMemberUpdate: (cb: Listener) =>
-      familyMemberListeners.current.add(cb),
-    onBossQuestUpdate: (cb: Listener) => bossQuestListeners.current.add(cb),
-    onBossParticipantUpdate: (cb: Listener) =>
-      bossParticipantListeners.current.add(cb),
-    refreshQuests,
-    refreshQuestTemplates,
-    refreshCharacters,
-    refreshRewards,
-  };
+  // Use useMemo to prevent context value recreation on every render
+  // This ensures hook dependency arrays remain stable
+  const value = React.useMemo(
+    () => ({
+      isConnected,
+      connectionError,
+      lastEvent,
+      onQuestUpdate: (cb: Listener) => questListeners.current.add(cb),
+      onQuestTemplateUpdate: (cb: Listener) =>
+        questTemplateListeners.current.add(cb),
+      onCharacterUpdate: (cb: Listener) => characterListeners.current.add(cb),
+      onRewardUpdate: (cb: Listener) => rewardListeners.current.add(cb),
+      onRewardRedemptionUpdate: (cb: Listener) =>
+        redemptionListeners.current.add(cb),
+      onFamilyMemberUpdate: (cb: Listener) =>
+        familyMemberListeners.current.add(cb),
+      onBossQuestUpdate: (cb: Listener) => bossQuestListeners.current.add(cb),
+      onBossParticipantUpdate: (cb: Listener) =>
+        bossParticipantListeners.current.add(cb),
+      refreshQuests,
+      refreshQuestTemplates,
+      refreshCharacters,
+      refreshRewards,
+    }),
+    [
+      isConnected,
+      connectionError,
+      lastEvent,
+      refreshQuests,
+      refreshQuestTemplates,
+      refreshCharacters,
+      refreshRewards,
+    ],
+  );
 
   return (
     <RealtimeContext.Provider value={value}>

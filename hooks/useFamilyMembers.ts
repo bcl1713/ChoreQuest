@@ -61,13 +61,16 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
 
     try {
       // Load family members (user profiles)
-      const { data: familyMembersData, error: familyMembersError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("family_id", profile.family_id);
+      const { data: familyMembersData, error: familyMembersError } =
+        await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("family_id", profile.family_id);
 
       if (familyMembersError) {
-        throw new Error(`Failed to fetch family members: ${familyMembersError.message}`);
+        throw new Error(
+          `Failed to fetch family members: ${familyMembersError.message}`,
+        );
       }
 
       const members = familyMembersData || [];
@@ -82,7 +85,9 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
           .in("user_id", memberIds);
 
         if (charactersError) {
-          throw new Error(`Failed to fetch family characters: ${charactersError.message}`);
+          throw new Error(
+            `Failed to fetch family characters: ${charactersError.message}`,
+          );
         }
 
         setFamilyCharacters(charactersData || []);
@@ -90,7 +95,8 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
         setFamilyCharacters([]);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load family members";
+      const message =
+        err instanceof Error ? err.message : "Failed to load family members";
       setError(message);
       // Clear state on error to ensure consistent state
       setFamilyMembers([]);
@@ -108,11 +114,9 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
   useEffect(() => {
     if (!profile?.family_id) return;
 
-    const unsubscribe = onFamilyMemberUpdate((event) => {
-      if (event.action === "UPDATE" || event.action === "INSERT" || event.action === "DELETE") {
-        // Reload family members when any member data changes
-        void loadFamilyMembers();
-      }
+    const unsubscribe = onFamilyMemberUpdate(() => {
+      // Reload family members when any member data changes
+      void loadFamilyMembers();
     });
 
     return unsubscribe;

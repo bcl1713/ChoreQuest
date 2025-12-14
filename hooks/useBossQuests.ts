@@ -31,7 +31,7 @@ interface UseBossQuestsReturn {
  */
 export function useBossQuests(): UseBossQuestsReturn {
   const { profile } = useAuth();
-  const realtime = useRealtime();
+  const { onBossQuestUpdate, onBossParticipantUpdate } = useRealtime();
   const [bossQuests, setBossQuests] = useState<BossQuestWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,9 @@ export function useBossQuests(): UseBossQuestsReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from("boss_battles")
-        .select("*, boss_battle_participants(user_id, participation_status, awarded_gold, awarded_xp, honor_awarded, approved_at, approved_by, user_profiles!boss_battle_participants_user_id_fkey(name))")
+        .select(
+          "*, boss_battle_participants(user_id, participation_status, awarded_gold, awarded_xp, honor_awarded, approved_at, approved_by, user_profiles!boss_battle_participants_user_id_fkey(name))",
+        )
         .eq("family_id", profile.family_id)
         .order("created_at", { ascending: false });
 
@@ -59,7 +61,8 @@ export function useBossQuests(): UseBossQuestsReturn {
 
       setBossQuests((data as BossQuestWithParticipants[]) ?? []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load boss quests";
+      const message =
+        err instanceof Error ? err.message : "Failed to load boss quests";
       setError(message);
       setBossQuests([]);
     } finally {
@@ -69,27 +72,30 @@ export function useBossQuests(): UseBossQuestsReturn {
 
   useEffect(() => {
     void loadBossQuests();
+  }, [loadBossQuests]);
+
+  // Realtime subscriptions for boss quests and participants
+  useEffect(() => {
     if (!profile?.family_id) return;
 
-    const unsubscribeBoss =
-      typeof realtime.onBossQuestUpdate === "function"
-        ? realtime.onBossQuestUpdate(() => {
-            void loadBossQuests();
-          })
-        : undefined;
+    const unsubscribeBoss = onBossQuestUpdate(() => {
+      void loadBossQuests();
+    });
 
-    const unsubscribeParticipants =
-      typeof realtime.onBossParticipantUpdate === "function"
-        ? realtime.onBossParticipantUpdate(() => {
-            void loadBossQuests();
-          })
-        : undefined;
+    const unsubscribeParticipants = onBossParticipantUpdate(() => {
+      void loadBossQuests();
+    });
 
     return () => {
       unsubscribeBoss?.();
       unsubscribeParticipants?.();
     };
-  }, [loadBossQuests, profile?.family_id, realtime]);
+  }, [
+    loadBossQuests,
+    profile?.family_id,
+    onBossQuestUpdate,
+    onBossParticipantUpdate,
+  ]);
 
   return {
     bossQuests,
