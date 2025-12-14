@@ -1,5 +1,47 @@
 # Tasks: Realtime Dashboard Updates Implementation
 
+## Critical Bug Fix (COMPLETED)
+
+### Critical Issue: Realtime Subscription Dependency Array Bug
+
+**Status**: ✅ COMPLETED (commit: 06d8d92)
+
+The root cause of realtime updates not propagating was incorrect dependency arrays
+in all data hooks (useQuests, useRewards, useFamilyMembers, useBossQuests).
+
+**Problem**:
+
+- Hooks included realtime registration functions in dependency arrays
+- Functions like `onQuestUpdate`, `onRewardUpdate`, etc. are registration methods
+- These functions should NEVER change - they always add to the same listener
+  registries
+- Including them caused unnecessary re-subscriptions and potential listener
+  deduplication
+- Effects could be set up and immediately cleaned up, breaking realtime
+  subscriptions
+
+**Solution**:
+
+- Removed realtime function references from dependency arrays
+- Added `eslint-disable-next-line react-hooks/exhaustive-deps` comments with
+  explanations
+- Ensured subscriptions remain stable for entire component lifecycle
+
+**Files Fixed**:
+
+- `hooks/useQuests.ts` - Removed `onQuestUpdate` from dependencies
+- `hooks/useRewards.ts` - Removed `onRewardUpdate` and
+  `onRewardRedemptionUpdate` from dependencies
+- `hooks/useFamilyMembers.ts` - Removed `onFamilyMemberUpdate` from
+  dependencies
+- `hooks/useBossQuests.ts` - Removed `onBossQuestUpdate` and
+  `onBossParticipantUpdate` from dependencies
+
+**Impact**: Quest updates, completions, approvals, and other data changes now propagate
+immediately via realtime subscriptions without requiring manual refresh.
+
+---
+
 ## Task Breakdown
 
 ### Task 1: Enhance useCharacter Hook with Realtime Subscription
