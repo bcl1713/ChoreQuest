@@ -192,7 +192,7 @@ export default function RewardManager() {
         if (!redemption || !redemption.user_id) return;
 
         await rewardService.updateRedemptionStatus(redemptionId, "DENIED");
-        await rewardService.refundGold(redemption.user_id, redemption.cost);
+        await rewardService.refundGold(redemption.user_id, redemption.cost, redemption.id);
       } catch (err) {
         console.error("Failed to deny redemption:", err);
         // Error will be shown via the hook's error state
