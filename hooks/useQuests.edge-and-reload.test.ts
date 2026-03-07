@@ -59,7 +59,10 @@ const mockQuests: QuestInstance[] = [
   },
 ];
 
-const createQuestQuery = (data: QuestInstance[] | null, error: Error | null) => ({
+const createQuestQuery = (
+  data: QuestInstance[] | null,
+  error: Error | null,
+) => ({
   select: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
   order: jest.fn().mockResolvedValue({ data, error }),
@@ -84,6 +87,9 @@ beforeEach(() => {
     onQuestUpdate: jest.fn(() => jest.fn()),
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 });
 
@@ -136,7 +142,7 @@ describe("useQuests - edge and reload", () => {
 
   it("should handle null data responses from Supabase", async () => {
     const mockQuery = createQuestQuery(null, null);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -151,7 +157,7 @@ describe("useQuests - edge and reload", () => {
 
   it("should reload data when reload is called", async () => {
     const mockQuery = createQuestQuery(mockQuests, null);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -205,7 +211,7 @@ describe("useQuests - edge and reload", () => {
 
   it("should handle errors during reload", async () => {
     const mockQuery = createQuestQuery(mockQuests, null);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -222,7 +228,9 @@ describe("useQuests - edge and reload", () => {
     await result.current.reload();
 
     await waitFor(() => {
-      expect(result.current.error).toBe("Failed to fetch quests: Reload failed");
+      expect(result.current.error).toBe(
+        "Failed to fetch quest instances: Reload failed",
+      );
     });
   });
 });

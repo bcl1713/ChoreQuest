@@ -94,6 +94,9 @@ beforeEach(() => {
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
     onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 
   (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
@@ -111,7 +114,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-    });
+  
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
+  });
 
     const { unmount } = renderHook(() => useRewards());
 
@@ -137,7 +143,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-    });
+  
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
+  });
 
     const { result } = renderHook(() => useRewards());
 
@@ -175,7 +184,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-    });
+  
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
+  });
 
     mockUseAuth.mockReturnValue({
       profile: null,
@@ -209,7 +221,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-    });
+  
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
+  });
 
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 

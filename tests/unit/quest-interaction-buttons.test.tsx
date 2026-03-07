@@ -7,8 +7,6 @@
  * THESE TESTS WILL FAIL until the quest pickup/management features are implemented.
  */
 
-
-
 import { render, screen, waitFor } from "@testing-library/react";
 import QuestDashboard from "../../components/quests/quest-dashboard";
 import React from "react";
@@ -82,12 +80,14 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
         id: mockHeroUser.id,
         family_id: "00000000-0000-4000-8000-000000000001",
         name: "Hero Player",
-        role: "HERO"
+        role: "HERO",
       },
     });
 
     (useRealtime as jest.Mock).mockReturnValue({
-      onQuestUpdate: jest.fn(),
+      onQuestUpdate: jest.fn(() => jest.fn()),
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
     });
 
     // Mock custom hooks
@@ -100,7 +100,7 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     });
 
     (useCharacter as jest.Mock).mockReturnValue({
-      character: { id: 'char-123', user_id: 'hero-123' },
+      character: { id: "char-123", user_id: "hero-123" },
       loading: false,
       error: null,
       reload: jest.fn(),
@@ -114,24 +114,37 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     });
 
     (supabase.from as jest.Mock).mockImplementation((tableName) => {
-      if (tableName === 'characters') {
+      if (tableName === "characters") {
         return {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({ data: { id: 'char-123', user_id: 'hero-123' }, error: null }),
+          single: jest.fn().mockResolvedValue({
+            data: { id: "char-123", user_id: "hero-123" },
+            error: null,
+          }),
         };
       }
-      if (tableName === 'user_profiles') {
+      if (tableName === "user_profiles") {
         return {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockResolvedValue({ data: [], error: null }),
         };
       }
-      if (tableName === 'quest_instances') {
+      if (tableName === "quest_instances") {
         return {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
-          order: jest.fn().mockResolvedValue({ data: questInstancesMock, error: null }),
+          order: jest
+            .fn()
+            .mockResolvedValue({ data: questInstancesMock, error: null }),
+        };
+      }
+      if (tableName === "boss_battles") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          in: jest.fn().mockReturnThis(),
+          order: jest.fn().mockResolvedValue({ data: [], error: null }),
         };
       }
       return supabase;
@@ -148,7 +161,9 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
     });
 
     // The "Available Quests" section should not be displayed
-    expect(screen.queryByTestId("available-quests-heading")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("available-quests-heading"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Clean the Kitchen")).not.toBeInTheDocument();
   });
 
@@ -186,7 +201,9 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
 
     // Dashboard should render with no quests
     await waitFor(() => {
-      expect(screen.getByText("You have no active quests right now.")).toBeInTheDocument();
+      expect(
+        screen.getByText("You have no active quests right now."),
+      ).toBeInTheDocument();
     });
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
@@ -52,6 +52,7 @@ export function useRewards(): UseRewardsReturn {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadRewards = useCallback(async () => {
     if (!profile?.family_id) {
@@ -61,7 +62,9 @@ export function useRewards(): UseRewardsReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -81,6 +84,7 @@ export function useRewards(): UseRewardsReturn {
       setRewards([]);
       setRedemptions([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -89,11 +93,9 @@ export function useRewards(): UseRewardsReturn {
     void loadRewards();
   }, [loadRewards]);
 
-  // Realtime subscription for reward updates
-  // Note: We don't include onRewardUpdate in dependencies because it's a registration
-  // function that doesn't change - it always adds to the same listener registry.
-
   useEffect(() => {
+    if (!profile?.family_id) return;
+
     const unsubscribe = onRewardUpdate((event) => {
       if (!event?.action) return;
 
@@ -114,18 +116,12 @@ export function useRewards(): UseRewardsReturn {
     });
 
     return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.family_id]);
-
-  // Realtime subscription for redemption updates
-  // Note: We don't include onRewardRedemptionUpdate in dependencies because it's a
-  // registration function that doesn't change - it always adds to the same listener registry.
+  }, [profile?.family_id, onRewardUpdate]);
 
   useEffect(() => {
     if (!profile?.family_id) return;
 
     const unsubscribe = onRewardRedemptionUpdate(async () => {
-      // Reload all redemptions when any change occurs
       try {
         const redemptionsData = await rewardService.getRedemptionsForFamily(
           profile.family_id!,
@@ -133,14 +129,11 @@ export function useRewards(): UseRewardsReturn {
         setRedemptions(redemptionsData);
       } catch (err) {
         console.error("Failed to reload redemptions:", err);
-        // Don't set error state here to avoid disrupting the UI
-        // The redemptions will just show stale data until next reload
       }
     });
 
     return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.family_id]);
+  }, [profile?.family_id, onRewardRedemptionUpdate]);
 
   return {
     rewards,

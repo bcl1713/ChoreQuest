@@ -84,13 +84,16 @@ beforeEach(() => {
     onQuestUpdate: jest.fn(() => jest.fn()),
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 });
 
 describe("useQuests - lifecycle and realtime", () => {
   it("should reload when family_id changes", async () => {
     const mockQuery = createQuestQuery(mockQuests);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result, rerender } = renderHook(() => useQuests());
@@ -129,10 +132,13 @@ describe("useQuests - lifecycle and realtime", () => {
       onQuestUpdate: mockOnQuestUpdate,
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
+
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
     });
 
     const mockQuery = createQuestQuery(mockQuests);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { unmount } = renderHook(() => useQuests());
@@ -146,7 +152,7 @@ describe("useQuests - lifecycle and realtime", () => {
   });
 
   it("should reload quests on quest updates", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
     const mockOnQuestUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
@@ -157,10 +163,13 @@ describe("useQuests - lifecycle and realtime", () => {
       onQuestUpdate: mockOnQuestUpdate,
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
+
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
     });
 
     const mockQuery = createQuestQuery(mockQuests);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -171,46 +180,17 @@ describe("useQuests - lifecycle and realtime", () => {
 
     jest.clearAllMocks();
 
-    const updatedQuests = [
-      ...mockQuests,
-      {
-        id: "quest-3",
-        family_id: "family-1",
-        title: "Realtime Quest",
-        description: "Realtime description",
-        status: "PENDING",
-        difficulty: "MEDIUM",
-        category: "DAILY",
-        xp_reward: 75,
-        gold_reward: 15,
-        quest_type: "INDIVIDUAL",
-        created_by_id: "user-1",
-        assigned_to_id: "user-2",
-        created_at: "2024-01-04T00:00:00Z",
-        updated_at: "2024-01-04T00:00:00Z",
-        due_date: null,
-        completed_at: null,
-        recurrence_pattern: null,
-        parent_template_id: null,
-        volunteer_bonus: null,
-        streak_bonus: null,
-        streak_count: null,
-      },
-    ];
-
-    mockQuery.order.mockResolvedValue({
-      data: updatedQuests,
-      error: null,
-    });
-
+    // The hook uses optimistic inline updates for UPDATE events,
+    // merging the record fields into the matching quest without refetching.
     updateCallback!({
       action: "UPDATE",
       record: { id: "quest-1", status: "IN_PROGRESS" },
     });
 
+    const expectedQuests = [{ ...mockQuests[0], status: "IN_PROGRESS" }];
+
     await waitFor(() => {
-      expect(result.current.quests).toEqual(updatedQuests);
+      expect(result.current.quests).toEqual(expectedQuests);
     });
-    expect(mockSupabase.from).toHaveBeenCalledWith("quest_instances");
   });
 });

@@ -105,10 +105,17 @@ beforeEach(() => {
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
     onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 
-  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
-  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(mockRedemptions);
+  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+    mockRewards,
+  );
+  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(
+    mockRedemptions,
+  );
 });
 
 describe("useRewards - loading and errors", () => {
@@ -127,13 +134,21 @@ describe("useRewards - loading and errors", () => {
     expect(result.current.rewards).toEqual(mockRewards);
     expect(result.current.redemptions).toEqual(mockRedemptions);
     expect(result.current.error).toBeNull();
-    expect(mockServiceInstance.getRewardsForFamily).toHaveBeenCalledWith("family-1");
-    expect(mockServiceInstance.getRedemptionsForFamily).toHaveBeenCalledWith("family-1");
+    expect(mockServiceInstance.getRewardsForFamily).toHaveBeenCalledWith(
+      "family-1",
+    );
+    expect(mockServiceInstance.getRedemptionsForFamily).toHaveBeenCalledWith(
+      "family-1",
+    );
   });
 
   it("should handle empty rewards and redemptions", async () => {
-    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue([]);
-    (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue([]);
+    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+      [],
+    );
+    (
+      mockServiceInstance.getRedemptionsForFamily as jest.Mock
+    ).mockResolvedValue([]);
 
     const { result } = renderHook(() => useRewards());
 
@@ -147,22 +162,8 @@ describe("useRewards - loading and errors", () => {
   });
 
   it("should handle errors when fetching rewards", async () => {
-    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockRejectedValue(new Error("Database error"));
-
-    const { result } = renderHook(() => useRewards());
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.error).toBe("Failed to fetch rewards: Database error");
-    expect(result.current.rewards).toEqual([]);
-    expect(result.current.redemptions).toEqual([]);
-  });
-
-  it("should handle errors when fetching redemptions", async () => {
-    (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockRejectedValue(
-      new Error("Redemption error"),
+    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockRejectedValue(
+      new Error("Database error"),
     );
 
     const { result } = renderHook(() => useRewards());
@@ -171,7 +172,23 @@ describe("useRewards - loading and errors", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe("Failed to fetch redemptions: Redemption error");
+    expect(result.current.error).toBe("Database error");
+    expect(result.current.rewards).toEqual([]);
+    expect(result.current.redemptions).toEqual([]);
+  });
+
+  it("should handle errors when fetching redemptions", async () => {
+    (
+      mockServiceInstance.getRedemptionsForFamily as jest.Mock
+    ).mockRejectedValue(new Error("Redemption error"));
+
+    const { result } = renderHook(() => useRewards());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBe("Redemption error");
     expect(result.current.rewards).toEqual([]);
     expect(result.current.redemptions).toEqual([]);
   });

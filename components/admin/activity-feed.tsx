@@ -7,10 +7,14 @@ import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui";
-import { EVENT_CONFIG, EVENT_ICONS, formatRelativeTime, getEventDescription } from "./activity-feed-config";
+import {
+  EVENT_CONFIG,
+  EVENT_ICONS,
+  formatRelativeTime,
+  getEventDescription,
+} from "./activity-feed-config";
 
 const activityService = new ActivityService();
-
 
 export default function ActivityFeed() {
   const { profile } = useAuth();
@@ -19,12 +23,18 @@ export default function ActivityFeed() {
   const onRewardRedemptionUpdate = realtime.onRewardRedemptionUpdate;
   const onCharacterUpdate = realtime.onCharacterUpdate;
   const onBossQuestUpdate = useMemo(
-    () => (typeof realtime.onBossQuestUpdate === "function" ? realtime.onBossQuestUpdate : () => () => {}),
-    [realtime.onBossQuestUpdate]
+    () =>
+      typeof realtime.onBossQuestUpdate === "function"
+        ? realtime.onBossQuestUpdate
+        : () => () => {},
+    [realtime.onBossQuestUpdate],
   );
   const onBossParticipantUpdate = useMemo(
-    () => (typeof realtime.onBossParticipantUpdate === "function" ? realtime.onBossParticipantUpdate : () => () => {}),
-    [realtime.onBossParticipantUpdate]
+    () =>
+      typeof realtime.onBossParticipantUpdate === "function"
+        ? realtime.onBossParticipantUpdate
+        : () => () => {},
+    [realtime.onBossParticipantUpdate],
   );
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +67,6 @@ export default function ActivityFeed() {
     loadActivity();
   }, [loadActivity]);
 
-  // Subscribe to realtime updates and refresh activity
   useEffect(() => {
     const unsubscribeQuest = onQuestUpdate(() => {
       loadActivity();
@@ -162,7 +171,9 @@ export default function ActivityFeed() {
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold text-white"><Wifi size={20} /> Recent Activity</h3>
+        <h3 className="text-xl font-semibold text-white">
+          <Wifi size={20} /> Recent Activity
+        </h3>
         <Button
           onClick={handleRefresh}
           isLoading={refreshing}
@@ -218,9 +229,13 @@ export default function ActivityFeed() {
                       </span>{" "}
                       {getEventDescription(event)}
                     </p>
-                    {(event.type === "BOSS_CREATED" || event.type === "BOSS_DEFEATED") && (
+                    {(event.type === "BOSS_CREATED" ||
+                      event.type === "BOSS_DEFEATED") && (
                       <p className="text-xs text-gray-400">
-                        {(event.bossParticipants ?? 0)} participants{event.bossRewards ? ` • ${event.bossRewards.xp} XP, ${event.bossRewards.gold} Gold, +${event.bossRewards.honor} Honor` : ""}
+                        {event.bossParticipants ?? 0} participants
+                        {event.bossRewards
+                          ? ` • ${event.bossRewards.xp} XP, ${event.bossRewards.gold} Gold, +${event.bossRewards.honor} Honor`
+                          : ""}
                       </p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">

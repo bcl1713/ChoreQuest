@@ -1,18 +1,27 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
+    div: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div {...props}>{children}</div>
+    ),
   },
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 const mockOnQuestUpdate = jest.fn(() => jest.fn());
 const mockOnRewardRedemptionUpdate = jest.fn(() => jest.fn());
 const mockOnCharacterUpdate = jest.fn(() => jest.fn());
+const mockOnBossQuestUpdate = jest.fn(() => jest.fn());
+const mockOnBossParticipantUpdate = jest.fn(() => jest.fn());
 jest.mock("@/lib/realtime-context", () => ({
   useRealtime: () => ({
     onQuestUpdate: mockOnQuestUpdate,
     onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
     onCharacterUpdate: mockOnCharacterUpdate,
+    onBossQuestUpdate: mockOnBossQuestUpdate,
+    onBossParticipantUpdate: mockOnBossParticipantUpdate,
   }),
 }));
 jest.mock("@/lib/auth-context", () => ({
@@ -36,6 +45,14 @@ jest.mock("@/lib/activity-service", () => {
 });
 import ActivityFeed from "@/components/admin/activity-feed";
 import { ActivityService } from "@/lib/activity-service";
+
+const getActivityMock = () => {
+  const MockedService = ActivityService as jest.MockedClass<
+    typeof ActivityService
+  >;
+  return new MockedService().getRecentActivity as jest.Mock;
+};
+
 describe("ActivityFeed", () => {
   const mockEvents = [
     {
@@ -88,9 +105,7 @@ describe("ActivityFeed", () => {
     },
   ];
   beforeEach(() => {
-    const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
-    const serviceInstance = new MockedService();
-    const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
+    const getRecentActivityMock = getActivityMock();
     getRecentActivityMock.mockReset();
     getRecentActivityMock.mockResolvedValue(mockEvents);
     mockOnQuestUpdate.mockClear().mockReturnValue(jest.fn());
@@ -106,17 +121,20 @@ describe("ActivityFeed", () => {
   it("should render loading state initially", () => {
     render(<ActivityFeed />);
     expect(screen.getByText("Recent Activity")).toBeInTheDocument();
-    const skeletons = screen.getAllByRole("generic").filter((el) =>
-      el.className.includes("animate-pulse")
-    );
+    const skeletons = screen
+      .getAllByRole("generic")
+      .filter((el) => el.className.includes("animate-pulse"));
     expect(skeletons.length).toBeGreaterThan(0);
   });
   it("should call getRecentActivity on mount", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
+      const MockedService = ActivityService as jest.MockedClass<
+        typeof ActivityService
+      >;
       const serviceInstance = new MockedService();
-      const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
+      const getRecentActivityMock =
+        serviceInstance.getRecentActivity as jest.Mock;
       expect(getRecentActivityMock).toHaveBeenCalledWith("family-123", 50);
     });
   });
@@ -140,25 +158,33 @@ describe("ActivityFeed", () => {
   it("should display quest completed events correctly", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      expect(screen.getByText(/completed quest "Clean the kitchen"/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/completed quest "Clean the kitchen"/i),
+      ).toBeInTheDocument();
     });
   });
   it("should display quest submitted events correctly", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      expect(screen.getByText(/submitted quest "Do homework" for approval/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/submitted quest "Do homework" for approval/i),
+      ).toBeInTheDocument();
     });
   });
   it("should display reward redeemed events correctly", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      expect(screen.getByText(/redeemed reward "Ice Cream"/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/redeemed reward "Ice Cream"/i),
+      ).toBeInTheDocument();
     });
   });
   it("should display reward approved events correctly", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      expect(screen.getByText(/reward "Movie Night" was approved/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/reward "Movie Night" was approved/i),
+      ).toBeInTheDocument();
     });
   });
   it("should display character created events correctly", async () => {
@@ -183,14 +209,7 @@ describe("ActivityFeed", () => {
       expect(screen.getByText(/Showing 5 recent events/i)).toBeInTheDocument();
     });
   });
-  it("should display Review button for submitted quests", async () => {
-    render(<ActivityFeed />);
-    await waitFor(() => {
-      const reviewButton = screen.getByRole("button", { name: /review/i });
-      expect(reviewButton).toBeInTheDocument();
-    });
-  });
-  it("should have clickable Review button for submitted quests", async () => {
+  it("should display clickable Review button for submitted quests", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
       const reviewButton = screen.getByRole("button", { name: /review/i });
@@ -198,72 +217,58 @@ describe("ActivityFeed", () => {
       expect(reviewButton.tagName).toBe("BUTTON");
     });
   });
-  it("should display Refresh button", async () => {
+  it("should display and enable Refresh button", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
+      const refreshButton = screen.getByRole("button", { name: /refresh/i });
+      expect(refreshButton).toBeInTheDocument();
+      expect(refreshButton).not.toBeDisabled();
     });
   });
   it("should refresh activity when Refresh button is clicked", async () => {
     render(<ActivityFeed />);
     await waitFor(() => {
-      const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
-      const serviceInstance = new MockedService();
-      const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
-      getRecentActivityMock.mockClear();
-      const refreshButton = screen.getByText("Refresh");
-      fireEvent.click(refreshButton);
+      const mock = getActivityMock();
+      mock.mockClear();
+      fireEvent.click(screen.getByText("Refresh"));
     });
     await waitFor(() => {
-      const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
-      const serviceInstance = new MockedService();
-      const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
-      expect(getRecentActivityMock).toHaveBeenCalled();
-    });
-  });
-  it("should allow refresh button to be clicked", async () => {
-    render(<ActivityFeed />);
-    await waitFor(() => {
-      const refreshButton = screen.getByText("Refresh");
-      expect(refreshButton).toBeInTheDocument();
-      expect(refreshButton).not.toBeDisabled();
+      expect(getActivityMock()).toHaveBeenCalled();
     });
   });
   it("should handle empty events list", async () => {
-    const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
-    const serviceInstance = new MockedService();
-    const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
+    const getRecentActivityMock = getActivityMock();
     getRecentActivityMock.mockResolvedValue([]);
     render(<ActivityFeed />);
     await waitFor(() => {
       expect(screen.getByText("No recent activity")).toBeInTheDocument();
-      expect(screen.getByText(/Complete quests and redeem rewards/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Complete quests and redeem rewards/i),
+      ).toBeInTheDocument();
     });
   });
   it("should handle error state", async () => {
-    const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
-    const serviceInstance = new MockedService();
-    const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
+    const getRecentActivityMock = getActivityMock();
     getRecentActivityMock.mockRejectedValue(new Error("Test error"));
     render(<ActivityFeed />);
     await waitFor(
       () => {
-        expect(screen.getByText(/Failed to load activity feed/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Failed to load activity feed/i),
+        ).toBeInTheDocument();
       },
-      { timeout: 3000 }
+      { timeout: 3000 },
     );
   });
   it("should show Retry button in error state", async () => {
-    const MockedService = ActivityService as jest.MockedClass<typeof ActivityService>;
-    const serviceInstance = new MockedService();
-    const getRecentActivityMock = serviceInstance.getRecentActivity as jest.Mock;
+    const getRecentActivityMock = getActivityMock();
     getRecentActivityMock.mockRejectedValue(new Error("Test error"));
     render(<ActivityFeed />);
     await waitFor(
       () => {
         expect(screen.getByText("Retry")).toBeInTheDocument();
       },
-      { timeout: 3000 }
+      { timeout: 3000 },
     );
   });
   it("should unsubscribe from updates on unmount", () => {

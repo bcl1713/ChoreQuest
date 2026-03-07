@@ -130,6 +130,9 @@ beforeEach(() => {
     onQuestUpdate: jest.fn(() => jest.fn()),
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 });
 

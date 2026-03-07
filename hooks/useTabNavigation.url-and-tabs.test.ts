@@ -8,7 +8,9 @@ jest.mock("next/navigation", () => ({
   usePathname: jest.fn(),
 }));
 
-const mockUseSearchParams = useSearchParams as jest.MockedFunction<typeof useSearchParams>;
+const mockUseSearchParams = useSearchParams as jest.MockedFunction<
+  typeof useSearchParams
+>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
 
@@ -36,7 +38,7 @@ beforeEach(() => {
   mockUsePathname.mockReturnValue("/admin");
   mockSearchParams.toString = jest.fn(() => "");
   mockSearchParams.get = jest.fn(() => null);
-   
+
   mockUseSearchParams.mockReturnValue(mockSearchParams as any);
 });
 
@@ -48,7 +50,9 @@ describe("useTabNavigation - URL sync and tabs array", () => {
       result.current.handleTabChange(1);
     });
 
-    expect(mockPush).toHaveBeenCalledWith("/admin?tab=settings");
+    expect(mockPush).toHaveBeenCalledWith("/admin?tab=settings", {
+      scroll: false,
+    });
   });
 
   it("should preserve existing query parameters when updating tab", () => {
@@ -61,7 +65,9 @@ describe("useTabNavigation - URL sync and tabs array", () => {
       result.current.handleTabChange(1);
     });
 
-    expect(mockPush).toHaveBeenCalledWith("/admin?foo=bar&tab=settings");
+    expect(mockPush).toHaveBeenCalledWith("/admin?foo=bar&tab=settings", {
+      scroll: false,
+    });
   });
 
   it("should preserve path when using router push", () => {
@@ -72,7 +78,9 @@ describe("useTabNavigation - URL sync and tabs array", () => {
       result.current.handleTabChange(2);
     });
 
-    expect(mockPush).toHaveBeenCalledWith("/quests?tab=profile");
+    expect(mockPush).toHaveBeenCalledWith("/quests?tab=profile", {
+      scroll: false,
+    });
   });
 
   it("should expose tabs with labels and icons", () => {

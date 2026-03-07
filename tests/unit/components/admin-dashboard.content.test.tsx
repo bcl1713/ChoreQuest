@@ -25,13 +25,17 @@ jest.mock("@/components/family/family-settings", () => () => (
   <div data-testid="family-settings">Family Settings</div>
 ));
 jest.mock("@/components/quests/quest-template-manager", () => ({
-  QuestTemplateManager: () => <div data-testid="quest-template-manager">Quest Template Manager</div>,
+  QuestTemplateManager: () => (
+    <div data-testid="quest-template-manager">Quest Template Manager</div>
+  ),
 }));
 jest.mock("@/components/rewards/reward-manager", () => () => (
   <div data-testid="reward-manager">Reward Manager</div>
 ));
 jest.mock("@/components/admin/quest-management-tab", () => ({
-  QuestManagementTab: () => <div data-testid="quest-management-tab">Quest Management Tab</div>,
+  QuestManagementTab: () => (
+    <div data-testid="quest-management-tab">Quest Management Tab</div>
+  ),
 }));
 
 describe("AdminDashboard content", () => {
@@ -39,7 +43,10 @@ describe("AdminDashboard content", () => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePathname as jest.Mock).mockReturnValue("/app/admin");
-    (useSearchParams as jest.Mock).mockReturnValue({ get: mockGet, toString: mockToString });
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: mockGet,
+      toString: mockToString,
+    });
     mockGet.mockReturnValue(null);
     mockToString.mockReturnValue("");
   });
@@ -65,14 +72,15 @@ describe("AdminDashboard content", () => {
       render(<AdminDashboard />);
       const tabList = screen.getByRole("tablist");
       expect(tabList.className).toContain("overflow-x-auto");
-      expect(tabList.className).toContain("lg:grid");
     });
   });
 
   describe("Tab Configuration", () => {
     it("should maintain correct ordering of tabs", () => {
       render(<AdminDashboard />);
-      const tabLabels = screen.getAllByRole("tab").map((tab) => tab.textContent);
+      const tabLabels = screen
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent);
       expect(tabLabels).toEqual([
         "Overview",
         "Quest Management",

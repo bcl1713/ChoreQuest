@@ -7,6 +7,15 @@ import {
   setupSupabaseList,
 } from "./guild-master-manager.fixtures";
 
+jest.mock("@/lib/supabase", () => ({
+  supabase: {
+    from: jest.fn(),
+    auth: {
+      getSession: jest.fn(),
+    },
+  },
+}));
+
 describe("GuildMasterManager - rendering", () => {
   beforeEach(() => {
     resetGuildMasterMocks();
@@ -17,7 +26,9 @@ describe("GuildMasterManager - rendering", () => {
     renderGuildMasterManager();
 
     expect(screen.getByText("Guild Master Management")).toBeInTheDocument();
-    const skeletons = screen.getAllByRole("generic").filter((el) => el.className.includes("animate-pulse"));
+    const skeletons = screen
+      .getAllByRole("generic")
+      .filter((el) => el.className.includes("animate-pulse"));
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
@@ -86,7 +97,9 @@ describe("GuildMasterManager - rendering", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/1 Guild Master in family/)).toBeInTheDocument();
-      expect(screen.queryAllByRole("button", { name: /Demote/ }).length).toBe(0);
+      expect(screen.queryAllByRole("button", { name: /Demote/ }).length).toBe(
+        0,
+      );
     });
   });
 

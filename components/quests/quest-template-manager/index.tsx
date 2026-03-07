@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime, RealtimeEvent } from "@/lib/realtime-context";
@@ -42,10 +42,14 @@ export function QuestTemplateManager() {
     useState<QuestTemplate | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<QuestTemplate | null>(null);
 
+  const hasLoadedRef = useRef(false);
+
   const loadTemplates = useCallback(async () => {
     if (!profile?.family_id) return;
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     const { data, error: fetchError } = await supabase
@@ -61,6 +65,7 @@ export function QuestTemplateManager() {
       setTemplates(data || []);
     }
 
+    hasLoadedRef.current = true;
     setLoading(false);
   }, [profile?.family_id]);
 
@@ -78,8 +83,8 @@ export function QuestTemplateManager() {
           case "UPDATE":
             setTemplates((prev) =>
               prev.map((t) =>
-                t.id === (event.record as QuestTemplate).id
-                  ? (event.record as QuestTemplate)
+                t.id === (event.record as Partial<QuestTemplate>).id
+                  ? ({ ...t, ...event.record } as QuestTemplate)
                   : t,
               ),
             );
@@ -166,20 +171,24 @@ export function QuestTemplateManager() {
     [],
   );
 
-  const handleTogglePause = useCallback(async (template: QuestTemplate) => {
-    try {
-      const { error } = await supabase
-        .from("quest_templates")
-        .update({ is_paused: !template.is_paused })
-        .eq("id", template.id);
+  const handleTogglePause = useCallback(
+    async (template: QuestTemplate) => {
+      try {
+        const { error } = await supabase
+          .from("quest_templates")
+          .update({ is_paused: !template.is_paused })
+          .eq("id", template.id);
 
-      if (error) throw error;
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to toggle pause state",
-      );
-    }
-  }, []);
+        if (error) throw error;
+        await loadTemplates();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to toggle pause state",
+        );
+      }
+    },
+    [loadTemplates],
+  );
 
   const handleFormCancel = useCallback(() => {
     setIsFormModalOpen(false);

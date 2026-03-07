@@ -33,6 +33,18 @@ const mockProfile = {
   updated_at: "2024-01-01T00:00:00Z",
 };
 
+const defaultRealtimeMock = () => ({
+  onFamilyMemberUpdate: jest.fn(() => jest.fn()),
+  onQuestUpdate: jest.fn(() => jest.fn()),
+  onRewardUpdate: jest.fn(() => jest.fn()),
+  onRedemptionUpdate: jest.fn(() => jest.fn()),
+  onBossQuestUpdate: jest.fn(() => jest.fn()),
+  onBossParticipantUpdate: jest.fn(() => jest.fn()),
+});
+const mockRealtimeWith = (overrides = {}) => {
+  mockUseRealtime.mockReturnValue({ ...defaultRealtimeMock(), ...overrides });
+};
+
 const mockFamilyMembers: Tables<"user_profiles">[] = [
   {
     id: "user-1",
@@ -87,14 +99,12 @@ const mockSupabaseTables = (
 ) => {
   mockSupabase.from.mockImplementation((table: string) => {
     if (table === "user_profiles") {
-       
       return profilesQuery as any;
     }
     if (table === "characters") {
-       
       return charactersQuery as any;
     }
-     
+
     return {} as any;
   });
 };
@@ -111,12 +121,7 @@ beforeEach(() => {
     signOut: jest.fn(),
     signInWithGoogle: jest.fn(),
   });
-  mockUseRealtime.mockReturnValue({
-    onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-    onQuestUpdate: jest.fn(() => jest.fn()),
-    onRewardUpdate: jest.fn(() => jest.fn()),
-    onRedemptionUpdate: jest.fn(() => jest.fn()),
-  });
+  mockRealtimeWith();
 });
 
 describe("useFamilyMembers - realtime and shape", () => {
@@ -124,12 +129,7 @@ describe("useFamilyMembers - realtime and shape", () => {
     const mockUnsubscribe = jest.fn();
     const mockOnFamilyMemberUpdate = jest.fn(() => mockUnsubscribe);
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: jest.fn(() => jest.fn()),
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onFamilyMemberUpdate: mockOnFamilyMemberUpdate });
 
     const profilesQuery = createUserProfilesQuery(mockFamilyMembers);
     const charactersQuery = createCharactersQuery(mockCharacters);
@@ -146,18 +146,13 @@ describe("useFamilyMembers - realtime and shape", () => {
   });
 
   it("should reload data when family member is updated", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
     const mockOnFamilyMemberUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: jest.fn(() => jest.fn()),
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onFamilyMemberUpdate: mockOnFamilyMemberUpdate });
 
     const profilesQuery = createUserProfilesQuery(mockFamilyMembers);
     const charactersQuery = createCharactersQuery(mockCharacters);
@@ -198,18 +193,13 @@ describe("useFamilyMembers - realtime and shape", () => {
   });
 
   it("should reload on INSERT events", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
     const mockOnFamilyMemberUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: jest.fn(() => jest.fn()),
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onFamilyMemberUpdate: mockOnFamilyMemberUpdate });
 
     const profilesQuery = createUserProfilesQuery(mockFamilyMembers);
     const charactersQuery = createCharactersQuery(mockCharacters);
@@ -234,18 +224,13 @@ describe("useFamilyMembers - realtime and shape", () => {
   });
 
   it("should reload on DELETE events", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
     const mockOnFamilyMemberUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: jest.fn(() => jest.fn()),
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onFamilyMemberUpdate: mockOnFamilyMemberUpdate });
 
     const profilesQuery = createUserProfilesQuery(mockFamilyMembers);
     const charactersQuery = createCharactersQuery(mockCharacters);
@@ -272,12 +257,7 @@ describe("useFamilyMembers - realtime and shape", () => {
   it("should not subscribe when profile has no family_id", async () => {
     const mockOnFamilyMemberUpdate = jest.fn(() => jest.fn());
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: jest.fn(() => jest.fn()),
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onFamilyMemberUpdate: mockOnFamilyMemberUpdate });
 
     mockUseAuth.mockReturnValue({
       profile: null,

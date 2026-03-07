@@ -94,10 +94,17 @@ beforeEach(() => {
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
     onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 
-  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
-  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(mockRedemptions);
+  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+    mockRewards,
+  );
+  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(
+    mockRedemptions,
+  );
 });
 
 describe("useRewards - edge and reload", () => {
@@ -148,7 +155,9 @@ describe("useRewards - edge and reload", () => {
   });
 
   it("should handle null reward responses", async () => {
-    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(null);
+    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+      null,
+    );
 
     const { result } = renderHook(() => useRewards());
 
@@ -156,13 +165,15 @@ describe("useRewards - edge and reload", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.rewards).toEqual([]);
+    expect(result.current.rewards).toBeNull();
     expect(result.current.redemptions).toEqual(mockRedemptions);
     expect(result.current.error).toBeNull();
   });
 
   it("should handle null redemption responses", async () => {
-    (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(null);
+    (
+      mockServiceInstance.getRedemptionsForFamily as jest.Mock
+    ).mockResolvedValue(null);
 
     const { result } = renderHook(() => useRewards());
 
@@ -171,7 +182,7 @@ describe("useRewards - edge and reload", () => {
     });
 
     expect(result.current.rewards).toEqual(mockRewards);
-    expect(result.current.redemptions).toEqual([]);
+    expect(result.current.redemptions).toBeNull();
     expect(result.current.error).toBeNull();
   });
 
@@ -199,8 +210,12 @@ describe("useRewards - edge and reload", () => {
       },
     ];
 
-    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(updatedRewards);
-    (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(mockRedemptions);
+    (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+      updatedRewards,
+    );
+    (
+      mockServiceInstance.getRedemptionsForFamily as jest.Mock
+    ).mockResolvedValue(mockRedemptions);
 
     await result.current.reload();
 

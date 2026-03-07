@@ -1,6 +1,104 @@
 import { render, screen } from "@testing-library/react";
 import { QuestStatus } from "@/lib/types/database";
 import { QuestManagementTab } from "../quest-management-tab";
+
+// jest.mock calls must be in the test file itself to be hoisted properly
+jest.mock("@/hooks/useQuests", () => ({
+  useQuests: jest.fn(),
+}));
+jest.mock("@/hooks/useFamilyMembers", () => ({
+  useFamilyMembers: jest.fn(),
+}));
+jest.mock("@/lib/auth-context", () => ({
+  useAuth: jest.fn(),
+}));
+jest.mock("@/components/quests/quest-card", () => {
+  return function MockQuestCard({
+    quest,
+    viewMode,
+  }: {
+    quest: { id: string; title: string };
+    viewMode: string;
+  }) {
+    return (
+      <div data-testid={`quest-card-${quest.id}`} data-view-mode={viewMode}>
+        {quest.title}
+      </div>
+    );
+  };
+});
+jest.mock("framer-motion", () => ({
+  motion: {
+    div: ({
+      children,
+      ...props
+    }: {
+      children: React.ReactNode;
+      [key: string]: unknown;
+    }) => <div {...props}>{children}</div>,
+  },
+}));
+jest.mock("@/components/ui/LoadingSpinner", () => ({
+  LoadingSpinner: function MockLoadingSpinner() {
+    return <div data-testid="loading-spinner">Loading...</div>;
+  },
+}));
+jest.mock("@/lib/animations/variants", () => ({
+  staggerContainer: {},
+}));
+jest.mock("@/components/ui/NotificationContainer", () => ({
+  NotificationContainer: function MockNotificationContainer() {
+    return <div data-testid="notification-container" />;
+  },
+}));
+jest.mock("@/components/ui/ConfirmationModal", () => ({
+  ConfirmationModal: function MockConfirmationModal({
+    isOpen,
+  }: {
+    isOpen: boolean;
+  }) {
+    return isOpen ? <div data-testid="confirmation-modal" /> : null;
+  },
+}));
+jest.mock("@/hooks/useNotification", () => ({
+  useNotification: () => ({
+    notifications: [],
+    dismiss: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+  }),
+}));
+jest.mock("@/components/quests/pending-approvals-section", () => {
+  return function MockPendingApprovalsSection({
+    quests,
+  }: {
+    quests: Array<{ id: string; title: string }>;
+  }) {
+    return (
+      <div data-testid="pending-approvals-section">
+        <h3>Pending Approval</h3>
+        <span>{quests.length}</span>
+        {quests.length === 0 ? (
+          <p>No quests awaiting approval</p>
+        ) : (
+          quests.map((q) => (
+            <div
+              key={q.id}
+              data-testid={`quest-card-${q.id}`}
+              data-view-mode="gm"
+            >
+              {q.title}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+});
+jest.mock("@/lib/quest-instance-api-service", () => ({
+  questInstanceApiService: {},
+}));
+
 import {
   createMockFamilyMember,
   createMockQuest,
@@ -86,14 +184,25 @@ describe("QuestManagementTab - rendering", () => {
 
       render(<QuestManagementTab />);
 
-      expect(screen.getByTestId("quest-card-quest-1")).toHaveAttribute("data-view-mode", "gm");
+      expect(screen.getByTestId("quest-card-quest-1")).toHaveAttribute(
+        "data-view-mode",
+        "gm",
+      );
     });
 
     it("shows correct count for each section", () => {
       const quests = [
         createMockQuest({ id: "quest-1", status: "COMPLETED" as QuestStatus }),
-        createMockQuest({ id: "quest-2", status: "PENDING" as QuestStatus, assigned_to_id: null }),
-        createMockQuest({ id: "quest-3", status: "IN_PROGRESS" as QuestStatus, assigned_to_id: "user-1" }),
+        createMockQuest({
+          id: "quest-2",
+          status: "PENDING" as QuestStatus,
+          assigned_to_id: null,
+        }),
+        createMockQuest({
+          id: "quest-3",
+          status: "IN_PROGRESS" as QuestStatus,
+          assigned_to_id: "user-1",
+        }),
       ];
       setupQuestData(quests);
 
@@ -135,9 +244,15 @@ describe("QuestManagementTab - rendering", () => {
       expect(screen.getByText("Pending Approval")).toBeInTheDocument();
       expect(screen.getByText("Unassigned")).toBeInTheDocument();
       expect(screen.getByText("In Progress")).toBeInTheDocument();
-      expect(screen.getByTestId("quest-card-quest-pending")).toBeInTheDocument();
-      expect(screen.getByTestId("quest-card-quest-unassigned")).toBeInTheDocument();
-      expect(screen.getByTestId("quest-card-quest-inprogress")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("quest-card-quest-pending"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("quest-card-quest-unassigned"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("quest-card-quest-inprogress"),
+      ).toBeInTheDocument();
     });
   });
 

@@ -134,11 +134,36 @@ export const applyDefaultActivityMocks = (mockFrom: jest.Mock) => {
     if (table === "reward_redemptions") {
       return {
         select: jest.fn().mockReturnValue({
-          in: jest.fn().mockReturnValue({
+          in: jest
+            .fn()
+            .mockResolvedValue({ data: mockRedemptions, error: null }),
+        }),
+      };
+    }
+    if (table === "boss_battles") {
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
             order: jest.fn().mockReturnValue({
               limit: jest.fn().mockResolvedValue({
-                data: mockRedemptions,
+                data: [],
                 error: null,
+              }),
+            }),
+          }),
+        }),
+      };
+    }
+    if (table === "transactions") {
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            in: jest.fn().mockReturnValue({
+              order: jest.fn().mockReturnValue({
+                limit: jest.fn().mockResolvedValue({
+                  data: [],
+                  error: null,
+                }),
               }),
             }),
           }),

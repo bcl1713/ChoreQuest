@@ -12,7 +12,16 @@ jest.mock("@/lib/auth-context", () => ({
 }));
 
 jest.mock("@/lib/realtime-context", () => ({
-  useRealtime: jest.fn(),
+  useRealtime: jest.fn(() => ({
+    onQuestUpdate: jest.fn(() => jest.fn()),
+    onQuestTemplateUpdate: jest.fn(() => jest.fn()),
+    onCharacterUpdate: jest.fn(() => jest.fn()),
+    onRewardUpdate: jest.fn(() => jest.fn()),
+    onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+    onFamilyMemberUpdate: jest.fn(() => jest.fn()),
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
+  })),
 }));
 
 jest.mock("@/lib/reward-service", () => {
@@ -94,10 +103,16 @@ beforeEach(() => {
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
     onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 
-  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
-  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(mockRedemptions);
+  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+    mockRewards,
+  );
+  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(
+    mockRedemptions,
+  );
 });
 
 describe("useRewards - return shape", () => {

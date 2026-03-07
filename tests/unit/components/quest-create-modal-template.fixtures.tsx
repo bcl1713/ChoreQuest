@@ -105,7 +105,11 @@ jest.mock("@/lib/supabase", () => {
   };
 });
 
-jest.mock("@/lib/quest-template-service");
+jest.mock("@/lib/quest-template-service", () => ({
+  questTemplateService: {
+    createQuestFromTemplate: jest.fn(),
+  },
+}));
 
 export const mockTemplates: QuestTemplate[] = [
   {
@@ -150,7 +154,9 @@ export const mockTemplates: QuestTemplate[] = [
   },
 ];
 
-export const renderTemplateModal = (props: Partial<React.ComponentProps<typeof QuestCreateModal>> = {}) =>
+export const renderTemplateModal = (
+  props: Partial<React.ComponentProps<typeof QuestCreateModal>> = {},
+) =>
   render(
     <QuestCreateModal
       isOpen={true}

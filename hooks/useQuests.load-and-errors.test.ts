@@ -82,7 +82,10 @@ const mockQuests: QuestInstance[] = [
   },
 ];
 
-const createQuestQuery = (data: QuestInstance[] | null, error: Error | null) => ({
+const createQuestQuery = (
+  data: QuestInstance[] | null,
+  error: Error | null,
+) => ({
   select: jest.fn().mockReturnThis(),
   eq: jest.fn().mockReturnThis(),
   order: jest.fn().mockResolvedValue({ data, error }),
@@ -107,13 +110,16 @@ beforeEach(() => {
     onQuestUpdate: jest.fn(() => jest.fn()),
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 });
 
 describe("useQuests - loading and errors", () => {
   it("should load quests successfully", async () => {
     const mockQuery = createQuestQuery(mockQuests, null);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -129,12 +135,14 @@ describe("useQuests - loading and errors", () => {
     expect(result.current.quests).toEqual(mockQuests);
     expect(mockQuery.select).toHaveBeenCalledWith("*");
     expect(mockQuery.eq).toHaveBeenCalledWith("family_id", "family-1");
-    expect(mockQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(mockQuery.order).toHaveBeenCalledWith("created_at", {
+      ascending: false,
+    });
   });
 
   it("should handle empty quest list", async () => {
     const mockQuery = createQuestQuery([], null);
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -149,7 +157,7 @@ describe("useQuests - loading and errors", () => {
 
   it("should handle errors when fetching quests", async () => {
     const mockQuery = createQuestQuery(null, new Error("Database error"));
-     
+
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());
@@ -158,7 +166,9 @@ describe("useQuests - loading and errors", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBe("Failed to fetch quests: Database error");
+    expect(result.current.error).toBe(
+      "Failed to fetch quest instances: Database error",
+    );
     expect(result.current.quests).toEqual([]);
   });
 
@@ -169,7 +179,6 @@ describe("useQuests - loading and errors", () => {
       order: jest.fn().mockRejectedValue("String error"),
     };
 
-     
     mockSupabase.from.mockReturnValue(mockQuery as any);
 
     const { result } = renderHook(() => useQuests());

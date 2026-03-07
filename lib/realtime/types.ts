@@ -29,7 +29,6 @@ export type ListenerRegistry = {
 export interface RealtimeContextType {
   isConnected: boolean;
   connectionError: string | null;
-  lastEvent: RealtimeEvent | null;
   onQuestUpdate: (callback: Listener) => () => void;
   onQuestTemplateUpdate: (callback: Listener) => () => void;
   onCharacterUpdate: (callback: Listener) => () => void;
@@ -44,4 +43,6 @@ export interface RealtimeContextType {
   refreshRewards: () => void;
 }
 
-export type SubscriptionPayload = RealtimePostgresChangesPayload<Record<string, unknown>>;
+export type SubscriptionPayload = RealtimePostgresChangesPayload<
+  Record<string, unknown>
+>;

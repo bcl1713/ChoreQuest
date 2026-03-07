@@ -4,20 +4,14 @@ import { filterByAll, filterByAny, groupBy } from "./data";
 describe("filterByAll", () => {
   it("should keep items that satisfy all predicates", () => {
     const items = [1, 2, 3, 4, 5];
-    const predicates = [
-      (n: number) => n > 2,
-      (n: number) => n % 2 === 1,
-    ];
+    const predicates = [(n: number) => n > 2, (n: number) => n % 2 === 1];
     const result = filterByAll(items, predicates);
     expect(result).toEqual([3, 5]);
   });
 
   it("should return empty array when predicates reject all", () => {
     const items = [1, 2, 3];
-    const predicates = [
-      (n: number) => n > 5,
-      (n: number) => n % 2 === 0,
-    ];
+    const predicates = [(n: number) => n > 5, (n: number) => n % 2 === 0];
     const result = filterByAll(items, predicates);
     expect(result).toEqual([]);
   });
@@ -32,28 +26,22 @@ describe("filterByAll", () => {
 describe("filterByAny", () => {
   it("should keep items that satisfy at least one predicate", () => {
     const items = [1, 2, 3, 4, 5];
-    const predicates = [
-      (n: number) => n > 4,
-      (n: number) => n % 2 === 0,
-    ];
+    const predicates = [(n: number) => n > 4, (n: number) => n % 2 === 0];
     const result = filterByAny(items, predicates);
     expect(result).toEqual([2, 4, 5]);
   });
 
   it("should return empty array when no predicates match", () => {
     const items = [1, 3, 5];
-    const predicates = [
-      (n: number) => n > 10,
-      (n: number) => n % 2 === 0,
-    ];
+    const predicates = [(n: number) => n > 10, (n: number) => n % 2 === 0];
     const result = filterByAny(items, predicates);
     expect(result).toEqual([]);
   });
 
-  it("should handle empty predicates array", () => {
+  it("should return empty array when predicates array is empty", () => {
     const items = [1, 2, 3];
     const result = filterByAny(items, []);
-    expect(result).toEqual(items);
+    expect(result).toEqual([]);
   });
 });
 

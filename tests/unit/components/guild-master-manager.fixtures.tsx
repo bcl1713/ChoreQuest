@@ -4,16 +4,25 @@ import { supabase } from "@/lib/supabase";
 
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
+    div: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div {...props}>{children}</div>
+    ),
   },
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 
 export const mockOnFamilyMemberUpdate = jest.fn(() => jest.fn());
+const mockOnBossQuestUpdate = jest.fn(() => jest.fn());
+const mockOnBossParticipantUpdate = jest.fn(() => jest.fn());
 
 jest.mock("@/lib/realtime-context", () => ({
   useRealtime: () => ({
     onFamilyMemberUpdate: mockOnFamilyMemberUpdate,
+    onBossQuestUpdate: mockOnBossQuestUpdate,
+    onBossParticipantUpdate: mockOnBossParticipantUpdate,
   }),
 }));
 

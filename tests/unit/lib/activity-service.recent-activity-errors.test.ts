@@ -38,7 +38,7 @@ describe("ActivityService - recent activity errors", () => {
       };
     });
     await expect(service.getRecentActivity(mockFamilyId)).rejects.toThrow(
-      "Failed to fetch family members: Database error"
+      "Failed to fetch family members: Database error",
     );
   });
 
@@ -81,7 +81,7 @@ describe("ActivityService - recent activity errors", () => {
       };
     });
     await expect(service.getRecentActivity(mockFamilyId)).rejects.toThrow(
-      "Failed to fetch completed quests: Quest query error"
+      "Failed to fetch completed quests: Quest query error",
     );
   });
 
@@ -138,7 +138,7 @@ describe("ActivityService - recent activity errors", () => {
       };
     });
     await expect(service.getRecentActivity(mockFamilyId)).rejects.toThrow(
-      "Failed to fetch submitted quests: Submitted quest query error"
+      "Failed to fetch submitted quests: Submitted quest query error",
     );
   });
 
@@ -173,11 +173,37 @@ describe("ActivityService - recent activity errors", () => {
       if (table === "reward_redemptions") {
         return {
           select: jest.fn().mockReturnValue({
-            in: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: "Redemption query error" },
+            }),
+          }),
+        };
+      }
+      if (table === "boss_battles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
               order: jest.fn().mockReturnValue({
                 limit: jest.fn().mockResolvedValue({
-                  data: null,
-                  error: { message: "Redemption query error" },
+                  data: [],
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "transactions") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              in: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  limit: jest.fn().mockResolvedValue({
+                    data: [],
+                    error: null,
+                  }),
                 }),
               }),
             }),
@@ -191,7 +217,7 @@ describe("ActivityService - recent activity errors", () => {
       };
     });
     await expect(service.getRecentActivity(mockFamilyId)).rejects.toThrow(
-      "Failed to fetch redemptions: Redemption query error"
+      "Failed to fetch redemptions: Redemption query error",
     );
   });
 });

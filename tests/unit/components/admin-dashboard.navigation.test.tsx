@@ -25,13 +25,17 @@ jest.mock("@/components/family/family-settings", () => () => (
   <div data-testid="family-settings">Family Settings</div>
 ));
 jest.mock("@/components/quests/quest-template-manager", () => ({
-  QuestTemplateManager: () => <div data-testid="quest-template-manager">Quest Template Manager</div>,
+  QuestTemplateManager: () => (
+    <div data-testid="quest-template-manager">Quest Template Manager</div>
+  ),
 }));
 jest.mock("@/components/rewards/reward-manager", () => () => (
   <div data-testid="reward-manager">Reward Manager</div>
 ));
 jest.mock("@/components/admin/quest-management-tab", () => ({
-  QuestManagementTab: () => <div data-testid="quest-management-tab">Quest Management Tab</div>,
+  QuestManagementTab: () => (
+    <div data-testid="quest-management-tab">Quest Management Tab</div>
+  ),
 }));
 
 describe("AdminDashboard navigation", () => {
@@ -39,7 +43,10 @@ describe("AdminDashboard navigation", () => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
     (usePathname as jest.Mock).mockReturnValue("/app/admin");
-    (useSearchParams as jest.Mock).mockReturnValue({ get: mockGet, toString: mockToString });
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: mockGet,
+      toString: mockToString,
+    });
     mockGet.mockReturnValue(null);
     mockToString.mockReturnValue("");
   });
@@ -47,12 +54,20 @@ describe("AdminDashboard navigation", () => {
   describe("Tab Rendering", () => {
     it("should render all tab labels and default selection", () => {
       render(<AdminDashboard />);
-      expect(screen.getByText(/Overview/)).toBeInTheDocument();
-      expect(screen.getByText(/Quest Management/)).toBeInTheDocument();
-      expect(screen.getByText(/Quest Templates/)).toBeInTheDocument();
-      expect(screen.getByText(/Rewards/)).toBeInTheDocument();
-      expect(screen.getByText(/Guild Masters/)).toBeInTheDocument();
-      expect(screen.getByText(/Family Settings/)).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Overview/ })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /Quest Management/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /Quest Templates/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Rewards/ })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /Guild Masters/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /Family Settings/ }),
+      ).toBeInTheDocument();
       const overviewTab = screen.getByRole("tab", { name: /Overview/ });
       expect(overviewTab).toHaveClass("bg-gold-600");
     });
@@ -61,7 +76,9 @@ describe("AdminDashboard navigation", () => {
   describe("Tab Navigation", () => {
     it("should change tab when clicked", async () => {
       render(<AdminDashboard />);
-      const guildMastersTab = screen.getByRole("tab", { name: /Guild Masters/ });
+      const guildMastersTab = screen.getByRole("tab", {
+        name: /Guild Masters/,
+      });
       fireEvent.click(guildMastersTab);
       await waitFor(() => expect(guildMastersTab).toHaveClass("bg-gold-600"));
     });
@@ -73,7 +90,7 @@ describe("AdminDashboard navigation", () => {
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith(
           "/app/admin?tab=rewards",
-          expect.objectContaining({ scroll: false })
+          expect.objectContaining({ scroll: false }),
         );
       });
     });
@@ -81,9 +98,14 @@ describe("AdminDashboard navigation", () => {
     it("should preserve existing query params when changing tabs", () => {
       mockToString.mockReturnValue("foo=bar");
       render(<AdminDashboard />);
-      const guildMastersTab = screen.getByRole("tab", { name: /Guild Masters/ });
+      const guildMastersTab = screen.getByRole("tab", {
+        name: /Guild Masters/,
+      });
       fireEvent.click(guildMastersTab);
-      expect(mockPush).toHaveBeenCalledWith("/app/admin?foo=bar&tab=guilds", expect.anything());
+      expect(mockPush).toHaveBeenCalledWith(
+        "/app/admin?foo=bar&tab=guild-masters",
+        expect.anything(),
+      );
     });
   });
 

@@ -175,7 +175,7 @@ describe("QuestInstanceService - assignQuest", () => {
     await expect(
       service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
     ).rejects.toThrow(
-      "Hero already has an active family quest. They must complete or release it first.",
+      "Hero already has an active family quest. Release the current quest before assigning another.",
     );
   });
 

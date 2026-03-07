@@ -1,6 +1,18 @@
 import { screen, waitFor } from "@testing-library/react";
 import { supabase } from "@/lib/supabase";
-import { renderGuildMasterManager, resetGuildMasterMocks } from "./guild-master-manager.fixtures";
+import {
+  renderGuildMasterManager,
+  resetGuildMasterMocks,
+} from "./guild-master-manager.fixtures";
+
+jest.mock("@/lib/supabase", () => ({
+  supabase: {
+    from: jest.fn(),
+    auth: {
+      getSession: jest.fn(),
+    },
+  },
+}));
 
 describe("GuildMasterManager - errors", () => {
   beforeEach(() => {
@@ -26,7 +38,9 @@ describe("GuildMasterManager - errors", () => {
     renderGuildMasterManager();
 
     await waitFor(() => {
-      expect(screen.getByText(/Database error/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Failed to load family members/),
+      ).toBeInTheDocument();
     });
   });
 });

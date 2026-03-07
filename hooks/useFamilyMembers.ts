@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -47,6 +47,7 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
   const [familyCharacters, setFamilyCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadFamilyMembers = useCallback(async () => {
     if (!profile?.family_id) {
@@ -56,7 +57,9 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -102,6 +105,7 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
       setFamilyMembers([]);
       setFamilyCharacters([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -110,21 +114,15 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
     void loadFamilyMembers();
   }, [loadFamilyMembers]);
 
-  // Realtime subscription for family member updates
-  // Note: We don't include onFamilyMemberUpdate in dependencies because it's a registration
-  // function that doesn't change - it always adds to the same listener registry.
-
   useEffect(() => {
     if (!profile?.family_id) return;
 
     const unsubscribe = onFamilyMemberUpdate(() => {
-      // Reload family members when any member data changes
       void loadFamilyMembers();
     });
 
     return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadFamilyMembers, profile?.family_id]);
+  }, [loadFamilyMembers, profile?.family_id, onFamilyMemberUpdate]);
 
   return {
     familyMembers,

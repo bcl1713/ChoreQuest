@@ -1,8 +1,17 @@
 "use client";
 
-import { Calendar, CalendarDays, Clock, Coins, Flame, User, Zap } from "lucide-react";
+import {
+  Calendar,
+  CalendarDays,
+  CheckCircle,
+  Clock,
+  Coins,
+  Flame,
+  User,
+  Zap,
+} from "lucide-react";
 import { getDifficultyColor, getStatusColor } from "@/lib/utils/colors";
-import { formatDueDate } from "@/lib/utils/formatting";
+import { formatCompletedTime, formatDueDate } from "@/lib/utils/formatting";
 import type { QuestInstance } from "@/lib/types/database";
 import type { RecurrenceLabelWithIcon } from "./quest-card-helpers";
 
@@ -14,7 +23,10 @@ type QuestMetaProps = {
   assignedHeroName?: string;
 };
 
-const recurrenceIcons: Record<string, React.ComponentType<{ size: number; className?: string }>> = {
+const recurrenceIcons: Record<
+  string,
+  React.ComponentType<{ size: number; className?: string }>
+> = {
   Calendar,
   CalendarDays,
   Clock,
@@ -28,14 +40,18 @@ export function QuestMeta({
   assignedHeroName,
 }: QuestMetaProps) {
   const statusLabel = (quest.status ?? "PENDING").replace(/_/g, " ");
-  const RecurrenceIcon = recurrenceLabel ? recurrenceIcons[recurrenceLabel.icon] : null;
+  const RecurrenceIcon = recurrenceLabel
+    ? recurrenceIcons[recurrenceLabel.icon]
+    : null;
 
   return (
     <>
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <div>
-            <h4 className="text-lg font-semibold text-gray-100">{quest.title}</h4>
+            <h4 className="text-lg font-semibold text-gray-100">
+              {quest.title}
+            </h4>
             <p className="text-gray-300 text-sm">{quest.description}</p>
           </div>
 
@@ -57,11 +73,14 @@ export function QuestMeta({
             )}
             {quest.due_date && <span>{formatDueDate(quest.due_date)}</span>}
             {volunteerBonusPercent && (
-              <span className="text-emerald-300">+{volunteerBonusPercent} Volunteer Bonus</span>
+              <span className="text-emerald-300">
+                +{volunteerBonusPercent} Volunteer Bonus
+              </span>
             )}
             {streakBonusPercent && quest.streak_count && (
               <span className="text-amber-300 flex items-center gap-1">
-                <Flame size={16} className="inline" /> {quest.streak_count}-day streak (+{streakBonusPercent})
+                <Flame size={16} className="inline" /> {quest.streak_count}-day
+                streak (+{streakBonusPercent})
               </span>
             )}
             {assignedHeroName && (
@@ -69,10 +88,20 @@ export function QuestMeta({
                 <User size={16} className="inline" /> {assignedHeroName}
               </span>
             )}
+            {quest.status === "COMPLETED" &&
+              quest.completed_at &&
+              formatCompletedTime(quest.completed_at) && (
+                <span className="text-sky-300 flex items-center gap-1">
+                  <CheckCircle size={16} className="inline" /> Completed{" "}
+                  {formatCompletedTime(quest.completed_at)}
+                </span>
+              )}
           </div>
         </div>
 
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quest.status)}`}>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(quest.status)}`}
+        >
           {statusLabel}
         </span>
       </div>

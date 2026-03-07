@@ -81,7 +81,9 @@ describe("QuestInstanceService - approveQuest", () => {
       streak_bonus: 0.05,
     };
 
-    const questSelectSingle = jest.fn().mockResolvedValue({ data: questRecord, error: null });
+    const questSelectSingle = jest
+      .fn()
+      .mockResolvedValue({ data: questRecord, error: null });
     const questSelectBuilder = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -106,7 +108,9 @@ describe("QuestInstanceService - approveQuest", () => {
       })),
     };
 
-    const characterSelectSingle = jest.fn().mockResolvedValue({ data: characterRecord, error: null });
+    const characterSelectSingle = jest
+      .fn()
+      .mockResolvedValue({ data: characterRecord, error: null });
     const characterSelectBuilder = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -123,7 +127,9 @@ describe("QuestInstanceService - approveQuest", () => {
       })),
     };
 
-    const templateMaybeSingle = jest.fn().mockResolvedValue({ data: templateRecord, error: null });
+    const templateMaybeSingle = jest
+      .fn()
+      .mockResolvedValue({ data: templateRecord, error: null });
     const templateBuilder = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -176,15 +182,15 @@ describe("QuestInstanceService - approveQuest", () => {
         template_id: templateId,
         current_streak: 2,
         longest_streak: 5,
-        last_completed_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        last_completed_date: new Date(
+          Date.now() - 24 * 60 * 60 * 1000,
+        ).toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }),
-      validateConsecutiveCompletion: jest.fn().mockReturnValue(true),
       incrementStreak: jest.fn().mockResolvedValue({
         current_streak: 3,
       }),
-      calculateStreakBonus: jest.fn().mockReturnValue(0.05),
       resetStreak: jest.fn().mockResolvedValue({
         current_streak: 0,
       }),
@@ -192,21 +198,24 @@ describe("QuestInstanceService - approveQuest", () => {
 
     const questService = new QuestInstanceService(
       supabaseStub as unknown as typeof supabase,
-      streakServiceMock as unknown as StreakService
+      streakServiceMock as unknown as StreakService,
     );
 
     const result = await questService.approveQuest(questId);
 
     expect(result.status).toBe("APPROVED");
-    expect(streakServiceMock.getStreak).toHaveBeenCalledWith(characterId, templateId);
+    expect(streakServiceMock.getStreak).toHaveBeenCalledWith(
+      characterId,
+      templateId,
+    );
     expect(streakServiceMock.incrementStreak).toHaveBeenCalled();
-    expect(streakServiceMock.calculateStreakBonus).toHaveBeenCalledWith(3);
     expect(streakServiceMock.resetStreak).not.toHaveBeenCalled();
 
-    const [characterUpdatePayload] = characterUpdateBuilder.update.mock.calls[0];
+    const [characterUpdatePayload] =
+      characterUpdateBuilder.update.mock.calls[0];
     expect(characterUpdatePayload).toEqual({
-      gold: 75,
-      xp: 125,
+      gold: 72,
+      xp: 120,
       active_family_quest_id: null,
       level: 2,
     });
@@ -214,7 +223,7 @@ describe("QuestInstanceService - approveQuest", () => {
     const [questUpdatePayload] = questUpdateBuilder.update.mock.calls[0];
     expect(questUpdatePayload.status).toBe("APPROVED");
     expect(questUpdatePayload.streak_count).toBe(3);
-    expect(questUpdatePayload.streak_bonus).toBe(0.05);
+    expect(questUpdatePayload.streak_bonus).toBe(0);
     expect(questUpdatePayload.completed_at).toEqual(expect.any(String));
     expect(questUpdatePayload.approved_at).toEqual(expect.any(String));
   });

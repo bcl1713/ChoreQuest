@@ -63,7 +63,7 @@ describe("QuestCompleteOverlay - visibility and title", () => {
         />,
       );
 
-      expect(screen.getByText("Great work, hero!")).toBeInTheDocument();
+      expect(screen.getByText("Quest Complete!")).toBeInTheDocument();
     });
 
     it("should display custom quest title", () => {

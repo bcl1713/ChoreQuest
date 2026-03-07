@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -35,6 +35,7 @@ export function useBossQuests(): UseBossQuestsReturn {
   const [bossQuests, setBossQuests] = useState<BossQuestWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadBossQuests = useCallback(async () => {
     if (!profile?.family_id) {
@@ -43,7 +44,9 @@ export function useBossQuests(): UseBossQuestsReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -66,6 +69,7 @@ export function useBossQuests(): UseBossQuestsReturn {
       setError(message);
       setBossQuests([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -73,11 +77,6 @@ export function useBossQuests(): UseBossQuestsReturn {
   useEffect(() => {
     void loadBossQuests();
   }, [loadBossQuests]);
-
-  // Realtime subscriptions for boss quests and participants
-  // Note: We don't include onBossQuestUpdate or onBossParticipantUpdate in dependencies
-  // because they're registration functions that don't change - they always add to the
-  // same listener registries.
 
   useEffect(() => {
     if (!profile?.family_id) return;
@@ -94,8 +93,12 @@ export function useBossQuests(): UseBossQuestsReturn {
       unsubscribeBoss?.();
       unsubscribeParticipants?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadBossQuests, profile?.family_id]);
+  }, [
+    loadBossQuests,
+    profile?.family_id,
+    onBossQuestUpdate,
+    onBossParticipantUpdate,
+  ]);
 
   return {
     bossQuests,

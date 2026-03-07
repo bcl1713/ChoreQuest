@@ -47,15 +47,69 @@ export const mockFamilyMembers = [
 ];
 
 export const mockCompletedQuests = [
-  { id: "q1", status: "COMPLETED", assigned_to_id: "user-1", completed_at: "2025-10-14T10:00:00Z", approved_at: "2025-10-14T11:00:00Z" },
-  { id: "q2", status: "COMPLETED", assigned_to_id: "user-1", completed_at: "2025-10-15T10:00:00Z", approved_at: "2025-10-15T11:00:00Z" },
-  { id: "q3", status: "COMPLETED", assigned_to_id: "user-2", completed_at: "2025-10-14T10:00:00Z", approved_at: "2025-10-14T11:00:00Z" },
-  { id: "q4", status: "COMPLETED", assigned_to_id: "user-1", completed_at: "2025-10-08T10:00:00Z", approved_at: "2025-10-08T11:00:00Z" },
-  { id: "q5", status: "COMPLETED", assigned_to_id: "user-3", completed_at: "2025-10-09T10:00:00Z", approved_at: "2025-10-09T11:00:00Z" },
-  { id: "q6", status: "COMPLETED", assigned_to_id: "user-1", completed_at: "2025-10-02T10:00:00Z", approved_at: "2025-10-02T11:00:00Z" },
-  { id: "q7", status: "COMPLETED", assigned_to_id: "user-2", completed_at: "2025-10-03T10:00:00Z", approved_at: "2025-10-03T11:00:00Z" },
-  { id: "q8", status: "COMPLETED", assigned_to_id: "user-3", completed_at: "2025-09-20T10:00:00Z", approved_at: "2025-09-20T11:00:00Z" },
-  { id: "q9", status: "COMPLETED", assigned_to_id: "user-3", completed_at: "2025-09-25T10:00:00Z", approved_at: "2025-09-25T11:00:00Z" },
+  {
+    id: "q1",
+    status: "COMPLETED",
+    assigned_to_id: "user-1",
+    completed_at: "2025-10-14T10:00:00Z",
+    approved_at: "2025-10-14T11:00:00Z",
+  },
+  {
+    id: "q2",
+    status: "COMPLETED",
+    assigned_to_id: "user-1",
+    completed_at: "2025-10-15T10:00:00Z",
+    approved_at: "2025-10-15T11:00:00Z",
+  },
+  {
+    id: "q3",
+    status: "COMPLETED",
+    assigned_to_id: "user-2",
+    completed_at: "2025-10-14T10:00:00Z",
+    approved_at: "2025-10-14T11:00:00Z",
+  },
+  {
+    id: "q4",
+    status: "COMPLETED",
+    assigned_to_id: "user-1",
+    completed_at: "2025-10-08T10:00:00Z",
+    approved_at: "2025-10-08T11:00:00Z",
+  },
+  {
+    id: "q5",
+    status: "COMPLETED",
+    assigned_to_id: "user-3",
+    completed_at: "2025-10-09T10:00:00Z",
+    approved_at: "2025-10-09T11:00:00Z",
+  },
+  {
+    id: "q6",
+    status: "COMPLETED",
+    assigned_to_id: "user-1",
+    completed_at: "2025-10-02T10:00:00Z",
+    approved_at: "2025-10-02T11:00:00Z",
+  },
+  {
+    id: "q7",
+    status: "COMPLETED",
+    assigned_to_id: "user-2",
+    completed_at: "2025-10-03T10:00:00Z",
+    approved_at: "2025-10-03T11:00:00Z",
+  },
+  {
+    id: "q8",
+    status: "COMPLETED",
+    assigned_to_id: "user-3",
+    completed_at: "2025-09-20T10:00:00Z",
+    approved_at: "2025-09-20T11:00:00Z",
+  },
+  {
+    id: "q9",
+    status: "COMPLETED",
+    assigned_to_id: "user-3",
+    completed_at: "2025-09-25T10:00:00Z",
+    approved_at: "2025-09-25T11:00:00Z",
+  },
 ];
 
 export const mockAllQuests = [
@@ -139,7 +193,9 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
     if (table === "user_profiles") {
       return {
         select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ data: mockFamilyMembers, error: null }),
+          eq: jest
+            .fn()
+            .mockResolvedValue({ data: mockFamilyMembers, error: null }),
         }),
       };
     }
@@ -149,7 +205,9 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: mockCompletedQuests, error: null }),
+              eq: jest
+                .fn()
+                .mockResolvedValue({ data: mockCompletedQuests, error: null }),
             }),
           }),
         };
@@ -158,7 +216,9 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockAllQuests, error: null }),
+              in: jest
+                .fn()
+                .mockResolvedValue({ data: mockAllQuests, error: null }),
             }),
           }),
         };
@@ -166,7 +226,9 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
       return {
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ data: mockPendingQuests, error: null }),
+            eq: jest
+              .fn()
+              .mockResolvedValue({ data: mockPendingQuests, error: null }),
           }),
         }),
       };
@@ -177,14 +239,21 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              in: jest.fn().mockResolvedValue({ data: mockPendingRedemptions, error: null }),
+              in: jest
+                .fn()
+                .mockResolvedValue({
+                  data: mockPendingRedemptions,
+                  error: null,
+                }),
             }),
           }),
         };
       }
       return {
         select: jest.fn().mockReturnValue({
-          in: jest.fn().mockResolvedValue({ data: mockAllRedemptions, error: null }),
+          in: jest
+            .fn()
+            .mockResolvedValue({ data: mockAllRedemptions, error: null }),
         }),
       };
     }
@@ -193,7 +262,9 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
       return {
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ data: mockBossBattles, error: null }),
+            eq: jest
+              .fn()
+              .mockResolvedValue({ data: mockBossBattles, error: null }),
           }),
         }),
       };
@@ -202,9 +273,9 @@ export const applyStatisticsDefaultMocks = (mockFrom: jest.Mock) => {
       bossBattleCalls.count++;
       return {
         select: jest.fn().mockReturnValue({
-          in: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ data: mockBossParticipants, error: null }),
-          }),
+          in: jest
+            .fn()
+            .mockResolvedValue({ data: mockBossParticipants, error: null }),
         }),
       };
     }

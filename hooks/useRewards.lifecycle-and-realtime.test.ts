@@ -105,6 +105,9 @@ beforeEach(() => {
     onRewardUpdate: jest.fn(() => jest.fn()),
     onRedemptionUpdate: jest.fn(() => jest.fn()),
     onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+
+    onBossQuestUpdate: jest.fn(() => jest.fn()),
+    onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 
   (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
@@ -150,7 +153,10 @@ describe("useRewards - lifecycle and reward realtime", () => {
       onRewardUpdate: mockOnRewardUpdate,
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+  
+      onBossQuestUpdate: jest.fn(() => jest.fn()),
+      onBossParticipantUpdate: jest.fn(() => jest.fn()),
+  });
 
     const { unmount } = renderHook(() => useRewards());
 

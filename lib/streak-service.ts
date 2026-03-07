@@ -221,6 +221,48 @@ export class StreakService {
 
     return leaderboard;
   }
+  /**
+   * Calculate the streak bonus multiplier based on streak count
+   * +1% per 5 consecutive days, capped at +5%
+   * @param streakCount - The current streak count
+   * @returns The bonus as a decimal (e.g., 0.01 for 1%)
+   */
+  calculateStreakBonus(streakCount: number): number {
+    if (streakCount < 5) return 0;
+    const tier = Math.floor(streakCount / 5);
+    return Math.min(tier * 0.01, 0.05);
+  }
+
+  /**
+   * Validate whether a completion is consecutive (no missed periods)
+   * @param lastCompletedDate - ISO string of last completion, or null for first completion
+   * @param recurrencePattern - 'DAILY' or 'WEEKLY'
+   * @param currentDate - The current completion date
+   * @returns true if the completion is consecutive
+   */
+  validateConsecutiveCompletion(
+    lastCompletedDate: string | null,
+    recurrencePattern: string,
+    currentDate: Date,
+  ): boolean {
+    if (!lastCompletedDate) return true;
+
+    const lastDate = new Date(lastCompletedDate);
+    const diffMs = currentDate.getTime() - lastDate.getTime();
+    const diffInDays = diffMs / (1000 * 60 * 60 * 24);
+
+    if (recurrencePattern === "DAILY") {
+      // Must be completed within ~2 calendar days (no missed day)
+      return diffInDays > 0 && diffInDays <= 2;
+    }
+
+    if (recurrencePattern === "WEEKLY") {
+      // Must be completed within ~8 days (no missed week)
+      return diffInDays > 0 && diffInDays <= 8;
+    }
+
+    return false;
+  }
 }
 
 // Export a singleton instance

@@ -1,26 +1,52 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
-import { UserProfile, Family } from '@/lib/types/database';
-import { useNetworkReady } from './network-ready-context';
-import { loadUserData } from './auth/load-user-data';
-import { createFamilyFlow } from './auth/create-family';
-import { loginUser, registerUser, updatePasswordFlow } from './auth/auth-actions';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import { supabase } from "@/lib/supabase";
+import type { User, Session } from "@supabase/supabase-js";
+import { UserProfile, Family } from "@/lib/types/database";
+import { useNetworkReady } from "./network-ready-context";
+import { loadUserData } from "./auth/load-user-data";
+import { createFamilyFlow } from "./auth/create-family";
+import {
+  loginUser,
+  registerUser,
+  updatePasswordFlow,
+} from "./auth/auth-actions";
 
-// Using types from @/lib/types/database
+type AuthCredentials = { email: string; password: string };
+type RegisterData = {
+  name: string;
+  email: string;
+  password: string;
+  familyCode: string;
+};
+type CreateFamilyData = {
+  name: string;
+  email: string;
+  password: string;
+  userName: string;
+};
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   family: Family | null;
   session: Session | null;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; familyCode: string }) => Promise<void>;
-  createFamily: (data: { name: string; email: string; password: string; userName: string }) => Promise<void>;
+  login: (credentials: AuthCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  createFamily: (data: CreateFamilyData) => Promise<void>;
   logout: () => Promise<void>;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  updatePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<void>;
   isLoading: boolean;
   error: string | null;
   characterName: string;
@@ -38,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
-  const [characterName, setCharacterName] = useState<string>('');
+  const [characterName, setCharacterName] = useState<string>("");
 
   // Refs to prevent duplicate loadUserData calls
   const prevUserIdRef = useRef<string | null>(null);
@@ -59,19 +85,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading,
       });
     },
-    [waitForReady, session?.access_token]
+    [waitForReady, session?.access_token],
   );
 
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
-    const handleAuthStateChange = async (event: string, currentSession: Session | null) => {
+    const handleAuthStateChange = async (
+      event: string,
+      currentSession: Session | null,
+    ) => {
       if (!mounted) return;
 
-      console.log('Auth state changed:', event, currentSession?.user?.id, 'Creating family:', isCreatingFamily);
+      console.log(
+        "Auth state changed:",
+        event,
+        currentSession?.user?.id,
+        "Creating family:",
+        isCreatingFamily,
+      );
 
       if (isCreatingFamily) {
-        console.log('Ignoring auth state change during family creation');
+        console.log("Ignoring auth state change during family creation");
         return;
       }
 
@@ -89,22 +124,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setIsLoading(false);
 
-      if (event === 'SIGNED_OUT') {
+      if (event === "SIGNED_OUT") {
         setError(null);
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     (async () => {
-      console.log('AuthContext: Starting auth initialization...');
+      console.log("AuthContext: Starting auth initialization...");
       try {
-        const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] AuthContext: Waiting for network ready...`);
         await waitForReady();
-        console.log(`[${new Date().toISOString()}] AuthContext: Network ready, awaiting auth events`);
+        console.log("AuthContext: Network ready, awaiting auth events");
       } catch (err) {
-        console.error('AuthContext: Error during initialization:', err);
+        console.error("AuthContext: Error during initialization:", err);
         setIsLoading(false);
       }
     })();
@@ -124,28 +159,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const channel = supabase
       .channel(`user-profile-updates-${user.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_profiles',
+          event: "UPDATE",
+          schema: "public",
+          table: "user_profiles",
           filter: `id=eq.${user.id}`,
         },
         async (payload) => {
-          console.log('AuthContext: Detected profile update via realtime', payload);
-          await loadUserDataHandler(user.id, session);
+          console.log(
+            "AuthContext: Detected profile update via realtime",
+            payload,
+          );
+          await loadUserDataHandler(user.id);
         },
       )
       .subscribe((status) => {
-        console.log('AuthContext: Profile subscription status', status);
+        console.log("AuthContext: Profile subscription status", status);
         return status;
       });
 
     return () => {
-      console.log('AuthContext: Unsubscribing from profile updates');
-      channel.unsubscribe();
+      console.log("AuthContext: Unsubscribing from profile updates");
+      supabase.removeChannel(channel);
     };
-  }, [user?.id, session, loadUserDataHandler]);
+  }, [user?.id, loadUserDataHandler]);
 
   const clearError = () => setError(null);
 
@@ -153,76 +191,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearError();
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   }, []);
 
-  // Add explicit session refresh on visibility change for mobile browsers
-  // This ensures session is still valid after tab resume or app backgrounding
+  // Refresh session on tab visibility change (handles mobile backgrounding)
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && user) {
-        const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] AuthContext: Tab visible, validating session...`);
-
-        // Explicitly get current session (triggers auto-refresh if needed)
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error(`[${timestamp}] AuthContext: Session validation error:`, error);
-          return;
-        }
-
-        if (!currentSession) {
-          console.log(`[${timestamp}] AuthContext: Session lost, signing out...`);
-          await logout();
-        } else if (currentSession.user.id === user.id) {
-          console.log(`[${timestamp}] AuthContext: Session valid for user:`, user.id);
-          // Session is valid, onAuthStateChange will handle any updates
-        }
-      }
+      if (document.visibilityState !== "visible" || !user) return;
+      const {
+        data: { session: currentSession },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      if (sessionError) return;
+      if (!currentSession) await logout();
     };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [user, logout]);
 
-  const login = async (credentials: { email: string; password: string }) =>
+  const login = async (credentials: AuthCredentials) =>
     loginUser(supabase, credentials, setError, setIsLoading);
 
-  const register = async (data: { name: string; email: string; password: string; familyCode: string }) =>
+  const register = async (data: RegisterData) =>
     registerUser(supabase, data, setError, setIsLoading);
 
-  const createFamily = async (data: { name: string; email: string; password: string; userName: string }) => {
+  const createFamily = async (data: CreateFamilyData) => {
     clearError();
     setIsLoading(true);
     setIsCreatingFamily(true); // Prevent premature auth state changes
 
     try {
-      console.log('Starting family creation process...');
+      console.log("Starting family creation process...");
 
-      // Generate family code
-      const familyCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      console.log('Generated family code:', familyCode);
-
-      // Create the auth user first
-      console.log('Creating auth user...');
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (authError) {
-        console.error('Auth user creation failed:', authError);
-        throw new Error(`User creation failed: ${authError.message}`);
-      }
-
-      if (!authData.user) {
-        throw new Error('Failed to create user account - no user returned');
-      }
-
-      console.log('Auth user created successfully:', authData.user.id);
-
+      // createFamilyFlow handles signUp, family creation, profile creation, and session setup
       await createFamilyFlow({
         data,
         supabase,
@@ -235,8 +238,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           loadUserDataHandler(userId, authSession),
       });
     } catch (err) {
-      console.error('Family creation process failed:', err);
-      const message = err instanceof Error ? err.message : 'Family creation failed';
+      console.error("Family creation process failed:", err);
+      const message =
+        err instanceof Error ? err.message : "Family creation failed";
       setError(message);
       setIsCreatingFamily(false);
       throw err;
@@ -247,26 +251,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updatePassword = useCallback(
     (currentPassword: string, newPassword: string) =>
-      updatePasswordFlow(supabase, user, currentPassword, newPassword, setError, setIsLoading),
-    [user]
+      updatePasswordFlow(
+        supabase,
+        user,
+        currentPassword,
+        newPassword,
+        setError,
+        setIsLoading,
+      ),
+    [user],
   );
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      profile,
-      family,
-      session,
-      login,
-      register,
-      createFamily,
-      logout,
-      updatePassword,
-      isLoading,
-      error,
-      characterName,
-      setCharacterName
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        family,
+        session,
+        login,
+        register,
+        createFamily,
+        logout,
+        updatePassword,
+        isLoading,
+        error,
+        characterName,
+        setCharacterName,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -275,7 +288,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

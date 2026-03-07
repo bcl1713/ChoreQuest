@@ -47,6 +47,7 @@ export function useCharacter(): UseCharacterReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadCharacter = useCallback(async () => {
     if (!user?.id) {
@@ -55,7 +56,9 @@ export function useCharacter(): UseCharacterReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -84,6 +87,7 @@ export function useCharacter(): UseCharacterReturn {
       setError(message);
       setCharacter(null);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [user?.id]);

@@ -4,29 +4,14 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { Character, CharacterClass } from "@/lib/types/database";
-import {
-  CHARACTER_CLASSES,
-  formatBonusPercentage,
-} from "@/lib/constants/character-classes";
-import { motion } from "framer-motion";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { CHARACTER_CLASSES } from "@/lib/constants/character-classes";
 import { FantasyButton } from "@/components/ui";
-import { FantasyIcon } from "@/components/icons/FantasyIcon";
-import { Sparkles, Sword, Shield, Heart, Target, Zap, Coins, Medal, Gem } from "lucide-react";
+import { ClassCard } from "./ClassCard";
 
 interface CharacterCreationProps {
   onCharacterCreated: (character: Character) => void;
   initialCharacterName?: string;
 }
-
-// Map character class icon names to Lucide icon components
-const CLASS_ICON_MAP = {
-  Sparkles: Sparkles,
-  Sword: Sword,
-  Shield: Shield,
-  Heart: Heart,
-  Target: Target,
-};
 
 export default function CharacterCreation({
   onCharacterCreated,
@@ -38,8 +23,7 @@ export default function CharacterCreation({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { user } = useAuth();
-  const prefersReducedMotion = useReducedMotion();
+  const { user, profile, family } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +46,7 @@ export default function CharacterCreation({
 
       // First, verify the user profile exists with retry logic for timing issues
       console.log("Checking for user profile...");
-      let profileData = null;
+      let profileData = profile ?? null;
       let profileError = null;
       let retryCount = 0;
       const maxRetries = 3;
@@ -71,7 +55,7 @@ export default function CharacterCreation({
       while (retryCount < maxRetries && !profileData) {
         const { data, error } = await supabase
           .from("user_profiles")
-          .select("id, name, role, family_id")
+          .select("*")
           .eq("id", user.id)
           .single();
 
@@ -112,9 +96,47 @@ export default function CharacterCreation({
         console.log("All user profiles (first 5):", allProfiles);
         console.log("All profiles query error:", allProfilesError);
 
-        throw new Error(
-          "User profile not found. This may be a timing issue - please wait a moment and try refreshing the page.",
-        );
+        // If the profile is missing but we know the family, attempt to self-heal by creating it
+        if (family) {
+          console.warn(
+            "Profile missing; attempting to create profile using current session and family context.",
+          );
+          const fallbackName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split("@")[0] ||
+            "Adventurer";
+
+          const { data: createdProfile, error: createProfileError } =
+            await supabase
+              .from("user_profiles")
+              .insert({
+                id: user.id,
+                email: user.email ?? "",
+                name: fallbackName,
+                role: "GUILD_MASTER" as const,
+                family_id: family.id,
+              })
+              .select("*")
+              .single();
+
+          if (createProfileError || !createdProfile) {
+            console.error("Failed to create fallback profile:", {
+              createProfileError,
+              createdProfile,
+            });
+            throw new Error(
+              createProfileError?.message ||
+                "User profile not found and automatic recovery failed. Please refresh and try again.",
+            );
+          }
+
+          profileData = createdProfile;
+        } else {
+          throw new Error(
+            "User profile not found. This may be a timing issue - please wait a moment and try refreshing the page.",
+          );
+        }
       }
 
       console.log("User profile verified, creating character...");
@@ -187,74 +209,12 @@ export default function CharacterCreation({
             {/* Mobile: Horizontal scrollable cards, Desktop: Grid */}
             <div className="md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 flex md:flex-none overflow-x-auto md:overflow-x-visible snap-x snap-mandatory gap-4 pb-4 md:pb-0 -mx-2 px-2 md:mx-0 md:px-0">
               {CHARACTER_CLASSES.map((characterClass) => (
-                <motion.div
+                <ClassCard
                   key={characterClass.id}
-                  data-testid={`class-${characterClass.name.toLowerCase()}`}
-                  className={`fantasy-card p-4 cursor-pointer min-w-[280px] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink ${
-                    selectedClass === characterClass.id
-                      ? "ring-4 ring-gold-500 bg-gold-900/40 border-gold-500/50 glow-effect-gold"
-                      : "hover:border-gold-500/30"
-                  }`}
-                  onClick={() => setSelectedClass(characterClass.id)}
-                  whileHover={
-                    prefersReducedMotion
-                      ? {}
-                      : {
-                          scale: 1.05,
-                          boxShadow: "0 10px 30px rgba(251, 191, 36, 0.2)",
-                        }
-                  }
-                  whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="text-center">
-                    <div className="flex justify-center mb-2">
-                      <FantasyIcon
-                        icon={CLASS_ICON_MAP[characterClass.icon as keyof typeof CLASS_ICON_MAP]}
-                        size="xl"
-                        aria-label={`${characterClass.name} class icon`}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gold-300 mb-2">
-                      {characterClass.name}
-                    </h3>
-                    <p className="text-sm text-gray-400 mb-3">
-                      {characterClass.description}
-                    </p>
-                    <div className="text-xs space-y-1">
-                      <div className="font-semibold text-gold-400 mb-2">
-                        Bonuses on ALL quests:
-                      </div>
-                      {characterClass.bonuses.xp > 1.0 && (
-                        <div className="text-primary-400 flex items-center justify-center gap-1">
-                          <Zap size={14} /> {formatBonusPercentage(characterClass.bonuses.xp)}{" "}
-                          XP
-                        </div>
-                      )}
-                      {characterClass.bonuses.gold > 1.0 && (
-                        <div className="text-gold-400 flex items-center justify-center gap-1">
-                          <Coins size={14} />{" "}
-                          {formatBonusPercentage(characterClass.bonuses.gold)}{" "}
-                          Gold
-                        </div>
-                      )}
-                      {characterClass.bonuses.honor > 1.0 && (
-                        <div className="text-purple-400 flex items-center justify-center gap-1">
-                          <Medal size={14} />{" "}
-                          {formatBonusPercentage(characterClass.bonuses.honor)}{" "}
-                          Honor
-                        </div>
-                      )}
-                      {characterClass.bonuses.gems > 1.0 && (
-                        <div className="text-gem-400 flex items-center justify-center gap-1">
-                          <Gem size={14} />{" "}
-                          {formatBonusPercentage(characterClass.bonuses.gems)}{" "}
-                          Gems
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
+                  characterClass={characterClass}
+                  isSelected={selectedClass === characterClass.id}
+                  onSelect={setSelectedClass}
+                />
               ))}
             </div>
           </div>

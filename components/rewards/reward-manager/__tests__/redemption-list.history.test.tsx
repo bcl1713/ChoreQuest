@@ -1,7 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RedemptionList } from "../redemption-list";
-import { createMockRedemption, createRedemptionHandlers } from "./redemption-list.fixtures";
+import {
+  createMockRedemption,
+  createRedemptionHandlers,
+} from "./redemption-list.fixtures";
 
 describe("RedemptionList - approved and history", () => {
   const handlers = createRedemptionHandlers();
@@ -12,19 +15,40 @@ describe("RedemptionList - approved and history", () => {
 
   describe("Approved Redemptions", () => {
     it("should render approved redemptions section", () => {
-      render(<RedemptionList redemptions={[createMockRedemption("1", "APPROVED")]} {...handlers} />);
-      expect(screen.getByTestId("approved-redemptions-section")).toBeInTheDocument();
-      expect(screen.getByText("Approved Redemptions")).toBeInTheDocument();
+      render(
+        <RedemptionList
+          redemptions={[createMockRedemption("1", "APPROVED")]}
+          {...handlers}
+        />,
+      );
+      expect(
+        screen.getByTestId("approved-redemptions-section"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Approved - Awaiting Fulfillment"),
+      ).toBeInTheDocument();
     });
 
     it("should display approved metadata", () => {
-      render(<RedemptionList redemptions={[createMockRedemption("1", "APPROVED")]} {...handlers} />);
-      expect(screen.getByText("Approved at")).toBeInTheDocument();
+      render(
+        <RedemptionList
+          redemptions={[createMockRedemption("1", "APPROVED")]}
+          {...handlers}
+        />,
+      );
+      expect(
+        screen.getByTestId("approved-redemption-item"),
+      ).toBeInTheDocument();
       expect(screen.getAllByText("Test User").length).toBeGreaterThan(0);
     });
 
     it("should render fulfill button and call handler", () => {
-      render(<RedemptionList redemptions={[createMockRedemption("fulfill-1", "APPROVED")]} {...handlers} />);
+      render(
+        <RedemptionList
+          redemptions={[createMockRedemption("fulfill-1", "APPROVED")]}
+          {...handlers}
+        />,
+      );
       fireEvent.click(screen.getByTestId("fulfill-redemption-button"));
       expect(handlers.onFulfill).toHaveBeenCalledWith("fulfill-1");
     });
@@ -32,8 +56,15 @@ describe("RedemptionList - approved and history", () => {
 
   describe("Completed Redemptions (History)", () => {
     it("should render history section", () => {
-      render(<RedemptionList redemptions={[createMockRedemption("1", "FULFILLED")]} {...handlers} />);
-      expect(screen.getByTestId("redemption-history-section")).toBeInTheDocument();
+      render(
+        <RedemptionList
+          redemptions={[createMockRedemption("1", "FULFILLED")]}
+          {...handlers}
+        />,
+      );
+      expect(
+        screen.getByTestId("redemption-history-section"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Redemption History")).toBeInTheDocument();
     });
 
@@ -45,14 +76,21 @@ describe("RedemptionList - approved and history", () => {
             createMockRedemption("2", "DENIED"),
           ]}
           {...handlers}
-        />
+        />,
       );
-      expect(screen.getAllByTestId("redemption-history-item")).toHaveLength(2);
+      expect(screen.getAllByTestId("completed-redemption-item")).toHaveLength(
+        2,
+      );
     });
 
     it("should show fulfillment timestamp for fulfilled redemptions", () => {
-      render(<RedemptionList redemptions={[createMockRedemption("1", "FULFILLED")]} {...handlers} />);
-      expect(screen.getByText(/Fulfilled at/)).toBeInTheDocument();
+      render(
+        <RedemptionList
+          redemptions={[createMockRedemption("1", "FULFILLED")]}
+          {...handlers}
+        />,
+      );
+      expect(screen.getByText(/Fulfilled /)).toBeInTheDocument();
     });
   });
 
@@ -66,18 +104,26 @@ describe("RedemptionList - approved and history", () => {
             createMockRedemption("3", "FULFILLED"),
           ]}
           {...handlers}
-        />
+        />,
       );
-      expect(screen.getByTestId("pending-redemptions-section")).toBeInTheDocument();
-      expect(screen.getByTestId("approved-redemptions-section")).toBeInTheDocument();
-      expect(screen.getByTestId("redemption-history-section")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("pending-redemptions-section"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("approved-redemptions-section"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("redemption-history-section"),
+      ).toBeInTheDocument();
     });
   });
 
   describe("Memoization", () => {
     it("should not re-render when props are unchanged", () => {
       const redemptions = [createMockRedemption("1", "PENDING")];
-      const { rerender } = render(<RedemptionList redemptions={redemptions} {...handlers} />);
+      const { rerender } = render(
+        <RedemptionList redemptions={redemptions} {...handlers} />,
+      );
       rerender(<RedemptionList redemptions={redemptions} {...handlers} />);
       expect(screen.getByText("Pending Redemptions")).toBeInTheDocument();
     });

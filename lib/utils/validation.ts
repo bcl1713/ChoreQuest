@@ -1,7 +1,16 @@
 import {
+  validateRequired,
   validateLength,
   validateMinNumber,
+  type ValidationResult,
+} from "./validation-core";
+
+export {
   validateRequired,
+  validateLength,
+  validateMaxLength,
+  validateNumberRange,
+  validateMinNumber,
   type ValidationResult,
 } from "./validation-core";
 
@@ -21,7 +30,7 @@ import {
  */
 export const validateFutureDate = (
   dateString: string | null | undefined,
-  fieldName?: string
+  fieldName?: string,
 ): ValidationResult => {
   if (!dateString) {
     return { isValid: true }; // Null/undefined dates are considered optional
@@ -62,7 +71,9 @@ export const validateFutureDate = (
  * validateQuestTitle("A".repeat(201)) // { isValid: false, error: "Quest title must be between 1 and 200 characters" }
  * ```
  */
-export const validateQuestTitle = (title: string | null | undefined): ValidationResult => {
+export const validateQuestTitle = (
+  title: string | null | undefined,
+): ValidationResult => {
   const requiredCheck = validateRequired(title, "Quest title");
   if (!requiredCheck.isValid) {
     return requiredCheck;
@@ -86,7 +97,7 @@ export const validateQuestTitle = (title: string | null | undefined): Validation
  * ```
  */
 export const validateQuestDescription = (
-  description: string | null | undefined
+  description: string | null | undefined,
 ): ValidationResult => {
   const requiredCheck = validateRequired(description, "Quest description");
   if (!requiredCheck.isValid) {
@@ -113,7 +124,7 @@ export const validateQuestDescription = (
  */
 export const validateQuestReward = (
   value: number,
-  rewardType: "XP" | "Gold"
+  rewardType: "XP" | "Gold",
 ): ValidationResult => {
   return validateMinNumber(value, 1, `${rewardType} reward`);
 };
@@ -132,7 +143,9 @@ export const validateQuestReward = (
  * validateRewardName("A".repeat(101)) // { isValid: false, error: "Reward name must be between 1 and 100 characters" }
  * ```
  */
-export const validateRewardName = (name: string | null | undefined): ValidationResult => {
+export const validateRewardName = (
+  name: string | null | undefined,
+): ValidationResult => {
   const requiredCheck = validateRequired(name, "Reward name");
   if (!requiredCheck.isValid) {
     return requiredCheck;
@@ -156,7 +169,7 @@ export const validateRewardName = (name: string | null | undefined): ValidationR
  * ```
  */
 export const validateRewardDescription = (
-  description: string | null | undefined
+  description: string | null | undefined,
 ): ValidationResult => {
   const requiredCheck = validateRequired(description, "Reward description");
   if (!requiredCheck.isValid) {
@@ -204,7 +217,9 @@ export const validateRewardCost = (cost: number): ValidationResult => {
  * ]) // { isValid: false, error: "This field is required" }
  * ```
  */
-export const combineValidations = (results: ValidationResult[]): ValidationResult => {
+export const combineValidations = (
+  results: ValidationResult[],
+): ValidationResult => {
   for (const result of results) {
     if (!result.isValid) {
       return result;

@@ -2,6 +2,12 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { questTemplateService } from "@/lib/quest-template-service";
 import { renderTemplateModal } from "./quest-create-modal-template.fixtures";
 
+jest.mock("@/lib/quest-template-service", () => ({
+  questTemplateService: {
+    createQuestFromTemplate: jest.fn(),
+  },
+}));
+
 describe("QuestCreateModal - template success paths", () => {
   const mockOnClose = jest.fn();
   const mockOnQuestCreated = jest.fn();
@@ -28,18 +34,30 @@ describe("QuestCreateModal - template success paths", () => {
       created_at: "2025-01-01T00:00:00Z",
       updated_at: "2025-01-01T00:00:00Z",
     };
-    (questTemplateService.createQuestFromTemplate as jest.Mock).mockResolvedValue(mockCreatedQuest);
+    (
+      questTemplateService.createQuestFromTemplate as jest.Mock
+    ).mockResolvedValue(mockCreatedQuest);
 
-    renderTemplateModal({ onClose: mockOnClose, onQuestCreated: mockOnQuestCreated });
+    renderTemplateModal({
+      onClose: mockOnClose,
+      onQuestCreated: mockOnQuestCreated,
+    });
     fireEvent.click(screen.getByText("From Template"));
-    fireEvent.change(screen.getByRole("combobox", { name: /select template/i }), { target: { value: "template-1" } });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: /select template/i }),
+      { target: { value: "template-1" } },
+    );
     fireEvent.click(screen.getByText(/create quest/i));
 
     await waitFor(() => {
-      expect(questTemplateService.createQuestFromTemplate).toHaveBeenCalledWith("template-1", "test-user-id", {
-        assignedToId: undefined,
-        dueDate: undefined,
-      });
+      expect(questTemplateService.createQuestFromTemplate).toHaveBeenCalledWith(
+        "template-1",
+        "test-user-id",
+        {
+          assignedToId: undefined,
+          dueDate: undefined,
+        },
+      );
       expect(mockOnQuestCreated).toHaveBeenCalled();
       expect(mockOnClose).toHaveBeenCalled();
     });
@@ -63,19 +81,33 @@ describe("QuestCreateModal - template success paths", () => {
       created_at: "2025-01-01T00:00:00Z",
       updated_at: "2025-01-01T00:00:00Z",
     };
-    (questTemplateService.createQuestFromTemplate as jest.Mock).mockResolvedValue(mockCreatedQuest);
+    (
+      questTemplateService.createQuestFromTemplate as jest.Mock
+    ).mockResolvedValue(mockCreatedQuest);
 
-    renderTemplateModal({ onClose: mockOnClose, onQuestCreated: mockOnQuestCreated });
+    renderTemplateModal({
+      onClose: mockOnClose,
+      onQuestCreated: mockOnQuestCreated,
+    });
     fireEvent.click(screen.getByText("From Template"));
-    fireEvent.change(screen.getByRole("combobox", { name: /select template/i }), { target: { value: "template-2" } });
-    fireEvent.change(screen.getByRole("combobox", { name: /assign to/i }), { target: { value: "member-1" } });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: /select template/i }),
+      { target: { value: "template-2" } },
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: /assign to/i }), {
+      target: { value: "member-1" },
+    });
     fireEvent.click(screen.getByText(/create quest/i));
 
     await waitFor(() => {
-      expect(questTemplateService.createQuestFromTemplate).toHaveBeenCalledWith("template-2", "test-user-id", {
-        assignedToId: "member-1",
-        dueDate: undefined,
-      });
+      expect(questTemplateService.createQuestFromTemplate).toHaveBeenCalledWith(
+        "template-2",
+        "test-user-id",
+        {
+          assignedToId: "member-1",
+          dueDate: undefined,
+        },
+      );
       expect(mockOnQuestCreated).toHaveBeenCalled();
       expect(mockOnClose).toHaveBeenCalled();
     });
@@ -99,12 +131,22 @@ describe("QuestCreateModal - template success paths", () => {
       created_at: "2025-01-01T00:00:00Z",
       updated_at: "2025-01-01T00:00:00Z",
     };
-    (questTemplateService.createQuestFromTemplate as jest.Mock).mockResolvedValue(mockCreatedQuest);
+    (
+      questTemplateService.createQuestFromTemplate as jest.Mock
+    ).mockResolvedValue(mockCreatedQuest);
 
-    renderTemplateModal({ onClose: mockOnClose, onQuestCreated: mockOnQuestCreated });
+    renderTemplateModal({
+      onClose: mockOnClose,
+      onQuestCreated: mockOnQuestCreated,
+    });
     fireEvent.click(screen.getByText("From Template"));
-    fireEvent.change(screen.getByRole("combobox", { name: /select template/i }), { target: { value: "template-1" } });
-    fireEvent.change(screen.getByLabelText(/due date/i), { target: { value: "2025-12-31T23:59" } });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: /select template/i }),
+      { target: { value: "template-1" } },
+    );
+    fireEvent.change(screen.getByLabelText(/due date/i), {
+      target: { value: "2027-12-31T23:59" },
+    });
     fireEvent.click(screen.getByText(/create quest/i));
 
     await waitFor(() => {

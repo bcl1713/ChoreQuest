@@ -34,6 +34,19 @@ const mockServiceInstance = new MockedRewardService();
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 const mockUseRealtime = useRealtime as jest.MockedFunction<typeof useRealtime>;
 
+const defaultRealtimeMock = () => ({
+  onFamilyMemberUpdate: jest.fn(() => jest.fn()),
+  onQuestUpdate: jest.fn(() => jest.fn()),
+  onRewardUpdate: jest.fn(() => jest.fn()),
+  onRedemptionUpdate: jest.fn(() => jest.fn()),
+  onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
+  onBossQuestUpdate: jest.fn(() => jest.fn()),
+  onBossParticipantUpdate: jest.fn(() => jest.fn()),
+});
+const mockRealtimeWith = (overrides = {}) => {
+  mockUseRealtime.mockReturnValue({ ...defaultRealtimeMock(), ...overrides });
+};
+
 const mockProfile = {
   id: "user-1",
   family_id: "family-1",
@@ -99,34 +112,26 @@ beforeEach(() => {
     signInWithGoogle: jest.fn(),
   });
 
-  mockUseRealtime.mockReturnValue({
-    onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-    onQuestUpdate: jest.fn(() => jest.fn()),
-    onRewardUpdate: jest.fn(() => jest.fn()),
-    onRedemptionUpdate: jest.fn(() => jest.fn()),
-    onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-  });
+  mockRealtimeWith();
 
-  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
-  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(mockRedemptions);
+  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+    mockRewards,
+  );
+  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(
+    mockRedemptions,
+  );
 });
 
 describe("useRewards - reward realtime events", () => {
   it("should handle INSERT events for rewards", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
 
     const mockOnRewardUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: mockOnRewardUpdate,
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-      onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onRewardUpdate: mockOnRewardUpdate });
 
     const { result } = renderHook(() => useRewards());
 
@@ -152,20 +157,14 @@ describe("useRewards - reward realtime events", () => {
   });
 
   it("should handle UPDATE events for rewards", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
 
     const mockOnRewardUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: mockOnRewardUpdate,
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-      onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onRewardUpdate: mockOnRewardUpdate });
 
     const { result } = renderHook(() => useRewards());
 
@@ -183,27 +182,23 @@ describe("useRewards - reward realtime events", () => {
     });
 
     await waitFor(() => {
-      const updatedReward = result.current.rewards.find(r => r.id === "reward-1");
+      const updatedReward = result.current.rewards.find(
+        (r) => r.id === "reward-1",
+      );
       expect(updatedReward?.name).toBe("Updated Reward Name");
       expect(updatedReward?.is_active).toBe(false);
     });
   });
 
   it("should handle DELETE events for rewards", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
 
     const mockOnRewardUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: mockOnRewardUpdate,
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-      onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onRewardUpdate: mockOnRewardUpdate });
 
     const { result } = renderHook(() => useRewards());
 
@@ -224,20 +219,14 @@ describe("useRewards - reward realtime events", () => {
   });
 
   it("should ignore reward events with no action", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
 
     const mockOnRewardUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: mockOnRewardUpdate,
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-      onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onRewardUpdate: mockOnRewardUpdate });
 
     const { result } = renderHook(() => useRewards());
 
@@ -256,20 +245,14 @@ describe("useRewards - reward realtime events", () => {
   });
 
   it("should handle DELETE with no old_record id gracefully", async () => {
-    let updateCallback: (event: any) => void;  
+    let updateCallback: (event: any) => void;
 
     const mockOnRewardUpdate = jest.fn((callback) => {
       updateCallback = callback;
       return jest.fn();
     });
 
-    mockUseRealtime.mockReturnValue({
-      onFamilyMemberUpdate: jest.fn(() => jest.fn()),
-      onQuestUpdate: jest.fn(() => jest.fn()),
-      onRewardUpdate: mockOnRewardUpdate,
-      onRedemptionUpdate: jest.fn(() => jest.fn()),
-      onRewardRedemptionUpdate: jest.fn(() => jest.fn()),
-    });
+    mockRealtimeWith({ onRewardUpdate: mockOnRewardUpdate });
 
     const { result } = renderHook(() => useRewards());
 

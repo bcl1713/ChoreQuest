@@ -6,6 +6,15 @@ import {
   setupSupabaseList,
 } from "./guild-master-manager.fixtures";
 
+jest.mock("@/lib/supabase", () => ({
+  supabase: {
+    from: jest.fn(),
+    auth: {
+      getSession: jest.fn(),
+    },
+  },
+}));
+
 describe("GuildMasterManager - actions", () => {
   beforeEach(() => {
     resetGuildMasterMocks();
@@ -16,7 +25,9 @@ describe("GuildMasterManager - actions", () => {
     it("opens confirmation modal when Promote clicked", async () => {
       renderGuildMasterManager();
 
-      await waitFor(() => fireEvent.click(screen.getByRole("button", { name: "Promote" })));
+      await waitFor(() =>
+        fireEvent.click(screen.getByRole("button", { name: "Promote" })),
+      );
 
       expect(screen.getByText("Promote to Guild Master?")).toBeInTheDocument();
     });
@@ -29,7 +40,9 @@ describe("GuildMasterManager - actions", () => {
       global.fetch = mockFetch;
       renderGuildMasterManager();
 
-      await waitFor(() => fireEvent.click(screen.getByRole("button", { name: "Promote" })));
+      await waitFor(() =>
+        fireEvent.click(screen.getByRole("button", { name: "Promote" })),
+      );
       fireEvent.click(screen.getAllByRole("button", { name: "Promote" })[1]);
 
       await waitFor(() => {
@@ -37,7 +50,9 @@ describe("GuildMasterManager - actions", () => {
           expect.stringContaining("/api/users/user-3/promote"),
           expect.objectContaining({
             method: "POST",
-            headers: expect.objectContaining({ Authorization: "Bearer mock-token" }),
+            headers: expect.objectContaining({
+              Authorization: "Bearer mock-token",
+            }),
           }),
         );
       });
@@ -85,7 +100,9 @@ describe("GuildMasterManager - actions", () => {
       global.fetch = mockFetch;
       renderGuildMasterManager();
 
-      await waitFor(() => fireEvent.click(screen.getByRole("button", { name: "Promote" })));
+      await waitFor(() =>
+        fireEvent.click(screen.getByRole("button", { name: "Promote" })),
+      );
       fireEvent.click(screen.getAllByRole("button", { name: "Promote" })[1]);
 
       await waitFor(() => {
@@ -98,7 +115,9 @@ describe("GuildMasterManager - actions", () => {
     it("opens confirmation modal when Demote clicked", async () => {
       renderGuildMasterManager();
 
-      await waitFor(() => fireEvent.click(screen.getByRole("button", { name: "Demote" })));
+      await waitFor(() =>
+        fireEvent.click(screen.getByRole("button", { name: "Demote" })),
+      );
 
       expect(screen.getByText("Demote to Hero?")).toBeInTheDocument();
     });
@@ -111,7 +130,9 @@ describe("GuildMasterManager - actions", () => {
       global.fetch = mockFetch;
       renderGuildMasterManager();
 
-      await waitFor(() => fireEvent.click(screen.getByRole("button", { name: "Demote" })));
+      await waitFor(() =>
+        fireEvent.click(screen.getByRole("button", { name: "Demote" })),
+      );
       fireEvent.click(screen.getAllByRole("button", { name: "Demote" })[1]);
 
       await waitFor(() => {
@@ -119,7 +140,9 @@ describe("GuildMasterManager - actions", () => {
           expect.stringContaining("/api/users/user-2/demote"),
           expect.objectContaining({
             method: "POST",
-            headers: expect.objectContaining({ Authorization: "Bearer mock-token" }),
+            headers: expect.objectContaining({
+              Authorization: "Bearer mock-token",
+            }),
           }),
         );
       });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -44,6 +44,7 @@ export function useQuests(): UseQuestsReturn {
   const [quests, setQuests] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadQuests = useCallback(async () => {
     if (!profile?.family_id) {
@@ -52,7 +53,9 @@ export function useQuests(): UseQuestsReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -75,6 +78,7 @@ export function useQuests(): UseQuestsReturn {
       setError(message);
       setQuests([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -82,12 +86,6 @@ export function useQuests(): UseQuestsReturn {
   useEffect(() => {
     void loadQuests();
   }, [loadQuests]);
-
-  // Realtime subscription for quest updates
-  // Note: We don't include onQuestUpdate in dependencies because it's a registration
-  // function that doesn't change - it always adds to the same listener registry.
-  // Including it would cause unnecessary re-subscriptions and race conditions.
-   
 
   useEffect(() => {
     if (!profile?.family_id) return;
@@ -119,8 +117,7 @@ export function useQuests(): UseQuestsReturn {
     });
 
     return unsubscribe;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.family_id]);
+  }, [profile?.family_id, onQuestUpdate]);
 
   return {
     quests,

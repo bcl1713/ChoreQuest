@@ -50,13 +50,18 @@ describe("QuestInstanceService - claimQuest", () => {
     active_family_quest_id: null,
   };
 
-  const mockCharacterWithQuest = { ...mockCharacter, active_family_quest_id: "another-quest-123" };
+  const mockCharacterWithQuest = {
+    ...mockCharacter,
+    active_family_quest_id: "another-quest-123",
+  };
 
   beforeEach(() => {
     const supabaseMock = supabase as unknown as { from: jest.Mock };
     mockFrom = jest.fn();
     supabaseMock.from = mockFrom;
-    service = new QuestInstanceService(supabase as unknown as SupabaseClient<Database>);
+    service = new QuestInstanceService(
+      supabase as unknown as SupabaseClient<Database>,
+    );
   });
 
   afterEach(() => {
@@ -112,11 +117,10 @@ describe("QuestInstanceService - claimQuest", () => {
       }),
     }));
 
-    const result = await service.claimQuest(mockQuestId, mockCharacterId, mockUserId, { volunteer_bonus: 0.2 });
+    const result = await service.claimQuest(mockQuestId, mockCharacterId);
 
-    expect(result.success).toBe(true);
-    expect(result.quest?.status).toBe("CLAIMED");
-    expect(result.quest?.assigned_to_id).toBe(mockUserId);
+    expect(result.status).toBe("CLAIMED");
+    expect(result.assigned_to_id).toBe(mockUserId);
   });
 
   it("should prevent claiming if character already has active quest", async () => {
@@ -142,10 +146,9 @@ describe("QuestInstanceService - claimQuest", () => {
       }),
     }));
 
-    const result = await service.claimQuest(mockQuestId, mockCharacterId, mockUserId, { volunteer_bonus: 0.2 });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("already has an active family quest");
+    await expect(
+      service.claimQuest(mockQuestId, mockCharacterId),
+    ).rejects.toThrow("already has an active family quest");
   });
 
   it("should handle quest fetch errors", async () => {
@@ -160,10 +163,9 @@ describe("QuestInstanceService - claimQuest", () => {
       }),
     }));
 
-    const result = await service.claimQuest(mockQuestId, mockCharacterId, mockUserId, { volunteer_bonus: 0.2 });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Quest not found");
+    await expect(
+      service.claimQuest(mockQuestId, mockCharacterId),
+    ).rejects.toThrow("Quest not found");
   });
 
   it("should handle character fetch errors", async () => {
@@ -189,9 +191,8 @@ describe("QuestInstanceService - claimQuest", () => {
       }),
     }));
 
-    const result = await service.claimQuest(mockQuestId, mockCharacterId, mockUserId, { volunteer_bonus: 0.2 });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Character not found");
+    await expect(
+      service.claimQuest(mockQuestId, mockCharacterId),
+    ).rejects.toThrow("Character not found");
   });
 });

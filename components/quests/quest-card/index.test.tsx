@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import QuestCard from "./index";
 import { createMockQuest } from "./__tests__/quest-card.fixtures";
 jest.mock("framer-motion", () => ({

@@ -15,7 +15,9 @@ interface UseQuestHandlersProps {
 /**
  * Custom hook for quest action handlers
  * Manages quest status updates, claims, releases, assignments, and approvals
- * Relies on realtime subscriptions to update the UI (no manual reloads on success)
+ * Calls loadData() after successful operations as a reliability fallback.
+ * Realtime subscriptions may also trigger updates, but loadData() ensures
+ * the UI always reflects the latest state even if realtime is delayed.
  */
 export function useQuestHandlers({
   onError,
@@ -23,14 +25,12 @@ export function useQuestHandlers({
   characterId,
   setSelectedAssignees,
 }: UseQuestHandlersProps) {
-  // Note: We do NOT call loadData() after these actions - the realtime subscriptions
-  // will automatically update the quests state when the database changes
   const handleStatusUpdate = useCallback(
     async (questId: string, status: QuestStatus) => {
       try {
         if (status === "APPROVED") {
           await questInstanceApiService.approveQuest(questId);
-          // Realtime subscription will update the UI automatically
+          await loadData();
           return;
         }
 
@@ -43,10 +43,9 @@ export function useQuestHandlers({
           .update(updateData)
           .eq("id", questId);
         if (updateError) throw new Error(updateError.message);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to update quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -57,10 +56,9 @@ export function useQuestHandlers({
     async (questId: string) => {
       try {
         await questInstanceApiService.claimQuest(questId);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to claim quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -73,12 +71,10 @@ export function useQuestHandlers({
         return;
       }
       try {
-        // Pass character ID for family quests so the character's active_family_quest_id is cleared
         await questInstanceApiService.releaseQuest(questId, characterId);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to release quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -91,10 +87,9 @@ export function useQuestHandlers({
       try {
         await questInstanceApiService.assignFamilyQuest(questId, assigneeId);
         setSelectedAssignees?.((prev) => ({ ...prev, [questId]: "" }));
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to assign quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -105,10 +100,9 @@ export function useQuestHandlers({
     async (questId: string) => {
       try {
         await questInstanceApiService.approveQuest(questId);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to approve quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -119,10 +113,9 @@ export function useQuestHandlers({
     async (questId: string) => {
       try {
         await questInstanceApiService.denyQuest(questId);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to deny quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -133,10 +126,9 @@ export function useQuestHandlers({
     async (questId: string) => {
       try {
         await questInstanceApiService.cancelQuest(questId);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to cancel quest");
-        // Only reload on error
         await loadData();
       }
     },
@@ -147,10 +139,9 @@ export function useQuestHandlers({
     async (questId: string) => {
       try {
         await questInstanceApiService.releaseQuest(questId);
-        // Realtime subscription will update the UI automatically
+        await loadData();
       } catch (err) {
         onError(err instanceof Error ? err.message : "Failed to release quest");
-        // Only reload on error
         await loadData();
       }
     },

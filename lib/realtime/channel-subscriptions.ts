@@ -23,87 +23,102 @@ const mapEvent =
     old_record: payload.old,
   });
 
-const subscribeTable = (
-  channel: RealtimeChannel,
-  table: string,
-  familyId: string,
-  handler: (payload: SubscriptionPayload) => void,
-) =>
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table, filter: `family_id=eq.${familyId}` },
-    handler,
-  );
+// Supabase Realtime has a bug where multiple postgres_changes subscriptions
+// on a single channel silently fail to register. Work around this by creating
+// one channel per table subscription.
 
-export const createFamilyRealtimeChannel = (
+type TableSubscription = {
+  channelName: string;
+  table: string;
+  filter?: string;
+  eventType: RealtimeEvent["type"];
+  registry: ListenerRegistry;
+};
+
+export const createFamilyRealtimeChannels = (
   familyId: string,
   registries: ChannelRegistries,
-  setLastEvent: (event: RealtimeEvent) => void,
-) => {
-  const channel = supabase.channel(`family_${familyId}`);
+): RealtimeChannel[] => {
+  const subscriptions: TableSubscription[] = [
+    {
+      channelName: `family_${familyId}_quest_instances`,
+      table: "quest_instances",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "quest_updated",
+      registry: registries.quest,
+    },
+    {
+      channelName: `family_${familyId}_quest_templates`,
+      table: "quest_templates",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "quest_template_updated",
+      registry: registries.questTemplate,
+    },
+    {
+      channelName: `family_${familyId}_characters`,
+      table: "characters",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "character_updated",
+      registry: registries.character,
+    },
+    {
+      channelName: `family_${familyId}_rewards`,
+      table: "rewards",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "reward_updated",
+      registry: registries.reward,
+    },
+    {
+      channelName: `family_${familyId}_reward_redemptions`,
+      table: "reward_redemptions",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "reward_redemption_updated",
+      registry: registries.rewardRedemption,
+    },
+    {
+      channelName: `family_${familyId}_user_profiles`,
+      table: "user_profiles",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "family_member_updated",
+      registry: registries.familyMember,
+    },
+    {
+      channelName: `family_${familyId}_boss_battles`,
+      table: "boss_battles",
+      filter: `family_id=eq.${familyId}`,
+      eventType: "boss_quest_updated",
+      registry: registries.bossQuest,
+    },
+    {
+      channelName: `family_${familyId}_boss_participants`,
+      table: "boss_battle_participants",
+      eventType: "boss_participant_updated",
+      registry: registries.bossParticipant,
+    },
+  ];
 
-  subscribeTable(channel, "quest_instances", familyId, (payload) => {
-    const event = mapEvent("quest_updated", "quest_instances")(payload);
-    setLastEvent(event);
-    registries.quest.emit(event);
-  });
+  return subscriptions.map(
+    ({ channelName, table, filter, eventType, registry }) => {
+      const channel = supabase.channel(channelName);
+      const opts: {
+        event: "*";
+        schema: "public";
+        table: string;
+        filter?: string;
+      } = {
+        event: "*",
+        schema: "public",
+        table,
+      };
+      if (filter) {
+        opts.filter = filter;
+      }
 
-  subscribeTable(channel, "quest_templates", familyId, (payload) => {
-    const event = mapEvent(
-      "quest_template_updated",
-      "quest_templates",
-    )(payload);
-    setLastEvent(event);
-    registries.questTemplate.emit(event);
-  });
+      channel.on("postgres_changes", opts, (payload) => {
+        registry.emit(mapEvent(eventType, table)(payload));
+      });
 
-  subscribeTable(channel, "characters", familyId, (payload) => {
-    const event = mapEvent("character_updated", "characters")(payload);
-    setLastEvent(event);
-    registries.character.emit(event);
-  });
-
-  subscribeTable(channel, "rewards", familyId, (payload) => {
-    const event = mapEvent("reward_updated", "rewards")(payload);
-    setLastEvent(event);
-    registries.reward.emit(event);
-  });
-
-  subscribeTable(channel, "reward_redemptions", familyId, (payload) => {
-    const event = mapEvent(
-      "reward_redemption_updated",
-      "reward_redemptions",
-    )(payload);
-    setLastEvent(event);
-    registries.rewardRedemption.emit(event);
-  });
-
-  subscribeTable(channel, "user_profiles", familyId, (payload) => {
-    const event = mapEvent("family_member_updated", "user_profiles")(payload);
-    setLastEvent(event);
-    registries.familyMember.emit(event);
-  });
-
-  subscribeTable(channel, "boss_battles", familyId, (payload) => {
-    const event = mapEvent("boss_quest_updated", "boss_battles")(payload);
-    setLastEvent(event);
-    registries.bossQuest.emit(event);
-  });
-
-  // Note: boss_battle_participants doesn't have family_id column directly,
-  // but changes are still relevant since boss_battles are family-scoped via the channel itself
-  channel.on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "boss_battle_participants" },
-    (payload) => {
-      const event = mapEvent(
-        "boss_participant_updated",
-        "boss_battle_participants",
-      )(payload);
-      setLastEvent(event);
-      registries.bossParticipant.emit(event);
+      return channel;
     },
   );
-
-  return channel;
 };

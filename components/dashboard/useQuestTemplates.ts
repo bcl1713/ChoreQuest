@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import { QuestTemplate } from '@/lib/types/database';
-import { supabase } from '@/lib/supabase';
-import { useRealtime } from '@/lib/realtime-context';
+import { useCallback, useEffect, useState } from "react";
+import { QuestTemplate } from "@/lib/types/database";
+import { supabase } from "@/lib/supabase";
+import { useRealtime } from "@/lib/realtime-context";
 
 type UseQuestTemplatesOptions = {
   familyId?: string | null;
   enabled: boolean;
 };
 
-export function useQuestTemplates({ familyId, enabled }: UseQuestTemplatesOptions) {
+export function useQuestTemplates({
+  familyId,
+  enabled,
+}: UseQuestTemplatesOptions) {
   const { onQuestTemplateUpdate } = useRealtime();
   const [questTemplates, setQuestTemplates] = useState<QuestTemplate[]>([]);
 
@@ -18,13 +21,13 @@ export function useQuestTemplates({ familyId, enabled }: UseQuestTemplatesOption
     if (!enabled || !familyId) return;
 
     const { data: templates, error } = await supabase
-      .from('quest_templates')
-      .select('*')
-      .eq('family_id', familyId)
-      .eq('is_active', true);
+      .from("quest_templates")
+      .select("*")
+      .eq("family_id", familyId)
+      .eq("is_active", true);
 
     if (error) {
-      console.error('Failed to load quest templates:', error);
+      console.error("Failed to load quest templates:", error);
       return;
     }
 
@@ -33,7 +36,9 @@ export function useQuestTemplates({ familyId, enabled }: UseQuestTemplatesOption
 
   useEffect(() => {
     if (!enabled || !familyId) return;
-    loadQuestTemplates().catch((err) => console.error('Failed to load quest templates:', err));
+    loadQuestTemplates().catch((err) =>
+      console.error("Failed to load quest templates:", err),
+    );
   }, [enabled, familyId, loadQuestTemplates]);
 
   useEffect(() => {
@@ -41,7 +46,7 @@ export function useQuestTemplates({ familyId, enabled }: UseQuestTemplatesOption
 
     const unsubscribe = onQuestTemplateUpdate((event) => {
       setQuestTemplates((currentTemplates) => {
-        if (event.action === 'INSERT') {
+        if (event.action === "INSERT") {
           const newTemplate = event.record as QuestTemplate;
           if (newTemplate.is_active) {
             return [...currentTemplates, newTemplate];
@@ -49,24 +54,33 @@ export function useQuestTemplates({ familyId, enabled }: UseQuestTemplatesOption
           return currentTemplates;
         }
 
-        if (event.action === 'UPDATE') {
-          const updatedTemplate = event.record as QuestTemplate;
-          const existsInList = currentTemplates.some((t) => t.id === updatedTemplate.id);
+        if (event.action === "UPDATE") {
+          const partial = event.record as Partial<QuestTemplate>;
+          const existsInList = currentTemplates.some(
+            (t) => t.id === partial.id,
+          );
 
-          if (updatedTemplate.is_active) {
-            if (existsInList) {
-              return currentTemplates.map((template) =>
-                template.id === updatedTemplate.id ? updatedTemplate : template
-              );
-            }
-            return [...currentTemplates, updatedTemplate];
+          if (existsInList) {
+            return currentTemplates
+              .map((template) =>
+                template.id === partial.id
+                  ? { ...template, ...partial }
+                  : template,
+              )
+              .filter((t) => t.is_active);
           }
 
-          return currentTemplates.filter((template) => template.id !== updatedTemplate.id);
+          if (partial.is_active !== false) {
+            return [...currentTemplates, partial as QuestTemplate];
+          }
+
+          return currentTemplates;
         }
 
-        if (event.action === 'DELETE') {
-          return currentTemplates.filter((template) => template.id !== event.old_record?.id);
+        if (event.action === "DELETE") {
+          return currentTemplates.filter(
+            (template) => template.id !== event.old_record?.id,
+          );
         }
 
         return currentTemplates;

@@ -1,4 +1,8 @@
-import { createFamilyService, applyDefaultFamilyMocks, mockFamilyId } from "./__fixtures__/family-service.fixtures";
+import {
+  createFamilyService,
+  applyDefaultFamilyMocks,
+  mockFamilyId,
+} from "./__fixtures__/family-service.fixtures";
 
 describe("FamilyService - regenerateInviteCode", () => {
   let service: any;
@@ -15,7 +19,7 @@ describe("FamilyService - regenerateInviteCode", () => {
 
   it("should update family invite code", async () => {
     const result = await service.regenerateInviteCode(mockFamilyId);
-    expect(result).toEqual({ code: "NEWCODE8" });
+    expect(result).toBe("NEWCODE8");
   });
 
   it("should throw error when update fails", async () => {
@@ -37,7 +41,7 @@ describe("FamilyService - regenerateInviteCode", () => {
       return { select: jest.fn() };
     });
     await expect(service.regenerateInviteCode(mockFamilyId)).rejects.toThrow(
-      "Failed to regenerate family invite code: Update failed"
+      "Failed to regenerate invite code: Update failed",
     );
   });
 });

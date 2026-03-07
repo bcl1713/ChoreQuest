@@ -167,13 +167,13 @@ describe("getQuestTimestamp", () => {
 describe("sortBy", () => {
   it("should sort numbers ascending", () => {
     const numbers = [5, 2, 9, 1];
-    const result = sortBy(numbers, (n) => n);
+    const result = sortBy(numbers, (a, b) => a - b);
     expect(result).toEqual([1, 2, 5, 9]);
   });
 
   it("should sort strings ascending", () => {
     const strings = ["banana", "apple", "cherry"];
-    const result = sortBy(strings, (s) => s);
+    const result = sortBy(strings, (a, b) => a.localeCompare(b));
     expect(result).toEqual(["apple", "banana", "cherry"]);
   });
 
@@ -183,7 +183,7 @@ describe("sortBy", () => {
       { name: "Alice", age: 25 },
       { name: "Bob", age: 28 },
     ];
-    const result = sortBy(objects, (obj) => obj.name);
+    const result = sortBy(objects, (a, b) => a.name.localeCompare(b.name));
     expect(result.map((o) => o.name)).toEqual(["Alice", "Bob", "Charlie"]);
   });
 });
@@ -195,7 +195,7 @@ describe("sortByKey", () => {
       { id: 1, name: "Alice" },
       { id: 2, name: "Bob" },
     ];
-    const result = sortByKey(items, "id");
+    const result = sortByKey(items, (item) => item.id);
     expect(result.map((item) => item.id)).toEqual([1, 2, 3]);
   });
 
@@ -205,11 +205,15 @@ describe("sortByKey", () => {
       { id: 1, name: "Alice" },
       { id: 2, name: "Bob" },
     ];
-    const result = sortByKey(items, "name");
-    expect(result.map((item) => item.name)).toEqual(["Alice", "Bob", "Charlie"]);
+    const result = sortByKey(items, (item) => item.name);
+    expect(result.map((item) => item.name)).toEqual([
+      "Alice",
+      "Bob",
+      "Charlie",
+    ]);
   });
 
   it("should handle empty arrays", () => {
-    expect(sortByKey([], "id")).toEqual([]);
+    expect(sortByKey([], (item: { id: number }) => item.id)).toEqual([]);
   });
 });

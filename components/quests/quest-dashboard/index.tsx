@@ -15,6 +15,8 @@ import * as QuestHelpers from "./quest-helpers";
 import PendingApprovalsSection from "@/components/quests/pending-approvals-section";
 import { BossQuestHistoryList } from "@/components/boss/boss-quest-history-list";
 import { useQuestHandlers } from "./useQuestHandlers";
+import { useRealtimeHighlight } from "@/hooks/useRealtimeHighlight";
+import { useRealtime } from "@/lib/realtime-context";
 
 type QuestDashboardProps = {
   onError: (error: string) => void;
@@ -53,6 +55,20 @@ export default function QuestDashboard({
     error: bossError,
     reload: reloadBossQuests,
   } = useBossQuests();
+
+  // Realtime visual feedback
+  const { highlight: highlightQuest, isHighlighted: isQuestHighlighted } =
+    useRealtimeHighlight();
+  const { onQuestUpdate } = useRealtime();
+  useEffect(() => {
+    const unsubscribe = onQuestUpdate((event) => {
+      const id =
+        (event.record as { id?: string } | undefined)?.id ??
+        (event.old_record as { id?: string } | undefined)?.id;
+      if (id) highlightQuest(id);
+    });
+    return unsubscribe;
+  }, [highlightQuest, onQuestUpdate]);
 
   // Local state
   const [showQuestHistory, setShowQuestHistory] = useState(false);
@@ -233,6 +249,7 @@ export default function QuestDashboard({
           onCompleteQuest={(id) => handleStatusUpdate(id, "COMPLETED")}
           onReleaseQuest={handleReleaseQuest}
           familyMembers={familyMembers}
+          isHighlighted={isQuestHighlighted}
         />
       </section>
 
