@@ -39,7 +39,10 @@ export function DashboardHeader({
                 {family.code})
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+            <p
+              className="text-xs text-gray-500 mt-1 flex items-center gap-1"
+              suppressHydrationWarning
+            >
               <Clock size={14} />
               {currentTime.toLocaleDateString()} •{" "}
               {currentTime.toLocaleTimeString()}
