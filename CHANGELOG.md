@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0] - 2026-03-07
+
+### Added
+- Boss battle system foundations:
+  - New API routes for creating, joining, completing, reopening, and canceling boss quests
+  - Boss quest panel and history UI with participant management
+  - Admin dashboard boss battle statistics and activity feed updates
+- Gold audit and adjustment tooling:
+  - `scripts/audit-gold.ts`
+  - `scripts/audit-gold-recalc.ts`
+  - `scripts/admin-set-gold.ts`
+- Expanded supporting tests for boss quests, rewards/statistics calculations, and frontend architecture refactors
+
+### Changed
+- Frontend refactor to strengthen SOLID boundaries across dashboard, profile, quest, reward, and admin components
+- Realtime channel stability improvements and listener lifecycle cleanup
+- Internal docs/workflow updates for ops/spec tooling and frontend architecture guidance
+
+### Notes
+- This release introduces new features and internal refactors without intentional breaking API removals.
+- Database migrations are included for new boss quest capabilities.
+
 ## [0.4.0] - 2025-10-26
 
 ### Major Refactoring Release: Code Quality & Developer Experience
