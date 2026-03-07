@@ -1,8 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Castle, Swords, Zap, Trophy, Coins, Gem, Award, AlertCircle } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
+import Link from "next/link";
+import {
+  Castle,
+  Swords,
+  Zap,
+  Trophy,
+  Coins,
+  Gem,
+  Award,
+  AlertCircle,
+} from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Home() {
   const { user } = useAuth();
@@ -25,23 +34,35 @@ export default function Home() {
             Welcome to Your Family&apos;s Quest Board
           </h2>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
-            Join the legendary guild where household tasks become heroic quests, 
-            family members become mighty heroes, and every chore completed brings 
-            honor to your family name.
+            Join the legendary guild where household tasks become heroic quests,
+            family members become mighty heroes, and every chore completed
+            brings honor to your family name.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             {user ? (
-              <Link href="/dashboard" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="enter-realm-button">
+              <Link
+                href="/dashboard"
+                className="fantasy-button text-lg px-8 py-3 flex items-center gap-2"
+                data-testid="enter-realm-button"
+              >
                 <Castle size={20} />
                 Enter Your Realm
               </Link>
             ) : (
               <>
-                <Link href="/auth/create-family" className="fantasy-button text-lg px-8 py-3 inline-block flex items-center gap-2" data-testid="create-family-button">
+                <Link
+                  href="/auth/create-family"
+                  className="fantasy-button text-lg px-8 py-3 flex items-center gap-2"
+                  data-testid="create-family-button"
+                >
                   <Castle size={20} />
                   Create Family Guild
                 </Link>
-                <Link href="/auth/register" className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 inline-block flex items-center gap-2" data-testid="join-guild-button">
+                <Link
+                  href="/auth/register"
+                  className="bg-gradient-to-r from-gem-600 to-gem-700 hover:from-gem-700 hover:to-gem-800 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                  data-testid="join-guild-button"
+                >
                   <Swords size={20} />
                   Join Existing Guild
                 </Link>
@@ -56,27 +77,36 @@ export default function Home() {
             <div className="text-4xl mb-4 flex justify-center">
               <Swords size={48} className="text-gold-400" />
             </div>
-            <h3 className="text-xl font-fantasy text-gray-100 mb-3">Epic Quests</h3>
+            <h3 className="text-xl font-fantasy text-gray-100 mb-3">
+              Epic Quests
+            </h3>
             <p className="text-gray-400">
-              Transform daily chores into heroic adventures. Earn XP and gold for every task completed.
+              Transform daily chores into heroic adventures. Earn XP and gold
+              for every task completed.
             </p>
           </div>
           <div className="fantasy-card p-6 text-center">
             <div className="text-4xl mb-4 flex justify-center">
               <Zap size={48} className="text-yellow-400" />
             </div>
-            <h3 className="text-xl font-fantasy text-gray-100 mb-3">Character Classes</h3>
+            <h3 className="text-xl font-fantasy text-gray-100 mb-3">
+              Character Classes
+            </h3>
             <p className="text-gray-400">
-              Choose your path: Knight, Mage, Ranger, Rogue, or Healer. Each class offers unique bonuses.
+              Choose your path: Knight, Mage, Ranger, Rogue, or Healer. Each
+              class offers unique bonuses.
             </p>
           </div>
           <div className="fantasy-card p-6 text-center">
             <div className="text-4xl mb-4 flex justify-center">
               <Trophy size={48} className="text-gold-400" />
             </div>
-            <h3 className="text-xl font-fantasy text-gray-100 mb-3">Boss Battles</h3>
+            <h3 className="text-xl font-fantasy text-gray-100 mb-3">
+              Boss Battles
+            </h3>
             <p className="text-gray-400">
-              Unite your family against epic boss challenges. Teamwork brings the greatest rewards.
+              Unite your family against epic boss challenges. Teamwork brings
+              the greatest rewards.
             </p>
           </div>
         </div>
@@ -126,13 +156,19 @@ export default function Home() {
             <AlertCircle size={24} />
           </h3>
           <p className="text-gray-400 mb-4">
-            The great ChoreQuest is being forged by skilled developers. Current progress:
+            The great ChoreQuest is being forged by skilled developers. Current
+            progress:
           </p>
           <div className="max-w-md mx-auto">
             <div className="bg-dark-700 rounded-full h-4 mb-2">
-              <div className="bg-gradient-to-r from-xp-500 to-xp-600 h-4 rounded-full" style={{width: '15%'}}></div>
+              <div
+                className="bg-gradient-to-r from-xp-500 to-xp-600 h-4 rounded-full"
+                style={{ width: "15%" }}
+              ></div>
             </div>
-            <p className="text-sm text-gray-500">Foundation Complete • Phase 1 MVP: In Development</p>
+            <p className="text-sm text-gray-500">
+              Foundation Complete • Phase 1 MVP: In Development
+            </p>
           </div>
         </div>
       </main>
@@ -140,7 +176,11 @@ export default function Home() {
       {!user && (
         <div className="text-center px-6 pb-10">
           <p className="text-sm text-gray-400">
-            <Link href="/auth/login" className="text-primary-400 hover:text-primary-300" data-testid="login-link">
+            <Link
+              href="/auth/login"
+              className="text-primary-400 hover:text-primary-300"
+              data-testid="login-link"
+            >
               Already have an account? Login here
             </Link>
           </p>
