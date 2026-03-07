@@ -1,15 +1,19 @@
-/**
- * Unit tests for StatisticsPanel component
- * Tests rendering, data display, and real-time updates
- */
-
 import { render, screen, waitFor } from "@testing-library/react";
 
-// Mock framer-motion BEFORE importing component
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <div {...props}>{children}</div>,
-    tr: ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) => <tr {...props}>{children}</tr>,
+    div: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <div {...props}>{children}</div>
+    ),
+    tr: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => (
+      <tr {...props}>{children}</tr>
+    ),
   },
 }));
 
@@ -17,12 +21,16 @@ jest.mock("framer-motion", () => ({
 const mockOnQuestUpdate = jest.fn(() => jest.fn());
 const mockOnRewardRedemptionUpdate = jest.fn(() => jest.fn());
 const mockOnCharacterUpdate = jest.fn(() => jest.fn());
+const mockOnBossQuestUpdate = jest.fn(() => jest.fn());
+const mockOnBossParticipantUpdate = jest.fn(() => jest.fn());
 
 jest.mock("@/lib/realtime-context", () => ({
   useRealtime: () => ({
     onQuestUpdate: mockOnQuestUpdate,
     onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
     onCharacterUpdate: mockOnCharacterUpdate,
+    onBossQuestUpdate: mockOnBossQuestUpdate,
+    onBossParticipantUpdate: mockOnBossParticipantUpdate,
   }),
 }));
 
@@ -49,9 +57,13 @@ jest.mock("@/lib/statistics-service", () => {
   };
 });
 
-// NOW import the component (after all mocks are set up)
 import StatisticsPanel from "@/components/admin/statistics-panel";
 import { StatisticsService } from "@/lib/statistics-service";
+
+const getStatsMock = () => {
+  const Svc = StatisticsService as jest.MockedClass<typeof StatisticsService>;
+  return new Svc().getFamilyStatistics as jest.Mock;
+};
 
 describe("StatisticsPanel", () => {
   const mockStatistics = {
@@ -123,9 +135,7 @@ describe("StatisticsPanel", () => {
 
   beforeEach(() => {
     // Get the mock function from the mocked service instance
-    const MockedService = StatisticsService as jest.MockedClass<typeof StatisticsService>;
-    const serviceInstance = new MockedService();
-    const getFamilyStatisticsMock = serviceInstance.getFamilyStatistics as jest.Mock;
+    const getFamilyStatisticsMock = getStatsMock();
 
     // Reset and configure mock before each test
     getFamilyStatisticsMock.mockReset();
@@ -142,9 +152,9 @@ describe("StatisticsPanel", () => {
 
   it("should render loading state initially", () => {
     render(<StatisticsPanel />);
-    const skeletons = screen.getAllByRole("generic").filter((el) =>
-      el.className.includes("animate-pulse")
-    );
+    const skeletons = screen
+      .getAllByRole("generic")
+      .filter((el) => el.className.includes("animate-pulse"));
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
@@ -152,9 +162,12 @@ describe("StatisticsPanel", () => {
     render(<StatisticsPanel />);
 
     await waitFor(() => {
-      const MockedService = StatisticsService as jest.MockedClass<typeof StatisticsService>;
+      const MockedService = StatisticsService as jest.MockedClass<
+        typeof StatisticsService
+      >;
       const serviceInstance = new MockedService();
-      const getFamilyStatisticsMock = serviceInstance.getFamilyStatistics as jest.Mock;
+      const getFamilyStatisticsMock =
+        serviceInstance.getFamilyStatistics as jest.Mock;
       expect(getFamilyStatisticsMock).toHaveBeenCalledWith("family-123");
     });
   });
@@ -203,7 +216,9 @@ describe("StatisticsPanel", () => {
       expect(screen.getByText("Boss Battles")).toBeInTheDocument();
       expect(screen.getByText("Battles This Week")).toBeInTheDocument();
       expect(screen.getByText("Battles This Month")).toBeInTheDocument();
-      expect(screen.getByText(/Top Participant \(This Week\)/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Top Participant \(This Week\)/),
+      ).toBeInTheDocument();
     });
   });
 
@@ -236,9 +251,7 @@ describe("StatisticsPanel", () => {
   });
 
   it("should handle error state", async () => {
-    const MockedService = StatisticsService as jest.MockedClass<typeof StatisticsService>;
-    const serviceInstance = new MockedService();
-    const getFamilyStatisticsMock = serviceInstance.getFamilyStatistics as jest.Mock;
+    const getFamilyStatisticsMock = getStatsMock();
     getFamilyStatisticsMock.mockRejectedValue(new Error("Test error"));
 
     render(<StatisticsPanel />);
@@ -247,14 +260,12 @@ describe("StatisticsPanel", () => {
       () => {
         expect(screen.getByText(/Failed to load/i)).toBeInTheDocument();
       },
-      { timeout: 3000 }
+      { timeout: 3000 },
     );
   });
 
   it("should handle empty character progress", async () => {
-    const MockedService = StatisticsService as jest.MockedClass<typeof StatisticsService>;
-    const serviceInstance = new MockedService();
-    const getFamilyStatisticsMock = serviceInstance.getFamilyStatistics as jest.Mock;
+    const getFamilyStatisticsMock = getStatsMock();
     getFamilyStatisticsMock.mockResolvedValue({
       ...mockStatistics,
       characterProgress: [],

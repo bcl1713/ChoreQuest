@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -47,6 +47,7 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
   const [familyCharacters, setFamilyCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadFamilyMembers = useCallback(async () => {
     if (!profile?.family_id) {
@@ -56,18 +57,23 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
       // Load family members (user profiles)
-      const { data: familyMembersData, error: familyMembersError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("family_id", profile.family_id);
+      const { data: familyMembersData, error: familyMembersError } =
+        await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("family_id", profile.family_id);
 
       if (familyMembersError) {
-        throw new Error(`Failed to fetch family members: ${familyMembersError.message}`);
+        throw new Error(
+          `Failed to fetch family members: ${familyMembersError.message}`,
+        );
       }
 
       const members = familyMembersData || [];
@@ -82,7 +88,9 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
           .in("user_id", memberIds);
 
         if (charactersError) {
-          throw new Error(`Failed to fetch family characters: ${charactersError.message}`);
+          throw new Error(
+            `Failed to fetch family characters: ${charactersError.message}`,
+          );
         }
 
         setFamilyCharacters(charactersData || []);
@@ -90,12 +98,14 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
         setFamilyCharacters([]);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load family members";
+      const message =
+        err instanceof Error ? err.message : "Failed to load family members";
       setError(message);
       // Clear state on error to ensure consistent state
       setFamilyMembers([]);
       setFamilyCharacters([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -104,19 +114,15 @@ export function useFamilyMembers(): UseFamilyMembersReturn {
     void loadFamilyMembers();
   }, [loadFamilyMembers]);
 
-  // Realtime subscription for family member updates
   useEffect(() => {
     if (!profile?.family_id) return;
 
-    const unsubscribe = onFamilyMemberUpdate((event) => {
-      if (event.action === "UPDATE" || event.action === "INSERT" || event.action === "DELETE") {
-        // Reload family members when any member data changes
-        void loadFamilyMembers();
-      }
+    const unsubscribe = onFamilyMemberUpdate(() => {
+      void loadFamilyMembers();
     });
 
     return unsubscribe;
-  }, [onFamilyMemberUpdate, loadFamilyMembers, profile?.family_id]);
+  }, [loadFamilyMembers, profile?.family_id, onFamilyMemberUpdate]);
 
   return {
     familyMembers,

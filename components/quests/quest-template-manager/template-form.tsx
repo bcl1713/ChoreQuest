@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { NotificationContainer } from '@/components/ui/NotificationContainer';
 import { useAuth } from '@/lib/auth-context';
 import { useNotification } from '@/hooks/useNotification';
 import { userService } from '@/lib/user-service';
-import { NotificationContainer } from '@/components/ui/NotificationContainer';
-import { Button } from '@/components/ui';
+import { supabase } from '@/lib/supabase';
+import { BasicInfoFields } from './template-form/BasicInfoFields';
+import { CharacterAssignments } from './template-form/CharacterAssignments';
+import { FormActions } from './template-form/FormActions';
+import { QuestConfigFields } from './template-form/QuestConfigFields';
+import { RewardFields } from './template-form/RewardFields';
+import { TemplateModalShell } from './template-form/TemplateModalShell';
 import type {
   QuestTemplate,
   QuestType,
@@ -161,172 +166,40 @@ export const TemplateForm = React.memo<TemplateFormProps>(({
   return (
     <>
       <NotificationContainer notifications={notifications} onDismiss={dismiss} />
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-gray-800 text-white p-8 rounded-lg shadow-2xl w-full max-w-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold mb-6">
-            {template ? 'Edit' : 'Create'} Quest Template
-          </h2>
+      <TemplateModalShell
+        title={`${template ? 'Edit' : 'Create'} Quest Template`}
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="title" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-              Title
-            </label>
-            <input
-              id="title"
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Title"
-              className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-              required
-            />
-          </div>
+          <BasicInfoFields
+            title={formData.title}
+            description={formData.description}
+            onChange={handleInputChange}
+          />
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Description"
-              className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-              rows={3}
-              required
-            ></textarea>
-          </div>
+          <QuestConfigFields
+            questType={formData.quest_type}
+            recurrencePattern={formData.recurrence_pattern}
+            difficulty={formData.difficulty}
+            onChange={handleInputChange}
+          />
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="quest_type" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-                Quest Type
-              </label>
-              <select
-                id="quest_type"
-                name="quest_type"
-                value={formData.quest_type}
-                onChange={handleInputChange}
-                className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-              >
-                <option value="INDIVIDUAL">Individual</option>
-                <option value="FAMILY">Family</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="recurrence_pattern" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-                Recurrence
-              </label>
-              <select
-                id="recurrence_pattern"
-                name="recurrence_pattern"
-                value={formData.recurrence_pattern}
-                onChange={handleInputChange}
-                className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-              >
-                <option value="DAILY">Daily</option>
-                <option value="WEEKLY">Weekly</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="difficulty" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-                Difficulty
-              </label>
-              <select
-                id="difficulty"
-                name="difficulty"
-                value={formData.difficulty}
-                onChange={handleInputChange}
-                className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-              >
-                <option value="EASY">Easy</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HARD">Hard</option>
-              </select>
-            </div>
-            <div className="flex items-end text-xs text-gray-400">
-              <p>Category automatically follows the recurrence pattern.</p>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="xp_reward" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-                XP Reward
-              </label>
-              <input
-                id="xp_reward"
-                type="number"
-                name="xp_reward"
-                value={formData.xp_reward}
-                onChange={handleInputChange}
-                placeholder="XP Reward"
-                className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-                min={0}
-              />
-            </div>
-            <div>
-              <label htmlFor="gold_reward" className="block text-sm font-semibold uppercase text-gray-300 mb-1">
-                Gold Reward
-              </label>
-              <input
-                id="gold_reward"
-                type="number"
-                name="gold_reward"
-                value={formData.gold_reward}
-                onChange={handleInputChange}
-                placeholder="Gold Reward"
-                className="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2"
-                min={0}
-              />
-            </div>
-          </div>
+          <RewardFields
+            xpReward={formData.xp_reward}
+            goldReward={formData.gold_reward}
+            onChange={handleInputChange}
+          />
 
           {formData.quest_type === 'INDIVIDUAL' && (
-            <div>
-              <label className="block text-sm font-semibold uppercase text-gray-300 mb-2">
-                Assign to Characters
-              </label>
-              {familyCharacters.length === 0 ? (
-                <p className="text-sm text-gray-400">No characters found for this family.</p>
-              ) : (
-                <div className="space-y-2">
-                  {characterList.map((character) => (
-                    <div key={character.id} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        id={character.id}
-                        checked={formData.assigned_character_ids.includes(character.id)}
-                        onChange={() => handleCharacterSelection(character.id)}
-                        className="form-checkbox h-4 w-4 text-purple-500"
-                      />
-                      <label htmlFor={character.id}>
-                        {character.name}
-                        {character.ownerName ? ` (${character.ownerName})` : ''}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <CharacterAssignments
+              characters={characterList}
+              assignedIds={formData.assigned_character_ids}
+              onToggle={handleCharacterSelection}
+            />
           )}
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button type="button" variant="secondary" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              Save Template
-            </Button>
-          </div>
+          <FormActions onCancel={onCancel} />
         </form>
-      </div>
-    </div>
+      </TemplateModalShell>
     </>
   );
 });

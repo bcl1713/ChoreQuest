@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -31,18 +31,11 @@ interface UseBossQuestsReturn {
  */
 export function useBossQuests(): UseBossQuestsReturn {
   const { profile } = useAuth();
-  const realtime = useRealtime();
-  const onBossQuestUpdate =
-    typeof realtime.onBossQuestUpdate === "function"
-      ? realtime.onBossQuestUpdate
-      : () => () => {};
-  const onBossParticipantUpdate =
-    typeof realtime.onBossParticipantUpdate === "function"
-      ? realtime.onBossParticipantUpdate
-      : () => () => {};
+  const { onBossQuestUpdate, onBossParticipantUpdate } = useRealtime();
   const [bossQuests, setBossQuests] = useState<BossQuestWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadBossQuests = useCallback(async () => {
     if (!profile?.family_id) {
@@ -51,13 +44,17 @@ export function useBossQuests(): UseBossQuestsReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
       const { data, error: fetchError } = await supabase
         .from("boss_battles")
-        .select("*, boss_battle_participants(user_id, participation_status, awarded_gold, awarded_xp, honor_awarded, approved_at, approved_by, user_profiles!boss_battle_participants_user_id_fkey(name))")
+        .select(
+          "*, boss_battle_participants(user_id, participation_status, awarded_gold, awarded_xp, honor_awarded, approved_at, approved_by, user_profiles!boss_battle_participants_user_id_fkey(name))",
+        )
         .eq("family_id", profile.family_id)
         .order("created_at", { ascending: false });
 
@@ -67,16 +64,21 @@ export function useBossQuests(): UseBossQuestsReturn {
 
       setBossQuests((data as BossQuestWithParticipants[]) ?? []);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load boss quests";
+      const message =
+        err instanceof Error ? err.message : "Failed to load boss quests";
       setError(message);
       setBossQuests([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
 
   useEffect(() => {
     void loadBossQuests();
+  }, [loadBossQuests]);
+
+  useEffect(() => {
     if (!profile?.family_id) return;
 
     const unsubscribeBoss = onBossQuestUpdate(() => {
@@ -88,10 +90,15 @@ export function useBossQuests(): UseBossQuestsReturn {
     });
 
     return () => {
-      unsubscribeBoss();
-      unsubscribeParticipants();
+      unsubscribeBoss?.();
+      unsubscribeParticipants?.();
     };
-  }, [loadBossQuests, onBossParticipantUpdate, onBossQuestUpdate, profile?.family_id]);
+  }, [
+    loadBossQuests,
+    profile?.family_id,
+    onBossQuestUpdate,
+    onBossParticipantUpdate,
+  ]);
 
   return {
     bossQuests,

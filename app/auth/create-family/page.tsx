@@ -1,18 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
-import AuthForm from '@/components/auth/AuthForm';
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import AuthForm from "@/components/auth/AuthForm";
 
 export default function CreateFamilyPage() {
   const router = useRouter();
-  const { user, family, createFamily, isLoading, error, setCharacterName } = useAuth();
+  const { user, family, createFamily, isLoading, error, setCharacterName } =
+    useAuth();
+  const isCreatingRef = useRef(false);
 
   useEffect(() => {
+    // Skip redirect if we just created a family - we need to go to character creation instead
+    if (isCreatingRef.current) return;
     if (user && !isLoading) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [user, isLoading, router]);
 
@@ -21,19 +25,22 @@ export default function CreateFamilyPage() {
       // Extract and validate required fields (already validated by Zod in AuthForm)
       const { name, email, password, userName } = data;
       if (!name || !email || !password || !userName) {
-        throw new Error('Missing required fields for family creation');
+        throw new Error("Missing required fields for family creation");
       }
+      // Prevent the useEffect from redirecting to dashboard
+      isCreatingRef.current = true;
       await createFamily({ name, email, password, userName });
       // Store character name for pre-filling in character creation
       setCharacterName(userName);
       // Also persist to sessionStorage since we're doing a full page navigation
-      sessionStorage.setItem('pendingCharacterName', userName);
+      sessionStorage.setItem("pendingCharacterName", userName);
       // Navigate to character creation after successful family creation
       // New Guild Masters need to create their character before accessing dashboard
-      window.location.href = '/character/create';
+      window.location.href = "/character/create";
     } catch (err) {
+      isCreatingRef.current = false;
       // Error will be handled by createFamily function
-      console.error('CreateFamily - Family creation failed:', err);
+      console.error("CreateFamily - Family creation failed:", err);
     }
   };
 
@@ -60,9 +67,12 @@ export default function CreateFamilyPage() {
 
         {family && (
           <div className="mt-6 p-4 bg-gold-900/20 border border-gold-500/30 rounded-lg">
-            <p className="text-gold-400 text-sm font-semibold mb-2">🏰 Guild Successfully Founded!</p>
+            <p className="text-gold-400 text-sm font-semibold mb-2">
+              🏰 Guild Successfully Founded!
+            </p>
             <p className="text-gray-300 text-sm">
-              Your guild code: <span className="font-mono text-gold-300">{family.code}</span>
+              Your guild code:{" "}
+              <span className="font-mono text-gold-300">{family.code}</span>
             </p>
             <p className="text-gray-400 text-xs mt-1">
               Share this code with family members so they can join your guild!
@@ -72,14 +82,20 @@ export default function CreateFamilyPage() {
 
         <div className="mt-8 text-center space-y-4">
           <p className="text-gray-400">
-            Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary-400 hover:text-primary-300 font-semibold">
+            Already have an account?{" "}
+            <Link
+              href="/auth/login"
+              className="text-primary-400 hover:text-primary-300 font-semibold"
+            >
               Enter the Realm
             </Link>
           </p>
           <p className="text-gray-400">
-            Want to join an existing guild?{' '}
-            <Link href="/auth/register" className="text-gem-400 hover:text-gem-300 font-semibold">
+            Want to join an existing guild?{" "}
+            <Link
+              href="/auth/register"
+              className="text-gem-400 hover:text-gem-300 font-semibold"
+            >
               Join Guild
             </Link>
           </p>

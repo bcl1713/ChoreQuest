@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -44,6 +44,7 @@ export function useQuests(): UseQuestsReturn {
   const [quests, setQuests] = useState<QuestInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadQuests = useCallback(async () => {
     if (!profile?.family_id) {
@@ -52,7 +53,9 @@ export function useQuests(): UseQuestsReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -63,15 +66,19 @@ export function useQuests(): UseQuestsReturn {
         .order("created_at", { ascending: false });
 
       if (fetchError) {
-        throw new Error(`Failed to fetch quest instances: ${fetchError.message}`);
+        throw new Error(
+          `Failed to fetch quest instances: ${fetchError.message}`,
+        );
       }
 
       setQuests(deduplicateQuests((data as QuestInstance[]) ?? []));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load quests";
+      const message =
+        err instanceof Error ? err.message : "Failed to load quests";
       setError(message);
       setQuests([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -80,7 +87,6 @@ export function useQuests(): UseQuestsReturn {
     void loadQuests();
   }, [loadQuests]);
 
-  // Realtime subscription for quest updates
   useEffect(() => {
     if (!profile?.family_id) return;
 
@@ -97,10 +103,8 @@ export function useQuests(): UseQuestsReturn {
         if (event.action === "UPDATE" && record.id) {
           return deduplicateQuests(
             current.map((quest) =>
-              quest.id === record.id
-                ? { ...quest, ...record }
-                : quest
-            )
+              quest.id === record.id ? { ...quest, ...record } : quest,
+            ),
           );
         }
 
@@ -113,7 +117,7 @@ export function useQuests(): UseQuestsReturn {
     });
 
     return unsubscribe;
-  }, [onQuestUpdate, profile?.family_id]);
+  }, [profile?.family_id, onQuestUpdate]);
 
   return {
     quests,

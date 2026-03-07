@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth-context';
-import { useRealtime, RealtimeEvent } from '@/lib/realtime-context';
-import type { QuestTemplate } from '@/lib/types/database';
-import type { TemplateFormData } from '@/lib/types/quest-templates';
-import { PlusCircle } from 'lucide-react';
-import { TemplateList } from './template-list';
-import { TemplateForm, QuestTemplateForm } from './template-form';
-import { DeleteModal } from './delete-modal';
-import { Button } from '@/components/ui';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
+import { useRealtime, RealtimeEvent } from "@/lib/realtime-context";
+import type {
+  QuestTemplate,
+  TablesUpdate,
+  TablesInsert,
+} from "@/lib/types/database";
+import type { TemplateFormData } from "@/lib/types/quest-templates";
+import { PlusCircle } from "lucide-react";
+import { TemplateList } from "./template-list";
+import { TemplateForm, QuestTemplateForm } from "./template-form";
+import { DeleteModal } from "./delete-modal";
+import { Button } from "@/components/ui";
 
 // Re-export for backwards compatibility
 export { QuestTemplateForm };
@@ -34,28 +38,34 @@ export function QuestTemplateManager() {
   const [error, setError] = useState<string | null>(null);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<QuestTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<QuestTemplate | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<QuestTemplate | null>(null);
+
+  const hasLoadedRef = useRef(false);
 
   const loadTemplates = useCallback(async () => {
     if (!profile?.family_id) return;
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     const { data, error: fetchError } = await supabase
-      .from('quest_templates')
-      .select('*')
-      .eq('family_id', profile.family_id)
-      .order('created_at', { ascending: false });
+      .from("quest_templates")
+      .select("*")
+      .eq("family_id", profile.family_id)
+      .order("created_at", { ascending: false });
 
     if (fetchError) {
-      setError('Failed to load templates');
-      console.error('Error loading templates:', fetchError);
+      setError("Failed to load templates");
+      console.error("Error loading templates:", fetchError);
     } else {
       setTemplates(data || []);
     }
 
+    hasLoadedRef.current = true;
     setLoading(false);
   }, [profile?.family_id]);
 
@@ -65,22 +75,28 @@ export function QuestTemplateManager() {
 
   useEffect(() => {
     const handleRealtimeUpdate = (event: RealtimeEvent) => {
-      if (event.table === 'quest_templates') {
+      if (event.table === "quest_templates") {
         switch (event.action) {
-          case 'INSERT':
+          case "INSERT":
             setTemplates((prev) => [...prev, event.record as QuestTemplate]);
             break;
-          case 'UPDATE':
+          case "UPDATE":
             setTemplates((prev) =>
               prev.map((t) =>
-                t.id === (event.record as QuestTemplate).id ? (event.record as QuestTemplate) : t
-              )
+                t.id === (event.record as Partial<QuestTemplate>).id
+                  ? ({ ...t, ...event.record } as QuestTemplate)
+                  : t,
+              ),
             );
             break;
-          case 'DELETE': {
-            const deletedRecord = event.old_record as { id?: string } | undefined;
+          case "DELETE": {
+            const deletedRecord = event.old_record as
+              | { id?: string }
+              | undefined;
             if (deletedRecord?.id) {
-              setTemplates((prev) => prev.filter((t) => t.id !== deletedRecord.id));
+              setTemplates((prev) =>
+                prev.filter((t) => t.id !== deletedRecord.id),
+              );
             }
             break;
           }
@@ -108,54 +124,71 @@ export function QuestTemplateManager() {
         if (selectedTemplate) {
           // Update
           const { error } = await supabase
-            .from('quest_templates')
-            .update(formData)
-            .eq('id', selectedTemplate.id);
+            .from("quest_templates")
+            .update(formData as TablesUpdate<"quest_templates">)
+            .eq("id", selectedTemplate.id);
           if (error) throw error;
         } else {
           // Create
           if (!profile?.family_id) {
-            throw new Error('Family context not available');
+            throw new Error("Family context not available");
           }
-          const { error } = await supabase
-            .from('quest_templates')
-            .insert({ ...formData, family_id: profile.family_id });
+          const { error } = await supabase.from("quest_templates").insert({
+            ...formData,
+            family_id: profile.family_id,
+          } as TablesInsert<"quest_templates">);
           if (error) throw error;
         }
         setIsFormModalOpen(false);
         setSelectedTemplate(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save template');
+        setError(
+          err instanceof Error ? err.message : "Failed to save template",
+        );
       }
     },
-    [selectedTemplate, profile?.family_id]
+    [selectedTemplate, profile?.family_id],
   );
 
-  const handleDeleteTemplate = useCallback(async (templateId: string, cleanup: boolean) => {
-    try {
-      if (cleanup) {
-        await supabase.from('quest_instances').delete().eq('template_id', templateId);
+  const handleDeleteTemplate = useCallback(
+    async (templateId: string, cleanup: boolean) => {
+      try {
+        if (cleanup) {
+          await supabase
+            .from("quest_instances")
+            .delete()
+            .eq("template_id", templateId);
+        }
+        await supabase.from("quest_templates").delete().eq("id", templateId);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to delete template",
+        );
+      } finally {
+        setDeleteTarget(null);
       }
-      await supabase.from('quest_templates').delete().eq('id', templateId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete template');
-    } finally {
-      setDeleteTarget(null);
-    }
-  }, []);
+    },
+    [],
+  );
 
-  const handleTogglePause = useCallback(async (template: QuestTemplate) => {
-    try {
-      const { error } = await supabase
-        .from('quest_templates')
-        .update({ is_paused: !template.is_paused })
-        .eq('id', template.id);
+  const handleTogglePause = useCallback(
+    async (template: QuestTemplate) => {
+      try {
+        const { error } = await supabase
+          .from("quest_templates")
+          .update({ is_paused: !template.is_paused })
+          .eq("id", template.id);
 
-      if (error) throw error;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to toggle pause state');
-    }
-  }, []);
+        if (error) throw error;
+        await loadTemplates();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to toggle pause state",
+        );
+      }
+    },
+    [loadTemplates],
+  );
 
   const handleFormCancel = useCallback(() => {
     setIsFormModalOpen(false);

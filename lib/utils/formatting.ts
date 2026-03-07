@@ -83,8 +83,14 @@ export const formatPoints = (points: number): string => {
  * formatPercent(0) // null
  * ```
  */
-export const formatPercent = (value: number | null | undefined): string | null => {
-  if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) {
+export const formatPercent = (
+  value: number | null | undefined,
+): string | null => {
+  if (
+    typeof value !== "number" ||
+    Number.isNaN(value) ||
+    !Number.isFinite(value)
+  ) {
     return null;
   }
   const normalized = value <= 1 ? value * 100 : value;
@@ -106,7 +112,9 @@ export const formatPercent = (value: number | null | undefined): string | null =
  * formatDateTime("invalid") // null
  * ```
  */
-export const formatDateTime = (value: string | null | undefined): string | null => {
+export const formatDateTime = (
+  value: string | null | undefined,
+): string | null => {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -162,4 +170,55 @@ export const formatDueDate = (dueDate: string | null): string | null => {
     return `Calendar Due Tomorrow ${formattedTime}`;
   }
   return `Calendar Due ${formattedDate} ${formattedTime}`;
+};
+
+/**
+ * Formats a completion timestamp as a human-readable relative or absolute time.
+ * Returns relative time for recent dates, absolute for older ones.
+ *
+ * @param value - ISO date string for when the quest was completed
+ * @returns A formatted string or null if invalid
+ *
+ * @example
+ * ```ts
+ * formatCompletedTime("2025-01-15T14:30:00Z") // "5 minutes ago" (if recent)
+ * formatCompletedTime("2025-01-13T14:30:00Z") // "yesterday at 02:30 PM"
+ * formatCompletedTime("2025-01-10T14:30:00Z") // "Jan 10 at 02:30 PM"
+ * formatCompletedTime(null) // null
+ * ```
+ */
+export const formatCompletedTime = (
+  value: string | null | undefined,
+): string | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  const timeStr = date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (diffMinutes < 1) {
+    return "1 minute ago";
+  }
+  if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes === 1 ? "" : "s"} ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  }
+  if (diffHours < 48) {
+    return `yesterday at ${timeStr}`;
+  }
+  const dateStr = date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
+  return `${dateStr} at ${timeStr}`;
 };

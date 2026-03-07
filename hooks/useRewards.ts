@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
@@ -47,9 +47,12 @@ export function useRewards(): UseRewardsReturn {
   const { profile } = useAuth();
   const { onRewardUpdate, onRewardRedemptionUpdate } = useRealtime();
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [redemptions, setRedemptions] = useState<RewardRedemptionWithUser[]>([]);
+  const [redemptions, setRedemptions] = useState<RewardRedemptionWithUser[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const loadRewards = useCallback(async () => {
     if (!profile?.family_id) {
@@ -59,7 +62,9 @@ export function useRewards(): UseRewardsReturn {
       return;
     }
 
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -71,11 +76,15 @@ export function useRewards(): UseRewardsReturn {
       setRewards(rewardsData);
       setRedemptions(redemptionsData);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load rewards and redemptions";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to load rewards and redemptions";
       setError(message);
       setRewards([]);
       setRedemptions([]);
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, [profile?.family_id]);
@@ -84,8 +93,9 @@ export function useRewards(): UseRewardsReturn {
     void loadRewards();
   }, [loadRewards]);
 
-  // Realtime subscription for reward updates
   useEffect(() => {
+    if (!profile?.family_id) return;
+
     const unsubscribe = onRewardUpdate((event) => {
       if (!event?.action) return;
 
@@ -95,7 +105,7 @@ export function useRewards(): UseRewardsReturn {
       } else if (event.action === "UPDATE") {
         const updatedReward = event.record as Reward;
         setRewards((prev) =>
-          prev.map((r) => (r.id === updatedReward.id ? updatedReward : r))
+          prev.map((r) => (r.id === updatedReward.id ? updatedReward : r)),
         );
       } else if (event.action === "DELETE") {
         const deletedId = event.old_record?.id as string;
@@ -106,21 +116,19 @@ export function useRewards(): UseRewardsReturn {
     });
 
     return unsubscribe;
-  }, [onRewardUpdate]);
+  }, [profile?.family_id, onRewardUpdate]);
 
-  // Realtime subscription for redemption updates
   useEffect(() => {
     if (!profile?.family_id) return;
 
     const unsubscribe = onRewardRedemptionUpdate(async () => {
-      // Reload all redemptions when any change occurs
       try {
-        const redemptionsData = await rewardService.getRedemptionsForFamily(profile.family_id!);
+        const redemptionsData = await rewardService.getRedemptionsForFamily(
+          profile.family_id!,
+        );
         setRedemptions(redemptionsData);
       } catch (err) {
         console.error("Failed to reload redemptions:", err);
-        // Don't set error state here to avoid disrupting the UI
-        // The redemptions will just show stale data until next reload
       }
     });
 

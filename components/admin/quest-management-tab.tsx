@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useMemo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuests } from '@/hooks/useQuests';
@@ -50,7 +49,6 @@ export function QuestManagementTab() {
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Action handlers with error handling
   const handleAssignQuest = useCallback(
     async (questId: string, characterId: string) => {
       if (!characterId) return;
@@ -160,13 +158,11 @@ export function QuestManagementTab() {
     setSelectedAssignee((prev) => ({ ...prev, [questId]: userId }));
   }, []);
 
-  // Memoized characters for assignment (map to { id, name } format)
   const assignableCharacters = useMemo(
     () => mapFamilyCharactersToAssignmentDisplay(familyCharacters),
     [familyCharacters]
   );
 
-  // Memoized quest grouping
   const questSections = useMemo(() => {
     const pendingApproval = filterPendingApprovalQuests(quests);
     const unassigned = filterUnassignedActiveQuests(quests);

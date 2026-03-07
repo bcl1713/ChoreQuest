@@ -2,8 +2,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  familyId: string;
-  role: 'GUILD_MASTER' | 'HERO' | 'YOUNG_HERO';
+  familyId: string | null;
+  role: "GUILD_MASTER" | "HERO" | "YOUNG_HERO" | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,7 +12,7 @@ export interface Character {
   id: string;
   userId: string;
   name: string;
-  class: 'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER';
+  class: "KNIGHT" | "MAGE" | "RANGER" | "ROGUE" | "HEALER";
   level: number;
   xp: number;
   gold: number;
@@ -37,9 +37,9 @@ export interface Quest {
   description: string;
   xpReward: number;
   goldReward: number;
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-  category: 'DAILY' | 'WEEKLY' | 'BOSS_BATTLE';
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'APPROVED';
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  category: "DAILY" | "WEEKLY" | "BOSS_BATTLE";
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "APPROVED";
   assignedToId?: string;
   createdById: string;
   familyId: string;
@@ -55,7 +55,7 @@ export interface BossBattle {
   totalHp: number;
   currentHp: number;
   familyId: string;
-  status: 'ACTIVE' | 'DEFEATED' | 'EXPIRED';
+  status: "ACTIVE" | "DEFEATED" | "EXPIRED";
   startDate: Date;
   endDate: Date;
   createdAt: Date;

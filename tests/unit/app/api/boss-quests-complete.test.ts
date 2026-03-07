@@ -1,4 +1,5 @@
 import { applyClassBonusIfApproved, resolveParticipantDecision } from "@/app/api/boss-quests/[id]/complete/route";
+import type { ParticipantDecision } from "@/lib/boss-quest-rewards";
 
 describe("resolveParticipantDecision", () => {
   const rewardGold = 50;
@@ -6,7 +7,7 @@ describe("resolveParticipantDecision", () => {
   const rewardHonor = 1;
 
   it("defaults to full approval when no explicit decision is provided", () => {
-    const map = new Map<string, any>();
+    const map = new Map<string, ParticipantDecision>();
 
     const result = resolveParticipantDecision("user-missing", map, rewardGold, rewardXp, rewardHonor);
 
@@ -19,7 +20,7 @@ describe("resolveParticipantDecision", () => {
   });
 
   it("applies partial and denied decisions while leaving others approved", () => {
-    const map = new Map<string, any>([
+    const map = new Map<string, ParticipantDecision>([
       [
         "user-partial",
         { status: "PARTIAL", gold: 10.9, xp: 5.4, honor: 0 },

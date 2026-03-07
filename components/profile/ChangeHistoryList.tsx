@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Character } from '@/lib/types/database';
-import { ProfileService, ChangeHistoryEntry } from '@/lib/profile-service';
-import { LoadingSpinner } from '@/components/ui';
-import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Character } from "@/lib/types/database";
+import { ProfileService, ChangeHistoryEntry } from "@/lib/profile-service";
+import { LoadingSpinner } from "@/components/ui";
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ChangeHistoryListProps {
   character: Character;
@@ -12,7 +12,9 @@ interface ChangeHistoryListProps {
 
 const ITEMS_PER_PAGE = 10;
 
-export default function ChangeHistoryList({ character }: ChangeHistoryListProps) {
+export default function ChangeHistoryList({
+  character,
+}: ChangeHistoryListProps) {
   const [history, setHistory] = useState<ChangeHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,15 +26,11 @@ export default function ChangeHistoryList({ character }: ChangeHistoryListProps)
       setError(null);
 
       try {
-        const historyData = await ProfileService.getChangeHistory(
-          character.id,
-          ITEMS_PER_PAGE,
-          currentPage
-        );
+        const historyData = await ProfileService.getChangeHistory();
         setHistory(historyData);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Failed to load change history';
+          err instanceof Error ? err.message : "Failed to load change history";
         setError(message);
       } finally {
         setIsLoading(false);
@@ -45,12 +43,12 @@ export default function ChangeHistoryList({ character }: ChangeHistoryListProps)
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
       return dateString;
@@ -59,12 +57,12 @@ export default function ChangeHistoryList({ character }: ChangeHistoryListProps)
 
   const getChangeTypeLabel = (type: string): string => {
     switch (type) {
-      case 'name':
-        return 'Character Name';
-      case 'class':
-        return 'Character Class';
-      case 'password':
-        return 'Password';
+      case "name":
+        return "Character Name";
+      case "class":
+        return "Character Class";
+      case "password":
+        return "Password";
       default:
         return type;
     }
@@ -72,12 +70,12 @@ export default function ChangeHistoryList({ character }: ChangeHistoryListProps)
 
   const getChangeDescription = (entry: ChangeHistoryEntry): string => {
     switch (entry.change_type) {
-      case 'name':
+      case "name":
         return `${entry.old_value} → ${entry.new_value}`;
-      case 'class':
+      case "class":
         return `${entry.old_value} → ${entry.new_value}`;
-      case 'password':
-        return 'Password changed (hidden for security)';
+      case "password":
+        return "Password changed (hidden for security)";
       default:
         return `${entry.old_value} → ${entry.new_value}`;
     }

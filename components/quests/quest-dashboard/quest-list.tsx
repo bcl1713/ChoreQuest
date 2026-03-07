@@ -1,12 +1,12 @@
-import React, { memo, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { QuestInstance } from '@/lib/types/database';
-import { staggerContainer } from '@/lib/animations/variants';
-import QuestCard from '../quest-card';
+import React, { memo, useMemo } from "react";
+import { motion } from "framer-motion";
+import { QuestInstance } from "@/lib/types/database";
+import { staggerContainer } from "@/lib/animations/variants";
+import QuestCard from "../quest-card";
 
 export interface QuestListProps {
   quests: QuestInstance[] | null | undefined;
-  viewMode?: 'hero' | 'gm'; // Explicit view mode for QuestCard (overrides variant-based detection)
+  viewMode?: "hero" | "gm"; // Explicit view mode for QuestCard (overrides variant-based detection)
 
   // Empty state messages
   emptyMessage?: string;
@@ -30,74 +30,79 @@ export interface QuestListProps {
 
   // QuestCard specific props
   familyMembers?: Array<{ id: string; name: string }>;
+
+  // Realtime visual feedback
+  isHighlighted?: (questId: string) => boolean;
 }
 
-const QuestList: React.FC<QuestListProps> = memo(({
-  quests,
-  viewMode: explicitViewMode = 'hero',
-  emptyMessage = 'No quests available.',
-  emptyHint,
-  onStartQuest,
-  onCompleteQuest,
-  onApproveQuest,
-  onReleaseQuest,
-  onPickupQuest,
-  onCancelQuest,
-  onAssignQuest,
-  getAssignedHeroName,
-  getSelectedAssignee,
-  onAssigneeChange,
-  familyMembers = [],
-}) => {
-  // Handle null/undefined quest arrays (memoized to prevent re-filtering on every render)
-  const validQuests = useMemo(
-    () => (quests || []).filter((quest) => quest && quest.id),
-    [quests]
-  );
-
-  // Empty state
-  if (validQuests.length === 0) {
-    return (
-      <div className="fantasy-card p-6 text-center text-gray-300">
-        {emptyMessage}
-        {emptyHint && (
-          <p className="text-xs text-gray-500 mt-2">
-            {emptyHint}
-          </p>
-        )}
-      </div>
+const QuestList: React.FC<QuestListProps> = memo(
+  ({
+    quests,
+    viewMode: explicitViewMode = "hero",
+    emptyMessage = "No quests available.",
+    emptyHint,
+    onStartQuest,
+    onCompleteQuest,
+    onApproveQuest,
+    onReleaseQuest,
+    onPickupQuest,
+    onCancelQuest,
+    onAssignQuest,
+    getAssignedHeroName,
+    getSelectedAssignee,
+    onAssigneeChange,
+    familyMembers = [],
+    isHighlighted,
+  }) => {
+    // Handle null/undefined quest arrays (memoized to prevent re-filtering on every render)
+    const validQuests = useMemo(
+      () => (quests || []).filter((quest) => quest && quest.id),
+      [quests],
     );
-  }
 
-  return (
-    <motion.div
-      className="grid gap-4"
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
-    >
-      {validQuests.map((quest) => (
-        <QuestCard
-          key={quest.id}
-          quest={quest}
-          viewMode={explicitViewMode}
-          onStart={onStartQuest}
-          onComplete={onCompleteQuest}
-          onApprove={onApproveQuest}
-          onPickup={onPickupQuest}
-          onCancel={onCancelQuest}
-          onRelease={onReleaseQuest}
-          onAssign={onAssignQuest}
-          familyMembers={familyMembers}
-          assignedHeroName={getAssignedHeroName?.(quest)}
-          selectedAssignee={getSelectedAssignee?.(quest.id)}
-          onAssigneeChange={onAssigneeChange}
-        />
-      ))}
-    </motion.div>
-  );
-});
+    // Empty state
+    if (validQuests.length === 0) {
+      return (
+        <div className="fantasy-card p-6 text-center text-gray-300">
+          {emptyMessage}
+          {emptyHint && (
+            <p className="text-xs text-gray-500 mt-2">{emptyHint}</p>
+          )}
+        </div>
+      );
+    }
 
-QuestList.displayName = 'QuestList';
+    return (
+      <motion.div
+        className="grid gap-4"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        {validQuests.map((quest) => (
+          <QuestCard
+            key={quest.id}
+            quest={quest}
+            viewMode={explicitViewMode}
+            onStart={onStartQuest}
+            onComplete={onCompleteQuest}
+            onApprove={onApproveQuest}
+            onPickup={onPickupQuest}
+            onCancel={onCancelQuest}
+            onRelease={onReleaseQuest}
+            onAssign={onAssignQuest}
+            familyMembers={familyMembers}
+            assignedHeroName={getAssignedHeroName?.(quest)}
+            selectedAssignee={getSelectedAssignee?.(quest.id)}
+            onAssigneeChange={onAssigneeChange}
+            showRealtimeEffect={isHighlighted?.(quest.id)}
+          />
+        ))}
+      </motion.div>
+    );
+  },
+);
+
+QuestList.displayName = "QuestList";
 
 export default QuestList;

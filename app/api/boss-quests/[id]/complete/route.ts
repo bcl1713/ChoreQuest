@@ -5,115 +5,21 @@ import {
   extractBearerToken,
   isAuthError,
 } from "@/lib/api-auth-helpers";
-import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
-import { RewardCalculator } from "@/lib/reward-calculator";
+import {
+  createServerSupabaseClient,
+  createServiceSupabaseClient,
+} from "@/lib/supabase-server";
+import {
+  applyClassBonusIfApproved,
+  buildCharacterRewardUpdate,
+  buildDecisionMap,
+  resolveParticipantDecision,
+} from "@/lib/boss-quest-rewards";
 import type { CharacterClass } from "@/lib/types/database";
-
-type DecisionStatus = "APPROVED" | "PARTIAL" | "DENIED";
-
-type ParticipantDecision = {
-  status: DecisionStatus;
-  gold?: number;
-  xp?: number;
-  honor?: number;
-};
-
-type AppliedDecision = {
-  status: DecisionStatus;
-  gold: number;
-  xp: number;
-  honor: number;
-};
-
-export function resolveParticipantDecision(
-  participantId: string,
-  decisionMap: Map<string, ParticipantDecision>,
-  rewardGold: number,
-  rewardXp: number,
-  honorReward: number
-): AppliedDecision {
-  const rawDecision = decisionMap.get(participantId);
-  const normalizedStatus = rawDecision?.status ? String(rawDecision.status).toUpperCase() : null;
-  const decision = rawDecision
-    ? {
-        status:
-          normalizedStatus === "PARTIAL"
-            ? "PARTIAL"
-            : normalizedStatus === "DENIED"
-              ? "DENIED"
-              : "APPROVED",
-        gold: rawDecision.gold,
-        xp: rawDecision.xp,
-        honor: rawDecision.honor,
-      }
-    : { status: "APPROVED" as const, gold: rewardGold, xp: rewardXp, honor: honorReward };
-
-  let appliedGold = rewardGold;
-  let appliedXp = rewardXp;
-  let appliedHonor = honorReward;
-
-  if (decision.status === "PARTIAL") {
-    appliedGold = Math.max(0, Math.floor(decision.gold ?? rewardGold));
-    appliedXp = Math.max(0, Math.floor(decision.xp ?? rewardXp));
-    appliedHonor = Math.max(0, Math.floor(decision.honor ?? honorReward));
-  } else if (decision.status === "DENIED") {
-    appliedGold = 0;
-    appliedXp = 0;
-    appliedHonor = 0;
-  }
-
-  return {
-    status: decision.status,
-    gold: appliedGold,
-    xp: appliedXp,
-    honor: appliedHonor,
-  };
-}
-
-export function applyClassBonusIfApproved(
-  decision: AppliedDecision,
-  characterClass: CharacterClass | null
-): AppliedDecision {
-  if (decision.status !== "APPROVED") {
-    return decision;
-  }
-
-  const bonus = characterClass
-    ? RewardCalculator.getClassBonus(characterClass)
-    : { xpBonus: 1, goldBonus: 1, honorBonus: 1, gemsBonus: 1 };
-
-  return {
-    ...decision,
-    gold: Math.floor(decision.gold * bonus.goldBonus),
-    xp: Math.floor(decision.xp * bonus.xpBonus),
-    honor: Math.floor(decision.honor * bonus.honorBonus),
-  };
-}
-
-export function buildCharacterRewardUpdate(
-  character: { gold?: number | null; xp?: number | null; honor_points?: number | null; level?: number | null },
-  rewards: { gold: number; xp: number; honor: number }
-): { gold: number; xp: number; honor_points: number; level: number } {
-  const updatedGold = (character.gold || 0) + rewards.gold;
-  const updatedXp = (character.xp || 0) + rewards.xp;
-  const updatedHonor = (character.honor_points || 0) + rewards.honor;
-  const derivedLevel = RewardCalculator.calculateLevelFromTotalXP(updatedXp);
-  const currentLevel =
-    Number.isFinite(character.level) && (character.level as number) > 0
-      ? Math.floor(character.level as number)
-      : 1;
-
-  return {
-    gold: updatedGold,
-    xp: updatedXp,
-    honor_points: updatedHonor,
-    level: Math.max(currentLevel, derivedLevel),
-  };
-}
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: bossQuestId } = await params;
@@ -138,55 +44,70 @@ export async function POST(
     if (requesterProfile.role !== "GUILD_MASTER") {
       return NextResponse.json(
         { error: "Only Guild Masters can complete boss quests" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const { data: bossQuest, error: bossError } = await supabase
       .from("boss_battles")
-      .select("id, family_id, status, reward_gold, reward_xp, honor_reward, rewards_distributed")
+      .select(
+        "id, family_id, status, reward_gold, reward_xp, honor_reward, rewards_distributed",
+      )
       .eq("id", bossQuestId)
       .maybeSingle();
 
     if (bossError) {
       return NextResponse.json(
         { error: `Failed to fetch boss quest: ${bossError.message}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!bossQuest) {
-      return NextResponse.json({ error: "Boss quest not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Boss quest not found" },
+        { status: 404 },
+      );
     }
 
     if (bossQuest.family_id !== requesterProfile.family_id) {
       return NextResponse.json(
         { error: "Cannot complete boss quests outside your family" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (bossQuest.rewards_distributed) {
       return NextResponse.json(
-        { success: true, message: "Boss quest already completed and rewards distributed" },
-        { status: 200 }
+        {
+          success: true,
+          message: "Boss quest already completed and rewards distributed",
+        },
+        { status: 200 },
       );
     }
 
-    const { data: participants, error: participantsError } = await serviceSupabase
-      .from("boss_battle_participants")
-      .select("id, user_id, participation_status, awarded_gold, awarded_xp, honor_awarded")
-      .eq("boss_battle_id", bossQuestId);
+    const { data: participants, error: participantsError } =
+      await serviceSupabase
+        .from("boss_battle_participants")
+        .select(
+          "id, user_id, participation_status, awarded_gold, awarded_xp, honor_awarded",
+        )
+        .eq("boss_battle_id", bossQuestId);
 
     if (participantsError) {
       return NextResponse.json(
         { error: `Failed to fetch participants: ${participantsError.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const uniqueParticipantIds = Array.from(
-      new Set((participants || []).map((p) => p.user_id).filter(Boolean)) as string[]
+      new Set(
+        (participants || [])
+          .map((p) => p.user_id)
+          .filter((id): id is string => id !== null),
+      ),
     );
 
     const rewardGold = bossQuest.reward_gold ?? 0;
@@ -194,25 +115,13 @@ export async function POST(
     const honorReward = bossQuest.honor_reward ?? 1;
 
     const nowIso = new Date().toISOString();
-    const decisionMap = new Map<
-      string,
-      { status: "APPROVED" | "PARTIAL" | "DENIED"; gold?: number; xp?: number; honor?: number }
-    >();
+    const decisionMap = buildDecisionMap(decisions);
 
-    decisions.forEach((d: any) => {
-      if (!d?.userId) return;
-      const status = typeof d.status === "string" ? d.status.toUpperCase() : "";
-      if (status === "APPROVED" || status === "PARTIAL" || status === "DENIED") {
-        decisionMap.set(d.userId, {
-          status,
-          gold: typeof d.gold === "number" ? d.gold : undefined,
-          xp: typeof d.xp === "number" ? d.xp : undefined,
-          honor: typeof d.honor === "number" ? d.honor : undefined,
-        });
-      }
-    });
-
-    const rewardTotals: { participantId: string; rewards: { gold: number; xp: number; honor: number }; status: string }[] = [];
+    const rewardTotals: {
+      participantId: string;
+      rewards: { gold: number; xp: number; honor: number };
+      status: string;
+    }[] = [];
 
     for (const participantId of uniqueParticipantIds) {
       const { data: character } = await serviceSupabase
@@ -222,8 +131,14 @@ export async function POST(
         .maybeSingle();
 
       const appliedDecision = applyClassBonusIfApproved(
-        resolveParticipantDecision(participantId, decisionMap, rewardGold, rewardXp, honorReward),
-        (character?.class as CharacterClass | null) ?? null
+        resolveParticipantDecision(
+          participantId,
+          decisionMap,
+          rewardGold,
+          rewardXp,
+          honorReward,
+        ),
+        (character?.class as CharacterClass | null) ?? null,
       );
 
       rewardTotals.push({
@@ -236,7 +151,9 @@ export async function POST(
         status: appliedDecision.status,
       });
 
-      const participantRow = (participants || []).find((p) => p.user_id === participantId);
+      const participantRow = (participants || []).find(
+        (p) => p.user_id === participantId,
+      );
       if (participantRow?.id) {
         const { error: updateParticipantError } = await serviceSupabase
           .from("boss_battle_participants")
@@ -251,7 +168,10 @@ export async function POST(
           .eq("id", participantRow.id);
 
         if (updateParticipantError) {
-          console.error("Failed to update participant approval", updateParticipantError);
+          console.error(
+            "Failed to update participant approval",
+            updateParticipantError,
+          );
         }
       }
 
@@ -268,22 +188,31 @@ export async function POST(
           .eq("id", character.id);
 
         if (characterUpdateError) {
-          console.error("Failed to update boss quest rewards for character", character.id, characterUpdateError);
+          console.error(
+            "Failed to update boss quest rewards for character",
+            character.id,
+            characterUpdateError,
+          );
         }
       }
 
-      const { error: transactionError } = await serviceSupabase.from("transactions").insert({
-        user_id: participantId,
-        type: "BOSS_VICTORY",
-        xp_change: appliedDecision.xp,
-        gold_change: appliedDecision.gold,
-        honor_change: appliedDecision.honor,
-        description: `Boss quest rewards (${appliedDecision.status})`,
-        related_id: bossQuestId,
-      });
+      const { error: transactionError } = await serviceSupabase
+        .from("transactions")
+        .insert({
+          user_id: participantId,
+          type: "BOSS_VICTORY",
+          xp_change: appliedDecision.xp,
+          gold_change: appliedDecision.gold,
+          honor_change: appliedDecision.honor,
+          description: `Boss quest rewards (${appliedDecision.status})`,
+          related_id: bossQuestId,
+        });
 
       if (transactionError) {
-        console.error("Failed to record boss quest transaction", transactionError);
+        console.error(
+          "Failed to record boss quest transaction",
+          transactionError,
+        );
       }
     }
 
@@ -299,7 +228,7 @@ export async function POST(
     if (updateError) {
       return NextResponse.json(
         { error: `Failed to mark boss quest defeated: ${updateError.message}` },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -310,11 +239,18 @@ export async function POST(
         rewards: { gold: rewardGold, xp: rewardXp, honor: honorReward },
         appliedRewards: rewardTotals,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
     console.error("Error completing boss quest:", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export {
+  resolveParticipantDecision,
+  applyClassBonusIfApproved,
+  buildCharacterRewardUpdate,
+} from "@/lib/boss-quest-rewards";

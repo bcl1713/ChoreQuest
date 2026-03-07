@@ -1,9 +1,3 @@
-/**
- * QuestTemplateService integration-style tests using mocked Supabase client.
- * These verify that the service issues the expected Supabase queries and
- * correctly interprets the returned data without requiring a live database.
- */
-
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { CreateQuestTemplateInput } from "@/lib/types/database";
 import { supabase } from "@/lib/supabase";
@@ -55,6 +49,24 @@ describe("QuestTemplateService (mocked Supabase)", () => {
   const testFamilyId = "family-123";
   const testTemplateId = "template-456";
   const testUserId = "user-789";
+  const templateBase = {
+    id: testTemplateId,
+    title: "Integration Test Quest",
+    description: "This is an integration test",
+    xp_reward: 100,
+    gold_reward: 50,
+    difficulty: "MEDIUM",
+    category: "DAILY",
+    family_id: testFamilyId,
+    is_active: true,
+    quest_type: "INDIVIDUAL",
+    recurrence_pattern: null,
+    assigned_character_ids: [],
+    is_paused: false,
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+  };
+  const buildTemplate = (overrides = {}) => ({ ...templateBase, ...overrides });
 
   beforeEach(() => {
     supabaseFromSpy.mockReset();
@@ -63,30 +75,21 @@ describe("QuestTemplateService (mocked Supabase)", () => {
   describe("createTemplate", () => {
     it("should create a quest template with all fields", async () => {
       const input: CreateQuestTemplateInput = {
-        title: "Integration Test Quest",
-        description: "This is an integration test",
-        xp_reward: 100,
-        gold_reward: 50,
-        difficulty: "MEDIUM",
-        category: "DAILY",
-        family_id: testFamilyId,
-        is_active: true,
+        title: templateBase.title,
+        description: templateBase.description,
+        xp_reward: templateBase.xp_reward,
+        gold_reward: templateBase.gold_reward,
+        difficulty: templateBase.difficulty,
+        category: templateBase.category as CreateQuestTemplateInput["category"],
+        family_id: templateBase.family_id,
+        is_active: templateBase.is_active,
         class_bonuses: {
           KNIGHT: { xp: 1.05, gold: 1.05 },
           MAGE: { xp: 1.2, gold: 1.0 },
         },
       };
 
-      const createdTemplate = {
-        ...input,
-        id: testTemplateId,
-        created_at: "2024-01-01T00:00:00.000Z",
-        updated_at: "2024-01-01T00:00:00.000Z",
-        recurrence_pattern: null,
-        quest_type: "INDIVIDUAL",
-        assigned_character_ids: [],
-        is_paused: false,
-      };
+      const createdTemplate = buildTemplate(input);
 
       const insertBuilder = createQueryBuilder<{ id: string }>(
         { data: null, error: null },
@@ -113,23 +116,7 @@ describe("QuestTemplateService (mocked Supabase)", () => {
   describe("getTemplatesForFamily", () => {
     it("should retrieve templates for a family", async () => {
       const templatesForFamily = [
-        {
-          id: testTemplateId,
-          title: "Integration Test Quest",
-          description: "This is an integration test",
-          xp_reward: 100,
-          gold_reward: 50,
-          difficulty: "MEDIUM",
-          category: "DAILY",
-          family_id: testFamilyId,
-          is_active: true,
-          quest_type: "INDIVIDUAL",
-          recurrence_pattern: null,
-          assigned_character_ids: [],
-          is_paused: false,
-          created_at: "2024-01-01T00:00:00.000Z",
-          updated_at: "2024-01-01T00:00:00.000Z",
-        },
+        buildTemplate(),
       ];
 
       const selectBuilder = createQueryBuilder({
@@ -155,22 +142,12 @@ describe("QuestTemplateService (mocked Supabase)", () => {
 
   describe("updateTemplate", () => {
     it("should update a template", async () => {
-      const updatedTemplate = {
-        id: testTemplateId,
+      const updatedTemplate = buildTemplate({
         xp_reward: 200,
         title: "Updated Integration Test Quest",
         description: "Updated",
-        family_id: testFamilyId,
-        difficulty: "MEDIUM",
-        category: "DAILY",
-        is_active: true,
-        quest_type: "INDIVIDUAL",
-        recurrence_pattern: null,
-        assigned_character_ids: [],
-        is_paused: false,
-        created_at: "2024-01-01T00:00:00.000Z",
         updated_at: "2024-01-02T00:00:00.000Z",
-      };
+      });
 
       const updateBuilder = createQueryBuilder(
         { data: null, error: null },
@@ -250,23 +227,7 @@ describe("QuestTemplateService (mocked Supabase)", () => {
 
   describe("createQuestFromTemplate", () => {
     it("should create a quest instance from template", async () => {
-      const template = {
-        id: testTemplateId,
-        title: "Integration Test Quest",
-        description: "This is an integration test",
-        xp_reward: 100,
-        gold_reward: 50,
-        difficulty: "MEDIUM",
-        category: "DAILY",
-        family_id: testFamilyId,
-        is_active: true,
-        quest_type: "INDIVIDUAL",
-        recurrence_pattern: null,
-        assigned_character_ids: [],
-        is_paused: false,
-        created_at: "2024-01-01T00:00:00.000Z",
-        updated_at: "2024-01-01T00:00:00.000Z",
-      };
+      const template = buildTemplate();
 
       const createdQuest = {
         id: "quest-123",

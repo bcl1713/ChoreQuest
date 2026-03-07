@@ -1,138 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, Clock, Gift, Sparkles, XCircle, PartyPopper, Plus, Wifi, RefreshCw, VolumeOff, Swords, Shield } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Wifi, RefreshCw, VolumeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { ActivityService, ActivityEvent } from "@/lib/activity-service";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui";
+import {
+  EVENT_CONFIG,
+  EVENT_ICONS,
+  formatRelativeTime,
+  getEventDescription,
+} from "./activity-feed-config";
 
 const activityService = new ActivityService();
-
-const EVENT_ICONS = {
-  CheckCircle,
-  Clock,
-  Gift,
-  Sparkles,
-  XCircle,
-  PartyPopper,
-  Plus,
-  Swords,
-  Shield,
-};
-
-// Event type icons and colors
-const EVENT_CONFIG: Record<string, {
-  icon: keyof typeof EVENT_ICONS;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-}> = {
-  QUEST_COMPLETED: {
-    icon: "CheckCircle",
-    color: "text-green-400",
-    bgColor: "bg-green-500/10",
-    borderColor: "border-green-500/30",
-  },
-  QUEST_SUBMITTED: {
-    icon: "Clock",
-    color: "text-orange-400",
-    bgColor: "bg-orange-500/10",
-    borderColor: "border-orange-500/30",
-  },
-  REWARD_REDEEMED: {
-    icon: "Gift",
-    color: "text-purple-400",
-    bgColor: "bg-purple-500/10",
-    borderColor: "border-purple-500/30",
-  },
-  REWARD_APPROVED: {
-    icon: "Sparkles",
-    color: "text-cyan-400",
-    bgColor: "bg-cyan-500/10",
-    borderColor: "border-cyan-500/30",
-  },
-  REWARD_DENIED: {
-    icon: "XCircle",
-    color: "text-red-400",
-    bgColor: "bg-red-500/10",
-    borderColor: "border-red-500/30",
-  },
-  LEVEL_UP: {
-    icon: "PartyPopper",
-    color: "text-yellow-400",
-    bgColor: "bg-yellow-500/10",
-    borderColor: "border-yellow-500/30",
-  },
-  CHARACTER_CREATED: {
-    icon: "Plus",
-    color: "text-blue-400",
-    bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/30",
-  },
-  BOSS_CREATED: {
-    icon: "Swords",
-    color: "text-indigo-300",
-    bgColor: "bg-indigo-500/10",
-    borderColor: "border-indigo-500/30",
-  },
-  BOSS_DEFEATED: {
-    icon: "Shield",
-    color: "text-emerald-300",
-    bgColor: "bg-emerald-500/10",
-    borderColor: "border-emerald-500/30",
-  },
-};
-
-// Format relative time (e.g., "5 minutes ago")
-function formatRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const eventTime = new Date(timestamp);
-  const diffMs = now.getTime() - eventTime.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffSec < 60) {
-    return "just now";
-  } else if (diffMin < 60) {
-    return `${diffMin} minute${diffMin !== 1 ? "s" : ""} ago`;
-  } else if (diffHour < 24) {
-    return `${diffHour} hour${diffHour !== 1 ? "s" : ""} ago`;
-  } else if (diffDay < 7) {
-    return `${diffDay} day${diffDay !== 1 ? "s" : ""} ago`;
-  } else {
-    return eventTime.toLocaleDateString();
-  }
-}
-
-// Format event description
-function getEventDescription(event: ActivityEvent): string {
-  switch (event.type) {
-    case "QUEST_COMPLETED":
-      return `completed quest "${event.questTitle}"`;
-    case "QUEST_SUBMITTED":
-      return `submitted quest "${event.questTitle}" for approval`;
-    case "REWARD_REDEEMED":
-      return `redeemed reward "${event.rewardName}"`;
-    case "REWARD_APPROVED":
-      return `reward "${event.rewardName}" was approved`;
-    case "REWARD_DENIED":
-      return `reward "${event.rewardName}" was denied`;
-    case "LEVEL_UP":
-      return `leveled up to level ${event.newLevel}!`;
-    case "CHARACTER_CREATED":
-      return `joined the family`;
-    case "BOSS_CREATED":
-      return `rallied boss quest "${event.bossTitle}"`;
-    case "BOSS_DEFEATED":
-      return `defeated boss quest "${event.bossTitle}"`;
-    default:
-      return "unknown activity";
-  }
-}
 
 export default function ActivityFeed() {
   const { profile } = useAuth();
@@ -140,8 +22,20 @@ export default function ActivityFeed() {
   const onQuestUpdate = realtime.onQuestUpdate;
   const onRewardRedemptionUpdate = realtime.onRewardRedemptionUpdate;
   const onCharacterUpdate = realtime.onCharacterUpdate;
-  const onBossQuestUpdate = typeof realtime.onBossQuestUpdate === "function" ? realtime.onBossQuestUpdate : () => () => {};
-  const onBossParticipantUpdate = typeof realtime.onBossParticipantUpdate === "function" ? realtime.onBossParticipantUpdate : () => () => {};
+  const onBossQuestUpdate = useMemo(
+    () =>
+      typeof realtime.onBossQuestUpdate === "function"
+        ? realtime.onBossQuestUpdate
+        : () => () => {},
+    [realtime.onBossQuestUpdate],
+  );
+  const onBossParticipantUpdate = useMemo(
+    () =>
+      typeof realtime.onBossParticipantUpdate === "function"
+        ? realtime.onBossParticipantUpdate
+        : () => () => {},
+    [realtime.onBossParticipantUpdate],
+  );
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +67,6 @@ export default function ActivityFeed() {
     loadActivity();
   }, [loadActivity]);
 
-  // Subscribe to realtime updates and refresh activity
   useEffect(() => {
     const unsubscribeQuest = onQuestUpdate(() => {
       loadActivity();
@@ -278,7 +171,9 @@ export default function ActivityFeed() {
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold text-white"><Wifi size={20} /> Recent Activity</h3>
+        <h3 className="text-xl font-semibold text-white">
+          <Wifi size={20} /> Recent Activity
+        </h3>
         <Button
           onClick={handleRefresh}
           isLoading={refreshing}
@@ -334,9 +229,13 @@ export default function ActivityFeed() {
                       </span>{" "}
                       {getEventDescription(event)}
                     </p>
-                    {(event.type === "BOSS_CREATED" || event.type === "BOSS_DEFEATED") && (
+                    {(event.type === "BOSS_CREATED" ||
+                      event.type === "BOSS_DEFEATED") && (
                       <p className="text-xs text-gray-400">
-                        {(event.bossParticipants ?? 0)} participants{event.bossRewards ? ` • ${event.bossRewards.xp} XP, ${event.bossRewards.gold} Gold, +${event.bossRewards.honor} Honor` : ""}
+                        {event.bossParticipants ?? 0} participants
+                        {event.bossRewards
+                          ? ` • ${event.bossRewards.xp} XP, ${event.bossRewards.gold} Gold, +${event.bossRewards.honor} Honor`
+                          : ""}
                       </p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">

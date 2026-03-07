@@ -6,22 +6,19 @@
 
 import { supabase } from "@/lib/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Tables, TablesInsert, TablesUpdate } from "@/lib/types/database-generated";
-import { getDaysBetweenInTimezone } from "@/lib/timezone-utils";
+import type { Database } from "@/lib/types/database-generated";
+import {
+  Tables,
+  TablesInsert,
+  TablesUpdate,
+} from "@/lib/types/database-generated";
 
 type CharacterQuestStreak = Tables<"character_quest_streaks">;
 type CharacterQuestStreakInsert = TablesInsert<"character_quest_streaks">;
 type CharacterQuestStreakUpdate = TablesUpdate<"character_quest_streaks">;
 
-// Streak bonus constants
-const STREAK_BONUS_INCREMENT = 0.01; // 1% bonus per threshold
-const STREAK_THRESHOLD_DAYS = 5; // Bonus increases every 5 days
-const MAX_STREAK_BONUS = 0.05; // 5% maximum bonus (25-day streak)
-
 export class StreakService {
-  constructor(
-    private readonly client: SupabaseClient | typeof supabase = supabase
-  ) {}
+  constructor(private readonly client: SupabaseClient<Database> = supabase) {}
   /**
    * Get the current streak for a character and template
    * Creates a new streak record if one doesn't exist
@@ -29,7 +26,10 @@ export class StreakService {
    * @param templateId - The quest template ID
    * @returns The streak record
    */
-  async getStreak(characterId: string, templateId: string): Promise<CharacterQuestStreak> {
+  async getStreak(
+    characterId: string,
+    templateId: string,
+  ): Promise<CharacterQuestStreak> {
     const { data: streak, error } = await this.client
       .from("character_quest_streaks")
       .select("*")
@@ -78,14 +78,17 @@ export class StreakService {
   async incrementStreak(
     characterId: string,
     templateId: string,
-    completedDate: Date
+    completedDate: Date,
   ): Promise<CharacterQuestStreak> {
     // Get current streak
     const streak = await this.getStreak(characterId, templateId);
 
     // Increment streak count
     const newStreakCount = (streak.current_streak || 0) + 1;
-    const newLongestStreak = Math.max(newStreakCount, streak.longest_streak || 0);
+    const newLongestStreak = Math.max(
+      newStreakCount,
+      streak.longest_streak || 0,
+    );
 
     // Update streak record
     const update: CharacterQuestStreakUpdate = {
@@ -115,7 +118,10 @@ export class StreakService {
    * @param templateId - The quest template ID
    * @returns The updated streak record
    */
-  async resetStreak(characterId: string, templateId: string): Promise<CharacterQuestStreak> {
+  async resetStreak(
+    characterId: string,
+    templateId: string,
+  ): Promise<CharacterQuestStreak> {
     // Get current streak
     const streak = await this.getStreak(characterId, templateId);
 
@@ -139,33 +145,13 @@ export class StreakService {
   }
 
   /**
-   * Calculate the streak bonus percentage for a given streak count
-   * Formula: +1% per 5 days, capped at +5% (25-day streak)
-   * Examples:
-   * - 0-4 days: 0% bonus
-   * - 5-9 days: 1% bonus (0.01)
-   * - 10-14 days: 2% bonus (0.02)
-   * - 25+ days: 5% bonus (0.05) - MAX
-   * @param streakCount - The current streak count
-   * @returns The bonus percentage as a decimal (e.g., 0.05 = 5%)
-   */
-  calculateStreakBonus(streakCount: number): number {
-    // Calculate how many thresholds have been reached
-    const thresholdsPassed = Math.floor(streakCount / STREAK_THRESHOLD_DAYS);
-
-    // Calculate bonus (1% per threshold)
-    const bonus = thresholdsPassed * STREAK_BONUS_INCREMENT;
-
-    // Cap at maximum bonus (5%)
-    return Math.min(bonus, MAX_STREAK_BONUS);
-  }
-
-  /**
    * Get all streaks for a character
    * @param characterId - The character ID
    * @returns Array of streak records
    */
-  async getCharacterStreaks(characterId: string): Promise<CharacterQuestStreak[]> {
+  async getCharacterStreaks(
+    characterId: string,
+  ): Promise<CharacterQuestStreak[]> {
     const { data: streaks, error } = await this.client
       .from("character_quest_streaks")
       .select("*")
@@ -185,8 +171,12 @@ export class StreakService {
    * @param familyId - The family ID
    * @returns Array of streaks with character information
    */
-  async getStreakLeaderboard(familyId: string): Promise<
-    Array<CharacterQuestStreak & { character_name: string; template_title: string }>
+  async getStreakLeaderboard(
+    familyId: string,
+  ): Promise<
+    Array<
+      CharacterQuestStreak & { character_name: string; template_title: string }
+    >
   > {
     const { data: streaks, error } = await this.client
       .from("character_quest_streaks")
@@ -201,7 +191,7 @@ export class StreakService {
           title,
           family_id
         )
-      `
+      `,
       )
       .order("current_streak", { ascending: false });
 
@@ -231,49 +221,47 @@ export class StreakService {
 
     return leaderboard;
   }
+  /**
+   * Calculate the streak bonus multiplier based on streak count
+   * +1% per 5 consecutive days, capped at +5%
+   * @param streakCount - The current streak count
+   * @returns The bonus as a decimal (e.g., 0.01 for 1%)
+   */
+  calculateStreakBonus(streakCount: number): number {
+    if (streakCount < 5) return 0;
+    const tier = Math.floor(streakCount / 5);
+    return Math.min(tier * 0.01, 0.05);
+  }
 
   /**
-   * Validate if a quest completion is consecutive (no gaps in the streak)
-   * Checks if the last completion was within the expected timeframe in the family's timezone
-   * @param lastCompletedDate - The last completion date (ISO string or null)
-   * @param recurrencePattern - The quest recurrence pattern (DAILY or WEEKLY)
+   * Validate whether a completion is consecutive (no missed periods)
+   * @param lastCompletedDate - ISO string of last completion, or null for first completion
+   * @param recurrencePattern - 'DAILY' or 'WEEKLY'
    * @param currentDate - The current completion date
-   * @param timezone - The family's IANA timezone string (e.g., 'America/Chicago')
-   * @returns True if consecutive, false if there's a gap
+   * @returns true if the completion is consecutive
    */
   validateConsecutiveCompletion(
     lastCompletedDate: string | null,
-    recurrencePattern: "DAILY" | "WEEKLY" | "CUSTOM",
+    recurrencePattern: string,
     currentDate: Date,
-    timezone: string = 'UTC'
   ): boolean {
-    if (!lastCompletedDate) {
-      // First completion is always valid
-      return true;
-    }
+    if (!lastCompletedDate) return true;
 
     const lastDate = new Date(lastCompletedDate);
+    const diffMs = currentDate.getTime() - lastDate.getTime();
+    const diffInDays = diffMs / (1000 * 60 * 60 * 24);
 
-    // For DAILY quests: allow completion today or yesterday in the family's timezone
     if (recurrencePattern === "DAILY") {
-      const daysBetween = getDaysBetweenInTimezone(lastDate, currentDate, timezone);
-
-      // Allow same day (0 days = re-completion) or next day (1 day = consecutive)
-      // daysBetween uses calendar days in the family's timezone, so this is correct
-      return daysBetween <= 1;
+      // Must be completed within ~2 calendar days (no missed day)
+      return diffInDays > 0 && diffInDays <= 2;
     }
 
-    // For WEEKLY quests: allow completion this week or last week in the family's timezone
     if (recurrencePattern === "WEEKLY") {
-      const daysBetween = getDaysBetweenInTimezone(lastDate, currentDate, timezone);
-
-      // Allow up to 8 days (same week or previous week)
-      // This accounts for completing at the start of one week and end of next
-      return daysBetween < 8;
+      // Must be completed within ~8 days (no missed week)
+      return diffInDays > 0 && diffInDays <= 8;
     }
 
-    // For CUSTOM, we can't validate without more info, so allow it
-    return true;
+    return false;
   }
 }
 
