@@ -24,10 +24,19 @@ const tabs: TabItem<TestTab>[] = [
 ];
 
 describe("TabBar", () => {
-  it("renders all provided tabs as buttons", () => {
+  it("renders a tablist container with all tabs", () => {
     render(<TabBar tabs={tabs} activeTab="home" onTabChange={() => {}} />);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(3);
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
+    const tabButtons = screen.getAllByRole("tab");
+    expect(tabButtons).toHaveLength(3);
+  });
+
+  it("sets aria-selected on the active tab only", () => {
+    render(<TabBar tabs={tabs} activeTab="home" onTabChange={() => {}} />);
+    const tabButtons = screen.getAllByRole("tab");
+    expect(tabButtons[0]).toHaveAttribute("aria-selected", "true");
+    expect(tabButtons[1]).toHaveAttribute("aria-selected", "false");
+    expect(tabButtons[2]).toHaveAttribute("aria-selected", "false");
   });
 
   it("applies active styling to the active tab", () => {
@@ -64,7 +73,7 @@ describe("TabBar", () => {
   it("does not render data-testid when omitted", () => {
     render(<TabBar tabs={tabs} activeTab="home" onTabChange={() => {}} />);
     // The profile tab has no testId
-    const buttons = screen.getAllByRole("button");
+    const buttons = screen.getAllByRole("tab");
     const profileButton = buttons[2];
     expect(profileButton.getAttribute("data-testid")).toBeNull();
   });
@@ -84,7 +93,7 @@ describe("TabBar", () => {
   it("falls back to first word when shortLabel is not provided", () => {
     render(<TabBar tabs={tabs} activeTab="home" onTabChange={() => {}} />);
     // Profile tab has label "User Profile" and no shortLabel
-    const buttons = screen.getAllByRole("button");
+    const buttons = screen.getAllByRole("tab");
     const profileButton = buttons[2];
     const mobileSpan = profileButton.querySelector(".sm\\:hidden");
     expect(mobileSpan).toHaveTextContent("User");

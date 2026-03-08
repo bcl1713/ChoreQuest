@@ -24,6 +24,7 @@ export function TabBar<T extends string>({
 }: TabBarProps<T>) {
   return (
     <div
+      role="tablist"
       className={cn(
         "flex flex-wrap border-b border-gold-700/30 bg-dark-800/50",
         className,
@@ -37,6 +38,9 @@ export function TabBar<T extends string>({
         return (
           <button
             key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onTabChange(tab.id)}
             {...(tab.testId ? { "data-testid": tab.testId } : {})}
             className={cn(
