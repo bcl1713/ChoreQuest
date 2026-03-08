@@ -7,11 +7,10 @@ import {
   QuestCompleteOverlay,
   type QuestReward,
 } from "@/components/animations";
-import { Button } from "@/components/ui";
+import { TabBar, type TabItem } from "@/components/ui";
 import QuestDashboard from "@/components/quests/quest-dashboard";
 import QuestCreateModal from "@/components/quests/quest-create-modal";
 import RewardStore from "@/components/rewards/reward-store";
-import { cn } from "@/lib/utils";
 import {
   AlertCircle,
   Award,
@@ -29,6 +28,25 @@ import type {
 } from "@/lib/types/database";
 import { StatCard } from "./stat-card";
 import { DashboardHeader } from "./dashboard-header";
+
+type DashboardTab = "quests" | "rewards";
+
+const dashboardTabs: TabItem<DashboardTab>[] = [
+  {
+    id: "quests",
+    label: "Quests & Adventures",
+    shortLabel: "Quests",
+    icon: Sword,
+    testId: "tab-quests",
+  },
+  {
+    id: "rewards",
+    label: "Reward Store",
+    shortLabel: "Rewards",
+    icon: Store,
+    testId: "tab-rewards",
+  },
+];
 
 type DashboardLayoutProps = {
   character: Character;
@@ -170,36 +188,12 @@ export function DashboardLayout({
             </p>
           </div>
 
-          <div className="flex space-x-1 mb-6 sm:mb-8 bg-dark-800 p-1 rounded-lg">
-            <Button
-              onClick={() => setActiveTab("quests")}
-              data-testid="tab-quests"
-              variant={activeTab === "quests" ? "gold" : "ghost"}
-              size="lg"
-              startIcon={<Sword aria-hidden="true" className="h-full w-full" />}
-              className={cn(
-                "flex-1 touch-target",
-                activeTab !== "quests" && "text-gray-300 hover:text-gray-100",
-              )}
-            >
-              <span className="hidden sm:inline">Quests & Adventures</span>
-              <span className="sm:hidden">Quests</span>
-            </Button>
-            <Button
-              onClick={() => setActiveTab("rewards")}
-              data-testid="tab-rewards"
-              variant={activeTab === "rewards" ? "gold" : "ghost"}
-              size="lg"
-              startIcon={<Store aria-hidden="true" className="h-full w-full" />}
-              className={cn(
-                "flex-1 touch-target",
-                activeTab !== "rewards" && "text-gray-300 hover:text-gray-100",
-              )}
-            >
-              <span className="hidden sm:inline">Reward Store</span>
-              <span className="sm:hidden">Rewards</span>
-            </Button>
-          </div>
+          <TabBar
+            tabs={dashboardTabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className="mb-6 sm:mb-8 rounded-lg"
+          />
 
           {error && (
             <div className="bg-red-600/20 border border-red-600 rounded-lg p-4 mb-6 flex items-start gap-3">
