@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Component, ErrorInfo, ReactNode } from "react";
+import { useEffect, Component, ErrorInfo, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Crown } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -61,15 +61,6 @@ export default function AdminPage() {
   const router = useRouter();
   const { user, profile, isLoading, family } = useAuth();
   const { character, isLoading: characterLoading } = useCharacter();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   useEffect(() => {
     // Redirect to login if not authenticated
     if (!isLoading && !user) {
@@ -107,7 +98,6 @@ export default function AdminPage() {
         character={character}
         family={family}
         profile={profile}
-        currentTime={currentTime}
         title="Admin Dashboard"
         titleIcon={<Crown size={32} />}
         actions={

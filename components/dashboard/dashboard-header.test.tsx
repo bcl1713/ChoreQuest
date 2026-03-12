@@ -134,7 +134,6 @@ type HeaderOverrides = {
   character?: Character;
   family?: Family | null;
   profile?: UserProfile | null;
-  currentTime?: Date;
   actions?: React.ReactNode;
   title?: string;
   titleIcon?: React.ReactNode;
@@ -145,7 +144,6 @@ function renderHeader(overrides: HeaderOverrides = {}) {
     character: mockCharacter,
     family: mockFamily,
     profile: mockGuildMasterProfile,
-    currentTime: new Date("2026-03-07T12:00:00"),
     actions: buildGuildMasterActions(),
     ...overrides,
   };
@@ -275,7 +273,9 @@ describe("DashboardHeader", () => {
   describe("hydration safety", () => {
     it("renders the time display with date and time", () => {
       renderHeader();
-      expect(screen.getByText(/12:00:00/)).toBeInTheDocument();
+      // Clock is now managed internally — just verify the time element renders
+      const clockElement = screen.getByText(/\d{1,2}:\d{2}:\d{2}/);
+      expect(clockElement).toBeInTheDocument();
     });
   });
 });

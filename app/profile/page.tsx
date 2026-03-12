@@ -7,7 +7,7 @@ import ProfileSettings from "@/components/profile/ProfileSettings";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
 import { AuthenticatedPageShell } from "@/components/layout/authenticated-page-shell";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -18,16 +18,6 @@ export default function ProfilePage() {
     error: characterError,
     refreshCharacter,
   } = useCharacter();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Update clock every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -81,7 +71,6 @@ export default function ProfilePage() {
         character={character}
         family={family}
         profile={profile}
-        currentTime={currentTime}
         actions={
           <>
             <Button

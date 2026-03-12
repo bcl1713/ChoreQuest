@@ -1,4 +1,6 @@
-import React, { type ReactNode } from "react";
+"use client";
+
+import React, { type ReactNode, useState, useEffect } from "react";
 import { IconWithLabel } from "@/components/ui";
 import { Clock, Shield } from "lucide-react";
 import type { Character, Family, UserProfile } from "@/lib/types/database";
@@ -8,7 +10,6 @@ type DashboardHeaderProps = {
   character: Character;
   family: Family | null;
   profile: UserProfile | null;
-  currentTime: Date;
   actions: ReactNode;
   title?: string;
   titleIcon?: ReactNode;
@@ -18,11 +19,18 @@ export function DashboardHeader({
   character,
   family,
   profile,
-  currentTime,
   actions,
   title = "ChoreQuest",
   titleIcon,
 }: DashboardHeaderProps) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   return (
     <header className="border-b border-dark-600 bg-dark-800/50 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">

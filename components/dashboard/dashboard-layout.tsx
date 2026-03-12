@@ -57,7 +57,6 @@ type DashboardLayoutProps = {
   family: Family | null;
   profile: UserProfile | null;
   levelProgress: { current: number; required: number };
-  currentTime: Date;
   activeTab: "quests" | "rewards";
   authError: string | null;
   error: string | null;
@@ -94,7 +93,6 @@ export function DashboardLayout({
   family,
   profile,
   levelProgress,
-  currentTime,
   activeTab,
   authError,
   error,
@@ -121,7 +119,6 @@ export function DashboardLayout({
           character={character}
           family={family}
           profile={profile}
-          currentTime={currentTime}
           actions={
             <>
               {profile?.role === "GUILD_MASTER" && (

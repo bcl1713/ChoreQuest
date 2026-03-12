@@ -1,25 +1,38 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { useCharacter } from '@/lib/character-context';
-import { useRealtime } from '@/lib/realtime-context';
-import { RewardCalculator } from '@/lib/reward-calculator';
-import { DashboardLayout } from './dashboard-layout';
-import { useQuestTemplates } from './useQuestTemplates';
-import { AuthErrorHandler } from './auth-error-handler';
-import { DashboardLoading } from './dashboard-loading';
-import type { QuestReward } from '@/components/animations';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense,
+} from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { useCharacter } from "@/lib/character-context";
+import { useRealtime } from "@/lib/realtime-context";
+import { RewardCalculator } from "@/lib/reward-calculator";
+import { DashboardLayout } from "./dashboard-layout";
+import { useQuestTemplates } from "./useQuestTemplates";
+import { AuthErrorHandler } from "./auth-error-handler";
+import { DashboardLoading } from "./dashboard-loading";
+import type { QuestReward } from "@/components/animations";
 
 export function DashboardContent() {
   const router = useRouter();
   const { user, profile, family, logout, isLoading } = useAuth();
-  const { character, isLoading: characterLoading, error: characterError, hasLoaded: characterHasLoaded, levelUpEvent, clearLevelUpEvent } = useCharacter();
+  const {
+    character,
+    isLoading: characterLoading,
+    error: characterError,
+    hasLoaded: characterHasLoaded,
+    levelUpEvent,
+    clearLevelUpEvent,
+  } = useCharacter();
   const { onQuestUpdate } = useRealtime();
 
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<'quests' | 'rewards'>('quests');
+  const [activeTab, setActiveTab] = useState<"quests" | "rewards">("quests");
   const [showCreateQuest, setShowCreateQuest] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -32,7 +45,7 @@ export function DashboardContent() {
     volunteerBonus?: number;
   }>({
     show: false,
-    questTitle: '',
+    questTitle: "",
     rewards: {},
   });
 
@@ -43,26 +56,27 @@ export function DashboardContent() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/auth/login');
+      router.push("/auth/login");
     }
   }, [user, isLoading, router]);
 
   useEffect(() => {
-    if (!isLoading && user && characterHasLoaded && character === null && !characterError) {
-      window.location.href = '/character/create';
+    if (
+      !isLoading &&
+      user &&
+      characterHasLoaded &&
+      character === null &&
+      !characterError
+    ) {
+      window.location.href = "/character/create";
     }
   }, [user, character, isLoading, characterHasLoaded, characterError, router]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!user || !character) return;
 
     const unsubscribe = onQuestUpdate((event) => {
-      if (event.action !== 'UPDATE') return;
+      if (event.action !== "UPDATE") return;
       const updatedQuest = event.record as {
         id: string;
         assigned_to_id?: string;
@@ -75,7 +89,7 @@ export function DashboardContent() {
         volunteer_bonus?: number;
       };
 
-      const wasJustApproved = updatedQuest.status === 'APPROVED';
+      const wasJustApproved = updatedQuest.status === "APPROVED";
       const isAssignedToMe = updatedQuest.assigned_to_id === user.id;
 
       if (wasJustApproved && isAssignedToMe && character) {
@@ -88,13 +102,13 @@ export function DashboardContent() {
 
         const calculatedRewards = RewardCalculator.calculateQuestRewards(
           baseRewards,
-          (updatedQuest.difficulty as 'EASY' | 'MEDIUM' | 'HARD') || 'MEDIUM',
-          character.class as 'KNIGHT' | 'MAGE' | 'RANGER' | 'ROGUE' | 'HEALER'
+          (updatedQuest.difficulty as "EASY" | "MEDIUM" | "HARD") || "MEDIUM",
+          character.class as "KNIGHT" | "MAGE" | "RANGER" | "ROGUE" | "HEALER",
         );
 
         setQuestCompleteData({
           show: true,
-          questTitle: updatedQuest.title || 'Quest Complete!',
+          questTitle: updatedQuest.title || "Quest Complete!",
           rewards: {
             xp: calculatedRewards.xp,
             gold: calculatedRewards.gold,
@@ -121,12 +135,16 @@ export function DashboardContent() {
   }, []);
 
   const handleQuestCompleteDismiss = useCallback(() => {
-    setQuestCompleteData({ show: false, questTitle: '', rewards: {} });
+    setQuestCompleteData({ show: false, questTitle: "", rewards: {} });
   }, []);
 
   const levelProgress = useMemo(
-    () => RewardCalculator.getLevelProgress(character?.level || 1, character?.xp || 0),
-    [character?.level, character?.xp]
+    () =>
+      RewardCalculator.getLevelProgress(
+        character?.level || 1,
+        character?.xp || 0,
+      ),
+    [character?.level, character?.xp],
   );
 
   if (isLoading || characterLoading) {
@@ -147,14 +165,13 @@ export function DashboardContent() {
         family={family}
         profile={profile}
         levelProgress={levelProgress}
-        currentTime={currentTime}
         activeTab={activeTab}
         authError={authError}
         error={error}
         setActiveTab={setActiveTab}
         onCreateQuest={() => setShowCreateQuest(true)}
-        onProfile={() => router.push('/profile')}
-        onAdmin={() => router.push('/admin')}
+        onProfile={() => router.push("/profile")}
+        onAdmin={() => router.push("/admin")}
         onLogout={logout}
         onError={handleError}
         onQuestCreated={handleQuestCreated}

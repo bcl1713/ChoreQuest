@@ -39,7 +39,6 @@ const defaultProps = {
   character: mockCharacter,
   family: mockFamily,
   profile: mockProfile,
-  currentTime: new Date("2026-03-07T12:00:00"),
   actions: <button>Test Action</button>,
 };
 
@@ -128,6 +127,8 @@ describe("AuthenticatedPageShell", () => {
 
   it("renders the current time", () => {
     renderShell();
-    expect(screen.getByText(/12:00:00/)).toBeInTheDocument();
+    // Clock is managed internally by DashboardHeader
+    const clockElement = screen.getByText(/\d{1,2}:\d{2}:\d{2}/);
+    expect(clockElement).toBeInTheDocument();
   });
 });

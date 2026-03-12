@@ -7,7 +7,6 @@ type AuthenticatedPageShellProps = {
   character: Character;
   family: Family | null;
   profile: UserProfile | null;
-  currentTime: Date;
   actions: ReactNode;
   title?: string;
   titleIcon?: ReactNode;
@@ -18,7 +17,6 @@ export function AuthenticatedPageShell({
   character,
   family,
   profile,
-  currentTime,
   actions,
   title,
   titleIcon,
@@ -29,7 +27,6 @@ export function AuthenticatedPageShell({
         character={character}
         family={family}
         profile={profile}
-        currentTime={currentTime}
         actions={actions}
         title={title}
         titleIcon={titleIcon}
