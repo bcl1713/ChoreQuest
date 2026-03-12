@@ -184,7 +184,7 @@ describe("PasswordChangeForm", () => {
     });
   });
 
-  it("clears form and handles success/error scenarios", async () => {
+  it("clears form on successful password change", async () => {
     renderForm();
     const { currentPasswordInput, newPasswordInput, confirmPasswordInput } =
       (await typePasswords("Current1!", "ValidPass1!", "ValidPass1!")) as {
@@ -201,12 +201,17 @@ describe("PasswordChangeForm", () => {
       expect(newPasswordInput.value).toBe("");
       expect(confirmPasswordInput.value).toBe("");
     });
+  });
 
-    // Test error case
+  it("shows error notification on failed password change", async () => {
     mockUpdatePassword.mockRejectedValueOnce(
       new Error("Invalid current password"),
     );
+
+    renderForm();
     await typePasswords("Wrong1!", "ValidPass1!", "ValidPass1!");
+
+    const button = screen.getByRole("button", { name: /Update Password/i });
     await userEvent.click(button);
 
     await waitFor(() => {
@@ -272,11 +277,9 @@ describe("PasswordChangeForm", () => {
         "Authentication failed",
       );
     });
-
-    expect(mockErrorNotification).toHaveBeenCalled();
   });
 
-  it("success notification is triggered alongside onSuccess callback", async () => {
+  it("calls onSuccess callback on successful submission", async () => {
     renderForm();
     await typePasswords("Current1!", "ValidPass1!", "ValidPass1!");
 

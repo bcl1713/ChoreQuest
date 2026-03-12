@@ -6,8 +6,8 @@
 - [x] 1.2 Initialize `useNotification(0)` for error notifications (no auto-dismiss)
 - [x] 1.3 Remove local `error` state from component
 - [x] 1.4 Remove `ErrorAlert` component from JSX
-- [x] 1.5 Update successful password change to call `success()` notification
-  alongside existing `onSuccess` callback
+- [x] 1.5 Update successful password change to call the `onSuccess` callback,
+  allowing the parent component to trigger a success notification
 - [x] 1.6 Update error handling in catch block to call `error()` notification
   instead of setting state
 - [x] 1.7 Update form validation errors to call `error()` notification instead
@@ -31,8 +31,7 @@
 - [x] 3.4 Write test: Failure notification displays when updatePassword
   throws error
 - [x] 3.5 Write test: Error notification remains visible (no auto-dismiss)
-- [x] 3.6 Write test: Success notification still triggers onSuccess callback
-  for character refresh
+- [x] 3.6 Write test: Verify `onSuccess` callback is triggered on success
 - [x] 3.7 Write test: Success notification works when user navigates away
   from password tab
 
