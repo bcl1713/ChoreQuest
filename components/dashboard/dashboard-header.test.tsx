@@ -2,7 +2,9 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DashboardHeader } from "./dashboard-header";
+import { Button } from "@/components/ui";
 import type { Character, Family, UserProfile } from "@/lib/types/database";
+import { Crown, LogOut, Settings, User, Zap } from "lucide-react";
 
 const mockCharacter: Character = {
   id: "char-1",
@@ -43,19 +45,111 @@ const mockHeroProfile: UserProfile = {
   updated_at: "2026-01-01",
 } as UserProfile;
 
-const defaultProps = {
-  character: mockCharacter,
-  family: mockFamily,
-  profile: mockGuildMasterProfile,
-  currentTime: new Date("2026-03-07T12:00:00"),
+const mockActions = {
   onCreateQuest: jest.fn(),
   onProfile: jest.fn(),
   onAdmin: jest.fn(),
   onLogout: jest.fn(),
 };
 
-function renderHeader(overrides: Partial<typeof defaultProps> = {}) {
-  return render(<DashboardHeader {...defaultProps} {...overrides} />);
+const cls = "touch-target gap-0 sm:gap-[var(--btn-gap)]";
+
+function buildGuildMasterActions() {
+  return (
+    <>
+      <Button
+        onClick={mockActions.onAdmin}
+        variant="primary"
+        size="sm"
+        className={cls}
+        data-testid="admin-dashboard-button"
+        aria-label="Admin"
+        startIcon={<Settings size={16} />}
+      >
+        <span className="hidden sm:inline">Admin</span>
+      </Button>
+      <Button
+        onClick={mockActions.onCreateQuest}
+        variant="gold"
+        size="sm"
+        className={cls}
+        data-testid="create-quest-button"
+        aria-label="Create Quest"
+        startIcon={<Zap size={16} />}
+      >
+        <span className="hidden sm:inline">Create Quest</span>
+      </Button>
+      <Button
+        onClick={mockActions.onProfile}
+        variant="primary"
+        size="sm"
+        className={cls}
+        data-testid="profile-button"
+        aria-label="Profile"
+        startIcon={<User size={16} />}
+      >
+        <span className="hidden sm:inline">Profile</span>
+      </Button>
+      <Button
+        onClick={mockActions.onLogout}
+        variant="destructive"
+        size="sm"
+        className={cls}
+        aria-label="Logout"
+        startIcon={<LogOut size={16} />}
+      >
+        <span className="hidden sm:inline">Logout</span>
+      </Button>
+    </>
+  );
+}
+
+function buildHeroActions() {
+  return (
+    <>
+      <Button
+        onClick={mockActions.onProfile}
+        variant="primary"
+        size="sm"
+        data-testid="profile-button"
+        aria-label="Profile"
+        startIcon={<User size={16} />}
+      >
+        <span className="hidden sm:inline">Profile</span>
+      </Button>
+      <Button
+        onClick={mockActions.onLogout}
+        variant="destructive"
+        size="sm"
+        aria-label="Logout"
+        startIcon={<LogOut size={16} />}
+      >
+        <span className="hidden sm:inline">Logout</span>
+      </Button>
+    </>
+  );
+}
+
+type HeaderOverrides = {
+  character?: Character;
+  family?: Family | null;
+  profile?: UserProfile | null;
+  currentTime?: Date;
+  actions?: React.ReactNode;
+  title?: string;
+  titleIcon?: React.ReactNode;
+};
+
+function renderHeader(overrides: HeaderOverrides = {}) {
+  const props = {
+    character: mockCharacter,
+    family: mockFamily,
+    profile: mockGuildMasterProfile,
+    currentTime: new Date("2026-03-07T12:00:00"),
+    actions: buildGuildMasterActions(),
+    ...overrides,
+  };
+  return render(<DashboardHeader {...props} />);
 }
 
 describe("DashboardHeader", () => {
@@ -64,9 +158,23 @@ describe("DashboardHeader", () => {
   });
 
   describe("rendering", () => {
-    it("renders the app title", () => {
+    it("renders the default app title", () => {
       renderHeader();
       expect(screen.getByText("ChoreQuest")).toBeInTheDocument();
+    });
+
+    it("renders a custom title when provided", () => {
+      renderHeader({ title: "Admin Dashboard" });
+      expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
+      expect(screen.queryByText("ChoreQuest")).not.toBeInTheDocument();
+    });
+
+    it("renders a title icon when provided", () => {
+      renderHeader({
+        title: "Admin Dashboard",
+        titleIcon: <Crown data-testid="title-icon" size={32} />,
+      });
+      expect(screen.getByTestId("title-icon")).toBeInTheDocument();
     });
 
     it("renders guild name and code when family is provided", () => {
@@ -105,8 +213,8 @@ describe("DashboardHeader", () => {
     });
   });
 
-  describe("mobile icon-only buttons", () => {
-    it("renders buttons with aria-labels for accessibility", () => {
+  describe("actions slot", () => {
+    it("renders provided action buttons", () => {
       renderHeader();
       expect(screen.getByRole("button", { name: "Admin" })).toBeInTheDocument();
       expect(
@@ -120,94 +228,53 @@ describe("DashboardHeader", () => {
       ).toBeInTheDocument();
     });
 
-    it("button text is hidden on mobile via hidden sm:inline class", () => {
-      renderHeader();
-      const adminButton = screen.getByRole("button", { name: "Admin" });
-      const textSpan = adminButton.querySelector("span.hidden.sm\\:inline");
-      expect(textSpan).toBeInTheDocument();
-      expect(textSpan).toHaveTextContent("Admin");
-    });
-
-    it("all action buttons have text spans with hidden sm:inline", () => {
-      renderHeader();
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
-        const textSpan = button.querySelector(":scope > span.hidden");
-        if (textSpan) {
-          expect(textSpan).toHaveClass("hidden");
-          expect(textSpan).toHaveClass("sm:inline");
-        }
+    it("renders only hero actions when given hero buttons", () => {
+      renderHeader({
+        profile: mockHeroProfile,
+        actions: buildHeroActions(),
       });
-    });
-  });
-
-  describe("desktop text labels", () => {
-    it("buttons contain text labels for desktop view", () => {
-      renderHeader();
-      expect(screen.getByText("Admin")).toBeInTheDocument();
-      expect(screen.getByText("Create Quest")).toBeInTheDocument();
-      expect(screen.getByText("Profile")).toBeInTheDocument();
-      expect(screen.getByText("Logout")).toBeInTheDocument();
-    });
-  });
-
-  describe("guild master buttons", () => {
-    it("shows Admin and Create Quest buttons for GUILD_MASTER role", () => {
-      renderHeader();
-      expect(screen.getByTestId("admin-dashboard-button")).toBeInTheDocument();
-      expect(screen.getByTestId("create-quest-button")).toBeInTheDocument();
-    });
-
-    it("hides Admin and Create Quest buttons for non-GUILD_MASTER roles", () => {
-      renderHeader({ profile: mockHeroProfile });
       expect(
         screen.queryByTestId("admin-dashboard-button"),
       ).not.toBeInTheDocument();
       expect(
         screen.queryByTestId("create-quest-button"),
       ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Profile" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Logout" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("mobile icon-only buttons", () => {
+    it("action button text uses hidden sm:inline for responsive display", () => {
+      renderHeader();
+      const adminButton = screen.getByRole("button", { name: "Admin" });
+      const textSpan = adminButton.querySelector("span.hidden.sm\\:inline");
+      expect(textSpan).toBeInTheDocument();
+      expect(textSpan).toHaveTextContent("Admin");
     });
   });
 
   describe("button interactions", () => {
-    it("calls onAdmin when Admin button is clicked", async () => {
+    it.each([
+      ["Admin", "onAdmin"],
+      ["Create Quest", "onCreateQuest"],
+      ["Profile", "onProfile"],
+      ["Logout", "onLogout"],
+    ] as const)("calls %s handler when clicked", async (label, handler) => {
       const user = userEvent.setup();
-      const onAdmin = jest.fn();
-      renderHeader({ onAdmin });
-      await user.click(screen.getByRole("button", { name: "Admin" }));
-      expect(onAdmin).toHaveBeenCalledTimes(1);
-    });
-
-    it("calls onCreateQuest when Create Quest button is clicked", async () => {
-      const user = userEvent.setup();
-      const onCreateQuest = jest.fn();
-      renderHeader({ onCreateQuest });
-      await user.click(screen.getByRole("button", { name: "Create Quest" }));
-      expect(onCreateQuest).toHaveBeenCalledTimes(1);
-    });
-
-    it("calls onProfile when Profile button is clicked", async () => {
-      const user = userEvent.setup();
-      const onProfile = jest.fn();
-      renderHeader({ onProfile });
-      await user.click(screen.getByRole("button", { name: "Profile" }));
-      expect(onProfile).toHaveBeenCalledTimes(1);
-    });
-
-    it("calls onLogout when Logout button is clicked", async () => {
-      const user = userEvent.setup();
-      const onLogout = jest.fn();
-      renderHeader({ onLogout });
-      await user.click(screen.getByRole("button", { name: "Logout" }));
-      expect(onLogout).toHaveBeenCalledTimes(1);
+      renderHeader();
+      await user.click(screen.getByRole("button", { name: label }));
+      expect(mockActions[handler]).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("hydration safety", () => {
     it("renders the time display with date and time", () => {
       renderHeader();
-      // The time element uses suppressHydrationWarning (verified via source)
-      // to prevent SSR/client mismatch on locale-formatted dates
       expect(screen.getByText(/12:00:00/)).toBeInTheDocument();
     });
   });

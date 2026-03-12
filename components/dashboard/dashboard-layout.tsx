@@ -11,13 +11,17 @@ import { TabBar, type TabItem } from "@/components/ui";
 import QuestDashboard from "@/components/quests/quest-dashboard";
 import QuestCreateModal from "@/components/quests/quest-create-modal";
 import RewardStore from "@/components/rewards/reward-store";
+import { Button } from "@/components/ui";
 import {
   AlertCircle,
   Award,
   Coins,
   Gem,
+  LogOut,
+  Settings,
   Store,
   Sword,
+  User,
   Zap,
 } from "lucide-react";
 import type {
@@ -118,10 +122,57 @@ export function DashboardLayout({
           family={family}
           profile={profile}
           currentTime={currentTime}
-          onCreateQuest={onCreateQuest}
-          onProfile={onProfile}
-          onAdmin={onAdmin}
-          onLogout={onLogout}
+          actions={
+            <>
+              {profile?.role === "GUILD_MASTER" && (
+                <>
+                  <Button
+                    onClick={onAdmin}
+                    variant="primary"
+                    size="sm"
+                    className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
+                    data-testid="admin-dashboard-button"
+                    aria-label="Admin"
+                    startIcon={<Settings size={16} />}
+                  >
+                    <span className="hidden sm:inline">Admin</span>
+                  </Button>
+                  <Button
+                    onClick={onCreateQuest}
+                    variant="gold"
+                    size="sm"
+                    className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
+                    data-testid="create-quest-button"
+                    aria-label="Create Quest"
+                    startIcon={<Zap size={16} />}
+                  >
+                    <span className="hidden sm:inline">Create Quest</span>
+                  </Button>
+                </>
+              )}
+              <Button
+                onClick={onProfile}
+                variant="primary"
+                size="sm"
+                className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
+                data-testid="profile-button"
+                aria-label="Profile"
+                startIcon={<User size={16} />}
+              >
+                <span className="hidden sm:inline">Profile</span>
+              </Button>
+              <Button
+                onClick={onLogout}
+                variant="destructive"
+                size="sm"
+                className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
+                aria-label="Logout"
+                startIcon={<LogOut size={16} />}
+              >
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </>
+          }
         />
 
         <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">

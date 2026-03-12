@@ -1,6 +1,6 @@
-import React from "react";
-import { Button, IconWithLabel } from "@/components/ui";
-import { Clock, LogOut, Settings, Shield, User, Zap } from "lucide-react";
+import React, { type ReactNode } from "react";
+import { IconWithLabel } from "@/components/ui";
+import { Clock, Shield } from "lucide-react";
 import type { Character, Family, UserProfile } from "@/lib/types/database";
 import { classDisplayMap, roleDisplayMap } from "./display-maps";
 
@@ -9,10 +9,9 @@ type DashboardHeaderProps = {
   family: Family | null;
   profile: UserProfile | null;
   currentTime: Date;
-  onCreateQuest: () => void;
-  onProfile: () => void;
-  onAdmin: () => void;
-  onLogout: () => void;
+  actions: ReactNode;
+  title?: string;
+  titleIcon?: ReactNode;
 };
 
 export function DashboardHeader({
@@ -20,18 +19,18 @@ export function DashboardHeader({
   family,
   profile,
   currentTime,
-  onCreateQuest,
-  onProfile,
-  onAdmin,
-  onLogout,
+  actions,
+  title = "ChoreQuest",
+  titleIcon,
 }: DashboardHeaderProps) {
   return (
     <header className="border-b border-dark-600 bg-dark-800/50 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold">
-              ChoreQuest
+            <h1 className="text-2xl sm:text-3xl font-fantasy text-transparent bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text font-bold flex items-center gap-2">
+              {titleIcon}
+              {title}
             </h1>
             {family && (
               <p className="text-sm text-gray-400">
@@ -82,55 +81,7 @@ export function DashboardHeader({
               )}
             </div>
 
-            <div className="flex gap-2 sm:gap-3">
-              {profile?.role === "GUILD_MASTER" && (
-                <>
-                  <Button
-                    onClick={onAdmin}
-                    variant="primary"
-                    size="sm"
-                    className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
-                    data-testid="admin-dashboard-button"
-                    aria-label="Admin"
-                    startIcon={<Settings size={16} />}
-                  >
-                    <span className="hidden sm:inline">Admin</span>
-                  </Button>
-                  <Button
-                    onClick={onCreateQuest}
-                    variant="gold"
-                    size="sm"
-                    className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
-                    data-testid="create-quest-button"
-                    aria-label="Create Quest"
-                    startIcon={<Zap size={16} />}
-                  >
-                    <span className="hidden sm:inline">Create Quest</span>
-                  </Button>
-                </>
-              )}
-              <Button
-                onClick={onProfile}
-                variant="primary"
-                size="sm"
-                className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
-                data-testid="profile-button"
-                aria-label="Profile"
-                startIcon={<User size={16} />}
-              >
-                <span className="hidden sm:inline">Profile</span>
-              </Button>
-              <Button
-                onClick={onLogout}
-                variant="destructive"
-                size="sm"
-                className="touch-target gap-0 sm:gap-[var(--btn-gap)]"
-                aria-label="Logout"
-                startIcon={<LogOut size={16} />}
-              >
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
-            </div>
+            <div className="flex gap-2 sm:gap-3">{actions}</div>
           </div>
         </div>
       </div>
