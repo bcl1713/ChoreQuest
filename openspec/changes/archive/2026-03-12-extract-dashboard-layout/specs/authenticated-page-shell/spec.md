@@ -81,14 +81,14 @@ level, and role using the shared display maps.
 
 ### Requirement: Header displays current time
 
-The header SHALL display the current date and time
-passed via the `currentTime` prop.
+The header SHALL manage its own clock state internally
+and display the current date and time.
 
 #### Scenario: Time is displayed
 
-- **WHEN** `currentTime` is provided
-- **THEN** the header SHALL render the formatted date
-  and time with a clock icon
+- **WHEN** the header renders
+- **THEN** the header SHALL display the formatted date
+  and time with a clock icon, updated every second
 - **AND** the time element SHALL use
   `suppressHydrationWarning` to prevent SSR mismatches
 
