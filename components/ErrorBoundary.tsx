@@ -1,9 +1,11 @@
 "use client";
 
+import { usePathname, useSearchParams } from "next/navigation";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 type Props = {
   children: ReactNode;
+  resetKey?: string;
 };
 
 type State = {
@@ -11,7 +13,7 @@ type State = {
   error: Error | null;
 };
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryInner extends Component<Props, State> {
   state: State = {
     hasError: false,
     error: null,
@@ -30,6 +32,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Root error boundary caught an error:", error, errorInfo);
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({
+        hasError: false,
+        error: null,
+      });
+    }
   }
 
   private readonly reload = () => {
@@ -61,4 +72,23 @@ export class ErrorBoundary extends Component<Props, State> {
       </div>
     );
   }
+}
+
+export function ErrorBoundary({
+  children,
+  resetKey,
+}: {
+  children: ReactNode;
+  resetKey?: string;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const navigationResetKey = `${pathname ?? ""}?${searchParams?.toString() ?? ""}`;
+  const effectiveResetKey = resetKey ?? navigationResetKey;
+
+  return (
+    <ErrorBoundaryInner key={effectiveResetKey} resetKey={effectiveResetKey}>
+      {children}
+    </ErrorBoundaryInner>
+  );
 }

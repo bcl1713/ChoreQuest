@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
 import { handleRouteError } from "@/lib/api-error-handler";
 import {
+  AppError,
   AuthError,
   ForbiddenError,
   NotFoundError,
@@ -62,9 +63,10 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      throw new NotFoundError(
+      throw new AppError(
         `Failed to fetch quest: ${questError.message}`,
-        "QUEST_NOT_FOUND",
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 

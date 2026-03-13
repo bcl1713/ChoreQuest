@@ -6,7 +6,7 @@ import {
   extractBearerToken,
   authenticateAndFetchUserProfile,
 } from "@/lib/api-auth-helpers";
-import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -32,9 +32,10 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      throw new NotFoundError(
+      throw new AppError(
         `Failed to fetch quest: ${questError.message}`,
-        "QUEST_NOT_FOUND",
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 
