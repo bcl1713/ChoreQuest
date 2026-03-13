@@ -7,7 +7,7 @@ import {
   authenticateAndFetchUserProfile,
   extractBearerToken,
 } from '@/lib/api-auth-helpers';
-import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
+import { AppError, ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types/database-generated';
@@ -43,7 +43,7 @@ async function verifyGuildMasterAccess(
     .single();
 
   if (requesterError || !requesterProfile) {
-    return { authorized: false, error: 'Failed to load user profile' };
+    throw new AppError('Failed to load user profile', 500, 'PROFILE_LOAD_FAILED');
   }
 
   if (requesterProfile.role !== 'GUILD_MASTER') {
@@ -56,7 +56,19 @@ async function verifyGuildMasterAccess(
     .eq('id', templateId)
     .single();
 
-  if (templateError || !template) {
+  if (templateError?.code === 'PGRST116') {
+    return { authorized: false, error: 'Quest template not found' };
+  }
+
+  if (templateError) {
+    throw new AppError(
+      'Failed to load quest template',
+      500,
+      'QUEST_TEMPLATE_LOOKUP_FAILED',
+    );
+  }
+
+  if (!template) {
     return { authorized: false, error: 'Quest template not found' };
   }
 

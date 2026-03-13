@@ -48,20 +48,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${orbitron.variable} antialiased`}
       >
-        <NetworkReadyProvider>
-          <AuthProvider>
-            <RealtimeProvider>
-              <CharacterProvider>
-                <ErrorBoundary>
+        <ErrorBoundary>
+          <NetworkReadyProvider>
+            <AuthProvider>
+              <RealtimeProvider>
+                <CharacterProvider>
                   <div className="flex min-h-screen flex-col">
                     <main className="flex-1">{children}</main>
                     <SiteFooter gitReference={gitReference} />
                   </div>
-                </ErrorBoundary>
-              </CharacterProvider>
-            </RealtimeProvider>
-          </AuthProvider>
-        </NetworkReadyProvider>
+                </CharacterProvider>
+              </RealtimeProvider>
+            </AuthProvider>
+          </NetworkReadyProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
