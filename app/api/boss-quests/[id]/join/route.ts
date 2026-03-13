@@ -69,7 +69,11 @@ export async function POST(
       );
 
     if (joinError) {
-      throw new Error(`Failed to join boss quest: ${joinError.message}`);
+      throw new AppError(
+        `Failed to join boss quest: ${joinError.message}`,
+        500,
+        "BOSS_QUEST_JOIN_FAILED",
+      );
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

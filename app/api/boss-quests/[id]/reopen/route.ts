@@ -63,7 +63,11 @@ export async function POST(
       .eq("id", bossQuestId);
 
     if (updateError) {
-      throw new Error(`Failed to reopen join window: ${updateError.message}`);
+      throw new AppError(
+        `Failed to reopen join window: ${updateError.message}`,
+        500,
+        "BOSS_QUEST_REOPEN_FAILED",
+      );
     }
 
     return NextResponse.json({ success: true, join_window_expires_at: newExpiry }, { status: 200 });

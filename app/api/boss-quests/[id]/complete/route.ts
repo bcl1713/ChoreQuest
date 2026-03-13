@@ -86,7 +86,11 @@ export async function POST(
         .eq("boss_battle_id", bossQuestId);
 
     if (participantsError) {
-      throw new Error(`Failed to fetch participants: ${participantsError.message}`);
+      throw new AppError(
+        `Failed to fetch participants: ${participantsError.message}`,
+        500,
+        "BOSS_QUEST_PARTICIPANTS_FETCH_FAILED",
+      );
     }
 
     const uniqueParticipantIds = Array.from(
@@ -213,7 +217,11 @@ export async function POST(
       .eq("id", bossQuestId);
 
     if (updateError) {
-      throw new Error(`Failed to mark boss quest defeated: ${updateError.message}`);
+      throw new AppError(
+        `Failed to mark boss quest defeated: ${updateError.message}`,
+        500,
+        "BOSS_QUEST_COMPLETE_FAILED",
+      );
     }
 
     return NextResponse.json(
