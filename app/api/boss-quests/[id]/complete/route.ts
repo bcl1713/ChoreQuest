@@ -4,7 +4,7 @@ import {
   authenticateAndFetchUserProfile,
   extractBearerToken,
 } from "@/lib/api-auth-helpers";
-import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
@@ -49,9 +49,10 @@ export async function POST(
       .maybeSingle();
 
     if (bossError) {
-      throw new NotFoundError(
+      throw new AppError(
         `Failed to fetch boss quest: ${bossError.message}`,
-        "BOSS_QUEST_NOT_FOUND",
+        500,
+        "BOSS_QUEST_FETCH_FAILED",
       );
     }
 

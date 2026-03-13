@@ -8,7 +8,7 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { AppError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -38,9 +38,10 @@ export async function POST(
       .maybeSingle();
 
     if (bossError) {
-      throw new NotFoundError(
+      throw new AppError(
         `Failed to fetch boss quest: ${bossError.message}`,
-        "BOSS_QUEST_NOT_FOUND",
+        500,
+        "BOSS_QUEST_FETCH_FAILED",
       );
     }
 

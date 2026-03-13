@@ -96,8 +96,9 @@ export const claimQuest = async (
     .single();
 
   if (updateError) {
-    throw new ConflictError(
+    throw new AppError(
       `Failed to claim quest: ${updateError.message}`,
+      500,
       "QUEST_CLAIM_FAILED",
     );
   }
@@ -118,8 +119,9 @@ export const claimQuest = async (
       })
       .eq("id", questId);
 
-    throw new ConflictError(
+    throw new AppError(
       `Failed to update character: ${characterUpdateError.message}`,
+      500,
       "CHARACTER_UPDATE_FAILED",
     );
   }

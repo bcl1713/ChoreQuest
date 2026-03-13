@@ -86,7 +86,7 @@ export function ErrorBoundary({
   const effectiveResetKey = resetKey ?? navigationResetKey;
 
   return (
-    <ErrorBoundaryInner key={effectiveResetKey} resetKey={effectiveResetKey}>
+    <ErrorBoundaryInner resetKey={effectiveResetKey}>
       {children}
     </ErrorBoundaryInner>
   );
