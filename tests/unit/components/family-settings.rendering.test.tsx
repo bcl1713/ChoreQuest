@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import {
   mockFamilyInfo,
   mockGetFamilyInfo,
+  mockNotificationSuccess,
   renderFamilySettings,
   resetFamilySettingsMocks,
   setupClipboardMock,
@@ -88,7 +89,7 @@ describe("FamilySettings - rendering", () => {
   });
 
   describe("Copy invite code", () => {
-    it("copies invite code and shows success message", async () => {
+    it("copies invite code and uses notification hook for success", async () => {
       setupClipboardMock();
       renderFamilySettings();
 
@@ -98,7 +99,9 @@ describe("FamilySettings - rendering", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Invite code copied to clipboard!")).toBeInTheDocument();
+        expect(mockNotificationSuccess).toHaveBeenCalledWith(
+          "Invite code copied to clipboard!",
+        );
       });
     });
   });

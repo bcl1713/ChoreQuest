@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import ClassChangeForm from './ClassChangeForm';
+import { useNotification } from '@/hooks/useNotification';
 import { ProfileService } from '@/lib/profile-service';
 import { Character } from '@/lib/types/database';
 
 jest.mock('@/lib/profile-service');
+jest.mock('@/hooks/useNotification');
 
 const mockCharacter: Character = {
   id: 'char-123',
@@ -22,6 +24,7 @@ const mockCharacter: Character = {
 
 describe('ClassChangeForm', () => {
   const mockOnSuccess = jest.fn();
+  const mockNotificationError = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -33,6 +36,14 @@ describe('ClassChangeForm', () => {
       0
     );
     (ProfileService.getClassChangeCost as jest.Mock).mockReturnValue(250); // 25 * level 10
+    (useNotification as jest.Mock).mockReturnValue({
+      notifications: [],
+      dismiss: jest.fn(),
+      show: jest.fn(),
+      info: jest.fn(),
+      success: jest.fn(),
+      error: mockNotificationError,
+    });
   });
 
   it('renders current class information', async () => {

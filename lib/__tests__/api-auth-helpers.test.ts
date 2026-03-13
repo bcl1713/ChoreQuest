@@ -14,6 +14,7 @@ const expectAuthErrorResult = (result: AuthenticatedUser | AuthError, message: s
   if ("error" in result) {
     expect(result.error).toBe(message);
     expect(result.status).toBe(status);
+    expect(result.code).toEqual(expect.any(String));
   }
 };
 // Helper to create a mock request
@@ -177,6 +178,7 @@ describe("api-auth-helpers", () => {
     it("should return true for auth error objects", () => {
       const error: AuthError = {
         error: "Test error",
+        code: "TEST_ERROR",
         status: 401,
       };
       expect(isAuthError(error)).toBe(true);
@@ -194,6 +196,7 @@ describe("api-auth-helpers", () => {
     it("should create a NextResponse with correct status and error message", () => {
       const authError: AuthError = {
         error: "Authentication failed",
+        code: "AUTH_ERROR",
         status: 401,
       };
       const response = authErrorResponse(authError);
@@ -201,9 +204,9 @@ describe("api-auth-helpers", () => {
     });
     it("should handle different status codes", () => {
       const testCases: AuthError[] = [
-        { error: "Unauthorized", status: 401 },
-        { error: "Forbidden", status: 403 },
-        { error: "Server error", status: 500 },
+        { error: "Unauthorized", code: "AUTH_ERROR", status: 401 },
+        { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+        { error: "Server error", code: "INTERNAL_ERROR", status: 500 },
       ];
       testCases.forEach((testCase) => {
         const response = authErrorResponse(testCase);

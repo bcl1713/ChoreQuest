@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
 import type { QuestInstance } from "@/lib/types/database";
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from "@/lib/errors";
 import { VOLUNTEER_BONUS_PERCENT } from "./constants";
 
 type ClaimQuestDeps = {
@@ -21,15 +26,24 @@ export const claimQuest = async (
     .single();
 
   if (fetchError || !quest) {
-    throw new Error(`Failed to fetch quest: ${fetchError?.message || "Quest not found"}`);
+    throw new NotFoundError(
+      `Failed to fetch quest: ${fetchError?.message || "Quest not found"}`,
+      "QUEST_NOT_FOUND",
+    );
   }
 
   if (quest.status !== "AVAILABLE") {
-    throw new Error(`Quest is not available for claiming (status: ${quest.status})`);
+    throw new ConflictError(
+      `Quest is not available for claiming (status: ${quest.status})`,
+      "QUEST_NOT_CLAIMABLE",
+    );
   }
 
   if (quest.quest_type !== "FAMILY") {
-    throw new Error("Only FAMILY quests can be claimed");
+    throw new ValidationError(
+      "Only FAMILY quests can be claimed",
+      "QUEST_TYPE_INVALID",
+    );
   }
 
   const { data: character, error: characterError } = await client
@@ -39,11 +53,17 @@ export const claimQuest = async (
     .single();
 
   if (characterError || !character) {
-    throw new Error(`Failed to fetch character: ${characterError?.message || "Character not found"}`);
+    throw new NotFoundError(
+      `Failed to fetch character: ${characterError?.message || "Character not found"}`,
+      "CHARACTER_NOT_FOUND",
+    );
   }
 
   if (character.active_family_quest_id) {
-    throw new Error("Hero already has an active family quest. Release the current quest before claiming another.");
+    throw new ConflictError(
+      "Hero already has an active family quest. Release the current quest before claiming another.",
+      "ACTIVE_FAMILY_QUEST_EXISTS",
+    );
   }
 
   const { data: updatedQuest, error: updateError } = await client
@@ -59,7 +79,10 @@ export const claimQuest = async (
     .single();
 
   if (updateError) {
-    throw new Error(`Failed to claim quest: ${updateError.message}`);
+    throw new ConflictError(
+      `Failed to claim quest: ${updateError.message}`,
+      "QUEST_CLAIM_FAILED",
+    );
   }
 
   const { error: characterUpdateError } = await client
@@ -78,7 +101,10 @@ export const claimQuest = async (
       })
       .eq("id", questId);
 
-    throw new Error(`Failed to update character: ${characterUpdateError.message}`);
+    throw new ConflictError(
+      `Failed to update character: ${characterUpdateError.message}`,
+      "CHARACTER_UPDATE_FAILED",
+    );
   }
 
   return updatedQuest as QuestInstance;

@@ -15,6 +15,7 @@ export interface AuthenticatedUser {
  */
 export interface AuthError {
   error: string;
+  code: string;
   status: number;
 }
 
@@ -32,6 +33,7 @@ export function extractBearerToken(
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return {
       error: "Missing or invalid authorization header",
+      code: "AUTH_HEADER_INVALID",
       status: 401,
     };
   }
@@ -63,6 +65,7 @@ export async function authenticateAndFetchUserProfile(
   if (authError || !user) {
     return {
       error: "Authentication failed",
+      code: "AUTH_ERROR",
       status: 401,
     };
   }
@@ -77,6 +80,7 @@ export async function authenticateAndFetchUserProfile(
   if (profileError || !userProfile) {
     return {
       error: "Failed to load user profile",
+      code: "PROFILE_LOAD_FAILED",
       status: 500,
     };
   }
@@ -132,5 +136,8 @@ export function isAuthError(value: unknown): value is AuthError {
  * @returns A NextResponse with appropriate status code
  */
 export function authErrorResponse(authError: AuthError): NextResponse {
-  return NextResponse.json({ error: authError.error }, { status: authError.status });
+  return NextResponse.json(
+    { error: authError.error, code: authError.code },
+    { status: authError.status },
+  );
 }

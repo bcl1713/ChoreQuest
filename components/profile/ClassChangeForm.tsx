@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useNotification } from "@/hooks/useNotification";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { FantasyButton } from "@/components/ui";
 import { getCharacterClassInfo } from "@/lib/constants/character-classes";
@@ -10,7 +11,6 @@ import { ClassSelectionGrid } from "./class-change/ClassSelectionGrid";
 import { CooldownNotice } from "./class-change/CooldownNotice";
 import { CostInfo } from "./class-change/CostInfo";
 import { CurrentClassCard } from "./class-change/CurrentClassCard";
-import { ErrorAlert } from "./shared/ErrorAlert";
 
 interface ClassChangeFormProps {
   character: Character;
@@ -21,9 +21,9 @@ export default function ClassChangeForm({
   character,
   onSuccess,
 }: ClassChangeFormProps) {
+  const { error: showError } = useNotification(0);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [canChange, setCanChange] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(
     null,
@@ -65,7 +65,6 @@ export default function ClassChangeForm({
   }, [character.id]);
 
   const handleClassSelect = (classId: string) => {
-    setError(null);
     setSelectedClass(classId);
   };
 
@@ -73,14 +72,13 @@ export default function ClassChangeForm({
     if (!selectedClass) return;
 
     setShowConfirmation(false);
-    setError(null);
     setIsLoading(true);
 
     try {
       // Check gold
       const currentGold = character.gold ?? 0;
       if (currentGold < cost) {
-        setError(
+        showError(
           `Insufficient gold. You need ${cost} gold but only have ${currentGold}.`,
         );
         setIsLoading(false);
@@ -90,7 +88,7 @@ export default function ClassChangeForm({
       // Check cooldown again
       const canChangeClass = await ProfileService.canChangeClass();
       if (!canChangeClass) {
-        setError(
+        showError(
           "You are still on cooldown. Please wait before changing classes again.",
         );
         setIsLoading(false);
@@ -112,7 +110,7 @@ export default function ClassChangeForm({
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to change class";
-      setError(message);
+      showError(message);
     } finally {
       setIsLoading(false);
     }
@@ -143,9 +141,6 @@ export default function ClassChangeForm({
           again later.
         </div>
       )}
-
-      {error && <ErrorAlert message={error} />}
-
       {canChange && selectedClass && selectedClass !== character.class && (
         <FantasyButton
           onClick={() => setShowConfirmation(true)}

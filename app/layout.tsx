@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { CharacterProvider } from "@/lib/character-context";
 import { RealtimeProvider } from "@/lib/realtime-context";
 import SiteFooter from "@/components/layout/site-footer";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getGitReferenceMetadata } from "@/lib/git-metadata";
 import "./globals.css";
 
@@ -51,10 +52,12 @@ export default function RootLayout({
           <AuthProvider>
             <RealtimeProvider>
               <CharacterProvider>
-                <div className="flex min-h-screen flex-col">
-                  <main className="flex-1">{children}</main>
-                  <SiteFooter gitReference={gitReference} />
-                </div>
+                <ErrorBoundary>
+                  <div className="flex min-h-screen flex-col">
+                    <main className="flex-1">{children}</main>
+                    <SiteFooter gitReference={gitReference} />
+                  </div>
+                </ErrorBoundary>
               </CharacterProvider>
             </RealtimeProvider>
           </AuthProvider>

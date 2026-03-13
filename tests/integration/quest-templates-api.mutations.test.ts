@@ -109,6 +109,7 @@ describe("Quest Templates API - mutations", () => {
 
       expect(response.status).toBe(403);
       expect(json.error).toBe("Only Guild Masters can create quest templates");
+      expect(json.code).toBe("QUEST_TEMPLATE_CREATE_FORBIDDEN");
     });
   });
 
@@ -294,7 +295,5 @@ describe("Quest Templates API - mutations", () => {
     });
   });
 
-  afterEach(() => {
-    (mockSupabase.auth.getUser as jest.Mock).mockReset();
-  });
+  afterEach(() => { (mockSupabase.auth.getUser as jest.Mock).mockReset(); });
 });

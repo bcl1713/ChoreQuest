@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useNotification } from '@/hooks/useNotification';
 import { Character } from '@/lib/types/database';
 import { ProfileService } from '@/lib/profile-service';
 import { FantasyButton } from '@/components/ui';
-import { AlertCircle } from 'lucide-react';
 
 interface CharacterNameFormProps {
   character: Character;
@@ -15,9 +15,9 @@ export default function CharacterNameForm({
   character,
   onSuccess,
 }: CharacterNameFormProps) {
+  const { error: showError } = useNotification(0);
   const [name, setName] = useState(character.name);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [charCount, setCharCount] = useState(character.name.length);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,15 +28,14 @@ export default function CharacterNameForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     if (!name.trim()) {
-      setError('Character name cannot be empty');
+      showError('Character name cannot be empty');
       return;
     }
 
     if (name === character.name) {
-      setError('Please enter a different name');
+      showError('Please enter a different name');
       return;
     }
 
@@ -50,7 +49,7 @@ export default function CharacterNameForm({
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to update character name';
-      setError(message);
+      showError(message);
     } finally {
       setIsLoading(false);
     }
@@ -95,14 +94,6 @@ export default function CharacterNameForm({
             Character names must be between 1 and 50 characters.
           </p>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="flex gap-3 p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
-            <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-300 text-sm">{error}</p>
-          </div>
-        )}
 
         {/* Submit Button */}
         <FantasyButton

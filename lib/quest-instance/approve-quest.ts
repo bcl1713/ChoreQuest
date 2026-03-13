@@ -5,6 +5,7 @@ import type {
   QuestTemplate,
   Character,
 } from "@/lib/types/database";
+import { ConflictError, NotFoundError } from "@/lib/errors";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { StreakService } from "@/lib/streak-service";
 import {
@@ -28,8 +29,9 @@ const fetchQuest = async (
     .single();
 
   if (fetchError || !quest) {
-    throw new Error(
+    throw new NotFoundError(
       `Failed to fetch quest: ${fetchError?.message || "Quest not found"}`,
+      "QUEST_NOT_FOUND",
     );
   }
 
@@ -38,11 +40,17 @@ const fetchQuest = async (
     quest.status !== "IN_PROGRESS" &&
     quest.status !== "COMPLETED"
   ) {
-    throw new Error(`Quest cannot be approved (status: ${quest.status})`);
+    throw new ConflictError(
+      `Quest cannot be approved (status: ${quest.status})`,
+      "QUEST_NOT_APPROVABLE",
+    );
   }
 
   if (!quest.assigned_to_id) {
-    throw new Error("Quest is not assigned to a hero");
+    throw new ConflictError(
+      "Quest is not assigned to a hero",
+      "QUEST_NOT_ASSIGNED",
+    );
   }
 
   return quest;
@@ -59,15 +67,16 @@ const resolveAssignedCharacter = async (
       .eq("id", quest.volunteered_by)
       .single();
     if (result.error || !result.data) {
-      throw new Error(
+      throw new NotFoundError(
         `Failed to fetch assigned character: ${result.error?.message || "Character not found"}`,
+        "CHARACTER_NOT_FOUND",
       );
     }
     return result.data as Character;
   }
 
   if (!quest.assigned_to_id) {
-    throw new Error("Quest has no assigned user");
+    throw new ConflictError("Quest has no assigned user", "QUEST_NOT_ASSIGNED");
   }
 
   const result = await client
@@ -81,12 +90,16 @@ const resolveAssignedCharacter = async (
   }
 
   if (result.error) {
-    throw new Error(
+    throw new NotFoundError(
       `Failed to fetch assigned character: ${result.error.message}`,
+      "CHARACTER_NOT_FOUND",
     );
   }
 
-  throw new Error("No characters found for assigned user");
+  throw new NotFoundError(
+    "No characters found for assigned user",
+    "CHARACTER_NOT_FOUND",
+  );
 };
 
 const fetchTemplate = async (
@@ -102,7 +115,10 @@ const fetchTemplate = async (
     .maybeSingle();
 
   if (templateError) {
-    throw new Error(`Failed to fetch quest template: ${templateError.message}`);
+    throw new NotFoundError(
+      `Failed to fetch quest template: ${templateError.message}`,
+      "QUEST_TEMPLATE_NOT_FOUND",
+    );
   }
 
   return templateData ?? null;
@@ -252,8 +268,9 @@ export const approveQuest = async (
     .eq("id", character.id);
 
   if (characterUpdateError) {
-    throw new Error(
+    throw new ConflictError(
       `Failed to update character stats: ${characterUpdateError.message}`,
+      "CHARACTER_UPDATE_FAILED",
     );
   }
 
@@ -271,7 +288,10 @@ export const approveQuest = async (
     .single();
 
   if (questUpdateError) {
-    throw new Error(`Failed to approve quest: ${questUpdateError.message}`);
+    throw new ConflictError(
+      `Failed to approve quest: ${questUpdateError.message}`,
+      "QUEST_APPROVE_FAILED",
+    );
   }
 
   return approvedQuest as QuestInstance;

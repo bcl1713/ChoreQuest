@@ -5,6 +5,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { handleRouteError } from '@/lib/api-error-handler';
+import {
+  AuthError,
+  ForbiddenError,
+  ValidationError,
+} from '@/lib/errors';
 import { questTemplateService } from '@/lib/quest-template-service';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
@@ -37,9 +43,9 @@ export async function POST(request: NextRequest) {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+      throw new AuthError(
+        'Missing or invalid authorization header',
+        'AUTH_HEADER_INVALID',
       );
     }
 
@@ -52,10 +58,7 @@ export async function POST(request: NextRequest) {
     const user = data?.user;
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
+      throw new AuthError();
     }
     const { data: requesterProfile, error: requesterError } = await supabase
       .from('user_profiles')
@@ -64,16 +67,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (requesterError || !requesterProfile) {
-      return NextResponse.json(
-        { error: 'Failed to load user profile' },
-        { status: 500 }
-      );
+      throw new Error('Failed to load user profile');
     }
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
-      return NextResponse.json(
-        { error: 'Only Guild Masters can create quest templates' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Only Guild Masters can create quest templates',
+        'QUEST_TEMPLATE_CREATE_FORBIDDEN',
       );
     }
 
@@ -83,18 +83,18 @@ export async function POST(request: NextRequest) {
 
     // Verify the family_id matches the user's family
     if (validatedData.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: 'Cannot create templates for other families' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Cannot create templates for other families',
+        'QUEST_TEMPLATE_CREATE_FORBIDDEN',
       );
     }
 
     // Validate INDIVIDUAL quest requirements
     if (validatedData.quest_type === 'INDIVIDUAL') {
       if (!validatedData.assigned_character_ids || validatedData.assigned_character_ids.length === 0) {
-        return NextResponse.json(
-          { error: 'INDIVIDUAL quests must have at least one assigned character' },
-          { status: 400 }
+        throw new ValidationError(
+          'INDIVIDUAL quests must have at least one assigned character',
+          'QUEST_TEMPLATE_ASSIGNMENT_REQUIRED',
         );
       }
     }
@@ -125,16 +125,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.issues },
-        { status: 400 }
+        { error: 'Validation failed', code: 'VALIDATION_ERROR', details: error.issues },
+        { status: 400 },
       );
     }
 
-    console.error('Unexpected error in POST /api/quest-templates:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }
 
@@ -147,9 +143,9 @@ export async function GET(request: NextRequest) {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
+      throw new AuthError(
+        'Missing or invalid authorization header',
+        'AUTH_HEADER_INVALID',
       );
     }
 
@@ -163,10 +159,7 @@ export async function GET(request: NextRequest) {
     const user = data?.user;
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
+      throw new AuthError();
     }
 
     // Get requester's profile
@@ -177,10 +170,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (requesterError || !requesterProfile) {
-      return NextResponse.json(
-        { error: 'Failed to load user profile' },
-        { status: 500 }
-      );
+      throw new Error('Failed to load user profile');
     }
 
     // Get query parameters
@@ -189,25 +179,25 @@ export async function GET(request: NextRequest) {
     const questType = searchParams.get('questType');
 
     if (!familyId) {
-      return NextResponse.json(
-        { error: 'familyId query parameter is required' },
-        { status: 400 }
+      throw new ValidationError(
+        'familyId query parameter is required',
+        'FAMILY_ID_REQUIRED',
       );
     }
 
     // Verify the user has access to this family
     if (familyId !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: 'Cannot access templates for other families' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Cannot access templates for other families',
+        'QUEST_TEMPLATE_ACCESS_FORBIDDEN',
       );
     }
 
     // Validate questType if provided
     if (questType && questType !== 'INDIVIDUAL' && questType !== 'FAMILY') {
-      return NextResponse.json(
-        { error: 'Invalid questType. Must be INDIVIDUAL or FAMILY' },
-        { status: 400 }
+      throw new ValidationError(
+        'Invalid questType. Must be INDIVIDUAL or FAMILY',
+        'QUEST_TYPE_INVALID',
       );
     }
 
@@ -229,10 +219,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Unexpected error in GET /api/quest-templates:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

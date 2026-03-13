@@ -9,12 +9,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { handleRouteError } from '@/lib/api-error-handler';
+import { AuthError } from '@/lib/errors';
 import { createServiceSupabaseClient } from '@/lib/supabase-server';
-
-const cronSecret = process.env.CRON_SECRET;
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  const cronSecret = process.env.CRON_SECRET;
 
   try {
     // Validate cron secret
@@ -25,18 +26,12 @@ export async function POST(request: NextRequest) {
 
     if (!cronSecret) {
       console.error('CRON_SECRET not configured in environment variables');
-      return NextResponse.json(
-        { error: 'Cron job not configured' },
-        { status: 500 }
-      );
+      throw new Error('CRON_SECRET not configured');
     }
 
     if (providedSecret !== cronSecret) {
       console.warn('Unauthorized cron job attempt');
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      throw new AuthError('Unauthorized', 'CRON_UNAUTHORIZED');
     }
 
     // Create Supabase client with service role for admin access
@@ -52,24 +47,14 @@ export async function POST(request: NextRequest) {
       duration: Date.now() - startTime,
     };
 
-    // Don't log here - let the cron job caller handle logging to avoid duplicates
+    if (!expirationResult.success) {
+      throw new Error(expirationResult.errors[0] ?? 'Quest expiration failed');
+    }
 
-    return NextResponse.json(result, {
-      status: expirationResult.success ? 200 : 500
-    });
+    return NextResponse.json(result, { status: 200 });
 
   } catch (error) {
-    console.error('Error in expire-quests cron job:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString(),
-        duration: Date.now() - startTime
-      },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }
 

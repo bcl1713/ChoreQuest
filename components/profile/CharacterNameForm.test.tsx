@@ -1,10 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CharacterNameForm from './CharacterNameForm';
+import { useNotification } from '@/hooks/useNotification';
 import { ProfileService } from '@/lib/profile-service';
 import { Character } from '@/lib/types/database';
 
 jest.mock('@/lib/profile-service');
+jest.mock('@/hooks/useNotification');
 
 const mockCharacter: Character = {
   id: 'char-123',
@@ -23,10 +25,20 @@ const mockCharacter: Character = {
 
 describe('CharacterNameForm', () => {
   const mockOnSuccess = jest.fn();
+  const mockNotificationError = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnSuccess.mockClear();
+    mockNotificationError.mockClear();
+    (useNotification as jest.Mock).mockReturnValue({
+      notifications: [],
+      dismiss: jest.fn(),
+      show: jest.fn(),
+      info: jest.fn(),
+      success: jest.fn(),
+      error: mockNotificationError,
+    });
   });
 
   it('renders the form with current character name', () => {
@@ -162,7 +174,7 @@ describe('CharacterNameForm', () => {
     await userEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText('Server error')).toBeInTheDocument();
+      expect(mockNotificationError).toHaveBeenCalledWith('Server error');
     });
   });
 

@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import FamilySettings from "@/components/family/family-settings";
+import { useNotification } from "@/hooks/useNotification";
 
 jest.mock("framer-motion", () => ({
   motion: {
@@ -35,6 +36,13 @@ jest.mock("@/lib/auth-context", () => ({
   useAuth: () => ({
     profile: mockProfile,
   }),
+}));
+
+export const mockNotificationSuccess = jest.fn();
+export const mockNotificationError = jest.fn();
+
+jest.mock("@/hooks/useNotification", () => ({
+  useNotification: jest.fn(),
 }));
 
 export const mockGetFamilyInfo = jest.fn();
@@ -92,6 +100,14 @@ export const renderFamilySettings = () => render(<FamilySettings />);
 export const resetFamilySettingsMocks = () => {
   jest.clearAllMocks();
   setupClipboardMock();
+  (useNotification as jest.Mock).mockReturnValue({
+    notifications: [],
+    dismiss: jest.fn(),
+    show: jest.fn(),
+    info: jest.fn(),
+    success: mockNotificationSuccess,
+    error: mockNotificationError,
+  });
   mockGetFamilyInfo.mockResolvedValue(mockFamilyInfo);
   mockRegenerateInviteCode.mockResolvedValue("XYZ789GHI");
 };
