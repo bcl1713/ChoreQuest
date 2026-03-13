@@ -8,7 +8,7 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -62,8 +62,9 @@ export async function POST(
       .eq("id", bossQuestId);
 
     if (updateError) {
-      throw new ConflictError(
+      throw new AppError(
         `Failed to cancel boss quest: ${updateError.message}`,
+        500,
         "BOSS_QUEST_CANCEL_FAILED",
       );
     }
