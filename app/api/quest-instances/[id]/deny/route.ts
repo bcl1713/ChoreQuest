@@ -4,8 +4,6 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   extractBearerToken,
   authenticateAndFetchUserProfile,
-  isAuthError,
-  authErrorResponse,
 } from "@/lib/api-auth-helpers";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
 
@@ -17,21 +15,11 @@ export async function POST(
     const { id: questId } = await params;
 
     // Extract Bearer token
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
     // Authenticate user and fetch profile
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     // Only GMs can deny quests
     if (requesterProfile.role !== "GUILD_MASTER") {

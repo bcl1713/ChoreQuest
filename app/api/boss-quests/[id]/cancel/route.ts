@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/api-error-handler";
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from "@/lib/api-auth-helpers";
 import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
-import { ForbiddenError, NotFoundError } from "@/lib/errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -19,20 +17,12 @@ export async function POST(
   try {
     const { id: bossQuestId } = await params;
 
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
 
     const supabase = createServerSupabaseClient(token);
     const serviceSupabase = createServiceSupabaseClient();
 
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== "GUILD_MASTER") {
       throw new ForbiddenError(
@@ -71,7 +61,10 @@ export async function POST(
       .eq("id", bossQuestId);
 
     if (updateError) {
-      throw new Error(`Failed to cancel boss quest: ${updateError.message}`);
+      throw new ConflictError(
+        `Failed to cancel boss quest: ${updateError.message}`,
+        "BOSS_QUEST_CANCEL_FAILED",
+      );
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

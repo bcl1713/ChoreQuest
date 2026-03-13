@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNotification } from "@/hooks/useNotification";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { FantasyButton } from "@/components/ui";
 import { getCharacterClassInfo } from "@/lib/constants/character-classes";
 import { ProfileService } from "@/lib/profile-service";
+import { ErrorAlert } from "@/components/profile/shared/ErrorAlert";
 import { Character, CharacterClass } from "@/lib/types/database";
 import { ClassSelectionGrid } from "./class-change/ClassSelectionGrid";
 import { CooldownNotice } from "./class-change/CooldownNotice";
@@ -21,8 +21,8 @@ export default function ClassChangeForm({
   character,
   onSuccess,
 }: ClassChangeFormProps) {
-  const { error: showError } = useNotification(0);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [canChange, setCanChange] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(
@@ -65,6 +65,9 @@ export default function ClassChangeForm({
   }, [character.id]);
 
   const handleClassSelect = (classId: string) => {
+    if (error) {
+      setError(null);
+    }
     setSelectedClass(classId);
   };
 
@@ -78,7 +81,7 @@ export default function ClassChangeForm({
       // Check gold
       const currentGold = character.gold ?? 0;
       if (currentGold < cost) {
-        showError(
+        setError(
           `Insufficient gold. You need ${cost} gold but only have ${currentGold}.`,
         );
         setIsLoading(false);
@@ -88,13 +91,14 @@ export default function ClassChangeForm({
       // Check cooldown again
       const canChangeClass = await ProfileService.canChangeClass();
       if (!canChangeClass) {
-        showError(
+        setError(
           "You are still on cooldown. Please wait before changing classes again.",
         );
         setIsLoading(false);
         return;
       }
 
+      setError(null);
       await ProfileService.changeCharacterClass(character.id, selectedClass);
       onSuccess(`Successfully changed class to ${selectedClassInfo?.name}!`);
       setSelectedClass(null);
@@ -108,9 +112,7 @@ export default function ClassChangeForm({
         setCooldownRemaining(remaining);
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to change class";
-      showError(message);
+      setError(err instanceof Error ? err.message : "Failed to change class");
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +120,8 @@ export default function ClassChangeForm({
 
   return (
     <div className="space-y-8">
+      {error && <ErrorAlert message={error} />}
+
       <CurrentClassCard classInfo={currentClassInfo} />
 
       {!canChange && cooldownRemaining !== null && (

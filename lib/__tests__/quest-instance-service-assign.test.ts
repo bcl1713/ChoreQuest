@@ -98,7 +98,7 @@ describe("QuestInstanceService - assignQuest", () => {
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
             data: null,
-            error: { message: "Quest not found" },
+            error: null,
           }),
         }),
       }),
@@ -106,7 +106,24 @@ describe("QuestInstanceService - assignQuest", () => {
 
     await expect(
       service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
-    ).rejects.toThrow("Failed to fetch quest: Quest not found");
+    ).rejects.toThrow("Quest not found");
+  });
+
+  it("should throw app error if quest fetch fails", async () => {
+    mockFrom.mockImplementationOnce(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: "Database offline" },
+          }),
+        }),
+      }),
+    }));
+
+    await expect(
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
+    ).rejects.toThrow("Failed to fetch quest: Database offline");
   });
 
   it("should throw error if quest is not AVAILABLE", async () => {

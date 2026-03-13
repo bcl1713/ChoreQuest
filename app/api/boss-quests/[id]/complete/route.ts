@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { handleRouteError } from "@/lib/api-error-handler";
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from "@/lib/api-auth-helpers";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 import {
@@ -28,20 +26,12 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const decisions = Array.isArray(body?.decisions) ? body.decisions : [];
 
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
 
     const supabase = createServerSupabaseClient(token);
     const serviceSupabase = createServiceSupabaseClient();
 
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== "GUILD_MASTER") {
       throw new ForbiddenError(

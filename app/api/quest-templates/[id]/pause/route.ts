@@ -7,9 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleRouteError } from '@/lib/api-error-handler';
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from '@/lib/api-auth-helpers';
 import { questTemplateService } from '@/lib/quest-template-service';
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
@@ -75,20 +73,12 @@ export async function PATCH(
 ) {
   try {
     const { id: templateId } = await params;
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
 
     // Create Supabase client with the user's token
     const supabase = createServerSupabaseClient(token);
 
-    const requesterOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(requesterOrError)) {
-      return authErrorResponse(requesterOrError);
-    }
-    const requester = requesterOrError;
+    const requester = await authenticateAndFetchUserProfile(supabase, token);
 
     // Verify authorization
     const { authorized, error } = await verifyGuildMasterAccess(

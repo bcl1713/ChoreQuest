@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from "@/lib/api-auth-helpers";
 import { handleRouteError } from "@/lib/api-error-handler";
 import { ForbiddenError } from "@/lib/errors";
@@ -20,20 +18,9 @@ const createBossQuestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
-
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
     if (requesterProfile.role !== "GUILD_MASTER") {
       throw new ForbiddenError(
         "Only Guild Masters can create boss quests",

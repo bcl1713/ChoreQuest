@@ -5,8 +5,6 @@ import { QuestInstanceService } from "@/lib/quest-instance-service";
 import {
   extractBearerToken,
   authenticateAndFetchUserProfile,
-  isAuthError,
-  authErrorResponse,
 } from "@/lib/api-auth-helpers";
 import { ForbiddenError, NotFoundError } from "@/lib/errors";
 
@@ -18,24 +16,14 @@ export async function POST(
     const { id: questId } = await params;
 
     // Extract Bearer token
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
     const body = await request.json().catch(() => ({}));
     const characterId = body?.characterId as string | undefined;
 
     // Authenticate user and fetch profile
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")

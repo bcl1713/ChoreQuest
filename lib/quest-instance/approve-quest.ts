@@ -5,7 +5,7 @@ import type {
   QuestTemplate,
   Character,
 } from "@/lib/types/database";
-import { ConflictError, NotFoundError } from "@/lib/errors";
+import { AppError, ConflictError, NotFoundError } from "@/lib/errors";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { StreakService } from "@/lib/streak-service";
 import {
@@ -28,9 +28,17 @@ const fetchQuest = async (
     .eq("id", questId)
     .single();
 
-  if (fetchError || !quest) {
+  if (fetchError) {
+    throw new AppError(
+      `Failed to fetch quest: ${fetchError.message}`,
+      500,
+      "QUEST_FETCH_FAILED",
+    );
+  }
+
+  if (!quest) {
     throw new NotFoundError(
-      `Failed to fetch quest: ${fetchError?.message || "Quest not found"}`,
+      "Quest not found",
       "QUEST_NOT_FOUND",
     );
   }
@@ -66,9 +74,16 @@ const resolveAssignedCharacter = async (
       .select("*")
       .eq("id", quest.volunteered_by)
       .single();
-    if (result.error || !result.data) {
+    if (result.error) {
+      throw new AppError(
+        `Failed to fetch assigned character: ${result.error.message}`,
+        500,
+        "CHARACTER_FETCH_FAILED",
+      );
+    }
+    if (!result.data) {
       throw new NotFoundError(
-        `Failed to fetch assigned character: ${result.error?.message || "Character not found"}`,
+        "Character not found",
         "CHARACTER_NOT_FOUND",
       );
     }
@@ -90,9 +105,10 @@ const resolveAssignedCharacter = async (
   }
 
   if (result.error) {
-    throw new NotFoundError(
+    throw new AppError(
       `Failed to fetch assigned character: ${result.error.message}`,
-      "CHARACTER_NOT_FOUND",
+      500,
+      "CHARACTER_FETCH_FAILED",
     );
   }
 
@@ -115,9 +131,10 @@ const fetchTemplate = async (
     .maybeSingle();
 
   if (templateError) {
-    throw new NotFoundError(
+    throw new AppError(
       `Failed to fetch quest template: ${templateError.message}`,
-      "QUEST_TEMPLATE_NOT_FOUND",
+      500,
+      "QUEST_TEMPLATE_FETCH_FAILED",
     );
   }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/ui/NotificationContainer";
 import { FamilyInfoCard } from "./family-settings/FamilyInfoCard";
 import { FamilyMembersCard } from "./family-settings/FamilyMembersCard";
 import { RegenerateInviteModal } from "./family-settings/RegenerateInviteModal";
@@ -18,7 +19,12 @@ export default function FamilySettings() {
     regenerateInviteCode,
     updateTimezone,
   } = useFamilyInfo();
-  const { error: showError, success: showSuccess } = useNotification();
+  const {
+    notifications,
+    dismiss,
+    error: showError,
+    success: showSuccess,
+  } = useNotification();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedTimezone, setSelectedTimezone] = useState<string>("");
 
@@ -93,6 +99,11 @@ export default function FamilySettings() {
 
   return (
     <div className="space-y-6" data-testid="family-settings">
+      <NotificationContainer
+        notifications={notifications}
+        onDismiss={dismiss}
+      />
+
       <FamilyInfoCard
         familyInfo={familyInfo}
         selectedTimezone={selectedTimezone}

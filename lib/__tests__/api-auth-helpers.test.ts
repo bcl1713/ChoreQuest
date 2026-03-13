@@ -4,32 +4,23 @@ import {
   extractBearerToken,
   authenticateAndFetchUserProfile,
   extractAndAuthenticateUser,
-  isAuthError,
-  authErrorResponse,
-  AuthError,
   AuthenticatedUser,
 } from "@/lib/api-auth-helpers";
-const expectAuthErrorResult = (result: AuthenticatedUser | AuthError, message: string, status: number) => {
-  expect(isAuthError(result as AuthenticatedUser | AuthError)).toBe(true);
-  if ("error" in result) {
-    expect(result.error).toBe(message);
-    expect(result.status).toBe(status);
-    expect(result.code).toEqual(expect.any(String));
-  }
-};
-// Helper to create a mock request
+import { AppError, AuthError } from "@/lib/errors";
+
 function createMockRequest(authHeader?: string): NextRequest {
   const headers = new Map<string, string>();
   if (authHeader) {
     headers.set("authorization", authHeader);
   }
+
   return {
     headers: {
       get: (key: string) => headers.get(key.toLowerCase()) || null,
     },
   } as unknown as NextRequest;
 }
-// Helper to create a mock Supabase client
+
 function createMockSupabaseClient(
   overrides: {
     authUser?: { id: string } | null;
@@ -58,206 +49,184 @@ function createMockSupabaseClient(
           })),
         };
       }
+
       return {} as Record<string, unknown>;
     }),
   } as unknown as SupabaseClient;
 }
+
+async function expectAppError(
+  promise: Promise<unknown> | (() => unknown),
+  expected: {
+    klass: typeof AppError;
+    message: string;
+    code: string;
+    statusCode: number;
+  }
+) {
+  try {
+    if (typeof promise === "function") {
+      promise();
+    } else {
+      await promise;
+    }
+    throw new Error("Expected helper to throw");
+  } catch (error) {
+    expect(error).toBeInstanceOf(expected.klass);
+    expect(error).toMatchObject({
+      message: expected.message,
+      code: expected.code,
+      statusCode: expected.statusCode,
+    });
+  }
+}
+
 describe("api-auth-helpers", () => {
   describe("extractBearerToken", () => {
-    it("should extract token from valid Bearer authorization header", () => {
-      const request = createMockRequest("Bearer my-secret-token");
-      const result = extractBearerToken(request);
-      expect(result).toBe("my-secret-token");
+    it("extracts token from a valid Bearer header", () => {
+      expect(extractBearerToken(createMockRequest("Bearer my-secret-token"))).toBe(
+        "my-secret-token"
+      );
     });
-    it("should return error when authorization header is missing", () => {
-      const request = createMockRequest();
-      const result = extractBearerToken(request);
-      expectAuthErrorResult(result as AuthenticatedUser | AuthError, "Missing or invalid authorization header", 401);
+
+    it("throws AuthError when authorization header is missing", async () => {
+      await expectAppError(() => extractBearerToken(createMockRequest()), {
+        klass: AuthError,
+        message: "Missing or invalid authorization header",
+        code: "AUTH_HEADER_INVALID",
+        statusCode: 401,
+      });
     });
-    it("should return error when authorization header doesn't start with Bearer", () => {
-      const request = createMockRequest("Basic dGVzdDp0ZXN0");
-      const result = extractBearerToken(request);
-      expectAuthErrorResult(result as AuthenticatedUser | AuthError, "Missing or invalid authorization header", 401);
+
+    it("throws AuthError when authorization header is not Bearer", async () => {
+      await expectAppError(
+        () => extractBearerToken(createMockRequest("Basic dGVzdDp0ZXN0")),
+        {
+          klass: AuthError,
+          message: "Missing or invalid authorization header",
+          code: "AUTH_HEADER_INVALID",
+          statusCode: 401,
+        }
+      );
     });
-    it("should return error when Bearer prefix is present but token is empty", () => {
-      const request = createMockRequest("Bearer ");
-      const result = extractBearerToken(request);
-      expect(result).toBe("");
+
+    it("allows an empty token after the Bearer prefix", () => {
+      expect(extractBearerToken(createMockRequest("Bearer "))).toBe("");
     });
   });
+
   describe("authenticateAndFetchUserProfile", () => {
-    it("should return authenticated user with profile when credentials are valid", async () => {
+    it("returns authenticated user profile when credentials are valid", async () => {
       const supabase = createMockSupabaseClient({
         authUser: { id: "user-123" },
         userProfile: { role: "GUILD_MASTER", family_id: "family-456" },
       });
-      const result = await authenticateAndFetchUserProfile(supabase, "valid-token");
-      expect(isAuthError(result as AuthenticatedUser | AuthError)).toBe(false);
-      if (!("error" in result)) {
-        expect(result.id).toBe("user-123");
-        expect(result.role).toBe("GUILD_MASTER");
-        expect(result.family_id).toBe("family-456");
-      }
+
+      await expect(
+        authenticateAndFetchUserProfile(supabase, "valid-token")
+      ).resolves.toEqual<AuthenticatedUser>({
+        id: "user-123",
+        role: "GUILD_MASTER",
+        family_id: "family-456",
+      });
     });
-    it("should return error when authentication fails", async () => {
+
+    it("throws AuthError when authentication fails", async () => {
       const supabase = createMockSupabaseClient({
         authUser: null,
         authError: new Error("Invalid token"),
       });
-      const result = await authenticateAndFetchUserProfile(supabase, "invalid-token");
-      expectAuthErrorResult(result as AuthenticatedUser | AuthError, "Authentication failed", 401);
+
+      await expectAppError(
+        authenticateAndFetchUserProfile(supabase, "invalid-token"),
+        {
+          klass: AuthError,
+          message: "Authentication failed",
+          code: "AUTH_ERROR",
+          statusCode: 401,
+        }
+      );
     });
-    it("should return error when user profile fetch fails", async () => {
+
+    it("throws AppError when profile loading fails", async () => {
       const supabase = createMockSupabaseClient({
         authUser: { id: "user-123" },
         userProfile: null,
         profileError: new Error("Profile not found"),
       });
-      const result = await authenticateAndFetchUserProfile(supabase, "valid-token");
-      expectAuthErrorResult(result as AuthenticatedUser | AuthError, "Failed to load user profile", 500);
+
+      await expectAppError(
+        authenticateAndFetchUserProfile(supabase, "valid-token"),
+        {
+          klass: AppError,
+          message: "Failed to load user profile",
+          code: "PROFILE_LOAD_FAILED",
+          statusCode: 500,
+        }
+      );
     });
-    it("should return error when user is null", async () => {
-      const supabase = createMockSupabaseClient({
-        authUser: null,
-        authError: null,
-      });
-      const result = await authenticateAndFetchUserProfile(supabase, "some-token");
-      expectAuthErrorResult(result as AuthenticatedUser | AuthError, "Authentication failed", 401);
-    });
-    it("should support different user roles", async () => {
+
+    it("supports all expected user roles", async () => {
       const roles = ["GUILD_MASTER", "HERO", "YOUNG_HERO"] as const;
+
       for (const role of roles) {
         const supabase = createMockSupabaseClient({
           authUser: { id: "user-123" },
           userProfile: { role, family_id: "family-456" },
         });
-        const result = await authenticateAndFetchUserProfile(supabase, "valid-token");
-        expect(isAuthError(result as AuthenticatedUser | AuthError)).toBe(false);
-        if (!("error" in result)) {
-          expect(result.role).toBe(role);
-        }
+
+        await expect(
+          authenticateAndFetchUserProfile(supabase, "valid-token")
+        ).resolves.toMatchObject({ role });
       }
     });
   });
+
   describe("extractAndAuthenticateUser", () => {
-    it("should extract token and authenticate user in one call", async () => {
+    it("extracts token and authenticates the user", async () => {
       const supabase = createMockSupabaseClient({
         authUser: { id: "user-123" },
         userProfile: { role: "GUILD_MASTER", family_id: "family-456" },
       });
-      const request = createMockRequest("Bearer valid-token");
-      const result = await extractAndAuthenticateUser(request, supabase);
-      expect(isAuthError(result as AuthenticatedUser | AuthError)).toBe(false);
-      if (!("error" in result)) {
-        expect(result.id).toBe("user-123");
-        expect(result.role).toBe("GUILD_MASTER");
-        expect(result.family_id).toBe("family-456");
-      }
+
+      await expect(
+        extractAndAuthenticateUser(createMockRequest("Bearer valid-token"), supabase)
+      ).resolves.toEqual<AuthenticatedUser>({
+        id: "user-123",
+        role: "GUILD_MASTER",
+        family_id: "family-456",
+      });
     });
-    it("should return token extraction error if header is invalid", async () => {
+
+    it("throws when token extraction fails", async () => {
       const supabase = createMockSupabaseClient();
-      const request = createMockRequest();
-      const result = await extractAndAuthenticateUser(request, supabase);
-      expect(isAuthError(result as AuthenticatedUser | AuthError)).toBe(true);
-      if ("error" in result) {
-        expect(result.error).toBe("Missing or invalid authorization header");
-        expect(result.status).toBe(401);
-      }
+
+      await expectAppError(
+        extractAndAuthenticateUser(createMockRequest(), supabase),
+        {
+          klass: AuthError,
+          message: "Missing or invalid authorization header",
+          code: "AUTH_HEADER_INVALID",
+          statusCode: 401,
+        }
+      );
     });
-    it("should return auth error if user authentication fails", async () => {
+
+    it("throws when user authentication fails", async () => {
       const supabase = createMockSupabaseClient({
         authUser: null,
         authError: new Error("Token expired"),
       });
-      const request = createMockRequest("Bearer expired-token");
-      const result = await extractAndAuthenticateUser(request, supabase);
-      expectAuthErrorResult(result as AuthenticatedUser | AuthError, "Authentication failed", 401);
-    });
-  });
-  describe("isAuthError", () => {
-    it("should return true for auth error objects", () => {
-      const error: AuthError = {
-        error: "Test error",
-        code: "TEST_ERROR",
-        status: 401,
-      };
-      expect(isAuthError(error)).toBe(true);
-    });
-    it("should return false for authenticated user objects", () => {
-      const user: AuthenticatedUser = {
-        id: "user-123",
-        role: "GUILD_MASTER",
-        family_id: "family-456",
-      };
-      expect(isAuthError(user)).toBe(false);
-    });
-  });
-  describe("authErrorResponse", () => {
-    it("should create a NextResponse with correct status and error message", () => {
-      const authError: AuthError = {
-        error: "Authentication failed",
-        code: "AUTH_ERROR",
-        status: 401,
-      };
-      const response = authErrorResponse(authError);
-      expect(response.status).toBe(401);
-    });
-    it("should handle different status codes", () => {
-      const testCases: AuthError[] = [
-        { error: "Unauthorized", code: "AUTH_ERROR", status: 401 },
-        { error: "Forbidden", code: "FORBIDDEN", status: 403 },
-        { error: "Server error", code: "INTERNAL_ERROR", status: 500 },
-      ];
-      testCases.forEach((testCase) => {
-        const response = authErrorResponse(testCase);
-        expect(response.status).toBe(testCase.status);
-      });
-    });
-  });
-  describe("Integration scenarios", () => {
-    it("should handle complete happy path: token extraction and authentication", async () => {
-      const supabase = createMockSupabaseClient({
-        authUser: { id: "user-abc" },
-        userProfile: { role: "HERO", family_id: "family-xyz" },
-      });
-      const request = createMockRequest("Bearer abc123token");
-      // Step 1: Extract token
-      const tokenOrError = extractBearerToken(request);
-      expect(isAuthError(tokenOrError as AuthenticatedUser | AuthError)).toBe(false);
-      if (typeof tokenOrError === "string") {
-        // Step 2: Authenticate
-        const userOrError = await authenticateAndFetchUserProfile(supabase, tokenOrError);
-        expect(isAuthError(userOrError as AuthenticatedUser | AuthError)).toBe(false);
-        if (!("error" in userOrError)) {
-          expect(userOrError.id).toBe("user-abc");
-          expect(userOrError.family_id).toBe("family-xyz");
+
+      await expectAppError(
+        extractAndAuthenticateUser(createMockRequest("Bearer expired-token"), supabase),
+        {
+          klass: AuthError,
+          message: "Authentication failed",
+          code: "AUTH_ERROR",
+          statusCode: 401,
         }
-      }
-    });
-    it("should handle error at extraction step", async () => {
-      const request = createMockRequest();
-      const tokenOrError = extractBearerToken(request);
-      expect(isAuthError(tokenOrError as AuthenticatedUser | AuthError)).toBe(true);
-      if ("error" in tokenOrError) {
-        const response = authErrorResponse(tokenOrError);
-        expect(response.status).toBe(401);
-      }
-    });
-    it("should handle error at authentication step", async () => {
-      const supabase = createMockSupabaseClient({
-        authUser: null,
-        authError: new Error("Invalid"),
-      });
-      const request = createMockRequest("Bearer invalid-token");
-      const tokenOrError = extractBearerToken(request);
-      if (typeof tokenOrError === "string") {
-        const userOrError = await authenticateAndFetchUserProfile(supabase, tokenOrError);
-        expect(isAuthError(userOrError as AuthenticatedUser | AuthError)).toBe(true);
-        if ("error" in userOrError) {
-          const response = authErrorResponse(userOrError);
-          expect(response.status).toBe(401);
-        }
-      }
+      );
     });
   });
 });

@@ -4,9 +4,7 @@ import { presetTemplates } from '@/lib/preset-templates';
 import { questTemplateService } from '@/lib/quest-template-service';
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from '@/lib/api-auth-helpers';
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
@@ -17,18 +15,10 @@ export async function POST(
 ) {
   try {
     const { presetId } = await context.params;
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
-    const requesterOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(requesterOrError)) {
-      return authErrorResponse(requesterOrError);
-    }
-    const requesterProfile = requesterOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
       throw new ForbiddenError(

@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleRouteError } from '@/lib/api-error-handler';
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from '@/lib/api-auth-helpers';
 import { questTemplateService } from '@/lib/quest-template-service';
 import { ForbiddenError, ValidationError } from '@/lib/errors';
@@ -22,18 +20,10 @@ export async function POST(
       deleteOriginal: boolean;
     };
 
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
-    const requesterOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(requesterOrError)) {
-      return authErrorResponse(requesterOrError);
-    }
-    const requesterProfile = requesterOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
       throw new ForbiddenError(

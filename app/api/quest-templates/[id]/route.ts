@@ -5,9 +5,7 @@ import { questTemplateService } from '@/lib/quest-template-service';
 import { QuestTemplate } from '@/lib/types/database';
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from '@/lib/api-auth-helpers';
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
@@ -76,46 +74,26 @@ const loadAuthContext = async (
   | { supabase: SupabaseClient<Database>; userId: string; template?: QuestTemplate; authorized: boolean; error?: string }
 > => {
   const supabase = createServerSupabaseClient(token);
-  const requesterOrError = await authenticateAndFetchUserProfile(supabase, token);
-  if (isAuthError(requesterOrError)) {
-    throw requesterOrError;
-  }
+  const requester = await authenticateAndFetchUserProfile(supabase, token);
 
-  const access = await verifyGuildMasterAccess(supabase, requesterOrError.id, templateId);
+  const access = await verifyGuildMasterAccess(supabase, requester.id, templateId);
   if (!access.authorized) {
     return {
       supabase,
-      userId: requesterOrError.id,
+      userId: requester.id,
       authorized: false,
       error: access.error,
       template: access.template,
     };
   }
 
-  return { supabase, userId: requesterOrError.id, authorized: true, template: access.template };
-};
-
-const isSupabaseLikeError = (error: unknown): error is { data?: unknown; error?: unknown } =>
-  typeof error === 'object' && error !== null && 'data' in error && 'error' in error;
-
-const handleUnexpectedError = (error: unknown, verb: string) => {
-  if (isAuthError(error)) {
-    return authErrorResponse(error);
-  }
-  if (isSupabaseLikeError(error)) {
-    console.error(`Unexpected error in ${verb}: data=`, error.data, 'error=', error.error);
-  } else {
-    console.error(`Unexpected error in ${verb}:`, error);
-  }
-  return handleRouteError(error);
+  return { supabase, userId: requester.id, authorized: true, template: access.template };
 };
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) return authErrorResponse(tokenOrError);
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const context = await loadAuthContext(token, templateId);
     if (!context.authorized) {
       if (context.error === 'Quest template not found') {
@@ -129,16 +107,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ success: true, template: context.template });
   } catch (error) {
-    return handleUnexpectedError(error, 'GET /api/quest-templates/[id]');
+    return handleRouteError(error);
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) return authErrorResponse(tokenOrError);
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const context = await loadAuthContext(token, templateId);
     if (!context.authorized) {
       if (context.error === 'Quest template not found') {
@@ -174,16 +150,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         { status: 400 },
       );
     }
-    return handleUnexpectedError(error, 'PATCH /api/quest-templates/[id]');
+    return handleRouteError(error);
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) return authErrorResponse(tokenOrError);
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const context = await loadAuthContext(token, templateId);
     if (!context.authorized) {
       if (context.error === 'Quest template not found') {
@@ -205,6 +179,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       message: 'Quest template deleted successfully',
     });
   } catch (error) {
-    return handleUnexpectedError(error, 'DELETE /api/quest-templates/[id]');
+    return handleRouteError(error);
   }
 }

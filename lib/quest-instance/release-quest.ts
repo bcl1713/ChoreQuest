@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
 import type { QuestInstance } from "@/lib/types/database";
 import {
+  AppError,
   ConflictError,
   NotFoundError,
   ValidationError,
@@ -24,9 +25,17 @@ export const releaseQuest = async (
     .eq("id", questId)
     .single();
 
-  if (fetchError || !quest) {
+  if (fetchError) {
+    throw new AppError(
+      `Failed to fetch quest: ${fetchError.message}`,
+      500,
+      "QUEST_FETCH_FAILED",
+    );
+  }
+
+  if (!quest) {
     throw new NotFoundError(
-      `Failed to fetch quest: ${fetchError?.message || "Quest not found"}`,
+      "Quest not found",
       "QUEST_NOT_FOUND",
     );
   }

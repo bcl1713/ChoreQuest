@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useNotification } from '@/hooks/useNotification';
+import { ErrorAlert } from '@/components/profile/shared/ErrorAlert';
 import { Character } from '@/lib/types/database';
 import { ProfileService } from '@/lib/profile-service';
 import { FantasyButton } from '@/components/ui';
@@ -15,8 +15,8 @@ export default function CharacterNameForm({
   character,
   onSuccess,
 }: CharacterNameFormProps) {
-  const { error: showError } = useNotification(0);
   const [name, setName] = useState(character.name);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [charCount, setCharCount] = useState(character.name.length);
 
@@ -24,21 +24,25 @@ export default function CharacterNameForm({
     const newName = e.target.value;
     setName(newName);
     setCharCount(newName.length);
+    if (error) {
+      setError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      showError('Character name cannot be empty');
+      setError('Character name cannot be empty');
       return;
     }
 
     if (name === character.name) {
-      showError('Please enter a different name');
+      setError('Please enter a different name');
       return;
     }
 
+    setError(null);
     setIsLoading(true);
 
     try {
@@ -47,9 +51,9 @@ export default function CharacterNameForm({
       // Note: In a real app, you'd refresh the character context here
       // For now, just show success message
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to update character name';
-      showError(message);
+      setError(
+        err instanceof Error ? err.message : 'Failed to update character name'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -58,6 +62,8 @@ export default function CharacterNameForm({
   return (
     <div className="max-w-md mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && <ErrorAlert message={error} />}
+
         {/* Current Name Display */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">

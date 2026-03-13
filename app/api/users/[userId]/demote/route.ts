@@ -8,9 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleRouteError } from '@/lib/api-error-handler';
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from '@/lib/api-auth-helpers';
 import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
@@ -22,20 +20,12 @@ export async function POST(
   try {
     const { userId: targetUserId } = await params;
 
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
 
     // Create Supabase client with the user's token
     const supabase = createServerSupabaseClient(token);
 
-    const requesterOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(requesterOrError)) {
-      return authErrorResponse(requesterOrError);
-    }
-    const requesterProfile = requesterOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
       throw new ForbiddenError(
