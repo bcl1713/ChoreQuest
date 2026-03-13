@@ -14,6 +14,20 @@ describe("handleRouteError", () => {
     });
   });
 
+  it("includes validation details when present", async () => {
+    const details = { fieldErrors: { name: ["Required"] } };
+    const response = handleRouteError(
+      new ValidationError("Bad request", "BAD_REQUEST", details),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Bad request",
+      code: "BAD_REQUEST",
+      details,
+    });
+  });
+
   it("returns a 500 payload for unknown errors", async () => {
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 

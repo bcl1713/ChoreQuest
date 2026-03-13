@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { AppError } from "@/lib/errors";
+import { AppError, ValidationError } from "@/lib/errors";
 
 export function handleRouteError(error: unknown): NextResponse {
   if (error instanceof AppError) {
+    const body =
+      error instanceof ValidationError && error.details !== undefined
+        ? { error: error.message, code: error.code, details: error.details }
+        : { error: error.message, code: error.code };
+
     return NextResponse.json(
-      { error: error.message, code: error.code },
+      body,
       { status: error.statusCode },
     );
   }

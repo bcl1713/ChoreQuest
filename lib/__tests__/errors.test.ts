@@ -33,4 +33,15 @@ describe("errors", () => {
       expect(error).toBeInstanceOf(AppError);
     },
   );
+
+  it("stores validation details when provided", () => {
+    const details = { fieldErrors: { name: ["Required"] } };
+    const error = new ValidationError(
+      "Invalid payload",
+      "VALIDATION_ERROR",
+      details,
+    );
+
+    expect(error.details).toEqual(details);
+  });
 });

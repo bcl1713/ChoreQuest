@@ -5,7 +5,7 @@ import {
   extractBearerToken,
 } from "@/lib/api-auth-helpers";
 import { handleRouteError } from "@/lib/api-error-handler";
-import { ForbiddenError } from "@/lib/errors";
+import { AppError, ForbiddenError, ValidationError } from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 const createBossQuestSchema = z.object({
@@ -31,13 +31,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = createBossQuestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid boss quest payload",
-          code: "VALIDATION_ERROR",
-          details: parsed.error.flatten(),
-        },
-        { status: 400 }
+      throw new ValidationError(
+        "Invalid boss quest payload",
+        "VALIDATION_ERROR",
+        parsed.error.flatten(),
       );
     }
 
@@ -75,8 +72,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (createError || !created) {
-      throw new Error(
+      throw new AppError(
         `Failed to create boss quest: ${createError?.message ?? "Unknown error"}`,
+        500,
+        "BOSS_QUEST_CREATE_FAILED",
       );
     }
 
