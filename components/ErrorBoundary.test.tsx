@@ -1,3 +1,11 @@
+const mockUsePathname = jest.fn();
+const mockUseSearchParams = jest.fn();
+
+jest.mock("next/navigation", () => ({
+  usePathname: () => mockUsePathname(),
+  useSearchParams: () => mockUseSearchParams(),
+}));
+
 import { render, screen } from "@testing-library/react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -11,9 +19,14 @@ describe("ErrorBoundary", () => {
   afterEach(() => {
     process.env.NODE_ENV = originalEnv;
     jest.restoreAllMocks();
+    mockUsePathname.mockReset();
+    mockUseSearchParams.mockReset();
+    mockUsePathname.mockReturnValue("/");
   });
 
   it("renders children when no error occurs", () => {
+    mockUsePathname.mockReturnValue("/");
+
     render(
       <ErrorBoundary>
         <div>Safe content</div>
@@ -25,6 +38,7 @@ describe("ErrorBoundary", () => {
 
   it("renders a fallback in production mode", () => {
     process.env.NODE_ENV = "production";
+    mockUsePathname.mockReturnValue("/");
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     render(
@@ -39,6 +53,7 @@ describe("ErrorBoundary", () => {
 
   it("resets after navigation changes", () => {
     process.env.NODE_ENV = "production";
+    mockUsePathname.mockReturnValue("/");
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     const { rerender } = render(
@@ -56,5 +71,17 @@ describe("ErrorBoundary", () => {
     );
 
     expect(screen.getByText("Recovered content")).toBeInTheDocument();
+  });
+
+  it("does not read search params for the default reset key", () => {
+    mockUsePathname.mockReturnValue("/quests");
+
+    render(
+      <ErrorBoundary>
+        <div>Safe content</div>
+      </ErrorBoundary>,
+    );
+
+    expect(mockUseSearchParams).not.toHaveBeenCalled();
   });
 });

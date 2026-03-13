@@ -151,4 +151,58 @@ describe("error-handling user, boss, and cron routes", () => {
     expect(json.expired).toBe(3);
     expect(json.duration).toEqual(expect.any(Number));
   });
+
+  it("generate cron route preserves structured failure payload", async () => {
+    mockGenerateRecurringQuests.mockResolvedValue({
+      success: false,
+      created: 0,
+      errors: ["template lookup failed"],
+    });
+
+    const response = await generateQuestsRoute(
+      createRequest(
+        "http://localhost/api/cron/generate-quests",
+        "POST",
+        undefined,
+        "Bearer cron-secret",
+      ),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      success: false,
+      created: 0,
+      errors: ["template lookup failed"],
+      timestamp: expect.any(String),
+      duration: expect.any(Number),
+    });
+  });
+
+  it("expire cron route preserves structured failure payload", async () => {
+    mockExpireQuests.mockResolvedValue({
+      success: false,
+      expired: 0,
+      streaksBroken: 0,
+      errors: ["expiration query failed"],
+    });
+
+    const response = await expireQuestsRoute(
+      createRequest(
+        "http://localhost/api/cron/expire-quests",
+        "POST",
+        undefined,
+        "Bearer cron-secret",
+      ),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      success: false,
+      expired: 0,
+      streaksBroken: 0,
+      errors: ["expiration query failed"],
+      timestamp: expect.any(String),
+      duration: expect.any(Number),
+    });
+  });
 });

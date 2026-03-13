@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (!expirationResult.success) {
-      throw new Error(expirationResult.errors[0] ?? 'Quest expiration failed');
+      return NextResponse.json(result, { status: 500 });
     }
 
     return NextResponse.json(result, { status: 200 });

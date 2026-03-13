@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (!generationResult.success) {
-      throw new Error(generationResult.errors[0] ?? 'Recurring quest generation failed');
+      return NextResponse.json(result, { status: 500 });
     }
 
     return NextResponse.json(result, { status: 200 });

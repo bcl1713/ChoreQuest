@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 type Props = {
@@ -82,8 +82,7 @@ export function ErrorBoundary({
   resetKey?: string;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const navigationResetKey = `${pathname ?? ""}?${searchParams?.toString() ?? ""}`;
+  const navigationResetKey = pathname ?? "";
   const effectiveResetKey = resetKey ?? navigationResetKey;
 
   return (
