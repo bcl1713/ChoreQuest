@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/api-error-handler";
 import {
   authenticateAndFetchUserProfile,
   authErrorResponse,
@@ -6,6 +7,7 @@ import {
   isAuthError,
 } from "@/lib/api-auth-helpers";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -35,27 +37,27 @@ export async function POST(
       .maybeSingle();
 
     if (bossError) {
-      return NextResponse.json(
-        { error: `Failed to fetch boss quest: ${bossError.message}` },
-        { status: 400 }
+      throw new NotFoundError(
+        `Failed to fetch boss quest: ${bossError.message}`,
+        "BOSS_QUEST_NOT_FOUND",
       );
     }
 
     if (!bossQuest) {
-      return NextResponse.json({ error: "Boss quest not found" }, { status: 404 });
+      throw new NotFoundError("Boss quest not found", "BOSS_QUEST_NOT_FOUND");
     }
 
     if (bossQuest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot join boss quests outside your family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot join boss quests outside your family",
+        "BOSS_QUEST_JOIN_FORBIDDEN",
       );
     }
 
     if (bossQuest.status !== "ACTIVE") {
-      return NextResponse.json(
-        { error: "Boss quest is not accepting new participants" },
-        { status: 400 }
+      throw new ValidationError(
+        "Boss quest is not accepting new participants",
+        "BOSS_QUEST_NOT_JOINABLE",
       );
     }
 
@@ -63,9 +65,9 @@ export async function POST(
       ? new Date(bossQuest.join_window_expires_at).getTime()
       : 0;
     if (Date.now() > windowExpires) {
-      return NextResponse.json(
-        { error: "Join window has closed for this boss quest" },
-        { status: 400 }
+      throw new ValidationError(
+        "Join window has closed for this boss quest",
+        "BOSS_QUEST_JOIN_WINDOW_CLOSED",
       );
     }
 
@@ -77,16 +79,11 @@ export async function POST(
       );
 
     if (joinError) {
-      return NextResponse.json(
-        { error: `Failed to join boss quest: ${joinError.message}` },
-        { status: 500 }
-      );
+      throw new Error(`Failed to join boss quest: ${joinError.message}`);
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Error joining boss quest:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error);
   }
 }

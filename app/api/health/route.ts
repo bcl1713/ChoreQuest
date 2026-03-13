@@ -38,6 +38,7 @@ export async function GET() {
           ...healthData,
           status: 'unhealthy',
           error: 'Database connection failed',
+          code: 'DATABASE_UNAVAILABLE',
         },
         { status: 503 }
       );
@@ -60,6 +61,7 @@ export async function GET() {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
+        code: 'HEALTH_CHECK_FAILED',
       },
       { status: 503 }
     );

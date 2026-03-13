@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/api-error-handler";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   extractBearerToken,
@@ -6,6 +7,7 @@ import {
   isAuthError,
   authErrorResponse,
 } from "@/lib/api-auth-helpers";
+import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -33,9 +35,9 @@ export async function POST(
 
     // Only GMs can deny quests
     if (requesterProfile.role !== "GUILD_MASTER") {
-      return NextResponse.json(
-        { error: "Only Guild Masters can deny quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Only Guild Masters can deny quests",
+        "QUEST_DENY_FORBIDDEN",
       );
     }
 
@@ -46,29 +48,29 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json(
-        { error: `Failed to fetch quest: ${questError.message}` },
-        { status: 400 }
+      throw new NotFoundError(
+        `Failed to fetch quest: ${questError.message}`,
+        "QUEST_NOT_FOUND",
       );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     // Check family authorization
     if (quest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot deny quests outside your family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot deny quests outside your family",
+        "QUEST_DENY_FORBIDDEN",
       );
     }
 
     // Only allow denying COMPLETED quests
     if (quest.status !== "COMPLETED") {
-      return NextResponse.json(
-        { error: `Quest cannot be denied (status: ${quest.status}). Only COMPLETED quests can be denied.` },
-        { status: 400 }
+      throw new ValidationError(
+        `Quest cannot be denied (status: ${quest.status}). Only COMPLETED quests can be denied.`,
+        "QUEST_NOT_DENIABLE",
       );
     }
 
@@ -82,10 +84,7 @@ export async function POST(
       .eq("id", questId);
 
     if (updateError) {
-      return NextResponse.json(
-        { error: `Failed to update quest: ${updateError.message}` },
-        { status: 500 }
-      );
+      throw new Error(`Failed to update quest: ${updateError.message}`);
     }
 
     return NextResponse.json(
@@ -93,11 +92,6 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    console.error("Error denying quest:", error);
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error);
   }
 }
