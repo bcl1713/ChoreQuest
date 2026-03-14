@@ -157,9 +157,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', code: 'VALIDATION_ERROR', details: error.issues },
-        { status: 400 },
+      return handleRouteError(
+        new ValidationError(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          error.issues,
+        ),
       );
     }
     return handleRouteError(error);

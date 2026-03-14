@@ -44,7 +44,7 @@ export async function POST(
       .single();
 
     if (profileError || !profile) {
-      throw new Error("Failed to load user profile");
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     if (!["HERO", "YOUNG_HERO", "GUILD_MASTER"].includes(profile.role ?? "")) {

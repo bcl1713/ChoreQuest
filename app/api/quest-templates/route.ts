@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { handleRouteError } from '@/lib/api-error-handler';
 import {
+  AppError,
   AuthError,
   ForbiddenError,
   ValidationError,
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (requesterError || !requesterProfile) {
-      throw new Error('Failed to load user profile');
+      throw new AppError('Failed to load user profile', 500, 'PROFILE_LOAD_FAILED');
     }
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
@@ -173,7 +174,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (requesterError || !requesterProfile) {
-      throw new Error('Failed to load user profile');
+      throw new AppError('Failed to load user profile', 500, 'PROFILE_LOAD_FAILED');
     }
 
     // Get query parameters

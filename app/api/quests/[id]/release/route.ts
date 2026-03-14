@@ -45,7 +45,7 @@ export async function POST(
       .single();
 
     if (profileError || !profile) {
-      throw new Error("Failed to load user profile");
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     const { data: quest, error: questError } = await supabase

@@ -49,7 +49,7 @@ export async function POST(
       .single();
 
     if (profileError || !requesterProfile) {
-      throw new Error("Failed to load user profile");
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     if (requesterProfile.role !== "GUILD_MASTER") {
