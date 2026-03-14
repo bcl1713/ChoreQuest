@@ -285,8 +285,9 @@ export const approveQuest = async (
     .eq("id", character.id);
 
   if (characterUpdateError) {
-    throw new ConflictError(
+    throw new AppError(
       `Failed to update character stats: ${characterUpdateError.message}`,
+      500,
       "CHARACTER_UPDATE_FAILED",
     );
   }
@@ -305,8 +306,9 @@ export const approveQuest = async (
     .single();
 
   if (questUpdateError) {
-    throw new ConflictError(
+    throw new AppError(
       `Failed to approve quest: ${questUpdateError.message}`,
+      500,
       "QUEST_APPROVE_FAILED",
     );
   }

@@ -74,8 +74,9 @@ export const releaseQuest = async (
     .single();
 
   if (updateError) {
-    throw new ConflictError(
+    throw new AppError(
       `Failed to release quest: ${updateError.message}`,
+      500,
       "QUEST_RELEASE_FAILED",
     );
   }
@@ -87,8 +88,9 @@ export const releaseQuest = async (
       .eq("id", quest.volunteered_by);
 
     if (characterUpdateError) {
-      throw new ConflictError(
+      throw new AppError(
         `Failed to update character: ${characterUpdateError.message}`,
+        500,
         "CHARACTER_UPDATE_FAILED",
       );
     }

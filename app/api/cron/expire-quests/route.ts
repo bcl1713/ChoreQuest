@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { handleRouteError } from '@/lib/api-error-handler';
-import { AuthError } from '@/lib/errors';
+import { AppError, AuthError } from '@/lib/errors';
 import { createServiceSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
@@ -26,7 +26,11 @@ export async function POST(request: NextRequest) {
 
     if (!cronSecret) {
       console.error('CRON_SECRET not configured in environment variables');
-      throw new Error('CRON_SECRET not configured');
+      throw new AppError(
+        'Cron job not configured',
+        500,
+        'CRON_NOT_CONFIGURED',
+      );
     }
 
     if (providedSecret !== cronSecret) {

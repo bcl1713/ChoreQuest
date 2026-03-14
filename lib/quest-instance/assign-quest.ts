@@ -95,8 +95,9 @@ export const assignQuest = async (
     .single();
 
   if (updateError) {
-    throw new ConflictError(
+    throw new AppError(
       `Failed to assign quest: ${updateError.message}`,
+      500,
       "QUEST_ASSIGN_FAILED",
     );
   }
@@ -117,8 +118,9 @@ export const assignQuest = async (
       })
       .eq("id", questId);
 
-    throw new ConflictError(
+    throw new AppError(
       `Failed to update character: ${characterUpdateError.message}`,
+      500,
       "CHARACTER_UPDATE_FAILED",
     );
   }
