@@ -12,6 +12,7 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "@/lib/errors";
+import { assertValidUuidParam } from "@/lib/api-route-params";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function POST(
@@ -20,6 +21,7 @@ export async function POST(
 ) {
   try {
     const { id: questId } = await params;
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

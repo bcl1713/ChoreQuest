@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assertValidUuidParam } from "@/lib/api-route-params";
 import { handleRouteError } from "@/lib/api-error-handler";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
@@ -13,6 +14,7 @@ export async function DELETE(
 ) {
   try {
     const { id: questId } = await params;
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     // Extract Bearer token
     const token = extractBearerToken(request);
