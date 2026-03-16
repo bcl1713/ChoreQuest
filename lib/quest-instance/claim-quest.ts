@@ -26,7 +26,7 @@ export const claimQuest = async (
     .eq("id", questId)
     .single();
 
-  if (fetchError) {
+  if (fetchError && fetchError.code !== "PGRST116") {
     throw new AppError(
       `Failed to fetch quest: ${fetchError.message}`,
       500,

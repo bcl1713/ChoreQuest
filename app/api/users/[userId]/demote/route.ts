@@ -52,9 +52,17 @@ export async function POST(
       .from('user_profiles')
       .select('role, family_id, name, email')
       .eq('id', targetUserId)
-      .single();
+      .maybeSingle();
 
-    if (targetError || !targetProfile) {
+    if (targetError) {
+      throw new AppError(
+        'Failed to fetch target user',
+        500,
+        'TARGET_USER_FETCH_FAILED',
+      );
+    }
+
+    if (!targetProfile) {
       throw new NotFoundError(
         'Target user not found',
         'TARGET_USER_NOT_FOUND',
