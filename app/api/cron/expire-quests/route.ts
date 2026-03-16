@@ -58,20 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result, { status: 200 });
 
   } catch (error) {
-    if (error instanceof AppError) {
-      return handleRouteError(error);
-    }
-
-    console.error(error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString(),
-        duration: Date.now() - startTime,
-      },
-      { status: 500 },
-    );
+    return handleRouteError(error);
   }
 }
 

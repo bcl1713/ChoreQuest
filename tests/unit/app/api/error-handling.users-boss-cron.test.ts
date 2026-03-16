@@ -235,4 +235,52 @@ describe("error-handling user, boss, and cron routes", () => {
       duration: expect.any(Number),
     });
   });
+
+  it("generate cron route standardizes thrown unexpected errors", async () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      mockGenerateRecurringQuests.mockRejectedValue(new Error("generator crashed"));
+
+      const response = await generateQuestsRoute(
+        createRequest(
+          "http://localhost/api/cron/generate-quests",
+          "POST",
+          undefined,
+          "Bearer cron-secret",
+        ),
+      );
+
+      expect(response.status).toBe(500);
+      await expect(response.json()).resolves.toEqual({
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
+      });
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("expire cron route standardizes thrown unexpected errors", async () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      mockExpireQuests.mockRejectedValue(new Error("expiration crashed"));
+
+      const response = await expireQuestsRoute(
+        createRequest(
+          "http://localhost/api/cron/expire-quests",
+          "POST",
+          undefined,
+          "Bearer cron-secret",
+        ),
+      );
+
+      expect(response.status).toBe(500);
+      await expect(response.json()).resolves.toEqual({
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
+      });
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
 });
