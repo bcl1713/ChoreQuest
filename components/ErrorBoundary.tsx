@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Component, Suspense, type ErrorInfo, type ReactNode } from "react";
+import { AppErrorFallback } from "@/components/AppErrorFallback";
 
 type Props = {
   children: ReactNode;
@@ -52,25 +53,7 @@ class ErrorBoundaryInner extends Component<Props, State> {
       return this.props.children;
     }
 
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center px-6 py-16">
-        <div className="w-full max-w-md rounded-2xl border border-red-500/30 bg-red-950/40 p-8 text-center shadow-lg">
-          <h2 className="text-2xl font-semibold text-white">
-            Something went wrong
-          </h2>
-          <p className="mt-3 text-sm text-red-100/85">
-            The page hit an unexpected error. Reload to try again.
-          </p>
-          <button
-            className="mt-6 inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-400"
-            onClick={this.reload}
-            type="button"
-          >
-            Reload page
-          </button>
-        </div>
-      </div>
-    );
+    return <AppErrorFallback onAction={this.reload} />;
   }
 }
 
@@ -82,7 +65,34 @@ export function ErrorBoundary({
   resetKey?: string;
 }) {
   const pathname = usePathname();
-  const navigationResetKey = pathname ?? "";
+  const fallbackResetKey = resetKey ?? `${pathname ?? ""}?`;
+
+  return (
+    <Suspense
+      fallback={
+        <ErrorBoundaryInner resetKey={fallbackResetKey}>
+          {children}
+        </ErrorBoundaryInner>
+      }
+    >
+      <ErrorBoundaryWithSearchParams pathname={pathname} resetKey={resetKey}>
+        {children}
+      </ErrorBoundaryWithSearchParams>
+    </Suspense>
+  );
+}
+
+function ErrorBoundaryWithSearchParams({
+  children,
+  pathname,
+  resetKey,
+}: {
+  children: ReactNode;
+  pathname: string | null;
+  resetKey?: string;
+}) {
+  const searchParams = useSearchParams();
+  const navigationResetKey = `${pathname ?? ""}?${searchParams?.toString() ?? ""}`;
   const effectiveResetKey = resetKey ?? navigationResetKey;
 
   return (

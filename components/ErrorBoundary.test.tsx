@@ -16,12 +16,18 @@ function ThrowingComponent() {
 }
 
 describe("ErrorBoundary", () => {
+  beforeEach(() => {
+    mockUsePathname.mockReturnValue("/");
+    mockUseSearchParams.mockReturnValue({ toString: () => "" });
+  });
+
   afterEach(() => {
     process.env.NODE_ENV = originalEnv;
     jest.restoreAllMocks();
     mockUsePathname.mockReset();
     mockUseSearchParams.mockReset();
     mockUsePathname.mockReturnValue("/");
+    mockUseSearchParams.mockReturnValue({ toString: () => "" });
   });
 
   it("renders children when no error occurs", () => {
@@ -39,6 +45,7 @@ describe("ErrorBoundary", () => {
   it("renders a fallback in production mode", () => {
     process.env.NODE_ENV = "production";
     mockUsePathname.mockReturnValue("/");
+    mockUseSearchParams.mockReturnValue({ toString: () => "" });
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     render(
@@ -54,6 +61,7 @@ describe("ErrorBoundary", () => {
   it("resets after navigation changes", () => {
     process.env.NODE_ENV = "production";
     mockUsePathname.mockReturnValue("/");
+    mockUseSearchParams.mockReturnValue({ toString: () => "" });
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     const { rerender } = render(
@@ -73,15 +81,28 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Recovered content")).toBeInTheDocument();
   });
 
-  it("does not read search params for the default reset key", () => {
+  it("resets after search params change when using the default reset key", () => {
+    process.env.NODE_ENV = "production";
     mockUsePathname.mockReturnValue("/quests");
+    mockUseSearchParams.mockReturnValue({ toString: () => "tab=active" });
+    jest.spyOn(console, "error").mockImplementation(() => {});
 
-    render(
+    const { rerender } = render(
       <ErrorBoundary>
-        <div>Safe content</div>
+        <ThrowingComponent />
       </ErrorBoundary>,
     );
 
-    expect(mockUseSearchParams).not.toHaveBeenCalled();
+    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+
+    mockUseSearchParams.mockReturnValue({ toString: () => "tab=completed" });
+
+    rerender(
+      <ErrorBoundary>
+        <div>Recovered content</div>
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText("Recovered content")).toBeInTheDocument();
   });
 });
