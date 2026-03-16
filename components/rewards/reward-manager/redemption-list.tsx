@@ -11,6 +11,11 @@ interface RedemptionListProps {
   onFulfill: (redemptionId: string) => void;
 }
 
+const formatTimestamp = (timestamp: string | null | undefined) => {
+  if (!timestamp) return "Unknown";
+  return new Date(timestamp).toLocaleString();
+};
+
 export const RedemptionList = React.memo(function RedemptionList({
   redemptions,
   onApprove,
@@ -62,10 +67,7 @@ export const RedemptionList = React.memo(function RedemptionList({
                     {redemption.reward_name} ({redemption.cost} gold)
                   </div>
                   <div className="text-xs text-gray-400 mt-1">
-                    Requested{" "}
-                    {redemption.requested_at
-                      ? new Date(redemption.requested_at).toLocaleString()
-                      : "Unknown"}
+                    Requested {formatTimestamp(redemption.requested_at)}
                   </div>
                   {redemption.notes && (
                     <div className="text-sm text-gray-500 italic mt-1">
@@ -121,8 +123,7 @@ export const RedemptionList = React.memo(function RedemptionList({
                     {redemption.reward_name} ({redemption.cost} gold)
                   </div>
                   <div className="text-xs text-green-600 mt-1">
-                    Approved{" "}
-                    {new Date(redemption.approved_at!).toLocaleString()}
+                    Approved {formatTimestamp(redemption.approved_at)}
                   </div>
                 </div>
                 <Button
@@ -174,16 +175,9 @@ export const RedemptionList = React.memo(function RedemptionList({
                   {redemption.reward_name} ({redemption.cost} gold)
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Requested{" "}
-                  {redemption.requested_at
-                    ? new Date(redemption.requested_at).toLocaleString()
-                    : "Unknown"}
+                  Requested {formatTimestamp(redemption.requested_at)}
                   {redemption.fulfilled_at && (
-                    <>
-                      {" "}
-                      • Fulfilled{" "}
-                      {new Date(redemption.fulfilled_at).toLocaleString()}
-                    </>
+                    <> • Fulfilled {formatTimestamp(redemption.fulfilled_at)}</>
                   )}
                 </div>
               </div>
