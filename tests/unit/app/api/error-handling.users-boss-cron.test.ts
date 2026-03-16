@@ -77,28 +77,33 @@ describe("error-handling user, boss, and cron routes", () => {
   });
 
   it("promote route preserves typed payload on update failure", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
-    mockSupabase.from
-      .mockImplementationOnce(() =>
-        singleResult({ id: "user-1", role: "GUILD_MASTER", family_id: "family-1" }),
-      )
-      .mockImplementationOnce(() =>
-        singleResult({ role: "HERO", family_id: "family-1", name: "Hero Two", email: "hero2@example.com" }),
-      )
-      .mockImplementationOnce(() =>
-        singleResult(null, { message: "write failed" }),
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
+      mockSupabase.from
+        .mockImplementationOnce(() =>
+          singleResult({ id: "user-1", role: "GUILD_MASTER", family_id: "family-1" }),
+        )
+        .mockImplementationOnce(() =>
+          singleResult({ role: "HERO", family_id: "family-1", name: "Hero Two", email: "hero2@example.com" }),
+        )
+        .mockImplementationOnce(() =>
+          singleResult(null, { message: "write failed" }),
+        );
+
+      const response = await promoteRoute(
+        createRequest("http://localhost/api/users/user-2/promote"),
+        { params: Promise.resolve({ userId: "user-2" }) },
       );
 
-    const response = await promoteRoute(
-      createRequest("http://localhost/api/users/user-2/promote"),
-      { params: Promise.resolve({ userId: "user-2" }) },
-    );
-
-    expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({
-      error: "Failed to promote user",
-      code: "USER_PROMOTE_UPDATE_FAILED",
-    });
+      expect(response.status).toBe(500);
+      await expect(response.json()).resolves.toEqual({
+        error: "Failed to promote user",
+        code: "USER_PROMOTE_UPDATE_FAILED",
+      });
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it("demote route returns validation payload for self-demotion", async () => {

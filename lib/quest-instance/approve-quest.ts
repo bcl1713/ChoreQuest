@@ -6,12 +6,12 @@ import type {
   Character,
 } from "@/lib/types/database";
 import { AppError, ConflictError, NotFoundError } from "@/lib/errors";
-import { RewardCalculator } from "@/lib/reward-calculator";
 import { StreakService } from "@/lib/streak-service";
 import {
-  validateConsecutiveCompletion,
-  calculateStreakBonus,
-} from "@/lib/streak-utils";
+  applyStreaks,
+  buildCharacterUpdatePayload,
+  fetchFamilyTimezone,
+} from "./approve-quest-helpers";
 
 type ApproveQuestDeps = {
   client: SupabaseClient<Database>;
@@ -141,68 +141,6 @@ const fetchTemplate = async (
   return templateData ?? null;
 };
 
-const fetchFamilyTimezone = async (
-  client: SupabaseClient<Database>,
-  familyId: string | null,
-) => {
-  if (!familyId) return "UTC";
-  const { data: family } = await client
-    .from("families")
-    .select("timezone")
-    .eq("id", familyId)
-    .maybeSingle();
-  return family?.timezone ?? "UTC";
-};
-
-const applyStreaks = async (
-  streakService: StreakService,
-  characterId: string,
-  templateId: string | null,
-  recurrencePattern: "DAILY" | "WEEKLY" | "CUSTOM" | null,
-  completionDate: Date,
-  familyTimezone: string,
-  currentXp: number,
-  currentGold: number,
-  baseXp: number,
-  baseGold: number,
-) => {
-  if (!templateId || !recurrencePattern) {
-    return { streakCount: 0, streakBonus: 0, xp: currentXp, gold: currentGold };
-  }
-
-  const streak = await streakService.getStreak(characterId, templateId);
-  const isConsecutive = validateConsecutiveCompletion(
-    streak.last_completed_date,
-    recurrencePattern,
-    completionDate,
-    familyTimezone,
-  );
-
-  if (isConsecutive) {
-    const updatedStreak = await streakService.incrementStreak(
-      characterId,
-      templateId,
-      completionDate,
-    );
-    const streakCount = updatedStreak.current_streak ?? 0;
-    const streakBonus = calculateStreakBonus(streakCount);
-    return {
-      streakCount,
-      streakBonus,
-      xp: currentXp + baseXp * streakBonus,
-      gold: currentGold + baseGold * streakBonus,
-    };
-  }
-
-  const resetStreak = await streakService.resetStreak(characterId, templateId);
-  return {
-    streakCount: resetStreak.current_streak ?? 0,
-    streakBonus: 0,
-    xp: currentXp,
-    gold: currentGold,
-  };
-};
-
 export const approveQuest = async (
   deps: ApproveQuestDeps,
   questId: string,
@@ -257,27 +195,11 @@ export const approveQuest = async (
 
   const updatedXp = Math.round(streakResult.xp);
   const updatedGold = Math.round(streakResult.gold);
-
-  const characterUpdatePayload: {
-    gold: number;
-    xp: number;
-    active_family_quest_id: null;
-    level?: number;
-  } = {
-    gold: (character.gold || 0) + updatedGold,
-    xp: (character.xp || 0) + updatedXp,
-    active_family_quest_id: null,
-  };
-
-  const levelResult = RewardCalculator.calculateLevelUp(
-    character.xp || 0,
+  const characterUpdatePayload = buildCharacterUpdatePayload(
+    character,
     updatedXp,
-    character.level || 1,
+    updatedGold,
   );
-
-  if (levelResult) {
-    characterUpdatePayload.level = levelResult.newLevel;
-  }
 
   const { error: characterUpdateError } = await client
     .from("characters")

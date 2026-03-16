@@ -61,7 +61,11 @@ export async function DELETE(
       .eq("id", questId);
 
     if (deleteError) {
-      throw new Error(`Failed to delete quest: ${deleteError.message}`);
+      throw new AppError(
+        `Failed to delete quest: ${deleteError.message}`,
+        500,
+        "QUEST_DELETE_FAILED",
+      );
     }
 
     return NextResponse.json(

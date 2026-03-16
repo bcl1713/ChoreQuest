@@ -99,7 +99,11 @@ export async function POST(
           .eq("id", questId);
 
         if (updateError) {
-          throw new Error(`Failed to update quest: ${updateError.message}`);
+          throw new AppError(
+            `Failed to update quest: ${updateError.message}`,
+            500,
+            "QUEST_RELEASE_FAILED",
+          );
         }
       }
     } else {
@@ -114,7 +118,11 @@ export async function POST(
         .eq("id", questId);
 
       if (updateError) {
-        throw new Error(`Failed to update quest: ${updateError.message}`);
+        throw new AppError(
+          `Failed to update quest: ${updateError.message}`,
+          500,
+          "QUEST_RELEASE_FAILED",
+        );
       }
     }
 

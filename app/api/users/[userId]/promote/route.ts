@@ -77,7 +77,6 @@ export async function POST(
       .single();
 
     if (updateError) {
-      console.error('Error promoting user:', updateError);
       throw new AppError(
         'Failed to promote user',
         500,
