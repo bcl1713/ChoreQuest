@@ -6,8 +6,12 @@ import {
   AuthError,
   ForbiddenError,
   NotFoundError,
+  ValidationError,
 } from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(
   request: NextRequest,
@@ -15,6 +19,10 @@ export async function POST(
 ) {
   try {
     const { id: questId } = await params;
+
+    if (!UUID_PATTERN.test(questId)) {
+      throw new ValidationError("Invalid quest ID format", "QUEST_ID_INVALID");
+    }
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

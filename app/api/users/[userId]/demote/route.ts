@@ -10,7 +10,12 @@ import {
   authenticateAndFetchUserProfile,
   extractBearerToken,
 } from '@/lib/api-auth-helpers';
-import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
+import {
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(
@@ -88,7 +93,11 @@ export async function POST(
 
     if (countError) {
       console.error('Error counting Guild Masters:', countError);
-      throw new Error('Failed to verify Guild Master count');
+      throw new AppError(
+        'Failed to verify Guild Master count',
+        500,
+        'GUILD_MASTER_COUNT_FAILED',
+      );
     }
 
     // Prevent demoting the last Guild Master
@@ -109,7 +118,11 @@ export async function POST(
 
     if (updateError) {
       console.error('Error demoting user:', updateError);
-      throw new Error('Failed to demote user');
+      throw new AppError(
+        'Failed to demote user',
+        500,
+        'USER_DEMOTE_UPDATE_FAILED',
+      );
     }
 
     // 1.12: Return the updated user profile
