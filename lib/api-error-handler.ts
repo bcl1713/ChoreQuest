@@ -3,6 +3,10 @@ import { AppError, ValidationError } from "@/lib/errors";
 
 export function handleRouteError(error: unknown): NextResponse {
   if (error instanceof AppError) {
+    if (error.statusCode >= 500) {
+      console.error(error);
+    }
+
     const body =
       error instanceof ValidationError && error.details !== undefined
         ? { error: error.message, code: error.code, details: error.details }
