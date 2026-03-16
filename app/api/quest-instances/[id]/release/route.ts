@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assertValidUuidParam } from "@/lib/api-route-params";
+import { handleRouteError } from "@/lib/api-error-handler";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
 import {
   extractBearerToken,
   authenticateAndFetchUserProfile,
-  isAuthError,
-  authErrorResponse,
 } from "@/lib/api-auth-helpers";
+import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -14,26 +15,17 @@ export async function POST(
 ) {
   try {
     const { id: questId } = await params;
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     // Extract Bearer token
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
     const body = await request.json().catch(() => ({}));
     const characterId = body?.characterId as string | undefined;
 
     // Authenticate user and fetch profile
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")
@@ -42,14 +34,15 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json(
-        { error: `Failed to fetch quest: ${questError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch quest: ${questError.message}`,
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     // Security: Validate that characterId (if provided) belongs to the authenticated user
@@ -72,17 +65,17 @@ export async function POST(
     const isQuestClaimer = validCharacterId && quest.volunteered_by === validCharacterId;
 
     if (!isGM && !isQuestAssignedToUser && !isQuestClaimer) {
-      return NextResponse.json(
-        { error: "You can only release your own quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "You can only release your own quests",
+        "QUEST_RELEASE_FORBIDDEN",
       );
     }
 
     // Check family authorization for GMs
     if (isGM && quest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot release quests outside your family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot release quests outside your family",
+        "QUEST_RELEASE_FORBIDDEN",
       );
     }
 
@@ -106,9 +99,10 @@ export async function POST(
           .eq("id", questId);
 
         if (updateError) {
-          return NextResponse.json(
-            { error: `Failed to update quest: ${updateError.message}` },
-            { status: 500 }
+          throw new AppError(
+            `Failed to update quest: ${updateError.message}`,
+            500,
+            "QUEST_RELEASE_FAILED",
           );
         }
       }
@@ -124,9 +118,10 @@ export async function POST(
         .eq("id", questId);
 
       if (updateError) {
-        return NextResponse.json(
-          { error: `Failed to update quest: ${updateError.message}` },
-          { status: 500 }
+        throw new AppError(
+          `Failed to update quest: ${updateError.message}`,
+          500,
+          "QUEST_RELEASE_FAILED",
         );
       }
     }
@@ -136,11 +131,6 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    console.error("Error releasing quest:", error);
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error);
   }
 }

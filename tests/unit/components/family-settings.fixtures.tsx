@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import FamilySettings from "@/components/family/family-settings";
+import { useNotification } from "@/hooks/useNotification";
 
 jest.mock("framer-motion", () => ({
   motion: {
@@ -21,6 +22,9 @@ jest.mock("lucide-react", () => ({
   User: () => <span>User Icon</span>,
   Globe: () => <span>Globe Icon</span>,
   Info: () => <span>Info Icon</span>,
+  Check: () => <span>Check Icon</span>,
+  X: () => <span>X Icon</span>,
+  AlertCircle: () => <span>AlertCircle Icon</span>,
   AlertTriangle: () => <span>AlertTriangle Icon</span>,
 }));
 
@@ -35,6 +39,19 @@ jest.mock("@/lib/auth-context", () => ({
   useAuth: () => ({
     profile: mockProfile,
   }),
+}));
+
+export const mockNotificationSuccess = jest.fn();
+export const mockNotificationError = jest.fn();
+export const mockNotificationDismiss = jest.fn();
+export const mockNotifications: Array<{
+  id: string;
+  type: "success" | "error" | "info";
+  message: string;
+}> = [];
+
+jest.mock("@/hooks/useNotification", () => ({
+  useNotification: jest.fn(),
 }));
 
 export const mockGetFamilyInfo = jest.fn();
@@ -92,6 +109,15 @@ export const renderFamilySettings = () => render(<FamilySettings />);
 export const resetFamilySettingsMocks = () => {
   jest.clearAllMocks();
   setupClipboardMock();
+  mockNotifications.length = 0;
+  (useNotification as jest.Mock).mockReturnValue({
+    notifications: mockNotifications,
+    dismiss: mockNotificationDismiss,
+    show: jest.fn(),
+    info: jest.fn(),
+    success: mockNotificationSuccess,
+    error: mockNotificationError,
+  });
   mockGetFamilyInfo.mockResolvedValue(mockFamilyInfo);
   mockRegenerateInviteCode.mockResolvedValue("XYZ789GHI");
 };

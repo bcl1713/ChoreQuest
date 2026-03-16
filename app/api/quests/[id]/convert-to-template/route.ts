@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { handleRouteError } from '@/lib/api-error-handler';
+import {
+  authenticateAndFetchUserProfile,
+  extractBearerToken,
+} from '@/lib/api-auth-helpers';
 import { questTemplateService } from '@/lib/quest-template-service';
+import { ForbiddenError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { TemplateFormData } from '@/lib/types/quest-templates';
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-) {
+  ) {
   try {
     const { id: questId } = await context.params;
     const { templateData, deleteOriginal } = (await request.json()) as {
@@ -14,35 +20,23 @@ export async function POST(
       deleteOriginal: boolean;
     };
 
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
-    }
-
-    const { data: requesterProfile, error: requesterError } = await supabase
-      .from('user_profiles')
-      .select('role, family_id')
-      .eq('id', user.id)
-      .single();
-
-    if (requesterError || !requesterProfile) {
-      return NextResponse.json({ error: 'Failed to load user profile' }, { status: 500 });
-    }
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
-      return NextResponse.json({ error: 'Only Guild Masters can convert quests' }, { status: 403 });
+      throw new ForbiddenError(
+        'Only Guild Masters can convert quests',
+        'QUEST_CONVERT_FORBIDDEN',
+      );
     }
 
     if (!requesterProfile.family_id) {
-      return NextResponse.json({ error: 'User is not associated with a family' }, { status: 400 });
+      throw new ValidationError(
+        'User is not associated with a family',
+        'REQUESTER_FAMILY_REQUIRED',
+      );
     }
 
     const newTemplate = await questTemplateService.createTemplate({
@@ -68,7 +62,6 @@ export async function POST(
     return NextResponse.json({ success: true, template: newTemplate }, { status: 201 });
 
   } catch (error) {
-    console.error('Error converting quest:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleRouteError(error);
   }
 }

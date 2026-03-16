@@ -2,10 +2,14 @@ import { screen, waitFor } from "@testing-library/react";
 import {
   mockFamilyInfo,
   mockGetFamilyInfo,
+  mockNotificationDismiss,
+  mockNotificationSuccess,
+  mockNotifications,
   renderFamilySettings,
   resetFamilySettingsMocks,
   setupClipboardMock,
 } from "./family-settings.fixtures";
+import { useNotification } from "@/hooks/useNotification";
 
 describe("FamilySettings - rendering", () => {
   beforeEach(() => {
@@ -88,7 +92,7 @@ describe("FamilySettings - rendering", () => {
   });
 
   describe("Copy invite code", () => {
-    it("copies invite code and shows success message", async () => {
+    it("copies invite code and uses notification hook for success", async () => {
       setupClipboardMock();
       renderFamilySettings();
 
@@ -98,8 +102,32 @@ describe("FamilySettings - rendering", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Invite code copied to clipboard!")).toBeInTheDocument();
+        expect(mockNotificationSuccess).toHaveBeenCalledWith(
+          "Invite code copied to clipboard!",
+        );
       });
     });
+  });
+
+  it("renders active notifications from the hook", async () => {
+    mockNotifications.push({
+      id: "notification-1",
+      type: "success",
+      message: "Invite code copied to clipboard!",
+    });
+    (useNotification as jest.Mock).mockReturnValue({
+      notifications: mockNotifications,
+      dismiss: mockNotificationDismiss,
+      show: jest.fn(),
+      info: jest.fn(),
+      success: mockNotificationSuccess,
+      error: jest.fn(),
+    });
+
+    renderFamilySettings();
+
+    expect(
+      await screen.findByText("Invite code copied to clipboard!")
+    ).toBeInTheDocument();
   });
 });

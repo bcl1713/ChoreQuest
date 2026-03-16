@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assertValidUuidParam } from "@/lib/api-route-params";
+import { handleRouteError } from "@/lib/api-error-handler";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   extractBearerToken,
   authenticateAndFetchUserProfile,
-  isAuthError,
-  authErrorResponse,
 } from "@/lib/api-auth-helpers";
+import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function DELETE(
   request: NextRequest,
@@ -13,23 +14,14 @@ export async function DELETE(
 ) {
   try {
     const { id: questId } = await params;
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     // Extract Bearer token
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
     // Authenticate user and fetch profile
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")
@@ -38,27 +30,28 @@ export async function DELETE(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json(
-        { error: `Failed to fetch quest: ${questError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch quest: ${questError.message}`,
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     if (requesterProfile.role !== "GUILD_MASTER") {
-      return NextResponse.json(
-        { error: "Only Guild Masters can delete quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Only Guild Masters can delete quests",
+        "QUEST_DELETE_FORBIDDEN",
       );
     }
 
     if (quest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot delete quests outside your family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot delete quests outside your family",
+        "QUEST_DELETE_FORBIDDEN",
       );
     }
 
@@ -68,9 +61,10 @@ export async function DELETE(
       .eq("id", questId);
 
     if (deleteError) {
-      return NextResponse.json(
-        { error: `Failed to delete quest: ${deleteError.message}` },
-        { status: 500 }
+      throw new AppError(
+        `Failed to delete quest: ${deleteError.message}`,
+        500,
+        "QUEST_DELETE_FAILED",
       );
     }
 
@@ -79,11 +73,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    console.error("Error deleting quest:", error);
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error);
   }
 }

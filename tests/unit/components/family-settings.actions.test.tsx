@@ -1,6 +1,8 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import {
   mockGetFamilyInfo,
+  mockNotificationError,
+  mockNotificationSuccess,
   mockRegenerateInviteCode,
   mockWriteText,
   renderFamilySettings,
@@ -30,23 +32,18 @@ describe("FamilySettings - actions", () => {
       await waitFor(() => fireEvent.click(screen.getByRole("button", { name: /Copy/ })));
 
       await waitFor(() => {
-        expect(screen.getByText("Failed to copy invite code")).toBeInTheDocument();
+        expect(mockNotificationError).toHaveBeenCalledWith("Failed to copy invite code");
       });
     });
 
-    it("auto-dismisses notification after 3 seconds", async () => {
-      jest.useFakeTimers();
+    it("uses notification hook for copy success", async () => {
       renderFamilySettings();
 
       await waitFor(() => fireEvent.click(screen.getByRole("button", { name: /Copy/ })));
-      await waitFor(() => expect(screen.getByText("Invite code copied to clipboard!")).toBeInTheDocument());
-
-      jest.advanceTimersByTime(3000);
 
       await waitFor(() => {
-        expect(screen.queryByText("Invite code copied to clipboard!")).not.toBeInTheDocument();
+        expect(mockNotificationSuccess).toHaveBeenCalledWith("Invite code copied to clipboard!");
       });
-      jest.useRealTimers();
     });
   });
 
@@ -124,7 +121,7 @@ describe("FamilySettings - actions", () => {
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Failed to regenerate invite code")).toBeInTheDocument();
+        expect(mockNotificationError).toHaveBeenCalledWith("Failed to regenerate invite code");
       });
     });
 

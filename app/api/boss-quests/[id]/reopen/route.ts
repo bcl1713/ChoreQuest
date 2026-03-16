@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/api-error-handler";
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from "@/lib/api-auth-helpers";
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase-server";
+import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export async function POST(
   request: NextRequest,
@@ -16,25 +16,17 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const minutes = typeof body?.minutes === "number" && body.minutes > 0 ? body.minutes : 60;
 
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
 
     const supabase = createServerSupabaseClient(token);
     const serviceSupabase = createServiceSupabaseClient();
 
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== "GUILD_MASTER") {
-      return NextResponse.json(
-        { error: "Only Guild Masters can reopen boss quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Only Guild Masters can reopen boss quests",
+        "BOSS_QUEST_REOPEN_FORBIDDEN",
       );
     }
 
@@ -45,20 +37,21 @@ export async function POST(
       .maybeSingle();
 
     if (bossError) {
-      return NextResponse.json(
-        { error: `Failed to fetch boss quest: ${bossError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch boss quest: ${bossError.message}`,
+        500,
+        "BOSS_QUEST_FETCH_FAILED",
       );
     }
 
     if (!bossQuest) {
-      return NextResponse.json({ error: "Boss quest not found" }, { status: 404 });
+      throw new NotFoundError("Boss quest not found", "BOSS_QUEST_NOT_FOUND");
     }
 
     if (bossQuest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot reopen boss quests outside your family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot reopen boss quests outside your family",
+        "BOSS_QUEST_REOPEN_FORBIDDEN",
       );
     }
 
@@ -70,16 +63,15 @@ export async function POST(
       .eq("id", bossQuestId);
 
     if (updateError) {
-      return NextResponse.json(
-        { error: `Failed to reopen join window: ${updateError.message}` },
-        { status: 500 }
+      throw new AppError(
+        `Failed to reopen join window: ${updateError.message}`,
+        500,
+        "BOSS_QUEST_REOPEN_FAILED",
       );
     }
 
     return NextResponse.json({ success: true, join_window_expires_at: newExpiry }, { status: 200 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Error reopening boss quest:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error);
   }
 }

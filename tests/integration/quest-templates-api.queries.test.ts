@@ -99,6 +99,7 @@ describe("Quest Templates API - queries", () => {
 
       expect(response.status).toBe(403);
       expect(json.error).toBe("Cannot access templates for other families");
+      expect(json.code).toBe("QUEST_TEMPLATE_ACCESS_FORBIDDEN");
     });
   });
 

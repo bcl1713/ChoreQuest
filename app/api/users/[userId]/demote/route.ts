@@ -5,6 +5,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { handleRouteError } from '@/lib/api-error-handler';
+import {
+  authenticateAndFetchUserProfile,
+  extractBearerToken,
+} from '@/lib/api-auth-helpers';
+import {
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(
@@ -14,58 +25,25 @@ export async function POST(
   try {
     const { userId: targetUserId } = await params;
 
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = extractBearerToken(request);
 
     // Create Supabase client with the user's token
     const supabase = createServerSupabaseClient(token);
 
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
-
-    const requesterId = user.id;
-
-    // 1.8: Get requester's profile to check if they are a Guild Master
-    const { data: requesterProfile, error: requesterError } = await supabase
-      .from('user_profiles')
-      .select('role, family_id')
-      .eq('id', requesterId)
-      .single();
-
-    if (requesterError || !requesterProfile) {
-      return NextResponse.json(
-        { error: 'Failed to load requester profile' },
-        { status: 500 }
-      );
-    }
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
-      return NextResponse.json(
-        { error: 'Only Guild Masters can demote users' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Only Guild Masters can demote users',
+        'USER_DEMOTE_FORBIDDEN',
       );
     }
 
     // 1.9: Check for self-demotion
-    if (requesterId === targetUserId) {
-      return NextResponse.json(
-        { error: 'Cannot demote yourself' },
-        { status: 400 }
+    if (requesterProfile.id === targetUserId) {
+      throw new ValidationError(
+        'Cannot demote yourself',
+        'SELF_DEMOTION_FORBIDDEN',
       );
     }
 
@@ -74,35 +52,43 @@ export async function POST(
       .from('user_profiles')
       .select('role, family_id, name, email')
       .eq('id', targetUserId)
-      .single();
+      .maybeSingle();
 
-    if (targetError || !targetProfile) {
-      return NextResponse.json(
-        { error: 'Target user not found' },
-        { status: 404 }
+    if (targetError) {
+      throw new AppError(
+        'Failed to fetch target user',
+        500,
+        'TARGET_USER_FETCH_FAILED',
+      );
+    }
+
+    if (!targetProfile) {
+      throw new NotFoundError(
+        'Target user not found',
+        'TARGET_USER_NOT_FOUND',
       );
     }
 
     // Verify both users are in the same family
     if (requesterProfile.family_id !== targetProfile.family_id) {
-      return NextResponse.json(
-        { error: 'Can only demote users in your family' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Can only demote users in your family',
+        'USER_DEMOTE_FORBIDDEN',
       );
     }
 
     if (!requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: 'Requester is not associated with a family' },
-        { status: 400 }
+      throw new ValidationError(
+        'Requester is not associated with a family',
+        'REQUESTER_FAMILY_REQUIRED',
       );
     }
 
     // Verify target is a Guild Master
     if (targetProfile.role !== 'GUILD_MASTER') {
-      return NextResponse.json(
-        { error: 'User is not a Guild Master' },
-        { status: 400 }
+      throw new ValidationError(
+        'User is not a Guild Master',
+        'TARGET_USER_NOT_GUILD_MASTER',
       );
     }
 
@@ -115,17 +101,18 @@ export async function POST(
 
     if (countError) {
       console.error('Error counting Guild Masters:', countError);
-      return NextResponse.json(
-        { error: 'Failed to verify Guild Master count' },
-        { status: 500 }
+      throw new AppError(
+        'Failed to verify Guild Master count',
+        500,
+        'GUILD_MASTER_COUNT_FAILED',
       );
     }
 
     // Prevent demoting the last Guild Master
     if (gmCount !== null && gmCount <= 1) {
-      return NextResponse.json(
-        { error: 'Cannot demote the last Guild Master. Promote another family member first.' },
-        { status: 400 }
+      throw new ValidationError(
+        'Cannot demote the last Guild Master. Promote another family member first.',
+        'LAST_GUILD_MASTER',
       );
     }
 
@@ -139,9 +126,10 @@ export async function POST(
 
     if (updateError) {
       console.error('Error demoting user:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to demote user' },
-        { status: 500 }
+      throw new AppError(
+        'Failed to demote user',
+        500,
+        'USER_DEMOTE_UPDATE_FAILED',
       );
     }
 
@@ -153,10 +141,6 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Unexpected error in demote endpoint:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

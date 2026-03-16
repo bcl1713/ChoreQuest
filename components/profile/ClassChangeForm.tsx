@@ -5,12 +5,12 @@ import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import { FantasyButton } from "@/components/ui";
 import { getCharacterClassInfo } from "@/lib/constants/character-classes";
 import { ProfileService } from "@/lib/profile-service";
+import { ErrorAlert } from "@/components/profile/shared/ErrorAlert";
 import { Character, CharacterClass } from "@/lib/types/database";
 import { ClassSelectionGrid } from "./class-change/ClassSelectionGrid";
 import { CooldownNotice } from "./class-change/CooldownNotice";
 import { CostInfo } from "./class-change/CostInfo";
 import { CurrentClassCard } from "./class-change/CurrentClassCard";
-import { ErrorAlert } from "./shared/ErrorAlert";
 
 interface ClassChangeFormProps {
   character: Character;
@@ -22,8 +22,8 @@ export default function ClassChangeForm({
   onSuccess,
 }: ClassChangeFormProps) {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [canChange, setCanChange] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(
     null,
@@ -65,7 +65,9 @@ export default function ClassChangeForm({
   }, [character.id]);
 
   const handleClassSelect = (classId: string) => {
-    setError(null);
+    if (error) {
+      setError(null);
+    }
     setSelectedClass(classId);
   };
 
@@ -73,7 +75,6 @@ export default function ClassChangeForm({
     if (!selectedClass) return;
 
     setShowConfirmation(false);
-    setError(null);
     setIsLoading(true);
 
     try {
@@ -97,6 +98,7 @@ export default function ClassChangeForm({
         return;
       }
 
+      setError(null);
       await ProfileService.changeCharacterClass(character.id, selectedClass);
       onSuccess(`Successfully changed class to ${selectedClassInfo?.name}!`);
       setSelectedClass(null);
@@ -110,9 +112,7 @@ export default function ClassChangeForm({
         setCooldownRemaining(remaining);
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to change class";
-      setError(message);
+      setError(err instanceof Error ? err.message : "Failed to change class");
     } finally {
       setIsLoading(false);
     }
@@ -120,6 +120,8 @@ export default function ClassChangeForm({
 
   return (
     <div className="space-y-8">
+      {error && <ErrorAlert message={error} />}
+
       <CurrentClassCard classInfo={currentClassInfo} />
 
       {!canChange && cooldownRemaining !== null && (
@@ -143,9 +145,6 @@ export default function ClassChangeForm({
           again later.
         </div>
       )}
-
-      {error && <ErrorAlert message={error} />}
-
       {canChange && selectedClass && selectedClass !== character.class && (
         <FantasyButton
           onClick={() => setShowConfirmation(true)}

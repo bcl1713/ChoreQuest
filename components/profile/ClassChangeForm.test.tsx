@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import ClassChangeForm from './ClassChangeForm';
 import { ProfileService } from '@/lib/profile-service';
 import { Character } from '@/lib/types/database';
@@ -221,6 +222,26 @@ describe('ClassChangeForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Need 200 more gold/)).toBeInTheDocument();
+    });
+  });
+
+  it('shows inline error when class change request fails', async () => {
+    const user = userEvent.setup();
+    (ProfileService.changeCharacterClass as jest.Mock).mockRejectedValue(
+      new Error('Server error')
+    );
+
+    render(
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+    );
+
+    const knightButton = await screen.findByRole('button', { name: /Knight/i });
+    await user.click(knightButton);
+    await user.click(screen.getByRole('button', { name: /Confirm Class Change/i }));
+    await user.click(screen.getByRole('button', { name: /^Change Class$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Server error')).toBeInTheDocument();
     });
   });
 

@@ -3,6 +3,33 @@ import { StreakService } from "../streak-service";
 import { supabase } from "../supabase";
 
 describe("QuestInstanceService - approveQuest", () => {
+  it("throws app error when quest fetch fails", async () => {
+    const fromMock = jest.fn((table: string) => {
+      if (table === "quest_instances") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: "Database offline" },
+              }),
+            }),
+          }),
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    const questService = new QuestInstanceService(
+      { from: fromMock } as unknown as typeof supabase,
+      {} as StreakService,
+    );
+
+    await expect(questService.approveQuest("quest-approve-123")).rejects.toThrow(
+      "Failed to fetch quest: Database offline",
+    );
+  });
+
   it("applies volunteer and streak bonuses and updates metadata", async () => {
     const questId = "quest-approve-123";
     const templateId = "template-approve-456";

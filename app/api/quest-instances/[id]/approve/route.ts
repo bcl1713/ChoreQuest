@@ -5,6 +5,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
+import { handleRouteError } from "@/lib/api-error-handler";
+import {
+  AppError,
+  AuthError,
+  ForbiddenError,
+  NotFoundError,
+} from "@/lib/errors";
+import { assertValidUuidParam } from "@/lib/api-route-params";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function POST(
@@ -16,9 +24,9 @@ export async function POST(
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Missing or invalid authorization header" },
-        { status: 401 }
+      throw new AuthError(
+        "Missing or invalid authorization header",
+        "AUTH_HEADER_INVALID",
       );
     }
 
@@ -29,7 +37,7 @@ export async function POST(
     const user = authData?.user;
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+      throw new AuthError();
     }
 
     const { data: requesterProfile, error: profileError } = await supabase
@@ -39,18 +47,17 @@ export async function POST(
       .single();
 
     if (profileError || !requesterProfile) {
-      return NextResponse.json(
-        { error: "Failed to load user profile" },
-        { status: 500 }
-      );
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     if (requesterProfile.role !== "GUILD_MASTER") {
-      return NextResponse.json(
-        { error: "Only Guild Masters can approve quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Only Guild Masters can approve quests",
+        "QUEST_APPROVE_FORBIDDEN",
       );
     }
+
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")
@@ -59,17 +66,21 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json({ error: `Failed to fetch quest: ${questError.message}` }, { status: 400 });
+      throw new AppError(
+        `Failed to fetch quest: ${questError.message}`,
+        500,
+        "QUEST_LOOKUP_FAILED",
+      );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     if (quest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot approve quests for other families" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot approve quests for other families",
+        "QUEST_APPROVE_FORBIDDEN",
       );
     }
 
@@ -84,21 +95,6 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    const isClientError =
-      message.includes("already approved") ||
-      message.includes("assigned to a hero") ||
-      message.includes("not associated") ||
-      message.includes("Failed to fetch assigned character") ||
-      message.includes("Failed to fetch quest");
-
-    if (!isClientError) {
-      console.error("Error approving quest:", error);
-    }
-
-    return NextResponse.json(
-      { error: message },
-      { status: isClientError ? 400 : 500 }
-    );
+    return handleRouteError(error);
   }
 }
