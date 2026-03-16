@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { assertValidUuidParam } from "@/lib/api-route-params";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
 import { handleRouteError } from "@/lib/api-error-handler";
 import {
@@ -16,7 +15,6 @@ export async function POST(
 ) {
   try {
     const { id: questId } = await params;
-    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

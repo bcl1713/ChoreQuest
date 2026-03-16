@@ -14,7 +14,6 @@ export async function POST(
 ) {
   try {
     const { id: questId } = await params;
-    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     // Extract Bearer token
     const token = extractBearerToken(request);
@@ -30,6 +29,8 @@ export async function POST(
         "QUEST_DENY_FORBIDDEN",
       );
     }
+
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")

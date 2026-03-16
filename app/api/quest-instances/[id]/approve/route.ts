@@ -21,7 +21,6 @@ export async function POST(
 ) {
   try {
     const { id: questId } = await params;
-    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -57,6 +56,8 @@ export async function POST(
         "QUEST_APPROVE_FORBIDDEN",
       );
     }
+
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")

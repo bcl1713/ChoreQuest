@@ -9,7 +9,12 @@ import {
   authenticateAndFetchUserProfile,
   extractBearerToken,
 } from '@/lib/api-auth-helpers';
-import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
+import {
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(
@@ -73,7 +78,11 @@ export async function POST(
 
     if (updateError) {
       console.error('Error promoting user:', updateError);
-      throw new Error('Failed to promote user');
+      throw new AppError(
+        'Failed to promote user',
+        500,
+        'USER_PROMOTE_UPDATE_FAILED',
+      );
     }
 
     // 1.6: Return the updated user profile
