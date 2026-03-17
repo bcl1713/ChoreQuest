@@ -2,6 +2,12 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { loginUser } from "@/lib/auth/auth-actions";
 import { Database } from "@/lib/types/database-generated";
 
+jest.mock("@/lib/supabase", () => ({
+  SUPABASE_URL: "https://test.supabase.co",
+  SUPABASE_ANON_KEY: "test-anon-key",
+  supabase: {},
+}));
+
 function createMockSupabase(
   overrides: {
     signInError?: Error | { message: string } | null;
