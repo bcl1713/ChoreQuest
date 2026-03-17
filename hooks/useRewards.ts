@@ -49,9 +49,11 @@ interface UseRewardsReturn {
  *   - loading: Boolean indicating if data is currently being fetched
  *   - error: Error message string if fetch failed, null otherwise
  *   - reload: Function to manually trigger a data reload
+ *   - mergeRedemption: Function to merge a DB-confirmed redemption row into local state in-place
+ *   - glowingRedemptionIds: Set of redemption IDs currently showing the realtime glow animation
  *
  * @example
- * const { rewards, redemptions, loading, error, reload } = useRewards();
+ * const { rewards, redemptions, loading, error, reload, mergeRedemption, glowingRedemptionIds } = useRewards();
  *
  * if (loading) return <Spinner />;
  * if (error) return <ErrorMessage error={error} />;
