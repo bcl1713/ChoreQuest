@@ -35,6 +35,8 @@ jobs:
           STATUS=$(supabase status --output env)
           ANON_KEY=$(echo "$STATUS" | grep '^ANON_KEY=' | cut -d= -f2- | tr -d '"')
           SERVICE_KEY=$(echo "$STATUS" | grep '^SERVICE_ROLE_KEY=' | cut -d= -f2- | tr -d '"')
+          [ -z "$ANON_KEY" ] && { echo "ERROR: failed to extract ANON_KEY from supabase status"; exit 1; }
+          [ -z "$SERVICE_KEY" ] && { echo "ERROR: failed to extract SERVICE_ROLE_KEY from supabase status"; exit 1; }
           echo "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> $GITHUB_ENV
           echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY}" >> $GITHUB_ENV

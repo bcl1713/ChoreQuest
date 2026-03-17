@@ -20,64 +20,83 @@ export default async function globalSetup() {
   const email = `e2e-${ts}@example.com`;
   const password = "E2eSmoke!123";
 
-  // 1. Create auth user
-  const { data: authData, error: authError } =
-    await admin.auth.admin.createUser({
+  let userId: string | undefined;
+  let familyId: string | undefined;
+
+  try {
+    // 1. Create auth user
+    const { data: authData, error: authError } =
+      await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+    if (authError || !authData.user) {
+      throw new Error(
+        `E2E setup: failed to create auth user: ${authError?.message}`,
+      );
+    }
+    userId = authData.user.id;
+
+    // 2. Create family
+    const { data: family, error: familyError } = await admin
+      .from("families")
+      .insert({ name: `E2E Family ${ts}`, code: `E2E${ts}` })
+      .select()
+      .single();
+    if (familyError) {
+      throw new Error(
+        `E2E setup: failed to create family: ${familyError.message}`,
+      );
+    }
+    familyId = family.id;
+
+    // 3. Create user profile
+    const { error: profileError } = await admin.from("user_profiles").insert({
+      id: userId,
       email,
-      password,
-      email_confirm: true,
+      name: "E2E Hero",
+      family_id: familyId,
+      role: "HERO",
     });
-  if (authError || !authData.user) {
-    throw new Error(
-      `E2E setup: failed to create auth user: ${authError?.message}`,
-    );
-  }
-  const userId = authData.user.id;
+    if (profileError) {
+      throw new Error(
+        `E2E setup: failed to create user profile: ${profileError.message}`,
+      );
+    }
 
-  // 2. Create family
-  const { data: family, error: familyError } = await admin
-    .from("families")
-    .insert({ name: `E2E Family ${ts}`, code: `E2E${ts}` })
-    .select()
-    .single();
-  if (familyError) {
-    throw new Error(
-      `E2E setup: failed to create family: ${familyError.message}`,
-    );
-  }
+    // 4. Create character (required to reach dashboard)
+    const { error: characterError } = await admin.from("characters").insert({
+      user_id: userId,
+      name: "E2E Knight",
+      class: "KNIGHT",
+      level: 1,
+      xp: 0,
+      gold: 0,
+      active_family_quest_id: null,
+    });
+    if (characterError) {
+      throw new Error(
+        `E2E setup: failed to create character: ${characterError.message}`,
+      );
+    }
 
-  // 3. Create user profile
-  const { error: profileError } = await admin.from("user_profiles").insert({
-    id: userId,
-    email,
-    name: "E2E Hero",
-    family_id: family.id,
-    role: "HERO",
-  });
-  if (profileError) {
-    throw new Error(
-      `E2E setup: failed to create user profile: ${profileError.message}`,
+    writeFileSync(
+      TEST_USER_FILE,
+      JSON.stringify({ email, password, userId, familyId }),
     );
+  } catch (err) {
+    // Clean up any partially created resources so we don't leak on retry
+    if (userId) {
+      await admin.auth.admin.deleteUser(userId).catch(() => {});
+    }
+    if (familyId) {
+      await admin
+        .from("families")
+        .delete()
+        .eq("id", familyId)
+        .catch(() => {});
+    }
+    throw err;
   }
-
-  // 4. Create character (required to reach dashboard)
-  const { error: characterError } = await admin.from("characters").insert({
-    user_id: userId,
-    name: "E2E Knight",
-    class: "KNIGHT",
-    level: 1,
-    xp: 0,
-    gold: 0,
-    active_family_quest_id: null,
-  });
-  if (characterError) {
-    throw new Error(
-      `E2E setup: failed to create character: ${characterError.message}`,
-    );
-  }
-
-  writeFileSync(
-    TEST_USER_FILE,
-    JSON.stringify({ email, password, userId, familyId: family.id }),
-  );
 }
