@@ -22,7 +22,7 @@ test.describe("Auth smoke tests", () => {
     await page.getByTestId("input-password").fill("wrong-password");
     await page.getByTestId("auth-submit-button").click();
 
-    await expect(page.locator("p.text-red-400")).toBeVisible({
+    await expect(page.getByTestId("auth-error-message")).toBeVisible({
       timeout: 10_000,
     });
     await expect(page).toHaveURL(/\/auth\/login/);

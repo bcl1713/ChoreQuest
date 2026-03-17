@@ -12,9 +12,13 @@ export default async function globalTeardown() {
 
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-  const serviceRoleKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    console.warn(
+      `E2E teardown: Missing SUPABASE_SERVICE_ROLE_KEY. Skipping cleanup.`,
+    );
+    return;
+  }
 
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },

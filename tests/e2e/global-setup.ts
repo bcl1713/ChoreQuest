@@ -5,9 +5,12 @@ import { TEST_USER_FILE } from "./fixtures/test-credentials";
 export default async function globalSetup() {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-  const serviceRoleKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error(
+      `E2E setup: Missing required environment variable SUPABASE_SERVICE_ROLE_KEY`,
+    );
+  }
 
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
