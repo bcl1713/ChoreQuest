@@ -12,12 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY:
-        ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +21,20 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Export Supabase keys to env
+        run: |
+          ANON_KEY=$(supabase status --output env | grep ANON_KEY | cut -d= -f2)
+          SERVICE_KEY=$(supabase status --output env | grep SERVICE_ROLE_KEY | cut -d= -f2)
+          echo "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_KEY}" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: npm ci
