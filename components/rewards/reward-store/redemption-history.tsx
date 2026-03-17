@@ -103,7 +103,7 @@ const RedemptionHistory = React.memo<RedemptionHistoryProps>(
               key={redemption.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className={`bg-gradient-to-r from-dark-700 to-dark-800 border border-dark-600 rounded-lg p-4 hover:border-dark-500 transition-colors${glowingIds?.has(redemption.id) ? " animate-realtime-glow" : ""}`}
+              className={`bg-gradient-to-r from-dark-700 to-dark-800 border border-dark-600 rounded-lg p-4 hover:border-dark-500 transition-colors ${glowingIds?.has(redemption.id) ? "animate-realtime-glow" : ""}`}
               data-testid={`redemption-${redemption.id}`}
             >
               <div className="flex items-start justify-between">

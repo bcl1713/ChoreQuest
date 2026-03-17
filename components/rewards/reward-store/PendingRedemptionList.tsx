@@ -32,7 +32,7 @@ export function PendingRedemptionList({
         {pendingRedemptions.map((redemption) => (
           <div
             key={redemption.id}
-            className={`bg-white border border-orange-200 rounded-lg p-4${glowingIds?.has(redemption.id) ? " animate-realtime-glow" : ""}`}
+            className={`bg-white border border-orange-200 rounded-lg p-4 ${glowingIds?.has(redemption.id) ? "animate-realtime-glow" : ""}`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
