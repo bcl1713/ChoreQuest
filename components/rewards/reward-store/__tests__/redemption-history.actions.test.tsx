@@ -75,5 +75,48 @@ describe("RedemptionHistory actions", () => {
       expect(handlers.onDeny).toHaveBeenCalledWith("pending");
       expect(handlers.onFulfill).toHaveBeenCalledWith("approved");
     });
+
+    it("disables approve and deny buttons when updatingId matches the card", () => {
+      render(
+        <RedemptionHistory
+          redemptions={gmRedemptions}
+          isGuildMaster
+          onApprove={handlers.onApprove}
+          onDeny={handlers.onDeny}
+          onFulfill={handlers.onFulfill}
+          updatingId="pending"
+        />,
+      );
+      expect(screen.getByTestId("approve-pending")).toBeDisabled();
+      expect(screen.getByTestId("deny-pending")).toBeDisabled();
+    });
+
+    it("disables fulfill button when updatingId matches the approved card", () => {
+      render(
+        <RedemptionHistory
+          redemptions={gmRedemptions}
+          isGuildMaster
+          onApprove={handlers.onApprove}
+          onDeny={handlers.onDeny}
+          onFulfill={handlers.onFulfill}
+          updatingId="approved"
+        />,
+      );
+      expect(screen.getByTestId("fulfill-approved")).toBeDisabled();
+    });
+
+    it("leaves other card buttons enabled when updatingId targets a different card", () => {
+      render(
+        <RedemptionHistory
+          redemptions={gmRedemptions}
+          isGuildMaster
+          onApprove={handlers.onApprove}
+          onDeny={handlers.onDeny}
+          onFulfill={handlers.onFulfill}
+          updatingId="pending"
+        />,
+      );
+      expect(screen.getByTestId("fulfill-approved")).not.toBeDisabled();
+    });
   });
 });

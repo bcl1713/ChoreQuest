@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
-import type { Tables } from "@/lib/types/database";
+import type { Tables, RewardRedemption } from "@/lib/types/database";
+import { mergeRedemptionUpdate } from "./mergeRedemptionUpdate";
 
 type Reward = Tables<"rewards">;
 
@@ -16,6 +17,8 @@ interface UseRewardsReturn {
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
+  mergeRedemption: (updated: RewardRedemption) => void;
+  glowingRedemptionIds: Set<string>;
 }
 
 /**
@@ -52,6 +55,9 @@ export function useRewards(): UseRewardsReturn {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [glowingRedemptionIds, setGlowingRedemptionIds] = useState<Set<string>>(
+    new Set(),
+  );
   const hasLoadedRef = useRef(false);
 
   const loadRewards = useCallback(async () => {
@@ -118,17 +124,26 @@ export function useRewards(): UseRewardsReturn {
     return unsubscribe;
   }, [profile?.family_id, onRewardUpdate]);
 
+  const mergeRedemption = useCallback((updated: RewardRedemption) => {
+    setRedemptions((prev) => mergeRedemptionUpdate(prev, updated));
+  }, []);
+
   useEffect(() => {
     if (!profile?.family_id) return;
 
-    const unsubscribe = onRewardRedemptionUpdate(async () => {
-      try {
-        const redemptionsData = await rewardService.getRedemptionsForFamily(
-          profile.family_id!,
-        );
-        setRedemptions(redemptionsData);
-      } catch (err) {
-        console.error("Failed to reload redemptions:", err);
+    const unsubscribe = onRewardRedemptionUpdate((event) => {
+      if (!event?.record) return;
+      const updated = event.record as unknown as RewardRedemption;
+      setRedemptions((prev) => mergeRedemptionUpdate(prev, updated));
+      if (updated.id) {
+        setGlowingRedemptionIds((prev) => new Set([...prev, updated.id]));
+        setTimeout(() => {
+          setGlowingRedemptionIds((prev) => {
+            const next = new Set(prev);
+            next.delete(updated.id);
+            return next;
+          });
+        }, 700);
       }
     });
 
@@ -141,5 +156,7 @@ export function useRewards(): UseRewardsReturn {
     loading,
     error,
     reload: loadRewards,
+    mergeRedemption,
+    glowingRedemptionIds,
   };
 }
