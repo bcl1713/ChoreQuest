@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useRewards } from "./useRewards";
+import { useRewards, REALTIME_GLOW_DURATION_MS } from "./useRewards";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import type { RewardRedemptionWithUser } from "@/lib/reward-service";
@@ -212,6 +212,37 @@ describe("useRewards - in-place merge", () => {
     });
 
     expect(result.current.glowingRedemptionIds.has("r-1")).toBe(true);
+  });
+
+  it("removes ID from glowingRedemptionIds after glow duration elapses", async () => {
+    const { getRedemptionCallback } = makeRealtimeSetup();
+    const { result } = renderHook(() => useRewards());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // Switch to fake timers after async loading completes to avoid interference
+    jest.useFakeTimers();
+
+    const updatedRecord = { ...pendingRedemption, status: "APPROVED" };
+
+    act(() => {
+      getRedemptionCallback()!({
+        type: "reward_redemption_updated",
+        table: "reward_redemptions",
+        action: "UPDATE",
+        record: updatedRecord as unknown as Record<string, unknown>,
+      });
+    });
+
+    expect(result.current.glowingRedemptionIds.has("r-1")).toBe(true);
+
+    act(() => {
+      jest.advanceTimersByTime(REALTIME_GLOW_DURATION_MS);
+    });
+
+    expect(result.current.glowingRedemptionIds.has("r-1")).toBe(false);
+
+    jest.useRealTimers();
   });
 
   it("does NOT add ID to glowingRedemptionIds when mergeRedemption is called directly", async () => {

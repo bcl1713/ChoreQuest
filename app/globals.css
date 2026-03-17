@@ -241,7 +241,8 @@ body {
   }
 }
 
-/* One-shot realtime update flash for redemption cards */
+/* One-shot realtime update flash for redemption cards.
+   Duration (0.7s) must match REALTIME_GLOW_DURATION_MS in hooks/useRewards.ts */
 .animate-realtime-glow {
   animation: realtime-glow-flash 0.7s ease-out forwards;
 }

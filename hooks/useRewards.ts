@@ -7,6 +7,18 @@ import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
 import type { Tables, RewardRedemption } from "@/lib/types/database";
 import { mergeRedemptionUpdate } from "./mergeRedemptionUpdate";
 
+/**
+ * Duration of the one-shot glow animation on realtime-updated redemption cards.
+ * Must match the animation duration in app/globals.css (.animate-realtime-glow).
+ */
+export const REALTIME_GLOW_DURATION_MS = 700;
+
+function isRedemptionRecord(
+  record: Record<string, unknown>,
+): record is RewardRedemption {
+  return typeof record.id === "string" && typeof record.status === "string";
+}
+
 type Reward = Tables<"rewards">;
 
 const rewardService = new RewardService();
@@ -59,6 +71,7 @@ export function useRewards(): UseRewardsReturn {
     new Set(),
   );
   const hasLoadedRef = useRef(false);
+  const glowTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const loadRewards = useCallback(async () => {
     if (!profile?.family_id) {
@@ -131,23 +144,30 @@ export function useRewards(): UseRewardsReturn {
   useEffect(() => {
     if (!profile?.family_id) return;
 
+    const timers = glowTimersRef.current;
+
     const unsubscribe = onRewardRedemptionUpdate((event) => {
       if (!event?.record) return;
-      const updated = event.record as unknown as RewardRedemption;
+      if (!isRedemptionRecord(event.record)) return;
+      const updated = event.record;
       setRedemptions((prev) => mergeRedemptionUpdate(prev, updated));
-      if (updated.id) {
-        setGlowingRedemptionIds((prev) => new Set([...prev, updated.id]));
-        setTimeout(() => {
-          setGlowingRedemptionIds((prev) => {
-            const next = new Set(prev);
-            next.delete(updated.id);
-            return next;
-          });
-        }, 700);
-      }
+      setGlowingRedemptionIds((prev) => new Set([...prev, updated.id]));
+      const timer = setTimeout(() => {
+        setGlowingRedemptionIds((prev) => {
+          const next = new Set(prev);
+          next.delete(updated.id);
+          return next;
+        });
+        timers.delete(timer);
+      }, REALTIME_GLOW_DURATION_MS);
+      timers.add(timer);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      timers.forEach(clearTimeout);
+      timers.clear();
+    };
   }, [profile?.family_id, onRewardRedemptionUpdate]);
 
   return {
