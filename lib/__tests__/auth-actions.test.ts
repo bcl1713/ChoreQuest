@@ -88,14 +88,6 @@ describe("loginUser", () => {
   });
 
   it("uses fallback message when thrown value is not an Error instance", async () => {
-    const supabase = {
-      auth: {
-        signInWithPassword: jest.fn().mockResolvedValue({
-          error: { message: undefined },
-        }),
-      },
-    } as unknown as SupabaseClient<Database>;
-
     // Non-Error object thrown — simulate by making signInWithPassword reject
     const supabaseThrows = {
       auth: {
@@ -113,6 +105,5 @@ describe("loginUser", () => {
     ).rejects.toBe("string error");
 
     expect(setError).toHaveBeenCalledWith("Login failed");
-    void supabase; // suppress unused warning
   });
 });
