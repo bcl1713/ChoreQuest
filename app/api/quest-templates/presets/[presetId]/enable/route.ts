@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { handleRouteError } from '@/lib/api-error-handler';
 import { presetTemplates } from '@/lib/preset-templates';
 import { questTemplateService } from '@/lib/quest-template-service';
+import {
+  authenticateAndFetchUserProfile,
+  extractBearerToken,
+} from '@/lib/api-auth-helpers';
+import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(
@@ -9,40 +15,28 @@ export async function POST(
 ) {
   try {
     const { presetId } = await context.params;
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
-    }
-
-    const { data: requesterProfile, error: requesterError } = await supabase
-      .from('user_profiles')
-      .select('role, family_id')
-      .eq('id', user.id)
-      .single();
-
-    if (requesterError || !requesterProfile) {
-      return NextResponse.json({ error: 'Failed to load user profile' }, { status: 500 });
-    }
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
-      return NextResponse.json({ error: 'Only Guild Masters can enable presets' }, { status: 403 });
+      throw new ForbiddenError(
+        'Only Guild Masters can enable presets',
+        'PRESET_ENABLE_FORBIDDEN',
+      );
     }
 
     if (!requesterProfile.family_id) {
-      return NextResponse.json({ error: 'User is not associated with a family' }, { status: 400 });
+      throw new ValidationError(
+        'User is not associated with a family',
+        'REQUESTER_FAMILY_REQUIRED',
+      );
     }
 
     const preset = Object.values(presetTemplates).flat().find(p => p.name === presetId);
     if (!preset) {
-      return NextResponse.json({ error: 'Preset not found' }, { status: 404 });
+      throw new NotFoundError('Preset not found', 'PRESET_NOT_FOUND');
     }
 
     const newTemplate = await questTemplateService.createTemplate({
@@ -64,7 +58,6 @@ export async function POST(
     return NextResponse.json({ success: true, template: newTemplate }, { status: 201 });
 
   } catch (error) {
-    console.error('Error enabling preset:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleRouteError(error);
   }
 }

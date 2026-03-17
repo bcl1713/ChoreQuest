@@ -86,7 +86,7 @@ describe("QuestInstanceService - claimQuest", () => {
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
             data: null,
-            error: { message: "Quest not found" },
+            error: null,
           }),
         }),
       }),
@@ -94,7 +94,24 @@ describe("QuestInstanceService - claimQuest", () => {
 
     await expect(
       service.claimQuest(mockQuestId, mockCharacterId),
-    ).rejects.toThrow("Failed to fetch quest: Quest not found");
+    ).rejects.toThrow("Quest not found");
+  });
+
+  it("should throw app error if quest fetch fails", async () => {
+    mockFrom.mockImplementationOnce(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: "Database offline" },
+          }),
+        }),
+      }),
+    }));
+
+    await expect(
+      service.claimQuest(mockQuestId, mockCharacterId),
+    ).rejects.toThrow("Failed to fetch quest: Database offline");
   });
 
   it("should throw error if quest is not AVAILABLE", async () => {
@@ -154,7 +171,7 @@ describe("QuestInstanceService - claimQuest", () => {
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
             data: null,
-            error: { message: "Character not found" },
+            error: null,
           }),
         }),
       }),
@@ -162,7 +179,7 @@ describe("QuestInstanceService - claimQuest", () => {
 
     await expect(
       service.claimQuest(mockQuestId, mockCharacterId),
-    ).rejects.toThrow("Failed to fetch character: Character not found");
+    ).rejects.toThrow("Character not found");
   });
 
   it("should throw error if hero already has active family quest (anti-hoarding)", async () => {

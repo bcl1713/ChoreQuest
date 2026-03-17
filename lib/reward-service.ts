@@ -11,6 +11,10 @@ import {
   RewardRedemption,
   UserProfile,
 } from "@/lib/types/database";
+import {
+  ConflictError,
+  NotFoundError,
+} from "@/lib/errors";
 
 export interface RewardRedemptionWithUser extends RewardRedemption {
   user_profiles: UserProfile;
@@ -32,7 +36,7 @@ export class RewardService {
       .eq("family_id", familyId);
 
     if (error) {
-      throw new Error(`Failed to fetch rewards: ${error.message}`);
+      throw new NotFoundError(`Failed to fetch rewards: ${error.message}`, "REWARDS_FETCH_FAILED");
     }
 
     return data || [];
@@ -51,7 +55,7 @@ export class RewardService {
       .single();
 
     if (error) {
-      throw new Error(`Failed to create reward: ${error.message}`);
+      throw new ConflictError(`Failed to create reward: ${error.message}`, "REWARD_CREATE_FAILED");
     }
 
     return data;
@@ -75,7 +79,7 @@ export class RewardService {
       .single();
 
     if (error) {
-      throw new Error(`Failed to update reward: ${error.message}`);
+      throw new ConflictError(`Failed to update reward: ${error.message}`, "REWARD_UPDATE_FAILED");
     }
 
     return data;
@@ -94,7 +98,7 @@ export class RewardService {
       .eq("id", rewardId);
 
     if (error) {
-      throw new Error(`Failed to delete reward: ${error.message}`);
+      throw new ConflictError(`Failed to delete reward: ${error.message}`, "REWARD_DELETE_FAILED");
     }
   }
 
@@ -118,7 +122,7 @@ export class RewardService {
       .order("requested_at", { ascending: false });
 
     if (error) {
-      throw new Error(`Failed to fetch redemptions: ${error.message}`);
+      throw new NotFoundError(`Failed to fetch redemptions: ${error.message}`, "REDEMPTIONS_FETCH_FAILED");
     }
 
     return (data as unknown as RewardRedemptionWithUser[]) || [];
@@ -164,7 +168,10 @@ export class RewardService {
       .single();
 
     if (error) {
-      throw new Error(`Failed to update redemption status: ${error.message}`);
+      throw new ConflictError(
+        `Failed to update redemption status: ${error.message}`,
+        "REDEMPTION_UPDATE_FAILED",
+      );
     }
 
     return data;
@@ -184,7 +191,7 @@ export class RewardService {
       .single();
 
     if (characterError) {
-      throw new Error(`Failed to fetch character: ${characterError.message}`);
+      throw new NotFoundError(`Failed to fetch character: ${characterError.message}`, "CHARACTER_NOT_FOUND");
     }
 
     // Update with refunded amount
@@ -196,7 +203,7 @@ export class RewardService {
       .eq("user_id", userId);
 
     if (refundError) {
-      throw new Error(`Failed to refund gold: ${refundError.message}`);
+      throw new ConflictError(`Failed to refund gold: ${refundError.message}`, "REFUND_FAILED");
     }
   }
 }

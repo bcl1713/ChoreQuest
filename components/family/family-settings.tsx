@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/ui/NotificationContainer";
 import { FamilyInfoCard } from "./family-settings/FamilyInfoCard";
 import { FamilyMembersCard } from "./family-settings/FamilyMembersCard";
-import { NotificationToast } from "./family-settings/NotificationToast";
 import { RegenerateInviteModal } from "./family-settings/RegenerateInviteModal";
 import { useFamilyInfo } from "./family-settings/useFamilyInfo";
 
@@ -18,12 +19,14 @@ export default function FamilySettings() {
     regenerateInviteCode,
     updateTimezone,
   } = useFamilyInfo();
+  const {
+    notifications,
+    dismiss,
+    error: showError,
+    success: showSuccess,
+  } = useNotification();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedTimezone, setSelectedTimezone] = useState<string>("");
-  const [notification, setNotification] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
 
   useEffect(() => {
     void loadFamilyInfo();
@@ -40,42 +43,37 @@ export default function FamilySettings() {
 
     try {
       await navigator.clipboard.writeText(familyInfo.code);
-      showNotification("success", "Invite code copied to clipboard!");
+      showSuccess("Invite code copied to clipboard!");
     } catch (err) {
       console.error("Failed to copy:", err);
-      showNotification("error", "Failed to copy invite code");
+      showError("Failed to copy invite code");
     }
   };
 
   const handleRegenerateCode = async () => {
     try {
       await regenerateInviteCode();
-      showNotification("success", "Invite code regenerated successfully!");
+      showSuccess("Invite code regenerated successfully!");
       setShowConfirmModal(false);
     } catch (err) {
       console.error("Failed to regenerate code:", err);
-      showNotification("error", "Failed to regenerate invite code");
+      showError("Failed to regenerate invite code");
     }
   };
 
   const handleTimezoneUpdate = async () => {
     if (!selectedTimezone || selectedTimezone === familyInfo?.timezone) {
-      showNotification("success", "Timezone is already up to date");
+      showSuccess("Timezone is already up to date");
       return;
     }
 
     try {
       await updateTimezone(selectedTimezone);
-      showNotification("success", "Timezone updated successfully!");
+      showSuccess("Timezone updated successfully!");
     } catch (err) {
       console.error("Failed to update timezone:", err);
-      showNotification("error", "Failed to update timezone");
+      showError("Failed to update timezone");
     }
-  };
-
-  const showNotification = (type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   if (loading) {
@@ -101,10 +99,10 @@ export default function FamilySettings() {
 
   return (
     <div className="space-y-6" data-testid="family-settings">
-      {/* Notifications */}
-      {notification && (
-        <NotificationToast message={notification.message} type={notification.type} />
-      )}
+      <NotificationContainer
+        notifications={notifications}
+        onDismiss={dismiss}
+      />
 
       <FamilyInfoCard
         familyInfo={familyInfo}

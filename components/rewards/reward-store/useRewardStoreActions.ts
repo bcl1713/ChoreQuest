@@ -2,14 +2,18 @@
 
 import { useCallback, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { RewardService, type RewardRedemptionWithUser } from "@/lib/reward-service";
-import type { Reward, Character } from "@/lib/types/database";
+import {
+  RewardService,
+  type RewardRedemptionWithUser,
+} from "@/lib/reward-service";
+import type { Reward, Character, RewardRedemption } from "@/lib/types/database";
 
 type UseRewardStoreActionsArgs = {
   userId?: string | null;
   character?: Character | null;
   onError?: (error: string) => void;
   refreshCharacter: () => Promise<void>;
+  mergeRedemption: (updated: RewardRedemption) => void;
 };
 
 const rewardService = new RewardService();
@@ -19,6 +23,7 @@ export function useRewardStoreActions({
   character,
   onError,
   refreshCharacter,
+  mergeRedemption,
 }: UseRewardStoreActionsArgs) {
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -69,16 +74,21 @@ export function useRewardStoreActions({
         }, 3000);
       } catch (error) {
         console.error("Failed to redeem reward:", error);
-        onError?.(error instanceof Error ? error.message : "Failed to redeem reward");
+        onError?.(
+          error instanceof Error ? error.message : "Failed to redeem reward",
+        );
       } finally {
         setRedeemingId(null);
       }
     },
-    [character, onError, refreshCharacter, userId]
+    [character, onError, refreshCharacter, userId],
   );
 
   const updateRedemptionStatus = useCallback(
-    async (redemption: RewardRedemptionWithUser, status: "APPROVED" | "DENIED" | "FULFILLED") => {
+    async (
+      redemption: RewardRedemptionWithUser,
+      status: "APPROVED" | "DENIED" | "FULFILLED",
+    ) => {
       if (!redemption.user_id) {
         onError?.("Missing redemption user");
         return;
@@ -86,7 +96,12 @@ export function useRewardStoreActions({
 
       setUpdatingId(redemption.id);
       try {
-        await rewardService.updateRedemptionStatus(redemption.id, status, userId ?? undefined);
+        const updated = await rewardService.updateRedemptionStatus(
+          redemption.id,
+          status,
+          userId ?? undefined,
+        );
+        mergeRedemption(updated);
 
         if (status === "DENIED") {
           const refundAmount = redemption.cost ?? 0;
@@ -95,12 +110,16 @@ export function useRewardStoreActions({
         }
       } catch (error) {
         console.error("Failed to update redemption:", error);
-        onError?.(error instanceof Error ? error.message : "Failed to update redemption");
+        onError?.(
+          error instanceof Error
+            ? error.message
+            : "Failed to update redemption",
+        );
       } finally {
         setUpdatingId(null);
       }
     },
-    [onError, refreshCharacter, userId]
+    [mergeRedemption, onError, refreshCharacter, userId],
   );
 
   const dismissSuccess = useCallback(() => {

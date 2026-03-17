@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { ErrorAlert } from '@/components/profile/shared/ErrorAlert';
 import { Character } from '@/lib/types/database';
 import { ProfileService } from '@/lib/profile-service';
 import { FantasyButton } from '@/components/ui';
-import { AlertCircle } from 'lucide-react';
 
 interface CharacterNameFormProps {
   character: Character;
@@ -16,19 +16,21 @@ export default function CharacterNameForm({
   onSuccess,
 }: CharacterNameFormProps) {
   const [name, setName] = useState(character.name);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [charCount, setCharCount] = useState(character.name.length);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setName(newName);
     setCharCount(newName.length);
+    if (error) {
+      setError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
     if (!name.trim()) {
       setError('Character name cannot be empty');
@@ -40,6 +42,7 @@ export default function CharacterNameForm({
       return;
     }
 
+    setError(null);
     setIsLoading(true);
 
     try {
@@ -48,9 +51,9 @@ export default function CharacterNameForm({
       // Note: In a real app, you'd refresh the character context here
       // For now, just show success message
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to update character name';
-      setError(message);
+      setError(
+        err instanceof Error ? err.message : 'Failed to update character name'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +62,8 @@ export default function CharacterNameForm({
   return (
     <div className="max-w-md mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && <ErrorAlert message={error} />}
+
         {/* Current Name Display */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -95,14 +100,6 @@ export default function CharacterNameForm({
             Character names must be between 1 and 50 characters.
           </p>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="flex gap-3 p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
-            <AlertCircle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
-            <p className="text-red-300 text-sm">{error}</p>
-          </div>
-        )}
 
         {/* Submit Button */}
         <FantasyButton

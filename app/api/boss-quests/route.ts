@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   authenticateAndFetchUserProfile,
-  authErrorResponse,
   extractBearerToken,
-  isAuthError,
 } from "@/lib/api-auth-helpers";
+import { handleRouteError } from "@/lib/api-error-handler";
+import { AppError, ForbiddenError, ValidationError } from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 const createBossQuestSchema = z.object({
@@ -18,33 +18,23 @@ const createBossQuestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const tokenOrError = extractBearerToken(request);
-    if (isAuthError(tokenOrError)) {
-      return authErrorResponse(tokenOrError);
-    }
-
-    const token = tokenOrError;
+    const token = extractBearerToken(request);
     const supabase = createServerSupabaseClient(token);
-
-    const userOrError = await authenticateAndFetchUserProfile(supabase, token);
-    if (isAuthError(userOrError)) {
-      return authErrorResponse(userOrError);
-    }
-
-    const requesterProfile = userOrError;
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
     if (requesterProfile.role !== "GUILD_MASTER") {
-      return NextResponse.json(
-        { error: "Only Guild Masters can create boss quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Only Guild Masters can create boss quests",
+        "BOSS_QUEST_CREATE_FORBIDDEN",
       );
     }
 
     const body = await request.json();
     const parsed = createBossQuestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid boss quest payload", details: parsed.error.flatten() },
-        { status: 400 }
+      throw new ValidationError(
+        "Invalid boss quest payload",
+        "VALIDATION_ERROR",
+        parsed.error.flatten(),
       );
     }
 
@@ -82,16 +72,15 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (createError || !created) {
-      return NextResponse.json(
-        { error: `Failed to create boss quest: ${createError?.message ?? "Unknown error"}` },
-        { status: 500 }
+      throw new AppError(
+        `Failed to create boss quest: ${createError?.message ?? "Unknown error"}`,
+        500,
+        "BOSS_QUEST_CREATE_FAILED",
       );
     }
 
     return NextResponse.json({ bossQuest: created }, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Error creating boss quest:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleRouteError(error);
   }
 }

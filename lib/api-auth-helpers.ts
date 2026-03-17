@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { AppError, AuthError } from "@/lib/errors";
 
 /**
  * Represents the authenticated user and their profile information
@@ -11,29 +12,21 @@ export interface AuthenticatedUser {
 }
 
 /**
- * Response type for authentication errors
- */
-export interface AuthError {
-  error: string;
-  status: number;
-}
-
-/**
  * Extracts and validates the Bearer token from the request Authorization header
  *
  * @param request - The Next.js request object
- * @returns The token string, or an AuthError if validation fails
+ * @returns The token string
  */
 export function extractBearerToken(
   request: NextRequest
-): string | AuthError {
+): string {
   const authHeader = request.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return {
-      error: "Missing or invalid authorization header",
-      status: 401,
-    };
+    throw new AuthError(
+      "Missing or invalid authorization header",
+      "AUTH_HEADER_INVALID",
+    );
   }
 
   return authHeader.substring(7);
@@ -48,12 +41,12 @@ export function extractBearerToken(
  *
  * @param supabase - The Supabase client instance (authenticated with the token)
  * @param token - The Bearer token to validate
- * @returns The authenticated user with profile data, or an AuthError
+ * @returns The authenticated user with profile data
  */
 export async function authenticateAndFetchUserProfile(
   supabase: SupabaseClient,
   token: string
-): Promise<AuthenticatedUser | AuthError> {
+): Promise<AuthenticatedUser> {
   // Step 1: Validate the token
   const { data: authData, error: authError } = await supabase.auth.getUser(
     token
@@ -61,10 +54,7 @@ export async function authenticateAndFetchUserProfile(
   const user = authData?.user;
 
   if (authError || !user) {
-    return {
-      error: "Authentication failed",
-      status: 401,
-    };
+    throw new AuthError("Authentication failed", "AUTH_ERROR");
   }
 
   // Step 2: Fetch user profile
@@ -75,10 +65,7 @@ export async function authenticateAndFetchUserProfile(
     .single();
 
   if (profileError || !userProfile) {
-    return {
-      error: "Failed to load user profile",
-      status: 500,
-    };
+    throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
   }
 
   return {
@@ -93,44 +80,12 @@ export async function authenticateAndFetchUserProfile(
  *
  * @param request - The Next.js request object
  * @param supabase - The authenticated Supabase client
- * @returns The authenticated user with profile data, or an AuthError
+ * @returns The authenticated user with profile data
  */
 export async function extractAndAuthenticateUser(
   request: NextRequest,
   supabase: SupabaseClient
-): Promise<AuthenticatedUser | AuthError> {
-  // Extract token
-  const tokenOrError = extractBearerToken(request);
-
-  if (isAuthError(tokenOrError)) {
-    return tokenOrError;
-  }
-
-  // Authenticate and fetch profile
-  return authenticateAndFetchUserProfile(supabase, tokenOrError);
-}
-
-/**
- * Checks if a value is an AuthError
- *
- * @param value - The value to check
- * @returns true if the value is an AuthError
- */
-export function isAuthError(value: unknown): value is AuthError {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "error" in value &&
-    "status" in value
-  );
-}
-
-/**
- * Creates an error response from an AuthError
- *
- * @param authError - The auth error object
- * @returns A NextResponse with appropriate status code
- */
-export function authErrorResponse(authError: AuthError): NextResponse {
-  return NextResponse.json({ error: authError.error }, { status: authError.status });
+): Promise<AuthenticatedUser> {
+  const token = extractBearerToken(request);
+  return authenticateAndFetchUserProfile(supabase, token);
 }

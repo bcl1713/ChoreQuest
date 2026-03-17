@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
+import { handleRouteError } from "@/lib/api-error-handler";
+import {
+  AppError,
+  AuthError,
+  ForbiddenError,
+  NotFoundError,
+} from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function POST(
@@ -11,9 +18,9 @@ export async function POST(
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Missing or invalid authorization header" },
-        { status: 401 }
+      throw new AuthError(
+        "Missing or invalid authorization header",
+        "AUTH_HEADER_INVALID",
       );
     }
 
@@ -27,7 +34,7 @@ export async function POST(
     const user = authData?.user;
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+      throw new AuthError();
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -37,17 +44,11 @@ export async function POST(
       .single();
 
     if (profileError || !profile) {
-      return NextResponse.json(
-        { error: "Failed to load user profile" },
-        { status: 500 }
-      );
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     if (!["HERO", "YOUNG_HERO", "GUILD_MASTER"].includes(profile.role ?? "")) {
-      return NextResponse.json(
-        { error: "Only heroes can claim quests" },
-        { status: 403 }
-      );
+      throw new ForbiddenError("Only heroes can claim quests", "QUEST_CLAIM_FORBIDDEN");
     }
 
     const { data: quest, error: questError } = await supabase
@@ -57,20 +58,21 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json(
-        { error: `Failed to fetch quest: ${questError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch quest: ${questError.message}`,
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     if (quest.family_id !== profile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot claim quests for another family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot claim quests for another family",
+        "QUEST_CLAIM_FORBIDDEN",
       );
     }
 
@@ -82,17 +84,15 @@ export async function POST(
       .maybeSingle();
 
     if (characterError) {
-      return NextResponse.json(
-        { error: `Failed to fetch character: ${characterError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch character: ${characterError.message}`,
+        500,
+        "CHARACTER_LOOKUP_FAILED",
       );
     }
 
     if (!character) {
-      return NextResponse.json(
-        { error: "No character found for this hero" },
-        { status: 400 }
-      );
+      throw new NotFoundError("No character found for this hero", "CHARACTER_NOT_FOUND");
     }
 
     const questInstanceService = new QuestInstanceService(supabase);
@@ -109,28 +109,6 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    if (
-      !(
-        message.includes("Quest is not available") ||
-        message.includes("Only FAMILY quests can be claimed") ||
-        message.includes("Failed to fetch character") ||
-        message.includes("Hero already has an active family quest")
-      )
-    ) {
-      console.error("Error claiming quest:", error);
-    }
-
-    const status =
-      message.startsWith("Failed to fetch quest") ||
-      message.startsWith("Hero already has") ||
-      message.startsWith("Quest is not available") ||
-      message.startsWith("Only FAMILY quests")
-        ? 400
-        : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    return handleRouteError(error);
   }
 }

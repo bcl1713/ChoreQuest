@@ -5,12 +5,13 @@ import type {
   QuestTemplate,
   Character,
 } from "@/lib/types/database";
-import { RewardCalculator } from "@/lib/reward-calculator";
+import { AppError, ConflictError, NotFoundError } from "@/lib/errors";
 import { StreakService } from "@/lib/streak-service";
 import {
-  validateConsecutiveCompletion,
-  calculateStreakBonus,
-} from "@/lib/streak-utils";
+  applyStreaks,
+  buildCharacterUpdatePayload,
+  fetchFamilyTimezone,
+} from "./approve-quest-helpers";
 
 type ApproveQuestDeps = {
   client: SupabaseClient<Database>;
@@ -27,9 +28,18 @@ const fetchQuest = async (
     .eq("id", questId)
     .single();
 
-  if (fetchError || !quest) {
-    throw new Error(
-      `Failed to fetch quest: ${fetchError?.message || "Quest not found"}`,
+  if (fetchError && fetchError.code !== "PGRST116") {
+    throw new AppError(
+      `Failed to fetch quest: ${fetchError.message}`,
+      500,
+      "QUEST_FETCH_FAILED",
+    );
+  }
+
+  if (!quest) {
+    throw new NotFoundError(
+      "Quest not found",
+      "QUEST_NOT_FOUND",
     );
   }
 
@@ -38,11 +48,17 @@ const fetchQuest = async (
     quest.status !== "IN_PROGRESS" &&
     quest.status !== "COMPLETED"
   ) {
-    throw new Error(`Quest cannot be approved (status: ${quest.status})`);
+    throw new ConflictError(
+      `Quest cannot be approved (status: ${quest.status})`,
+      "QUEST_NOT_APPROVABLE",
+    );
   }
 
   if (!quest.assigned_to_id) {
-    throw new Error("Quest is not assigned to a hero");
+    throw new ConflictError(
+      "Quest is not assigned to a hero",
+      "QUEST_NOT_ASSIGNED",
+    );
   }
 
   return quest;
@@ -58,16 +74,24 @@ const resolveAssignedCharacter = async (
       .select("*")
       .eq("id", quest.volunteered_by)
       .single();
-    if (result.error || !result.data) {
-      throw new Error(
-        `Failed to fetch assigned character: ${result.error?.message || "Character not found"}`,
+    if (result.error) {
+      throw new AppError(
+        `Failed to fetch assigned character: ${result.error.message}`,
+        500,
+        "CHARACTER_FETCH_FAILED",
+      );
+    }
+    if (!result.data) {
+      throw new NotFoundError(
+        "Character not found",
+        "CHARACTER_NOT_FOUND",
       );
     }
     return result.data as Character;
   }
 
   if (!quest.assigned_to_id) {
-    throw new Error("Quest has no assigned user");
+    throw new ConflictError("Quest has no assigned user", "QUEST_NOT_ASSIGNED");
   }
 
   const result = await client
@@ -81,12 +105,17 @@ const resolveAssignedCharacter = async (
   }
 
   if (result.error) {
-    throw new Error(
+    throw new AppError(
       `Failed to fetch assigned character: ${result.error.message}`,
+      500,
+      "CHARACTER_FETCH_FAILED",
     );
   }
 
-  throw new Error("No characters found for assigned user");
+  throw new NotFoundError(
+    "No characters found for assigned user",
+    "CHARACTER_NOT_FOUND",
+  );
 };
 
 const fetchTemplate = async (
@@ -102,72 +131,14 @@ const fetchTemplate = async (
     .maybeSingle();
 
   if (templateError) {
-    throw new Error(`Failed to fetch quest template: ${templateError.message}`);
+    throw new AppError(
+      `Failed to fetch quest template: ${templateError.message}`,
+      500,
+      "QUEST_TEMPLATE_FETCH_FAILED",
+    );
   }
 
   return templateData ?? null;
-};
-
-const fetchFamilyTimezone = async (
-  client: SupabaseClient<Database>,
-  familyId: string | null,
-) => {
-  if (!familyId) return "UTC";
-  const { data: family } = await client
-    .from("families")
-    .select("timezone")
-    .eq("id", familyId)
-    .maybeSingle();
-  return family?.timezone ?? "UTC";
-};
-
-const applyStreaks = async (
-  streakService: StreakService,
-  characterId: string,
-  templateId: string | null,
-  recurrencePattern: "DAILY" | "WEEKLY" | "CUSTOM" | null,
-  completionDate: Date,
-  familyTimezone: string,
-  currentXp: number,
-  currentGold: number,
-  baseXp: number,
-  baseGold: number,
-) => {
-  if (!templateId || !recurrencePattern) {
-    return { streakCount: 0, streakBonus: 0, xp: currentXp, gold: currentGold };
-  }
-
-  const streak = await streakService.getStreak(characterId, templateId);
-  const isConsecutive = validateConsecutiveCompletion(
-    streak.last_completed_date,
-    recurrencePattern,
-    completionDate,
-    familyTimezone,
-  );
-
-  if (isConsecutive) {
-    const updatedStreak = await streakService.incrementStreak(
-      characterId,
-      templateId,
-      completionDate,
-    );
-    const streakCount = updatedStreak.current_streak ?? 0;
-    const streakBonus = calculateStreakBonus(streakCount);
-    return {
-      streakCount,
-      streakBonus,
-      xp: currentXp + baseXp * streakBonus,
-      gold: currentGold + baseGold * streakBonus,
-    };
-  }
-
-  const resetStreak = await streakService.resetStreak(characterId, templateId);
-  return {
-    streakCount: resetStreak.current_streak ?? 0,
-    streakBonus: 0,
-    xp: currentXp,
-    gold: currentGold,
-  };
 };
 
 export const approveQuest = async (
@@ -224,27 +195,11 @@ export const approveQuest = async (
 
   const updatedXp = Math.round(streakResult.xp);
   const updatedGold = Math.round(streakResult.gold);
-
-  const characterUpdatePayload: {
-    gold: number;
-    xp: number;
-    active_family_quest_id: null;
-    level?: number;
-  } = {
-    gold: (character.gold || 0) + updatedGold,
-    xp: (character.xp || 0) + updatedXp,
-    active_family_quest_id: null,
-  };
-
-  const levelResult = RewardCalculator.calculateLevelUp(
-    character.xp || 0,
+  const characterUpdatePayload = buildCharacterUpdatePayload(
+    character,
     updatedXp,
-    character.level || 1,
+    updatedGold,
   );
-
-  if (levelResult) {
-    characterUpdatePayload.level = levelResult.newLevel;
-  }
 
   const { error: characterUpdateError } = await client
     .from("characters")
@@ -252,8 +207,10 @@ export const approveQuest = async (
     .eq("id", character.id);
 
   if (characterUpdateError) {
-    throw new Error(
+    throw new AppError(
       `Failed to update character stats: ${characterUpdateError.message}`,
+      500,
+      "CHARACTER_UPDATE_FAILED",
     );
   }
 
@@ -271,7 +228,11 @@ export const approveQuest = async (
     .single();
 
   if (questUpdateError) {
-    throw new Error(`Failed to approve quest: ${questUpdateError.message}`);
+    throw new AppError(
+      `Failed to approve quest: ${questUpdateError.message}`,
+      500,
+      "QUEST_APPROVE_FAILED",
+    );
   }
 
   return approvedQuest as QuestInstance;

@@ -4,7 +4,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { handleRouteError } from '@/lib/api-error-handler';
+import {
+  authenticateAndFetchUserProfile,
+  extractBearerToken,
+} from '@/lib/api-auth-helpers';
 import { questTemplateService } from '@/lib/quest-template-service';
+import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types/database-generated';
@@ -67,43 +73,27 @@ export async function PATCH(
 ) {
   try {
     const { id: templateId } = await params;
-
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
+    const token = extractBearerToken(request);
 
     // Create Supabase client with the user's token
     const supabase = createServerSupabaseClient(token);
 
-    // Get the authenticated user
-    const { data, error: authError } = await supabase.auth.getUser(token);
-    const user = data?.user;
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
+    const requester = await authenticateAndFetchUserProfile(supabase, token);
 
     // Verify authorization
     const { authorized, error } = await verifyGuildMasterAccess(
       supabase,
-      user.id,
+      requester.id,
       templateId
     );
 
     if (!authorized) {
-      return NextResponse.json(
-        { error: error || 'Access denied' },
-        { status: error === 'Quest template not found' ? 404 : 403 }
+      if (error === 'Quest template not found') {
+        throw new NotFoundError('Quest template not found', 'QUEST_TEMPLATE_NOT_FOUND');
+      }
+      throw new ForbiddenError(
+        error || 'Access denied',
+        'QUEST_TEMPLATE_ACCESS_FORBIDDEN',
       );
     }
 
@@ -112,9 +102,9 @@ export async function PATCH(
     const { paused } = body;
 
     if (typeof paused !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Body must contain a boolean "paused" field' },
-        { status: 400 }
+      throw new ValidationError(
+        'Body must contain a boolean "paused" field',
+        'PAUSED_FLAG_REQUIRED',
       );
     }
 
@@ -132,14 +122,6 @@ export async function PATCH(
     });
 
   } catch (error) {
-    if (error && typeof error === 'object' && 'data' in error && 'error' in error) {
-      console.error('Unexpected error in PATCH /api/quest-templates/[id]/pause: data=', error.data, 'error=', error.error);
-    } else {
-      console.error('Unexpected error in PATCH /api/quest-templates/[id]/pause:', error);
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

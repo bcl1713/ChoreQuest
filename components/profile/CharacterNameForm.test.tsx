@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CharacterNameForm from './CharacterNameForm';
 import { ProfileService } from '@/lib/profile-service';
@@ -75,20 +75,17 @@ describe('CharacterNameForm', () => {
   });
 
   it('shows error when name is empty', async () => {
-    render(
+    const { container } = render(
       <CharacterNameForm character={mockCharacter} onSuccess={mockOnSuccess} />
     );
 
     const input = screen.getByPlaceholderText('Enter new character name...');
     await userEvent.clear(input);
-    await userEvent.type(input, 'NewName');
+    fireEvent.submit(container.querySelector('form') as HTMLFormElement);
 
-    const button = screen.getByRole('button', { name: /Update Character Name/i });
-
-    // Clear input and try to show error
-    await userEvent.clear(input);
-    // Just verify button is disabled when empty
-    expect(button).toBeDisabled();
+    expect(
+      screen.getByText('Character name cannot be empty')
+    ).toBeInTheDocument();
   });
 
   it('calls ProfileService.changeCharacterName on valid submission', async () => {
@@ -164,6 +161,27 @@ describe('CharacterNameForm', () => {
     await waitFor(() => {
       expect(screen.getByText('Server error')).toBeInTheDocument();
     });
+  });
+
+  it('shows error when name is unchanged and clears it after editing', async () => {
+    const { container } = render(
+      <CharacterNameForm character={mockCharacter} onSuccess={mockOnSuccess} />
+    );
+
+    const input = screen.getByPlaceholderText('Enter new character name...');
+    const button = screen.getByRole('button', { name: /Update Character Name/i });
+
+    expect(button).toBeDisabled();
+
+    fireEvent.submit(container.querySelector('form') as HTMLFormElement);
+    expect(
+      screen.getByText('Please enter a different name')
+    ).toBeInTheDocument();
+
+    await userEvent.type(input, 'X');
+    expect(
+      screen.queryByText('Please enter a different name')
+    ).not.toBeInTheDocument();
   });
 
   it('shows loading state during submission', async () => {

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { handleRouteError } from '@/lib/api-error-handler';
 import { questTemplateService } from '@/lib/quest-template-service';
 import { QuestTemplate } from '@/lib/types/database';
+import {
+  authenticateAndFetchUserProfile,
+  extractBearerToken,
+} from '@/lib/api-auth-helpers';
+import { AppError, ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/types/database-generated';
@@ -37,7 +43,7 @@ async function verifyGuildMasterAccess(
     .single();
 
   if (requesterError || !requesterProfile) {
-    return { authorized: false, error: 'Failed to load user profile' };
+    throw new AppError('Failed to load user profile', 500, 'PROFILE_LOAD_FAILED');
   }
 
   if (requesterProfile.role !== 'GUILD_MASTER') {
@@ -50,7 +56,19 @@ async function verifyGuildMasterAccess(
     .eq('id', templateId)
     .single();
 
-  if (templateError || !template) {
+  if (templateError?.code === 'PGRST116') {
+    return { authorized: false, error: 'Quest template not found' };
+  }
+
+  if (templateError) {
+    throw new AppError(
+      'Failed to load quest template',
+      500,
+      'QUEST_TEMPLATE_LOOKUP_FAILED',
+    );
+  }
+
+  if (!template) {
     return { authorized: false, error: 'Quest template not found' };
   }
 
@@ -61,88 +79,62 @@ async function verifyGuildMasterAccess(
   return { authorized: true, template };
 }
 
-const extractToken = (request: NextRequest) => {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-  return authHeader.substring(7);
-};
-
 const loadAuthContext = async (
-  token: string | null,
+  token: string,
   templateId: string
 ): Promise<
-  | { response: NextResponse }
   | { supabase: SupabaseClient<Database>; userId: string; template?: QuestTemplate; authorized: boolean; error?: string }
 > => {
-  if (!token) {
-    return { response: NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 }) };
-  }
-
   const supabase = createServerSupabaseClient(token);
-  const { data, error: authError } = await supabase.auth.getUser(token);
-  const user = data?.user;
+  const requester = await authenticateAndFetchUserProfile(supabase, token);
 
-  if (authError || !user) {
-    return { response: NextResponse.json({ error: 'Authentication failed' }, { status: 401 }) };
-  }
-
-  const access = await verifyGuildMasterAccess(supabase, user.id, templateId);
+  const access = await verifyGuildMasterAccess(supabase, requester.id, templateId);
   if (!access.authorized) {
     return {
       supabase,
-      userId: user.id,
+      userId: requester.id,
       authorized: false,
       error: access.error,
       template: access.template,
     };
   }
 
-  return { supabase, userId: user.id, authorized: true, template: access.template };
-};
-
-const isSupabaseLikeError = (error: unknown): error is { data?: unknown; error?: unknown } =>
-  typeof error === 'object' && error !== null && 'data' in error && 'error' in error;
-
-const handleUnexpectedError = (error: unknown, verb: string) => {
-  if (isSupabaseLikeError(error)) {
-    console.error(`Unexpected error in ${verb}: data=`, error.data, 'error=', error.error);
-  } else {
-    console.error(`Unexpected error in ${verb}:`, error);
-  }
-  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  return { supabase, userId: requester.id, authorized: true, template: access.template };
 };
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-    const token = extractToken(request);
+    const token = extractBearerToken(request);
     const context = await loadAuthContext(token, templateId);
-    if ('response' in context) return context.response;
     if (!context.authorized) {
-      return NextResponse.json(
-        { error: context.error || 'Access denied' },
-        { status: context.error === 'Quest template not found' ? 404 : 403 }
+      if (context.error === 'Quest template not found') {
+        throw new NotFoundError('Quest template not found', 'QUEST_TEMPLATE_NOT_FOUND');
+      }
+      throw new ForbiddenError(
+        context.error || 'Access denied',
+        'QUEST_TEMPLATE_ACCESS_FORBIDDEN',
       );
     }
 
     return NextResponse.json({ success: true, template: context.template });
   } catch (error) {
-    return handleUnexpectedError(error, 'GET /api/quest-templates/[id]');
+    return handleRouteError(error);
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-    const token = extractToken(request);
+    const token = extractBearerToken(request);
     const context = await loadAuthContext(token, templateId);
-    if ('response' in context) return context.response;
     if (!context.authorized) {
-      return NextResponse.json(
-        { error: context.error || 'Access denied' },
-        { status: context.error === 'Quest template not found' ? 404 : 403 }
+      if (context.error === 'Quest template not found') {
+        throw new NotFoundError('Quest template not found', 'QUEST_TEMPLATE_NOT_FOUND');
+      }
+      throw new ForbiddenError(
+        context.error || 'Access denied',
+        'QUEST_TEMPLATE_ACCESS_FORBIDDEN',
       );
     }
 
@@ -150,9 +142,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const validatedData = updateQuestTemplateSchema.parse(body);
 
     if (validatedData.quest_type === 'INDIVIDUAL' && validatedData.assigned_character_ids?.length === 0) {
-      return NextResponse.json(
-        { error: 'INDIVIDUAL quests must have at least one assigned character' },
-        { status: 400 }
+      throw new ValidationError(
+        'INDIVIDUAL quests must have at least one assigned character',
+        'QUEST_TEMPLATE_ASSIGNMENT_REQUIRED',
       );
     }
 
@@ -165,22 +157,30 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return handleRouteError(
+        new ValidationError(
+          'Validation failed',
+          'VALIDATION_ERROR',
+          error.issues,
+        ),
+      );
     }
-    return handleUnexpectedError(error, 'PATCH /api/quest-templates/[id]');
+    return handleRouteError(error);
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: templateId } = await params;
-    const token = extractToken(request);
+    const token = extractBearerToken(request);
     const context = await loadAuthContext(token, templateId);
-    if ('response' in context) return context.response;
     if (!context.authorized) {
-      return NextResponse.json(
-        { error: context.error || 'Access denied' },
-        { status: context.error === 'Quest template not found' ? 404 : 403 }
+      if (context.error === 'Quest template not found') {
+        throw new NotFoundError('Quest template not found', 'QUEST_TEMPLATE_NOT_FOUND');
+      }
+      throw new ForbiddenError(
+        context.error || 'Access denied',
+        'QUEST_TEMPLATE_ACCESS_FORBIDDEN',
       );
     }
 
@@ -194,6 +194,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       message: 'Quest template deleted successfully',
     });
   } catch (error) {
-    return handleUnexpectedError(error, 'DELETE /api/quest-templates/[id]');
+    return handleRouteError(error);
   }
 }

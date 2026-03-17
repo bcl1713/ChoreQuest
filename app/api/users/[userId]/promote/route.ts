@@ -4,6 +4,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { handleRouteError } from '@/lib/api-error-handler';
+import {
+  authenticateAndFetchUserProfile,
+  extractBearerToken,
+} from '@/lib/api-auth-helpers';
+import {
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '@/lib/errors';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(
@@ -13,50 +24,17 @@ export async function POST(
   try {
     const { userId: targetUserId } = await params;
 
-    // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = extractBearerToken(request);
 
     // Create Supabase client with the user's token
     const supabase = createServerSupabaseClient(token);
 
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
-
-    const requesterId = user.id;
-
-    // 1.2: Get requester's profile to check if they are a Guild Master
-    const { data: requesterProfile, error: requesterError } = await supabase
-      .from('user_profiles')
-      .select('role, family_id')
-      .eq('id', requesterId)
-      .single();
-
-    if (requesterError || !requesterProfile) {
-      return NextResponse.json(
-        { error: 'Failed to load requester profile' },
-        { status: 500 }
-      );
-    }
+    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
 
     if (requesterProfile.role !== 'GUILD_MASTER') {
-      return NextResponse.json(
-        { error: 'Only Guild Masters can promote users' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Only Guild Masters can promote users',
+        'USER_PROMOTE_FORBIDDEN',
       );
     }
 
@@ -65,28 +43,36 @@ export async function POST(
       .from('user_profiles')
       .select('role, family_id, name, email')
       .eq('id', targetUserId)
-      .single();
+      .maybeSingle();
 
-    if (targetError || !targetProfile) {
-      return NextResponse.json(
-        { error: 'Target user not found' },
-        { status: 404 }
+    if (targetError) {
+      throw new AppError(
+        'Failed to fetch target user',
+        500,
+        'TARGET_USER_FETCH_FAILED',
+      );
+    }
+
+    if (!targetProfile) {
+      throw new NotFoundError(
+        'Target user not found',
+        'TARGET_USER_NOT_FOUND',
       );
     }
 
     // Verify both users are in the same family
     if (requesterProfile.family_id !== targetProfile.family_id) {
-      return NextResponse.json(
-        { error: 'Can only promote users in your family' },
-        { status: 403 }
+      throw new ForbiddenError(
+        'Can only promote users in your family',
+        'USER_PROMOTE_FORBIDDEN',
       );
     }
 
     // 1.4: Check if target is already a Guild Master
     if (targetProfile.role === 'GUILD_MASTER') {
-      return NextResponse.json(
-        { error: 'User is already a Guild Master' },
-        { status: 400 }
+      throw new ValidationError(
+        'User is already a Guild Master',
+        'USER_ALREADY_GUILD_MASTER',
       );
     }
 
@@ -99,10 +85,10 @@ export async function POST(
       .single();
 
     if (updateError) {
-      console.error('Error promoting user:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to promote user' },
-        { status: 500 }
+      throw new AppError(
+        'Failed to promote user',
+        500,
+        'USER_PROMOTE_UPDATE_FAILED',
       );
     }
 
@@ -114,10 +100,6 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Unexpected error in promote endpoint:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleRouteError(error);
   }
 }

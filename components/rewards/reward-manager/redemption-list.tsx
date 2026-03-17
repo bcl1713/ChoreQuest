@@ -11,6 +11,11 @@ interface RedemptionListProps {
   onFulfill: (redemptionId: string) => void;
 }
 
+const formatTimestamp = (timestamp: string | null | undefined) => {
+  if (!timestamp) return "Unknown";
+  return new Date(timestamp).toLocaleString();
+};
+
 export const RedemptionList = React.memo(function RedemptionList({
   redemptions,
   onApprove,
@@ -19,26 +24,34 @@ export const RedemptionList = React.memo(function RedemptionList({
 }: RedemptionListProps) {
   // Memoize filtered redemptions to prevent re-filtering on every render
   const pendingRedemptions = useMemo(
-    () => redemptions.filter(r => r.status === 'PENDING'),
-    [redemptions]
+    () => redemptions.filter((r) => r.status === "PENDING"),
+    [redemptions],
   );
 
   const approvedRedemptions = useMemo(
-    () => redemptions.filter(r => r.status === 'APPROVED'),
-    [redemptions]
+    () => redemptions.filter((r) => r.status === "APPROVED"),
+    [redemptions],
   );
 
   const completedRedemptions = useMemo(
-    () => redemptions.filter(r => ['DENIED', 'FULFILLED'].includes(r.status || '')),
-    [redemptions]
+    () =>
+      redemptions.filter((r) =>
+        ["DENIED", "FULFILLED"].includes(r.status || ""),
+      ),
+    [redemptions],
   );
 
   return (
     <>
       {/* Pending Redemptions Section */}
       {pendingRedemptions.length > 0 && (
-        <div data-testid="pending-redemptions-section" className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-          <h3 className="text-lg font-bold text-orange-900 mb-3">Pending Redemptions</h3>
+        <div
+          data-testid="pending-redemptions-section"
+          className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+        >
+          <h3 className="text-lg font-bold text-orange-900 mb-3">
+            Pending Redemptions
+          </h3>
           <div className="space-y-2">
             {pendingRedemptions.map((redemption) => (
               <div
@@ -47,12 +60,19 @@ export const RedemptionList = React.memo(function RedemptionList({
                 className="bg-white border rounded-lg p-3 flex items-center justify-between"
               >
                 <div className="flex-1">
-                  <div className="font-semibold">{redemption.user_profiles.name}</div>
+                  <div className="font-semibold">
+                    {redemption.user_profiles.name}
+                  </div>
                   <div className="text-sm text-gray-600">
                     {redemption.reward_name} ({redemption.cost} gold)
                   </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    Requested {formatTimestamp(redemption.requested_at)}
+                  </div>
                   {redemption.notes && (
-                    <div className="text-sm text-gray-500 italic mt-1">{redemption.notes}</div>
+                    <div className="text-sm text-gray-500 italic mt-1">
+                      {redemption.notes}
+                    </div>
                   )}
                 </div>
                 <div className="flex gap-2 ml-4">
@@ -81,8 +101,13 @@ export const RedemptionList = React.memo(function RedemptionList({
 
       {/* Approved Redemptions (Awaiting Fulfillment) */}
       {approvedRedemptions.length > 0 && (
-        <div data-testid="approved-redemptions-section" className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="text-lg font-bold text-green-900 mb-3">Approved - Awaiting Fulfillment</h3>
+        <div
+          data-testid="approved-redemptions-section"
+          className="bg-green-50 border border-green-200 rounded-lg p-4"
+        >
+          <h3 className="text-lg font-bold text-green-900 mb-3">
+            Approved - Awaiting Fulfillment
+          </h3>
           <div className="space-y-2">
             {approvedRedemptions.map((redemption) => (
               <div
@@ -91,12 +116,14 @@ export const RedemptionList = React.memo(function RedemptionList({
                 className="bg-white border rounded-lg p-3 flex items-center justify-between"
               >
                 <div className="flex-1">
-                  <div className="font-semibold">{redemption.user_profiles.name}</div>
+                  <div className="font-semibold">
+                    {redemption.user_profiles.name}
+                  </div>
                   <div className="text-sm text-gray-600">
                     {redemption.reward_name} ({redemption.cost} gold)
                   </div>
                   <div className="text-xs text-green-600 mt-1">
-                    Approved {new Date(redemption.approved_at!).toLocaleString()}
+                    Approved {formatTimestamp(redemption.approved_at)}
                   </div>
                 </div>
                 <Button
@@ -116,8 +143,13 @@ export const RedemptionList = React.memo(function RedemptionList({
 
       {/* Redemption History */}
       {completedRedemptions.length > 0 && (
-        <div data-testid="redemption-history-section" className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Redemption History</h3>
+        <div
+          data-testid="redemption-history-section"
+          className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+        >
+          <h3 className="text-lg font-bold text-gray-900 mb-3">
+            Redemption History
+          </h3>
           <div className="space-y-2">
             {completedRedemptions.map((redemption) => (
               <div
@@ -126,12 +158,16 @@ export const RedemptionList = React.memo(function RedemptionList({
                 className="bg-white border rounded-lg p-3"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <div className="font-semibold">{redemption.user_profiles.name}</div>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    redemption.status === 'FULFILLED'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <div className="font-semibold">
+                    {redemption.user_profiles.name}
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      redemption.status === "FULFILLED"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
                     {redemption.status}
                   </span>
                 </div>
@@ -139,9 +175,9 @@ export const RedemptionList = React.memo(function RedemptionList({
                   {redemption.reward_name} ({redemption.cost} gold)
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  Requested {redemption.requested_at ? new Date(redemption.requested_at).toLocaleString() : 'Unknown'}
+                  Requested {formatTimestamp(redemption.requested_at)}
                   {redemption.fulfilled_at && (
-                    <> • Fulfilled {new Date(redemption.fulfilled_at).toLocaleString()}</>
+                    <> • Fulfilled {formatTimestamp(redemption.fulfilled_at)}</>
                   )}
                 </div>
               </div>

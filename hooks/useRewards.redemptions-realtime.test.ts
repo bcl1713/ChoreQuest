@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useRewards } from "./useRewards";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
@@ -99,8 +99,12 @@ beforeEach(() => {
     onBossParticipantUpdate: jest.fn(() => jest.fn()),
   });
 
-  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(mockRewards);
-  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(mockRedemptions);
+  (mockServiceInstance.getRewardsForFamily as jest.Mock).mockResolvedValue(
+    mockRewards,
+  );
+  (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(
+    mockRedemptions,
+  );
 });
 
 describe("useRewards - redemptions realtime", () => {
@@ -114,10 +118,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-  
+
       onBossQuestUpdate: jest.fn(() => jest.fn()),
       onBossParticipantUpdate: jest.fn(() => jest.fn()),
-  });
+    });
 
     const { unmount } = renderHook(() => useRewards());
 
@@ -129,8 +133,8 @@ describe("useRewards - redemptions realtime", () => {
     expect(mockUnsubscribe).toHaveBeenCalled();
   });
 
-  it("should reload redemptions when redemption update occurs", async () => {
-    let redemptionCallback: () => void;
+  it("should merge redemption in-place when redemption update event arrives", async () => {
+    let redemptionCallback: (event: unknown) => void;
 
     const mockOnRewardRedemptionUpdate = jest.fn((callback) => {
       redemptionCallback = callback;
@@ -143,10 +147,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-  
+
       onBossQuestUpdate: jest.fn(() => jest.fn()),
       onBossParticipantUpdate: jest.fn(() => jest.fn()),
-  });
+    });
 
     const { result } = renderHook(() => useRewards());
 
@@ -154,25 +158,32 @@ describe("useRewards - redemptions realtime", () => {
       expect(result.current.loading).toBe(false);
     });
 
-    jest.clearAllMocks();
+    const initialServiceCallCount = (
+      mockServiceInstance.getRedemptionsForFamily as jest.Mock
+    ).mock.calls.length;
 
-    const updatedRedemptions: RewardRedemptionWithUser[] = [
-      ...mockRedemptions,
-      {
-        ...mockRedemptions[0],
-        id: "redemption-2",
-        status: "APPROVED",
-      },
-    ];
-
-    (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockResolvedValue(updatedRedemptions);
-
-    redemptionCallback!();
+    // Simulate a realtime UPDATE event
+    act(() => {
+      redemptionCallback!({
+        type: "reward_redemption_updated",
+        table: "reward_redemptions",
+        action: "UPDATE",
+        record: {
+          ...mockRedemptions[0],
+          status: "APPROVED",
+          approved_at: "2024-01-02T00:00:00Z",
+        },
+      });
+    });
 
     await waitFor(() => {
-      expect(result.current.redemptions).toHaveLength(2);
+      expect(result.current.redemptions[0].status).toBe("APPROVED");
     });
-    expect(mockServiceInstance.getRedemptionsForFamily).toHaveBeenCalledWith("family-1");
+    // No extra network call — merge is in-place
+    expect(
+      (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mock.calls
+        .length,
+    ).toBe(initialServiceCallCount);
   });
 
   it("should not subscribe to redemptions when profile has no family_id", async () => {
@@ -184,10 +195,10 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-  
+
       onBossQuestUpdate: jest.fn(() => jest.fn()),
       onBossParticipantUpdate: jest.fn(() => jest.fn()),
-  });
+    });
 
     mockUseAuth.mockReturnValue({
       profile: null,
@@ -207,8 +218,8 @@ describe("useRewards - redemptions realtime", () => {
     });
   });
 
-  it("should handle errors during redemption reload gracefully", async () => {
-    let redemptionCallback: () => void;
+  it("should handle malformed realtime event gracefully (no record)", async () => {
+    let redemptionCallback: (event: unknown) => void;
 
     const mockOnRewardRedemptionUpdate = jest.fn((callback) => {
       redemptionCallback = callback;
@@ -221,29 +232,29 @@ describe("useRewards - redemptions realtime", () => {
       onRewardUpdate: jest.fn(() => jest.fn()),
       onRedemptionUpdate: jest.fn(() => jest.fn()),
       onRewardRedemptionUpdate: mockOnRewardRedemptionUpdate,
-  
+
       onBossQuestUpdate: jest.fn(() => jest.fn()),
       onBossParticipantUpdate: jest.fn(() => jest.fn()),
-  });
-
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
-    renderHook(() => useRewards());
-
-    await waitFor(() => {
-      expect(mockServiceInstance.getRedemptionsForFamily).toHaveBeenCalled();
     });
 
-    (mockServiceInstance.getRedemptionsForFamily as jest.Mock).mockRejectedValue(
-      new Error("Redemption load failed"),
-    );
+    const { result } = renderHook(() => useRewards());
 
-    redemptionCallback!();
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
 
-    await new Promise(resolve => setTimeout(resolve, 100));
+    const initialLength = result.current.redemptions.length;
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to reload redemptions:", expect.any(Error));
+    // Event with no record — should not throw, state unchanged
+    act(() => {
+      redemptionCallback!({
+        type: "reward_redemption_updated",
+        action: "UPDATE",
+      });
+    });
 
-    consoleErrorSpy.mockRestore();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(result.current.redemptions).toHaveLength(initialLength);
   });
 });

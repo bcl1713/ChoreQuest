@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
+import { handleRouteError } from "@/lib/api-error-handler";
+import {
+  AppError,
+  AuthError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function POST(
@@ -11,9 +19,9 @@ export async function POST(
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Missing or invalid authorization header" },
-        { status: 401 }
+      throw new AuthError(
+        "Missing or invalid authorization header",
+        "AUTH_HEADER_INVALID",
       );
     }
 
@@ -27,7 +35,7 @@ export async function POST(
     const user = authData?.user;
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+      throw new AuthError();
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -37,10 +45,7 @@ export async function POST(
       .single();
 
     if (profileError || !profile) {
-      return NextResponse.json(
-        { error: "Failed to load user profile" },
-        { status: 500 }
-      );
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     const { data: quest, error: questError } = await supabase
@@ -50,20 +55,21 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json(
-        { error: `Failed to fetch quest: ${questError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch quest: ${questError.message}`,
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     if (quest.family_id !== profile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot release quests for another family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot release quests for another family",
+        "QUEST_RELEASE_FORBIDDEN",
       );
     }
 
@@ -80,9 +86,10 @@ export async function POST(
         .maybeSingle();
 
       if (characterError) {
-        return NextResponse.json(
-          { error: `Failed to fetch character: ${characterError.message}` },
-          { status: 400 }
+        throw new AppError(
+          `Failed to fetch character: ${characterError.message}`,
+          500,
+          "CHARACTER_LOOKUP_FAILED",
         );
       }
 
@@ -90,9 +97,9 @@ export async function POST(
     }
 
     if (!characterIdForRelease) {
-      return NextResponse.json(
-        { error: "Unable to determine which character should release this quest" },
-        { status: 400 }
+      throw new ValidationError(
+        "Unable to determine which character should release this quest",
+        "CHARACTER_REQUIRED",
       );
     }
 
@@ -110,27 +117,6 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    if (
-      !(
-        message.includes("Quest cannot be released") ||
-        message.includes("Only FAMILY quests can be released") ||
-        message.includes("Only the hero who claimed this quest can release it")
-      )
-    ) {
-      console.error("Error releasing quest:", error);
-    }
-
-    const status =
-      message.startsWith("Failed to fetch quest") ||
-      message.startsWith("Quest cannot be released") ||
-      message.startsWith("Only FAMILY quests") ||
-      message.startsWith("Only the hero")
-        ? 400
-        : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    return handleRouteError(error);
   }
 }

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { handleRouteError } from "@/lib/api-error-handler";
+import { ValidationError } from "@/lib/errors";
 import { streakService } from "@/lib/streak-service";
 
 export async function GET(request: Request) {
@@ -6,9 +8,8 @@ export async function GET(request: Request) {
   const characterId = searchParams.get("characterId");
 
   if (!characterId) {
-    return NextResponse.json(
-      { error: "characterId is required" },
-      { status: 400 }
+    return handleRouteError(
+      new ValidationError("characterId is required", "CHARACTER_ID_REQUIRED"),
     );
   }
 
@@ -16,8 +17,6 @@ export async function GET(request: Request) {
     const streaks = await streakService.getCharacterStreaks(characterId);
     return NextResponse.json({ streaks });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleRouteError(error);
   }
 }

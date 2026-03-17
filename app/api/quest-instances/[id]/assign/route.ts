@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assertValidUuidParam } from "@/lib/api-route-params";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
+import { handleRouteError } from "@/lib/api-error-handler";
+import {
+  AppError,
+  AuthError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function POST(
@@ -11,9 +20,9 @@ export async function POST(
 
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Missing or invalid authorization header" },
-        { status: 401 }
+      throw new AuthError(
+        "Missing or invalid authorization header",
+        "AUTH_HEADER_INVALID",
       );
     }
 
@@ -24,17 +33,14 @@ export async function POST(
     const characterId = body?.characterId as string | undefined;
 
     if (!characterId) {
-      return NextResponse.json(
-        { error: "Character ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Character ID is required", "CHARACTER_ID_REQUIRED");
     }
 
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     const user = authData?.user;
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+      throw new AuthError();
     }
 
     const { data: requesterProfile, error: profileError } = await supabase
@@ -44,18 +50,17 @@ export async function POST(
       .single();
 
     if (profileError || !requesterProfile) {
-      return NextResponse.json(
-        { error: "Failed to load user profile" },
-        { status: 500 }
-      );
+      throw new AppError("Failed to load user profile", 500, "PROFILE_LOAD_FAILED");
     }
 
     if (requesterProfile.role !== "GUILD_MASTER") {
-      return NextResponse.json(
-        { error: "Only Guild Masters can assign family quests" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Only Guild Masters can assign family quests",
+        "QUEST_ASSIGN_FORBIDDEN",
       );
     }
+
+    assertValidUuidParam(questId, "quest", "QUEST_ID_INVALID");
 
     const { data: quest, error: questError } = await supabase
       .from("quest_instances")
@@ -64,27 +69,28 @@ export async function POST(
       .maybeSingle();
 
     if (questError) {
-      return NextResponse.json(
-        { error: `Failed to fetch quest: ${questError.message}` },
-        { status: 400 }
+      throw new AppError(
+        `Failed to fetch quest: ${questError.message}`,
+        500,
+        "QUEST_LOOKUP_FAILED",
       );
     }
 
     if (!quest) {
-      return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+      throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
     }
 
     if (quest.family_id !== requesterProfile.family_id) {
-      return NextResponse.json(
-        { error: "Cannot assign quests outside your family" },
-        { status: 403 }
+      throw new ForbiddenError(
+        "Cannot assign quests outside your family",
+        "QUEST_ASSIGN_FORBIDDEN",
       );
     }
 
     if (quest.quest_type !== "FAMILY") {
-      return NextResponse.json(
-        { error: "Only family quests support GM assignment" },
-        { status: 400 }
+      throw new ValidationError(
+        "Only family quests support GM assignment",
+        "QUEST_TYPE_INVALID",
       );
     }
 
@@ -103,26 +109,6 @@ export async function POST(
       { status: 200 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    if (
-      !(
-        message.includes("Quest is not available for assignment") ||
-        message.includes("Only FAMILY quests can be assigned") ||
-        message.includes("Hero already has an active family quest")
-      )
-    ) {
-      console.error("Error assigning quest:", error);
-    }
-
-    const status =
-      message.startsWith("Quest is not available") ||
-      message.startsWith("Only FAMILY quests") ||
-      message.startsWith("Hero already has")
-        ? 400
-        : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    return handleRouteError(error);
   }
 }
