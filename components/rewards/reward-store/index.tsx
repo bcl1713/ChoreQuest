@@ -19,7 +19,13 @@ interface RewardStoreProps {
 export default function RewardStore({ onError }: RewardStoreProps) {
   const { user } = useAuth();
   const { character, refreshCharacter } = useCharacterContext();
-  const { rewards, redemptions, loading } = useRewards();
+  const {
+    rewards,
+    redemptions,
+    loading,
+    mergeRedemption,
+    glowingRedemptionIds,
+  } = useRewards();
 
   const {
     redeemReward,
@@ -33,11 +39,12 @@ export default function RewardStore({ onError }: RewardStoreProps) {
     character,
     onError,
     refreshCharacter,
+    mergeRedemption,
   });
 
   const canAfford = useCallback(
     (cost: number) => (character ? (character.gold || 0) >= cost : false),
-    [character]
+    [character],
   );
 
   const getRedemptionStatus = useCallback(
@@ -46,19 +53,22 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         (r) =>
           r.reward_id === rewardId &&
           r.user_profiles.id === user?.id &&
-          ["PENDING", "APPROVED"].includes(r.status || "")
+          ["PENDING", "APPROVED"].includes(r.status || ""),
       );
       return pending ? (pending.status as "PENDING" | "APPROVED") : null;
     },
-    [redemptions, user?.id]
+    [redemptions, user?.id],
   );
 
-  const pendingRedemptions = useMemo(() => redemptions.filter((r) => r.status === "PENDING"), [redemptions]);
+  const pendingRedemptions = useMemo(
+    () => redemptions.filter((r) => r.status === "PENDING"),
+    [redemptions],
+  );
   const goldBalance = useMemo(() => character?.gold || 0, [character]);
 
   const hasPendingRedemptions = useMemo(
     () => user?.role === "GUILD_MASTER" && pendingRedemptions.length > 0,
-    [user?.role, pendingRedemptions.length]
+    [user?.role, pendingRedemptions.length],
   );
 
   const handleHistoryStatusChange = useCallback(
@@ -68,7 +78,7 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         void updateRedemptionStatus(redemption, status);
       }
     },
-    [redemptions, updateRedemptionStatus]
+    [redemptions, updateRedemptionStatus],
   );
 
   if (loading) {
@@ -102,8 +112,11 @@ export default function RewardStore({ onError }: RewardStoreProps) {
       {hasPendingRedemptions && (
         <PendingRedemptionList
           pendingRedemptions={pendingRedemptions}
-          onUpdate={(redemption, status) => void updateRedemptionStatus(redemption, status)}
+          onUpdate={(redemption, status) =>
+            void updateRedemptionStatus(redemption, status)
+          }
           updatingId={updatingId}
+          glowingIds={glowingRedemptionIds}
         />
       )}
 
@@ -113,6 +126,8 @@ export default function RewardStore({ onError }: RewardStoreProps) {
         onApprove={(id) => handleHistoryStatusChange(id, "APPROVED")}
         onDeny={(id) => handleHistoryStatusChange(id, "DENIED")}
         onFulfill={(id) => handleHistoryStatusChange(id, "FULFILLED")}
+        updatingId={updatingId}
+        glowingIds={glowingRedemptionIds}
       />
 
       <RedeemSuccessToast

@@ -6,11 +6,20 @@ import type { RewardRedemptionWithUser } from "@/lib/reward-service";
 
 type PendingRedemptionListProps = {
   pendingRedemptions: RewardRedemptionWithUser[];
-  onUpdate: (redemption: RewardRedemptionWithUser, status: "APPROVED" | "DENIED") => void;
+  onUpdate: (
+    redemption: RewardRedemptionWithUser,
+    status: "APPROVED" | "DENIED",
+  ) => void;
   updatingId: string | null;
+  glowingIds?: Set<string>;
 };
 
-export function PendingRedemptionList({ pendingRedemptions, onUpdate, updatingId }: PendingRedemptionListProps) {
+export function PendingRedemptionList({
+  pendingRedemptions,
+  onUpdate,
+  updatingId,
+  glowingIds,
+}: PendingRedemptionListProps) {
   if (pendingRedemptions.length === 0) return null;
 
   return (
@@ -23,7 +32,7 @@ export function PendingRedemptionList({ pendingRedemptions, onUpdate, updatingId
         {pendingRedemptions.map((redemption) => (
           <div
             key={redemption.id}
-            className="bg-white border border-orange-200 rounded-lg p-4"
+            className={`bg-white border border-orange-200 rounded-lg p-4 ${glowingIds?.has(redemption.id) ? "animate-realtime-glow" : ""}`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">

@@ -4,7 +4,21 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
-import type { Tables } from "@/lib/types/database";
+import { supabase } from "@/lib/supabase";
+import type { Tables, RewardRedemption } from "@/lib/types/database";
+import { mergeRedemptionUpdate } from "./mergeRedemptionUpdate";
+
+/**
+ * Duration of the one-shot glow animation on realtime-updated redemption cards.
+ * Must match the animation duration in app/globals.css (.animate-realtime-glow).
+ */
+export const REALTIME_GLOW_DURATION_MS = 700;
+
+function isRedemptionRecord(
+  record: Record<string, unknown>,
+): record is RewardRedemption {
+  return typeof record.id === "string" && typeof record.status === "string";
+}
 
 type Reward = Tables<"rewards">;
 
@@ -16,6 +30,8 @@ interface UseRewardsReturn {
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
+  mergeRedemption: (updated: RewardRedemption) => void;
+  glowingRedemptionIds: Set<string>;
 }
 
 /**
@@ -34,9 +50,11 @@ interface UseRewardsReturn {
  *   - loading: Boolean indicating if data is currently being fetched
  *   - error: Error message string if fetch failed, null otherwise
  *   - reload: Function to manually trigger a data reload
+ *   - mergeRedemption: Function to merge a DB-confirmed redemption row into local state in-place
+ *   - glowingRedemptionIds: Set of redemption IDs currently showing the realtime glow animation
  *
  * @example
- * const { rewards, redemptions, loading, error, reload } = useRewards();
+ * const { rewards, redemptions, loading, error, reload, mergeRedemption, glowingRedemptionIds } = useRewards();
  *
  * if (loading) return <Spinner />;
  * if (error) return <ErrorMessage error={error} />;
@@ -52,7 +70,11 @@ export function useRewards(): UseRewardsReturn {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [glowingRedemptionIds, setGlowingRedemptionIds] = useState<Set<string>>(
+    new Set(),
+  );
   const hasLoadedRef = useRef(false);
+  const glowTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const loadRewards = useCallback(async () => {
     if (!profile?.family_id) {
@@ -118,21 +140,61 @@ export function useRewards(): UseRewardsReturn {
     return unsubscribe;
   }, [profile?.family_id, onRewardUpdate]);
 
+  const mergeRedemption = useCallback((updated: RewardRedemption) => {
+    setRedemptions((prev) => mergeRedemptionUpdate(prev, updated));
+  }, []);
+
   useEffect(() => {
     if (!profile?.family_id) return;
 
-    const unsubscribe = onRewardRedemptionUpdate(async () => {
-      try {
-        const redemptionsData = await rewardService.getRedemptionsForFamily(
-          profile.family_id!,
-        );
-        setRedemptions(redemptionsData);
-      } catch (err) {
-        console.error("Failed to reload redemptions:", err);
+    const timers = glowTimersRef.current;
+
+    const unsubscribe = onRewardRedemptionUpdate((event) => {
+      if (!event?.record) return;
+      if (!isRedemptionRecord(event.record)) return;
+      const updated = event.record;
+
+      if (event.action === "INSERT") {
+        // Fetch the single new row with its joined user_profiles
+        void supabase
+          .from("reward_redemptions")
+          .select("*, user_profiles:user_id(*)")
+          .eq("id", updated.id)
+          .single()
+          .then(({ data }) => {
+            if (!data) return;
+            const row = data as unknown as RewardRedemptionWithUser;
+            setRedemptions((prev) =>
+              prev.some((r) => r.id === row.id) ? prev : [row, ...prev],
+            );
+          });
+        return;
       }
+
+      if (event.action === "DELETE") {
+        setRedemptions((prev) => prev.filter((r) => r.id !== updated.id));
+        return;
+      }
+
+      // UPDATE — merge in-place preserving the joined user_profiles
+      setRedemptions((prev) => mergeRedemptionUpdate(prev, updated));
+      setGlowingRedemptionIds((prev) => new Set([...prev, updated.id]));
+      const timer = setTimeout(() => {
+        setGlowingRedemptionIds((prev) => {
+          const next = new Set(prev);
+          next.delete(updated.id);
+          return next;
+        });
+        timers.delete(timer);
+      }, REALTIME_GLOW_DURATION_MS);
+      timers.add(timer);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      timers.forEach(clearTimeout);
+      timers.clear();
+    };
   }, [profile?.family_id, onRewardRedemptionUpdate]);
 
   return {
@@ -141,5 +203,7 @@ export function useRewards(): UseRewardsReturn {
     loading,
     error,
     reload: loadRewards,
+    mergeRedemption,
+    glowingRedemptionIds,
   };
 }
