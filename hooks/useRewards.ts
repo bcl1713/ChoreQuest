@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { RewardService, RewardRedemptionWithUser } from "@/lib/reward-service";
+import { supabase } from "@/lib/supabase";
 import type { Tables, RewardRedemption } from "@/lib/types/database";
 import { mergeRedemptionUpdate } from "./mergeRedemptionUpdate";
 
@@ -152,6 +153,30 @@ export function useRewards(): UseRewardsReturn {
       if (!event?.record) return;
       if (!isRedemptionRecord(event.record)) return;
       const updated = event.record;
+
+      if (event.action === "INSERT") {
+        // Fetch the single new row with its joined user_profiles
+        void supabase
+          .from("reward_redemptions")
+          .select("*, user_profiles:user_id(*)")
+          .eq("id", updated.id)
+          .single()
+          .then(({ data }) => {
+            if (!data) return;
+            const row = data as unknown as RewardRedemptionWithUser;
+            setRedemptions((prev) =>
+              prev.some((r) => r.id === row.id) ? prev : [row, ...prev],
+            );
+          });
+        return;
+      }
+
+      if (event.action === "DELETE") {
+        setRedemptions((prev) => prev.filter((r) => r.id !== updated.id));
+        return;
+      }
+
+      // UPDATE — merge in-place preserving the joined user_profiles
       setRedemptions((prev) => mergeRedemptionUpdate(prev, updated));
       setGlowingRedemptionIds((prev) => new Set([...prev, updated.id]));
       const timer = setTimeout(() => {

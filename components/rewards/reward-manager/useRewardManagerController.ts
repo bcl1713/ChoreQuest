@@ -10,8 +10,12 @@ import type { RewardFormData } from "./reward-form";
 
 const rewardService = new RewardService();
 
-export function useRewardManagerController(profile: UserProfile | null, user: User | null) {
-  const { rewards, redemptions, loading, error } = useRewards();
+export function useRewardManagerController(
+  profile: UserProfile | null,
+  user: User | null,
+) {
+  const { rewards, redemptions, loading, error, mergeRedemption } =
+    useRewards();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -153,16 +157,17 @@ export function useRewardManagerController(profile: UserProfile | null, user: Us
       if (!user) return;
 
       try {
-        await rewardService.updateRedemptionStatus(
+        const updated = await rewardService.updateRedemptionStatus(
           redemptionId,
           "APPROVED",
           user.id,
         );
+        mergeRedemption(updated);
       } catch (err) {
         console.error("Failed to approve redemption:", err);
       }
     },
-    [user],
+    [user, mergeRedemption],
   );
 
   const handleDenyRedemption = useCallback(
@@ -173,22 +178,33 @@ export function useRewardManagerController(profile: UserProfile | null, user: Us
         const redemption = redemptions.find((r) => r.id === redemptionId);
         if (!redemption || !redemption.user_id) return;
 
-        await rewardService.updateRedemptionStatus(redemptionId, "DENIED");
+        const updated = await rewardService.updateRedemptionStatus(
+          redemptionId,
+          "DENIED",
+        );
+        mergeRedemption(updated);
         await rewardService.refundGold(redemption.user_id, redemption.cost);
       } catch (err) {
         console.error("Failed to deny redemption:", err);
       }
     },
-    [user, redemptions],
+    [user, redemptions, mergeRedemption],
   );
 
-  const handleFulfillRedemption = useCallback(async (redemptionId: string) => {
-    try {
-      await rewardService.updateRedemptionStatus(redemptionId, "FULFILLED");
-    } catch (err) {
-      console.error("Failed to fulfill redemption:", err);
-    }
-  }, []);
+  const handleFulfillRedemption = useCallback(
+    async (redemptionId: string) => {
+      try {
+        const updated = await rewardService.updateRedemptionStatus(
+          redemptionId,
+          "FULFILLED",
+        );
+        mergeRedemption(updated);
+      } catch (err) {
+        console.error("Failed to fulfill redemption:", err);
+      }
+    },
+    [mergeRedemption],
+  );
 
   return {
     rewards,

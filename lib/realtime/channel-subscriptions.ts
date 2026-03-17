@@ -71,7 +71,9 @@ export const createFamilyRealtimeChannels = (
     {
       channelName: `family_${familyId}_reward_redemptions`,
       table: "reward_redemptions",
-      filter: `family_id=eq.${familyId}`,
+      // reward_redemptions has no family_id column; omit filter so events
+      // are delivered.  mergeRedemptionUpdate only matches by ID, so
+      // cross-family events are harmless no-ops.
       eventType: "reward_redemption_updated",
       registry: registries.rewardRedemption,
     },
