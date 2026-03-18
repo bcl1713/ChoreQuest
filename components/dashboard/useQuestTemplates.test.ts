@@ -67,6 +67,28 @@ describe("useQuestTemplates", () => {
       expect(result.current.questTemplates).toHaveLength(0);
     });
 
+    it("fetches templates when familyId is known but character has not yet loaded", async () => {
+      // Verifies the hook has no character dependency — templates should load
+      // as soon as user + family_id are available (before character resolves).
+      const templates = [makeTemplate("t-1")];
+      const chainMock = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+      };
+      chainMock.eq
+        .mockReturnValueOnce(chainMock)
+        .mockReturnValueOnce(Promise.resolve({ data: templates, error: null }));
+      mockFrom.mockReturnValue(chainMock);
+
+      const { result } = renderHook(() =>
+        useQuestTemplates({ familyId: "fam-1", enabled: true }),
+      );
+
+      await waitFor(() =>
+        expect(result.current.questTemplates).toHaveLength(1),
+      );
+    });
+
     it("handles database error gracefully without throwing", async () => {
       const chainMock = {
         select: jest.fn().mockReturnThis(),

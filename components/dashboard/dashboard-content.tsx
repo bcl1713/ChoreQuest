@@ -51,7 +51,7 @@ export function DashboardContent() {
 
   const { questTemplates, reloadQuestTemplates } = useQuestTemplates({
     familyId: profile?.family_id,
-    enabled: Boolean(user && profile && character),
+    enabled: Boolean(user && profile?.family_id),
   });
 
   useEffect(() => {
