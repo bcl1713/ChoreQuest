@@ -165,225 +165,108 @@ INSERT INTO achievement_categories (name, description, display_order, icon) VALU
   ('Secret',     'Hidden achievements discovered through play',            6, 'eye-off');
 
 -- 6.2 Adventurer achievements (quest completion milestones + volunteer + challenge)
-INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config) VALUES
-  (
-    'First Quest',
-    'Complete your very first quest.',
-    (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
-    50, 10,
-    'quest_complete',
-    '{"threshold": 1}'
-  ),
-  (
-    'Seasoned Adventurer',
-    'Complete 10 quests.',
-    (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
-    200, 50,
-    'quest_complete',
-    '{"threshold": 10}'
-  ),
-  (
-    'Veteran Hero',
-    'Complete 50 quests.',
-    (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
-    500, 150,
-    'quest_complete',
-    '{"threshold": 50}'
-  ),
-  (
-    'Legendary Quester',
-    'Complete 100 quests.',
-    (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
-    1000, 300,
-    'quest_complete',
-    '{"threshold": 100}'
-  ),
-  (
-    'Volunteer Spirit',
-    'Volunteer to help with a quest.',
-    (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
-    100, 25,
-    'quest_volunteer',
-    '{"threshold": 1}'
-  ),
-  (
-    'Challenge Seeker',
-    'Complete 5 HARD difficulty quests.',
-    (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
-    300, 75,
-    'quest_difficulty',
-    '{"difficulty": "HARD", "threshold": 5}'
-  );
+INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config)
+SELECT
+  v.name,
+  v.description,
+  (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
+  v.xp_reward,
+  v.gold_reward,
+  v.criteria_type,
+  v.criteria_config::jsonb
+FROM (VALUES
+  ('First Quest',        'Complete your very first quest.',        50,   10,  'quest_complete',  '{"threshold": 1}'),
+  ('Seasoned Adventurer','Complete 10 quests.',                    200,  50,  'quest_complete',  '{"threshold": 10}'),
+  ('Veteran Hero',       'Complete 50 quests.',                    500,  150, 'quest_complete',  '{"threshold": 50}'),
+  ('Legendary Quester',  'Complete 100 quests.',                   1000, 300, 'quest_complete',  '{"threshold": 100}'),
+  ('Volunteer Spirit',   'Volunteer to help with a quest.',        100,  25,  'quest_volunteer', '{"threshold": 1}'),
+  ('Challenge Seeker',   'Complete 5 HARD difficulty quests.',     300,  75,  'quest_difficulty','{"difficulty": "HARD", "threshold": 5}')
+) AS v(name, description, xp_reward, gold_reward, criteria_type, criteria_config);
 
 -- 6.3 Warrior achievements (boss battles)
-INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config) VALUES
-  (
-    'First Blood',
-    'Defeat your first boss.',
-    (SELECT id FROM achievement_categories WHERE name = 'Warrior'),
-    150, 50,
-    'boss_defeated',
-    '{"threshold": 1}'
-  ),
-  (
-    'Boss Slayer',
-    'Defeat 10 bosses.',
-    (SELECT id FROM achievement_categories WHERE name = 'Warrior'),
-    1000, 250,
-    'boss_defeated',
-    '{"threshold": 10}'
-  ),
-  (
-    'Battle Ready',
-    'Participate in 5 boss battles.',
-    (SELECT id FROM achievement_categories WHERE name = 'Warrior'),
-    200, 50,
-    'boss_participated',
-    '{"threshold": 5}'
-  );
+INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config)
+SELECT
+  v.name,
+  v.description,
+  (SELECT id FROM achievement_categories WHERE name = 'Warrior'),
+  v.xp_reward,
+  v.gold_reward,
+  v.criteria_type,
+  v.criteria_config::jsonb
+FROM (VALUES
+  ('First Blood',  'Defeat your first boss.',        150,  50,  'boss_defeated',    '{"threshold": 1}'),
+  ('Boss Slayer',  'Defeat 10 bosses.',               1000, 250, 'boss_defeated',    '{"threshold": 10}'),
+  ('Battle Ready', 'Participate in 5 boss battles.',  200,  50,  'boss_participated','{"threshold": 5}')
+) AS v(name, description, xp_reward, gold_reward, criteria_type, criteria_config);
 
 -- 6.4 Wealth achievements (gold earning and spending)
-INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config) VALUES
-  (
-    'First Gold',
-    'Earn your first gold coin.',
-    (SELECT id FROM achievement_categories WHERE name = 'Wealth'),
-    25, 0,
-    'gold_earned',
-    '{"threshold": 1}'
-  ),
-  (
-    'Treasure Hunter',
-    'Earn 100 gold total.',
-    (SELECT id FROM achievement_categories WHERE name = 'Wealth'),
-    100, 0,
-    'gold_earned',
-    '{"threshold": 100}'
-  ),
-  (
-    'Gold Hoarder',
-    'Earn 1000 gold total.',
-    (SELECT id FROM achievement_categories WHERE name = 'Wealth'),
-    500, 0,
-    'gold_earned',
-    '{"threshold": 1000}'
-  ),
-  (
-    'Big Spender',
-    'Spend 100 gold at the reward shop.',
-    (SELECT id FROM achievement_categories WHERE name = 'Wealth'),
-    75, 0,
-    'gold_spent',
-    '{"threshold": 100}'
-  );
+INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config)
+SELECT
+  v.name,
+  v.description,
+  (SELECT id FROM achievement_categories WHERE name = 'Wealth'),
+  v.xp_reward,
+  v.gold_reward,
+  v.criteria_type,
+  v.criteria_config::jsonb
+FROM (VALUES
+  ('First Gold',      'Earn your first gold coin.',          25,  0, 'gold_earned', '{"threshold": 1}'),
+  ('Treasure Hunter', 'Earn 100 gold total.',                100, 0, 'gold_earned', '{"threshold": 100}'),
+  ('Gold Hoarder',    'Earn 1000 gold total.',               500, 0, 'gold_earned', '{"threshold": 1000}'),
+  ('Big Spender',     'Spend 100 gold at the reward shop.',  75,  0, 'gold_spent',  '{"threshold": 100}')
+) AS v(name, description, xp_reward, gold_reward, criteria_type, criteria_config);
 
 -- 6.5 Growth achievements (level milestones and XP)
-INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config) VALUES
-  (
-    'Rising Star',
-    'Reach level 2.',
-    (SELECT id FROM achievement_categories WHERE name = 'Growth'),
-    50, 25,
-    'level_reached',
-    '{"threshold": 2}'
-  ),
-  (
-    'Apprentice',
-    'Reach level 5.',
-    (SELECT id FROM achievement_categories WHERE name = 'Growth'),
-    150, 50,
-    'level_reached',
-    '{"threshold": 5}'
-  ),
-  (
-    'Hero',
-    'Reach level 10.',
-    (SELECT id FROM achievement_categories WHERE name = 'Growth'),
-    400, 100,
-    'level_reached',
-    '{"threshold": 10}'
-  ),
-  (
-    'Legend',
-    'Reach level 20.',
-    (SELECT id FROM achievement_categories WHERE name = 'Growth'),
-    1000, 250,
-    'level_reached',
-    '{"threshold": 20}'
-  ),
-  (
-    'XP Hunter',
-    'Earn 1000 XP total.',
-    (SELECT id FROM achievement_categories WHERE name = 'Growth'),
-    200, 50,
-    'xp_earned',
-    '{"threshold": 1000}'
-  );
+INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config)
+SELECT
+  v.name,
+  v.description,
+  (SELECT id FROM achievement_categories WHERE name = 'Growth'),
+  v.xp_reward,
+  v.gold_reward,
+  v.criteria_type,
+  v.criteria_config::jsonb
+FROM (VALUES
+  ('Rising Star', 'Reach level 2.',     50,   25,  'level_reached', '{"threshold": 2}'),
+  ('Apprentice',  'Reach level 5.',     150,  50,  'level_reached', '{"threshold": 5}'),
+  ('Hero',        'Reach level 10.',    400,  100, 'level_reached', '{"threshold": 10}'),
+  ('Legend',      'Reach level 20.',    1000, 250, 'level_reached', '{"threshold": 20}'),
+  ('XP Hunter',   'Earn 1000 XP total.',200, 50,  'xp_earned',     '{"threshold": 1000}')
+) AS v(name, description, xp_reward, gold_reward, criteria_type, criteria_config);
 
 -- 6.6 Dedication achievements (streak milestones)
-INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config) VALUES
-  (
-    'Three Day Streak',
-    'Maintain a 3-day activity streak.',
-    (SELECT id FROM achievement_categories WHERE name = 'Dedication'),
-    75, 20,
-    'streak_reached',
-    '{"threshold": 3}'
-  ),
-  (
-    'Week Warrior',
-    'Maintain a 7-day activity streak.',
-    (SELECT id FROM achievement_categories WHERE name = 'Dedication'),
-    200, 50,
-    'streak_reached',
-    '{"threshold": 7}'
-  ),
-  (
-    'Fortnight Fighter',
-    'Maintain a 14-day activity streak.',
-    (SELECT id FROM achievement_categories WHERE name = 'Dedication'),
-    400, 100,
-    'streak_reached',
-    '{"threshold": 14}'
-  ),
-  (
-    'Monthly Master',
-    'Maintain a 30-day activity streak.',
-    (SELECT id FROM achievement_categories WHERE name = 'Dedication'),
-    800, 200,
-    'streak_reached',
-    '{"threshold": 30}'
-  );
+INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config)
+SELECT
+  v.name,
+  v.description,
+  (SELECT id FROM achievement_categories WHERE name = 'Dedication'),
+  v.xp_reward,
+  v.gold_reward,
+  v.criteria_type,
+  v.criteria_config::jsonb
+FROM (VALUES
+  ('Three Day Streak', 'Maintain a 3-day activity streak.',  75,  20,  'streak_reached', '{"threshold": 3}'),
+  ('Week Warrior',     'Maintain a 7-day activity streak.',  200, 50,  'streak_reached', '{"threshold": 7}'),
+  ('Fortnight Fighter','Maintain a 14-day activity streak.', 400, 100, 'streak_reached', '{"threshold": 14}'),
+  ('Monthly Master',   'Maintain a 30-day activity streak.', 800, 200, 'streak_reached', '{"threshold": 30}')
+) AS v(name, description, xp_reward, gold_reward, criteria_type, criteria_config);
 
 -- 6.7 Secret achievements (is_hidden = TRUE)
-INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, is_hidden, criteria_type, criteria_config) VALUES
-  (
-    'Shape Shifter',
-    'Change your character class.',
-    (SELECT id FROM achievement_categories WHERE name = 'Secret'),
-    200, 50,
-    TRUE,
-    'class_change',
-    '{"threshold": 1}'
-  ),
-  (
-    'Honorable',
-    'Earn your first honor point.',
-    (SELECT id FROM achievement_categories WHERE name = 'Secret'),
-    100, 0,
-    TRUE,
-    'honor_earned',
-    '{"threshold": 1}'
-  ),
-  (
-    'First Redemption',
-    'Redeem your first reward.',
-    (SELECT id FROM achievement_categories WHERE name = 'Secret'),
-    50, 0,
-    TRUE,
-    'reward_redeemed',
-    '{"threshold": 1}'
-  );
+INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, is_hidden, criteria_type, criteria_config)
+SELECT
+  v.name,
+  v.description,
+  (SELECT id FROM achievement_categories WHERE name = 'Secret'),
+  v.xp_reward,
+  v.gold_reward,
+  TRUE,
+  v.criteria_type,
+  v.criteria_config::jsonb
+FROM (VALUES
+  ('Shape Shifter',    'Change your character class.',   200, 50, 'class_change',   '{"threshold": 1}'),
+  ('Honorable',        'Earn your first honor point.',   100, 0,  'honor_earned',   '{"threshold": 1}'),
+  ('First Redemption', 'Redeem your first reward.',      50,  0,  'reward_redeemed','{"threshold": 1}')
+) AS v(name, description, xp_reward, gold_reward, criteria_type, criteria_config);
 
 -- 6.8 Balance note: reward values above are draft and subject to balancing.
 -- Quest rewards in this project range from ~10–150 XP per quest.
