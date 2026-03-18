@@ -222,7 +222,12 @@ export default function AuthForm({
 
         {error && (
           <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p
+              className="text-red-400 text-sm"
+              data-testid="auth-error-message"
+            >
+              {error}
+            </p>
           </div>
         )}
 

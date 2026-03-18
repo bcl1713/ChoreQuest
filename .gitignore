@@ -18,7 +18,8 @@
 /coverage
 /playwright-report
 /test-results
-/tests/e2d/.auth/
+/tests/e2e/.auth/
+/tests/e2e/.playwright-test-user.json
 # test screenshots and debug files
 *.png
 test-*.png
