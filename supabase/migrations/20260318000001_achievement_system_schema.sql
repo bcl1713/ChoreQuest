@@ -28,7 +28,7 @@ CREATE TABLE achievements (
   id              UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   name            TEXT        NOT NULL,
   description     TEXT        NOT NULL,
-  category_id     UUID        REFERENCES achievement_categories(id),
+  category_id     UUID        NOT NULL REFERENCES achievement_categories(id),
   icon            TEXT,
   xp_reward       INT         DEFAULT 0,
   gold_reward     INT         DEFAULT 0,
@@ -45,8 +45,8 @@ CREATE TABLE character_achievements (
   id             UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   character_id   UUID        NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
   achievement_id UUID        NOT NULL REFERENCES achievements(id) ON DELETE CASCADE,
-  unlocked_at    TIMESTAMPTZ,
-  progress       JSONB,
+  unlocked_at    TIMESTAMPTZ,           -- NULL = in-progress, NOT NULL = fully unlocked
+  progress       JSONB,                 -- evaluation engine (#136) writes partial progress here
   notified       BOOL        DEFAULT FALSE,
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   updated_at     TIMESTAMPTZ DEFAULT NOW(),
@@ -101,6 +101,8 @@ CREATE POLICY "Authenticated users can view achievement categories"
   FOR SELECT
   USING (auth.uid() IS NOT NULL);
 
+-- USING (false) blocks all write access for authenticated (non-service) users.
+-- The Supabase service role bypasses RLS entirely, so it can still write.
 CREATE POLICY "Service role manages achievement categories"
   ON achievement_categories
   FOR ALL
@@ -146,6 +148,9 @@ CREATE POLICY "Family members can view character achievements"
   );
 
 -- 5.6 character_achievements INSERT/UPDATE: service role only
+-- USING (false) blocks all write access for authenticated (non-service) users.
+-- The Supabase service role bypasses RLS entirely, so it can still write.
+-- Achievement unlocks are written exclusively by the evaluation engine (#136).
 CREATE POLICY "Service role manages character achievements"
   ON character_achievements
   FOR ALL
@@ -163,6 +168,9 @@ INSERT INTO achievement_categories (name, description, display_order, icon) VALU
   ('Growth',     'Awarded for leveling up and earning XP',                4, 'star'),
   ('Dedication', 'Awarded for maintaining activity streaks',               5, 'flame'),
   ('Secret',     'Hidden achievements discovered through play',            6, 'eye-off');
+
+-- criteria_type values below must match the evaluation engine constants defined
+-- in issue #136. Renaming any value here requires a companion data migration.
 
 -- 6.2 Adventurer achievements (quest completion milestones + volunteer + challenge)
 INSERT INTO achievements (name, description, category_id, xp_reward, gold_reward, criteria_type, criteria_config)

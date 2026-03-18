@@ -233,7 +233,14 @@ describe("Achievement System Schema Migration (20260318000001)", () => {
     });
 
     it("should seed at least one hidden achievement (is_hidden = TRUE)", () => {
-      expect(sql).toMatch(/is_hidden.*TRUE|TRUE.*is_hidden/i);
+      // Verify the Secret seed block explicitly passes TRUE as the is_hidden column value.
+      // The Secret INSERT selects TRUE as a literal in the SELECT list (not in VALUES),
+      // so we look for the pattern within the Secret category's INSERT block.
+      const secretInsertBlock = sql.match(
+        /-- 6\.7 Secret achievements[\s\S]*?(?=--|$)/i,
+      );
+      expect(secretInsertBlock).toBeTruthy();
+      expect(secretInsertBlock![0]).toMatch(/\bTRUE\b/i);
     });
 
     it("should seed achievements across all 6 categories", () => {
