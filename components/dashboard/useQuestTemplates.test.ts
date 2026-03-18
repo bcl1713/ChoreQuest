@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { useQuestTemplates } from "./useQuestTemplates";
+import { makeTemplate } from "./useQuestTemplates.test-utils";
 
 const mockFrom = jest.fn();
 jest.mock("@/lib/supabase", () => ({
@@ -12,19 +13,6 @@ jest.mock("@/lib/realtime-context", () => ({
     onQuestTemplateUpdate: mockOnQuestTemplateUpdate,
   }),
 }));
-
-export const makeTemplate = (id: string, overrides = {}) => ({
-  id,
-  family_id: "fam-1",
-  title: `Quest ${id}`,
-  description: null,
-  is_active: true,
-  reward_gold: 10,
-  reward_xp: 20,
-  created_at: "2026-01-01",
-  updated_at: "2026-01-01",
-  ...overrides,
-});
 
 describe("useQuestTemplates", () => {
   beforeEach(() => {
@@ -39,6 +27,8 @@ describe("useQuestTemplates", () => {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
       };
+      // First .eq() filters by family_id (returns chainMock for chaining),
+      // second .eq() filters by is_active=true (returns the resolved promise).
       chainMock.eq
         .mockReturnValueOnce(chainMock)
         .mockReturnValueOnce(Promise.resolve({ data: templates, error: null }));
@@ -82,6 +72,7 @@ describe("useQuestTemplates", () => {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
       };
+      // First .eq() filters by family_id, second .eq() filters by is_active=true.
       chainMock.eq
         .mockReturnValueOnce(chainMock)
         .mockReturnValueOnce(

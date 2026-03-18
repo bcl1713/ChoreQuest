@@ -1,4 +1,14 @@
-import { NextRequest } from "next/server";
+import {
+  VALID_UUID,
+  GM_USER_ID,
+  HERO_USER_ID,
+  FAMILY_ID,
+  OTHER_FAMILY_ID,
+  makeRequest,
+  params,
+  singleResult,
+  makeSetupAuth,
+} from "./quest-instance-helpers";
 
 const mockSupabase = {
   auth: { getUser: jest.fn() },
@@ -20,53 +30,7 @@ jest.mock("@/lib/quest-instance-service", () => ({
 import { POST as releaseRoute } from "@/app/api/quest-instances/[id]/release/route";
 import { QuestInstanceService } from "@/lib/quest-instance-service";
 
-// ---------------------------------------------------------------------------
-// Test helpers
-// ---------------------------------------------------------------------------
-
-const VALID_UUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
-const GM_USER_ID = "user-gm-1";
-const HERO_USER_ID = "user-hero-1";
-const FAMILY_ID = "fam-1";
-const OTHER_FAMILY_ID = "fam-other";
-
-const makeRequest = (
-  method: string,
-  body?: unknown,
-  auth: string | null = `Bearer token`,
-) => {
-  const headers: Record<string, string> = {
-    "content-type": "application/json",
-  };
-  if (auth !== null) headers["authorization"] = auth;
-  return new NextRequest("http://localhost/test", {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-};
-
-const params = (id: string) => ({ params: Promise.resolve({ id }) });
-
-/** Sets up mockSupabase.auth.getUser */
-const setupAuth = (role: "GUILD_MASTER" | "HERO", familyId = FAMILY_ID) => {
-  const userId = role === "GUILD_MASTER" ? GM_USER_ID : HERO_USER_ID;
-  mockSupabase.auth.getUser.mockResolvedValue({
-    data: { user: { id: userId } },
-    error: null,
-  });
-  return { userId, role, familyId };
-};
-
-/** Returns a chainable mock for .from(...).select().eq().single() */
-const singleResult = (data: unknown, error: unknown = null) => ({
-  select: jest.fn().mockReturnThis(),
-  eq: jest.fn().mockReturnThis(),
-  single: jest.fn().mockResolvedValue({ data, error }),
-  maybeSingle: jest.fn().mockResolvedValue({ data, error }),
-  update: jest.fn().mockReturnThis(),
-  delete: jest.fn().mockReturnThis(),
-});
+const setupAuth = makeSetupAuth(mockSupabase.auth.getUser);
 
 // ---------------------------------------------------------------------------
 // release route

@@ -1,5 +1,6 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useQuestTemplates } from "./useQuestTemplates";
+import { makeTemplate } from "./useQuestTemplates.test-utils";
 
 const mockFrom = jest.fn();
 jest.mock("@/lib/supabase", () => ({
@@ -12,19 +13,6 @@ jest.mock("@/lib/realtime-context", () => ({
     onQuestTemplateUpdate: mockOnQuestTemplateUpdate,
   }),
 }));
-
-const makeTemplate = (id: string, overrides = {}) => ({
-  id,
-  family_id: "fam-1",
-  title: `Quest ${id}`,
-  description: null,
-  is_active: true,
-  reward_gold: 10,
-  reward_xp: 20,
-  created_at: "2026-01-01",
-  updated_at: "2026-01-01",
-  ...overrides,
-});
 
 const makeChain = (data: unknown[]) => {
   const chainMock = {

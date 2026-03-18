@@ -14,7 +14,7 @@ jest.mock("next/navigation", () => ({
     refresh: jest.fn(),
   }),
   usePathname: () => "/dashboard",
-  useSearchParams: jest.fn(() => new URLSearchParams()),
+  useSearchParams: jest.fn(),
 }));
 
 const { useSearchParams } = jest.requireMock("next/navigation");

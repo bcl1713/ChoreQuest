@@ -37,7 +37,6 @@ jest.mock("@/components/admin/quest-management-tab", () => ({
 
 const mockPush = jest.fn();
 const mockGet = jest.fn();
-const mockToString = jest.fn(() => "");
 
 describe("AdminDashboard", () => {
   beforeEach(() => {
@@ -46,7 +45,7 @@ describe("AdminDashboard", () => {
     (usePathname as jest.Mock).mockReturnValue("/admin");
     (useSearchParams as jest.Mock).mockReturnValue({
       get: mockGet,
-      toString: mockToString,
+      toString: jest.fn(() => ""),
     });
     mockGet.mockReturnValue(null);
   });
