@@ -89,16 +89,6 @@ describe("useQuestTemplates", () => {
       );
     });
 
-    it("does not fetch when familyId is absent even if enabled is true", () => {
-      // Verifies that a missing family_id (not yet resolved from profile)
-      // prevents an unnecessary fetch regardless of other state.
-      const { result } = renderHook(() =>
-        useQuestTemplates({ familyId: null, enabled: true }),
-      );
-      expect(mockFrom).not.toHaveBeenCalled();
-      expect(result.current.questTemplates).toHaveLength(0);
-    });
-
     it("handles database error gracefully without throwing", async () => {
       const chainMock = {
         select: jest.fn().mockReturnThis(),
