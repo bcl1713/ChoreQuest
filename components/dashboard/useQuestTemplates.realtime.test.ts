@@ -1,4 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
+import type { RealtimeEvent } from "@/lib/realtime-context";
 import { useQuestTemplates } from "./useQuestTemplates";
 import { makeTemplate } from "./useQuestTemplates.test-utils";
 
@@ -26,7 +27,7 @@ const makeChain = (data: unknown[]) => {
 };
 
 describe("useQuestTemplates — realtime subscription", () => {
-  let capturedListener: ((event: unknown) => void) | null = null;
+  let capturedListener: ((event: RealtimeEvent) => void) | null = null;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,7 +58,12 @@ describe("useQuestTemplates — realtime subscription", () => {
     await waitFor(() => expect(result.current.questTemplates).toHaveLength(1));
 
     act(() => {
-      capturedListener?.({ action: "INSERT", record: makeTemplate("t-2") });
+      capturedListener?.({
+        type: "quest_template_updated",
+        table: "quest_templates",
+        action: "INSERT",
+        record: makeTemplate("t-2"),
+      });
     });
 
     expect(result.current.questTemplates).toHaveLength(2);
@@ -71,6 +77,8 @@ describe("useQuestTemplates — realtime subscription", () => {
 
     act(() => {
       capturedListener?.({
+        type: "quest_template_updated",
+        table: "quest_templates",
         action: "INSERT",
         record: makeTemplate("t-inactive", { is_active: false }),
       });
@@ -91,6 +99,8 @@ describe("useQuestTemplates — realtime subscription", () => {
 
     act(() => {
       capturedListener?.({
+        type: "quest_template_updated",
+        table: "quest_templates",
         action: "UPDATE",
         record: { id: "t-1", title: "New Title", is_active: true },
       });
@@ -109,6 +119,8 @@ describe("useQuestTemplates — realtime subscription", () => {
 
     act(() => {
       capturedListener?.({
+        type: "quest_template_updated",
+        table: "quest_templates",
         action: "UPDATE",
         record: { id: "t-1", is_active: false },
       });
@@ -128,7 +140,13 @@ describe("useQuestTemplates — realtime subscription", () => {
     await waitFor(() => expect(result.current.questTemplates).toHaveLength(2));
 
     act(() => {
-      capturedListener?.({ action: "DELETE", old_record: { id: "t-1" } });
+      capturedListener?.({
+        type: "quest_template_updated",
+        table: "quest_templates",
+        action: "DELETE",
+        record: {},
+        old_record: { id: "t-1" },
+      });
     });
 
     expect(result.current.questTemplates).toHaveLength(1);

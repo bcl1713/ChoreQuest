@@ -41,33 +41,28 @@ describe("POST /api/quest-instances/[id]/deny", () => {
 
   it("returns 200 when GM denies a COMPLETED quest", async () => {
     setupAuth("GUILD_MASTER");
-    const updateMock = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({
-        data: {
-          id: VALID_UUID,
-          family_id: FAMILY_ID,
-          status: "COMPLETED",
-          assigned_to_id: HERO_USER_ID,
-        },
-        error: null,
-      }),
-      update: jest.fn().mockReturnThis(),
-    };
-    // update().eq() final call resolves success
-    const updateChain = {
-      update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
-      }),
-    };
     mockSupabase.from
       .mockReturnValueOnce(
         singleResult({ role: "GUILD_MASTER", family_id: FAMILY_ID }),
       )
-      .mockReturnValueOnce(updateMock)
-      .mockReturnValueOnce(updateChain);
+      .mockReturnValueOnce({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({
+          data: {
+            id: VALID_UUID,
+            family_id: FAMILY_ID,
+            status: "COMPLETED",
+            assigned_to_id: HERO_USER_ID,
+          },
+          error: null,
+        }),
+      })
+      .mockReturnValueOnce({
+        update: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null }),
+        }),
+      });
 
     const res = await denyRoute(makeRequest("POST"), params(VALID_UUID));
     expect(res.status).toBe(200);
