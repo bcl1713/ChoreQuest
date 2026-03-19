@@ -108,6 +108,45 @@ export function useRewardStoreActions({
           await rewardService.refundGold(redemption.user_id, refundAmount);
           await refreshCharacter();
         }
+
+        if (status === "APPROVED") {
+          supabase.auth
+            .getSession()
+            .then(({ data }) => {
+              const token = data.session?.access_token;
+              fetch("/api/achievement-progress/evaluate", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                  eventType: "REWARD_APPROVED",
+                  userId: redemption.user_id,
+                }),
+              })
+                .then((response) => {
+                  if (!response.ok) {
+                    console.error(
+                      "Achievement progress evaluation failed (non-blocking):",
+                      response.status,
+                    );
+                  }
+                })
+                .catch((err) => {
+                  console.error(
+                    "Achievement progress evaluation failed (non-blocking):",
+                    err,
+                  );
+                });
+            })
+            .catch((err) => {
+              console.error(
+                "Achievement progress evaluation failed (non-blocking):",
+                err,
+              );
+            });
+        }
       } catch (error) {
         console.error("Failed to update redemption:", error);
         onError?.(

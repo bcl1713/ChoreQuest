@@ -3,7 +3,7 @@ import { RewardRedemptionWithUser } from "@/lib/reward-service";
 export const createMockRedemption = (
   id: string,
   status: "PENDING" | "APPROVED" | "DENIED" | "FULFILLED",
-  overrides?: Partial<RewardRedemptionWithUser>
+  overrides?: Partial<RewardRedemptionWithUser>,
 ): RewardRedemptionWithUser => ({
   id,
   user_id: "user-1",
@@ -18,15 +18,20 @@ export const createMockRedemption = (
     status === "APPROVED" || status === "FULFILLED"
       ? new Date("2024-01-02T10:00:00Z").toISOString()
       : null,
-  fulfilled_at: status === "FULFILLED" ? new Date("2024-01-03T10:00:00Z").toISOString() : null,
+  fulfilled_at:
+    status === "FULFILLED"
+      ? new Date("2024-01-03T10:00:00Z").toISOString()
+      : null,
+  approved_by: null,
   notes: overrides?.notes ?? null,
   user_profiles: {
     id: "user-1",
     name: "Test Hero",
     email: "hero@example.com",
-    role: "CHILD",
+    role: "YOUNG_HERO",
     family_id: "family-1",
     created_at: new Date().toISOString(),
+    updated_at: null,
   },
   ...overrides,
 });

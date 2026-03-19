@@ -9,7 +9,7 @@ export const mockReward: Reward = {
   cost: 50,
   is_active: true,
   created_at: "2024-01-01T00:00:00Z",
-  created_by: "user-1",
+  updated_at: null,
 };
 
 export const createHandlers = () => ({

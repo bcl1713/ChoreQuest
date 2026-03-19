@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { RewardService } from "@/lib/reward-service";
+import { supabase } from "@/lib/supabase";
 import { Reward } from "@/lib/types/database";
 import { useRewards } from "@/hooks/useRewards";
 import type { UserProfile } from "@/lib/types/database";
@@ -163,11 +164,51 @@ export function useRewardManagerController(
           user.id,
         );
         mergeRedemption(updated);
+
+        const redemption = redemptions.find((r) => r.id === redemptionId);
+        if (redemption?.user_id) {
+          supabase.auth
+            .getSession()
+            .then(({ data }) => {
+              const token = data.session?.access_token;
+              fetch("/api/achievement-progress/evaluate", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                  eventType: "REWARD_APPROVED",
+                  userId: redemption.user_id,
+                }),
+              })
+                .then((response) => {
+                  if (!response.ok) {
+                    console.error(
+                      "Achievement progress evaluation failed (non-blocking):",
+                      response.status,
+                    );
+                  }
+                })
+                .catch((err) => {
+                  console.error(
+                    "Achievement progress evaluation failed (non-blocking):",
+                    err,
+                  );
+                });
+            })
+            .catch((err) => {
+              console.error(
+                "Achievement progress evaluation failed (non-blocking):",
+                err,
+              );
+            });
+        }
       } catch (err) {
         console.error("Failed to approve redemption:", err);
       }
     },
-    [user, mergeRedemption],
+    [user, mergeRedemption, redemptions],
   );
 
   const handleDenyRedemption = useCallback(

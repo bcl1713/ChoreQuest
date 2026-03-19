@@ -15,6 +15,7 @@ import {
   buildDecisionMap,
   resolveParticipantDecision,
 } from "@/lib/boss-quest-rewards";
+import { AchievementProgressService } from "@/lib/achievement-progress-service";
 import type { CharacterClass } from "@/lib/types/database";
 
 export async function POST(
@@ -31,7 +32,10 @@ export async function POST(
     const supabase = createServerSupabaseClient(token);
     const serviceSupabase = createServiceSupabaseClient();
 
-    const requesterProfile = await authenticateAndFetchUserProfile(supabase, token);
+    const requesterProfile = await authenticateAndFetchUserProfile(
+      supabase,
+      token,
+    );
 
     if (requesterProfile.role !== "GUILD_MASTER") {
       throw new ForbiddenError(
@@ -184,6 +188,21 @@ export async function POST(
             character.id,
             characterUpdateError,
           );
+        } else if (appliedDecision.status !== "DENIED") {
+          try {
+            const progressService = new AchievementProgressService(
+              serviceSupabase,
+            );
+            await progressService.updateProgress(character.id, {
+              type: "BOSS_COMPLETED",
+            });
+          } catch (progressError) {
+            console.error(
+              "Achievement progress update failed after boss completion (non-blocking):",
+              character.id,
+              progressError,
+            );
+          }
         }
       }
 

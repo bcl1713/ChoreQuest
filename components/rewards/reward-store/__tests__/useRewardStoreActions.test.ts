@@ -16,6 +16,11 @@ jest.mock("@/lib/reward-service", () => {
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
+    auth: {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: { access_token: "test-token" } },
+      }),
+    },
     from: jest.fn(() => ({
       insert: jest.fn().mockResolvedValue({ error: null }),
       update: jest.fn(() => ({
@@ -24,6 +29,10 @@ jest.mock("@/lib/supabase", () => ({
     })),
   },
 }));
+
+// Mock global fetch for the achievement-progress evaluate route
+const mockFetch = jest.fn().mockResolvedValue({ ok: true });
+global.fetch = mockFetch;
 
 import { RewardService as MockedRewardService } from "@/lib/reward-service";
 
@@ -159,5 +168,131 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
     });
 
     await waitFor(() => expect(result.current.updatingId).toBeNull());
+  });
+});
+
+// ─── Task 11.4: Reward hook → achievement evaluate route integration ──────────
+
+describe("useRewardStoreActions - achievement progress evaluate integration (task 11.4)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFetch.mockResolvedValue({ ok: true });
+  });
+
+  it("calls /api/achievement-progress/evaluate after APPROVED status update", async () => {
+    mockUpdateRedemptionStatus.mockResolvedValue(approvedRow);
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        pendingRedemption,
+        "APPROVED",
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/achievement-progress/evaluate",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer test-token",
+          }),
+          body: expect.stringContaining("REWARD_APPROVED"),
+        }),
+      );
+    });
+  });
+
+  it("does NOT call evaluate route when status is DENIED", async () => {
+    mockUpdateRedemptionStatus.mockResolvedValue(deniedRow);
+    mockRefundGold.mockResolvedValue(undefined);
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(pendingRedemption, "DENIED");
+    });
+
+    // fetch should not have been called with the evaluate route
+    expect(mockFetch).not.toHaveBeenCalledWith(
+      "/api/achievement-progress/evaluate",
+      expect.anything(),
+    );
+  });
+
+  it("does NOT call evaluate route when status is FULFILLED", async () => {
+    mockUpdateRedemptionStatus.mockResolvedValue(fulfilledRow);
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        { ...pendingRedemption, status: "APPROVED" },
+        "FULFILLED",
+      );
+    });
+
+    expect(mockFetch).not.toHaveBeenCalledWith(
+      "/api/achievement-progress/evaluate",
+      expect.anything(),
+    );
+  });
+
+  it("does not block redemption approval when evaluate route fetch fails", async () => {
+    mockUpdateRedemptionStatus.mockResolvedValue(approvedRow);
+    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        pendingRedemption,
+        "APPROVED",
+      );
+    });
+
+    // mergeRedemption was still called — redemption approval succeeded
+    expect(args.mergeRedemption).toHaveBeenCalledWith(approvedRow);
+  });
+
+  it("does not block redemption approval when evaluate route returns non-ok response", async () => {
+    mockUpdateRedemptionStatus.mockResolvedValue(approvedRow);
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        pendingRedemption,
+        "APPROVED",
+      );
+    });
+
+    // mergeRedemption was still called — redemption approval succeeded
+    expect(args.mergeRedemption).toHaveBeenCalledWith(approvedRow);
+  });
+
+  it("sends the redeemer userId in the evaluate route body", async () => {
+    mockUpdateRedemptionStatus.mockResolvedValue(approvedRow);
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        pendingRedemption,
+        "APPROVED",
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/achievement-progress/evaluate",
+        expect.objectContaining({
+          body: expect.stringContaining(pendingRedemption.user_id!),
+        }),
+      );
+    });
   });
 });
