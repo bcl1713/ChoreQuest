@@ -40,9 +40,12 @@ Key schema facts for evaluator design:
 
 Because most tables key on `user_id` rather than
 `character_id`, every evaluator must first resolve the
-character's `user_id` from the `characters` table. The
-service caches this lookup for the duration of a single
-`updateProgress` call.
+character's `user_id` from the `characters` table.
+Achievement selection also depends on the owning
+user's `family_id` so the service can load both
+global and family-scoped achievements. The service
+caches this context lookup for the duration of a
+single `updateProgress` call.
 
 All services use direct Supabase client queries with
 `{ data, error }` destructuring. Constructor-based
@@ -74,8 +77,8 @@ service-role for inserts/updates.
 - Unlock evaluation (setting `unlocked_at`) — issue 136
 - Notification emission — issue 137
 - New public/client-facing API routes
-- `class_change` / `honor_earned` runtime triggers
-  (backfill-only evaluators; triggers deferred)
+- `honor_earned` runtime trigger
+  (backfill-only evaluator; trigger deferred)
 
 ## Decisions
 
@@ -93,7 +96,9 @@ read client. Each criteria type maps to an evaluator
 function via a `Record<string, EvaluatorFn>` registry.
 Evaluators are pure functions that accept a Supabase
 client, character ID, and user ID, query canonical
-state, and return `{ current: number }`.
+state, and return `{ current: number }`. The service
+also resolves `family_id` alongside `user_id` so
+achievement fetches can include family-specific rows.
 
 **Why over per-criteria classes:** The evaluators are
 small (one query each). Separate classes would add file
@@ -159,26 +164,24 @@ a small amount of latency from the achievement queries.
 This is acceptable because the queries are per-character
 indexed lookups, not full scans.
 
-### 5. Reward approval triggers progress via internal API route
+### 5. Reward approval triggers progress in approve route
 
-The reward approval flow runs entirely client-side:
-`useRewardStoreActions.ts` calls
-`RewardService.updateRedemptionStatus()`, which uses
-the browser Supabase client. The progress service
-requires a service-role client for
-`character_achievements` writes, so it cannot run
-in the browser.
+The reward approval flow crosses from the client into
+the server at
+`app/api/reward-redemptions/[id]/approve/route.ts`.
+`useRewardStoreActions.ts` calls this route after a
+GM approves a redemption. The route performs the
+redemption status update and then invokes
+`AchievementProgressService.updateProgress()` with
+event type `REWARD_APPROVED` using a service-role
+client.
 
-A lightweight internal API route at
-`app/api/achievement-progress/evaluate/route.ts`
-bridges this gap. After a GM approves a redemption,
-the client hook calls this route to trigger
-server-side progress evaluation. The route
-authenticates the caller, resolves the character ID,
-and invokes `AchievementProgressService.updateProgress()`
-with event type `REWARD_APPROVED`. The call is
-fire-and-catch on the client side — failures do not
-block redemption approval.
+Progress evaluation is awaited inside the approve
+route but wrapped in `try/catch`, so evaluation
+failures remain non-blocking for the approval itself.
+This keeps the reward flow authoritative on the
+server while preserving the intended user-visible
+behavior.
 
 **Why not trigger at redemption creation:** The initial
 redemption is PENDING. Gold is deducted optimistically,
@@ -191,7 +194,8 @@ directly:** `RewardService` imports the browser
 Supabase client (`lib/supabase.ts`), not a
 service-role client. The progress service needs
 service role for `character_achievements` writes.
-A server route is the minimal boundary crossing.
+The server approve route is the minimal boundary
+crossing.
 
 **Why not a Supabase database trigger:** A Postgres
 trigger on `reward_redemptions` UPDATE could invoke
@@ -199,18 +203,50 @@ a Supabase Edge Function. This adds deployment
 complexity and makes testing harder. Deferred unless
 the API-route approach proves problematic.
 
-This route is an internal implementation detail
-called only from the reward approval hook, not a
-public API. The proposal's "no new public API routes"
-constraint is preserved.
+`app/api/achievement-progress/evaluate/route.ts`
+still exists as an internal utility endpoint for
+server-side progress evaluation, but it is not part
+of the primary reward approval path. The proposal's
+"no new public API routes" constraint is preserved.
 
-### 6. Backfill detection via row absence
+### 6. Class change triggers progress in change-class route
 
-On `updateProgress`, the service checks whether any
-`character_achievements` rows exist for the given
-character. If none exist, it runs all 13 evaluators
-(full backfill). If rows exist, it runs only the
+The class change flow in
+`app/api/characters/[id]/change-class/route.ts`
+records a `character_change_history` row and then
+invokes `AchievementProgressService.updateProgress()`
+with event type `CLASS_CHANGED` using a service-role
+client.
+
+Progress evaluation is awaited inside the route but
+wrapped in `try/catch`, so evaluation failures remain
+non-blocking for the class change itself.
+
+**Why now:** the class change route already owns the
+authoritative state transition and writes the same
+history table used by the evaluator, so it is the
+natural integration point.
+
+**Why keep the evaluator history-based:** counting
+`character_change_history` preserves idempotency and
+supports backfill for characters with preexisting
+history.
+
+### 7. Backfill detection via row absence
+
+On `updateProgress`, the service checks whether the
+given character is missing any expected
+`character_achievements` rows for the family's current
+achievement set. If any achievement row is missing, it
+runs all 13 evaluators (full backfill). If all
+achievement rows already exist, it runs only the
 evaluators mapped to the triggering event type.
+
+This is intentionally stricter than a simple "no rows
+at all" check. It allows the system to self-heal
+partial backfills and automatically backfill newly
+seeded achievements for characters that were already
+evaluated before those achievements existed.
 
 **Why over a dedicated backfill flag on characters:**
 Adding a column to `characters` couples the achievement
@@ -224,7 +260,7 @@ self-corrects. The on-demand approach ensures backfill
 happens exactly when a character first interacts with
 the achievement system.
 
-### 7. Upsert via ON CONFLICT on unique constraint
+### 8. Upsert via ON CONFLICT on unique constraint
 
 Progress writes use Supabase's `.upsert()` with
 `onConflict: 'character_id,achievement_id'`. This
@@ -236,12 +272,14 @@ atomic and avoids a read-then-write race condition.
 Supabase's `.upsert()` maps directly to Postgres
 `ON CONFLICT DO UPDATE`.
 
-### 8. Evaluator query patterns by criteria type
+### 9. Evaluator query patterns by criteria type
 
 Every evaluator receives `characterId` and `userId`
 (resolved once per `updateProgress` call from
-`characters.user_id`). Queries use whichever key the
-source table requires.
+`characters.user_id`). Achievement fetches also use
+the resolved `family_id` to include family-scoped
+rows. Queries use whichever key the source table
+requires.
 
 - `quest_complete`: `quest_instances` — COUNT where
   (`assigned_to_id` = userId OR `volunteered_by` =
@@ -259,21 +297,20 @@ source table requires.
   where `user_id` = userId AND
   `participation_status` = 'APPROVED'
 - `boss_participated`: `boss_battle_participants` —
-  COUNT where `user_id` = userId
-- `gold_earned`: defined as **base rewards only**
-  (excludes volunteer/streak/class bonuses).
-  `quest_instances` — SUM `gold_reward` where
+  COUNT where `user_id` = userId AND
+  `participation_status` IN ('APPROVED', 'PARTIAL')
+- `gold_earned`: includes approved quest gold with
+  volunteer and streak bonuses, plus boss gold from
+  approved and partial participations.
+  `quest_instances` — SUM effective approved quest
+  gold computed from `gold_reward` with
+  `volunteer_bonus` and `streak_bonus` where
   (`assigned_to_id` = userId OR `volunteered_by` =
   characterId) AND `status` = 'APPROVED'. Plus
   `boss_battle_participants` — SUM `awarded_gold`
   where `user_id` = userId AND
-  `participation_status` = 'APPROVED'. Combined
-  total of both sources. Rationale: bonus gold
-  (volunteer, streak, class) is applied at approval
-  time and not stored separately on the quest row —
-  reconstructing it would require re-running the
-  full bonus calculation pipeline. Base rewards are
-  the stable, queryable value.
+  `participation_status` IN ('APPROVED', 'PARTIAL').
+  Combined total of both sources.
 - `gold_spent`: `reward_redemptions` — SUM `cost`
   where `user_id` = userId AND `status` IN
   ('APPROVED', 'FULFILLED'). Only counts confirmed
@@ -289,8 +326,11 @@ source table requires.
   `longest_streak` where `character_id` = characterId.
   Uses `longest_streak` (not `current_streak`) so
   progress is never lost when a streak resets.
-- `class_change`: backfill-only — returns 0 (no
-  change history table exists)
+- `class_change`: `character_change_history` —
+  count rows where `character_id` = characterId and
+  `change_type` = `class`. Runtime evaluation is
+  triggered by the class change route, and the same
+  query continues to support backfill.
 - `honor_earned`: `characters` — read `honor_points`
   where `id` = characterId
 

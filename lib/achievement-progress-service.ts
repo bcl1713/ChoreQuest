@@ -7,7 +7,8 @@ import { createServiceSupabaseClient } from "@/lib/supabase-server";
 export type AchievementEventType =
   | "QUEST_APPROVED"
   | "REWARD_APPROVED"
-  | "BOSS_COMPLETED";
+  | "BOSS_COMPLETED"
+  | "CLASS_CHANGED";
 
 export type AchievementEvent = {
   type: AchievementEventType;
@@ -48,6 +49,7 @@ export const EVENT_CRITERIA_MAP: Record<AchievementEventType, string[]> = {
     "xp_earned",
     "level_reached",
   ],
+  CLASS_CHANGED: ["class_change"],
 };
 
 export const ALL_CRITERIA_TYPES = [
@@ -137,33 +139,35 @@ const evaluateBossParticipated: EvaluatorFn = async (
   const { count, error } = await client
     .from("boss_battle_participants")
     .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .in("participation_status", ["APPROVED", "PARTIAL"]);
 
   if (error) throw error;
   return { current: count ?? 0 };
 };
 
 const evaluateGoldEarned: EvaluatorFn = async (client, characterId, userId) => {
-  // Quest base gold rewards (approved quests)
+  // Quest gold rewards (approved quests, including volunteer bonuses)
   const { data: questRows, error: questError } = await client
     .from("quest_instances")
-    .select("gold_reward")
+    .select("gold_reward, volunteer_bonus, streak_bonus")
     .eq("status", "APPROVED")
     .or(`assigned_to_id.eq.${userId},volunteered_by.eq.${characterId}`);
 
   if (questError) throw questError;
 
-  const questGold = (questRows ?? []).reduce(
-    (sum, row) => sum + (row.gold_reward ?? 0),
-    0,
-  );
+  const questGold = (questRows ?? []).reduce((sum, row) => {
+    const base = row.gold_reward ?? 0;
+    const bonusFraction = (row.volunteer_bonus ?? 0) + (row.streak_bonus ?? 0);
+    return sum + Math.round(base * (1 + bonusFraction));
+  }, 0);
 
-  // Boss battle gold rewards (approved participations)
+  // Boss battle gold rewards (approved and partial participations)
   const { data: bossRows, error: bossError } = await client
     .from("boss_battle_participants")
     .select("awarded_gold")
     .eq("user_id", userId)
-    .eq("participation_status", "APPROVED");
+    .in("participation_status", ["APPROVED", "PARTIAL"]);
 
   if (bossError) throw bossError;
 
@@ -238,9 +242,15 @@ const evaluateStreakReached: EvaluatorFn = async (client, characterId) => {
   return { current: maxStreak };
 };
 
-const evaluateClassChange: EvaluatorFn = async () => {
-  // Backfill-only: no class change history table exists
-  return { current: 0 };
+const evaluateClassChange: EvaluatorFn = async (client, characterId) => {
+  const { count, error } = await client
+    .from("character_change_history")
+    .select("*", { count: "exact", head: true })
+    .eq("character_id", characterId)
+    .eq("change_type", "class");
+
+  if (error) throw error;
+  return { current: count ?? 0 };
 };
 
 const evaluateHonorEarned: EvaluatorFn = async (client, characterId) => {
@@ -334,7 +344,9 @@ export class AchievementProgressService {
       .select("id, criteria_type, criteria_config");
 
     if (familyId) {
-      query = query.eq("family_id", familyId);
+      query = query.or(`family_id.eq.${familyId},family_id.is.null`);
+    } else {
+      query = query.is("family_id", null);
     }
 
     const { data, error } = await query;
@@ -346,17 +358,19 @@ export class AchievementProgressService {
     return data ?? [];
   }
 
-  private async hasExistingProgress(characterId: string): Promise<boolean> {
-    const { count, error } = await this.readClient
+  private async fetchExistingAchievementIds(
+    characterId: string,
+  ): Promise<Set<string>> {
+    const { data, error } = await this.readClient
       .from("character_achievements")
-      .select("*", { count: "exact", head: true })
+      .select("achievement_id")
       .eq("character_id", characterId);
 
     if (error) {
       throw new Error(`Failed to check progress: ${error.message}`);
     }
 
-    return (count ?? 0) > 0;
+    return new Set((data ?? []).map((row) => row.achievement_id));
   }
 
   async updateProgress(
@@ -366,11 +380,15 @@ export class AchievementProgressService {
     const { userId, familyId } =
       await this.resolveCharacterContext(characterId);
     const achievements = await this.fetchAchievements(familyId);
-    const hasProgress = await this.hasExistingProgress(characterId);
+    const existingAchievementIds =
+      await this.fetchExistingAchievementIds(characterId);
+    const needsBackfill = achievements.some(
+      (a) => !existingAchievementIds.has(a.id),
+    );
 
-    const criteriaTypesToEvaluate = hasProgress
-      ? (EVENT_CRITERIA_MAP[event.type] ?? [])
-      : ALL_CRITERIA_TYPES.slice(); // full backfill
+    const criteriaTypesToEvaluate = needsBackfill
+      ? ALL_CRITERIA_TYPES.slice() // full backfill
+      : (EVENT_CRITERIA_MAP[event.type] ?? []);
 
     // Warn about achievements with unrecognized criteria types
     for (const a of achievements) {
@@ -424,7 +442,9 @@ export class AchievementProgressService {
 
     if (upsertRows.length === 0) return;
 
-    // Atomic batch upsert — writes only progress column, preserves unlocked_at
+    // Deliberately omit unlocked_at from upsertRows so Supabase only updates
+    // character_id, achievement_id, and progress on conflict, preserving any
+    // existing unlocked_at timestamp.
     const { error } = await this.writeClient
       .from("character_achievements")
       .upsert(upsertRows, {

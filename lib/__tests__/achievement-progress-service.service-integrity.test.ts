@@ -43,7 +43,7 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
       }),
     };
     const questChain = {
@@ -93,7 +93,10 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: ACHIEVEMENT_ID }],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();
@@ -133,7 +136,10 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: ACHIEVEMENT_ID }],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();

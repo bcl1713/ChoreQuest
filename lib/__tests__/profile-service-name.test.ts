@@ -18,15 +18,17 @@ describe("ProfileService - naming", () => {
   });
 
   describe("getClassChangeCost", () => {
-    it("should calculate cost as 25 * level", () => {
+    it("should return tiered costs based on level", () => {
+      expect(ProfileService.getClassChangeCost(1)).toBe(100);
+      expect(ProfileService.getClassChangeCost(5)).toBe(100);
+      expect(ProfileService.getClassChangeCost(6)).toBe(250);
       expect(ProfileService.getClassChangeCost(10)).toBe(250);
-      expect(ProfileService.getClassChangeCost(20)).toBe(500);
-      expect(ProfileService.getClassChangeCost(1)).toBe(25);
-    });
-
-    it("should handle edge cases", () => {
-      expect(ProfileService.getClassChangeCost(0)).toBe(0);
-      expect(ProfileService.getClassChangeCost(100)).toBe(2500);
+      expect(ProfileService.getClassChangeCost(11)).toBe(500);
+      expect(ProfileService.getClassChangeCost(15)).toBe(500);
+      expect(ProfileService.getClassChangeCost(16)).toBe(1000);
+      expect(ProfileService.getClassChangeCost(20)).toBe(1000);
+      expect(ProfileService.getClassChangeCost(21)).toBe(2000);
+      expect(ProfileService.getClassChangeCost(100)).toBe(2000);
     });
   });
 

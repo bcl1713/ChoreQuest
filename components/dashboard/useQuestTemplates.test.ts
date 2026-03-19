@@ -90,6 +90,7 @@ describe("useQuestTemplates", () => {
     });
 
     it("handles database error gracefully without throwing", async () => {
+      jest.spyOn(console, "error").mockImplementation(() => {});
       const chainMock = {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),

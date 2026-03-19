@@ -41,7 +41,10 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: ACHIEVEMENT_ID }],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();
@@ -85,7 +88,10 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: ACHIEVEMENT_ID }],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();
@@ -160,7 +166,13 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [
+            { achievement_id: "ach-known" },
+            { achievement_id: "ach-unknown" },
+          ],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();
@@ -190,7 +202,61 @@ describe("AchievementProgressService - service level", () => {
     warnSpy.mockRestore();
   });
 
-  // 8.9 getProgress
+  // 8.9 global achievements included when character has a family
+  it("queries achievements with or-filter including global (family_id IS NULL) when character has a family", async () => {
+    const FAMILY_ID = "family-test-001";
+    const questChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          or: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        }),
+      }),
+    };
+    // Character with a family_id via user_profiles join
+    const charChain = makeDataResult({
+      user_id: USER_ID,
+      user_profiles: { family_id: FAMILY_ID },
+    });
+    const orSpy = jest.fn().mockResolvedValue({
+      data: [
+        {
+          id: ACHIEVEMENT_ID,
+          criteria_type: "quest_complete",
+          criteria_config: { threshold: 1 },
+        },
+      ],
+      error: null,
+    });
+    const achievementsChain = {
+      select: jest.fn().mockReturnValue({ or: orSpy }),
+    };
+    const charAchChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: ACHIEVEMENT_ID }],
+          error: null,
+        }),
+      }),
+    };
+    const writeUpsert = makeUpsertResult();
+
+    const readClient = makeReadClient({
+      characters: charChain as unknown as MockChain,
+      achievements: achievementsChain as unknown as MockChain,
+      character_achievements: charAchChain,
+      quest_instances: questChain as unknown as MockChain,
+    });
+    mockWriteClient.from.mockReturnValue(writeUpsert);
+
+    const service = new AchievementProgressService(readClient as never);
+    await service.updateProgress(CHARACTER_ID, { type: "QUEST_APPROVED" });
+
+    expect(orSpy).toHaveBeenCalledWith(
+      `family_id.eq.${FAMILY_ID},family_id.is.null`,
+    );
+  });
+
+  // 8.10 getProgress
   describe("getProgress", () => {
     it("returns joined progress records for character with existing progress", async () => {
       const progressData = [

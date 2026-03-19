@@ -20,10 +20,9 @@ existing in the database.
   `getProgress(characterId)`
 - Implement progress evaluators for all 13 seeded
   criteria types from the migration, with runtime
-  trigger integration for 11 currently supported
-  event sources; `class_change` and `honor_earned`
-  remain backfill-only until their trigger paths
-  are defined:
+  trigger integration for 12 currently supported
+  event sources; `honor_earned` remains backfill-only
+  until its trigger path is defined:
   - **Quest-related**: `quest_complete`,
     `quest_volunteer`, `quest_difficulty`
   - **Boss-related**: `boss_defeated`,
@@ -66,11 +65,12 @@ event sources in the existing codebase:
    `level_reached`, `streak_reached`.
 2. **Reward redemption approval**
    (`useRewardStoreActions.ts` → internal route
-   `app/api/achievement-progress/evaluate`): fires
+   `app/api/reward-redemptions/[id]/approve`): fires
    when a Guild Master approves a redemption. The
-   client hook calls an internal server route because
-   the reward flow is client-side and progress writes
-   require service role. Not triggered at the initial
+   client hook delegates approval to a server route,
+   and that route performs both the redemption status
+   update and inline progress evaluation with a
+   service-role client. Not triggered at the initial
    gold deduction (which is PENDING and may be
    refunded). Covers criteria: `gold_spent`,
    `reward_redeemed`.
@@ -81,9 +81,6 @@ event sources in the existing codebase:
 
 Deferred triggers (not in scope for issue 135):
 
-- `class_change`: requires hooking into character
-  class update flow (not currently a high-frequency
-  path)
 - `honor_earned`: honor system does not exist yet
 
 Each event source calls
@@ -119,13 +116,15 @@ initial progress. Criteria backfill support:
   `xp_earned`, `level_reached`, `streak_reached`,
   `reward_redeemed`, `boss_defeated`,
   `boss_participated`
-- **Best-effort**: `class_change` (only if change
-  history is recorded), `honor_earned` (deferred —
-  honor system does not exist yet)
+- **Best-effort**: `class_change` (history-backed and
+  also triggered by the class change route),
+  `honor_earned` (deferred — honor system does not
+  exist yet)
 
 Backfill runs once per character on first
 `updateProgress` call (detected by absence of any
-`character_achievements` rows for that character).
+required `character_achievements` rows for that
+character's visible achievement set).
 Subsequent evaluations recompute only the criteria
 affected by the triggering event.
 

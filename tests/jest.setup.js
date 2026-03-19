@@ -34,15 +34,161 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// Mock framer-motion to avoid issues with animation testing
+// Mock framer-motion to avoid issues with animation testing.
+// Motion-specific props are destructured out so they don't get forwarded to
+// native DOM elements (which would cause React "unknown prop" warnings).
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }) => <div {...props}>{children}</div>,
-    span: ({ children, ...props }) => <span {...props}>{children}</span>,
-    button: ({ children, ...props }) => <button {...props}>{children}</button>,
-    h1: ({ children, ...props }) => <h1 {...props}>{children}</h1>,
-    h2: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
-    p: ({ children, ...props }) => <p {...props}>{children}</p>,
+    div: ({
+      children,
+      whileHover,
+      whileTap,
+      whileFocus,
+      whileDrag,
+      whileInView,
+      animate,
+      initial,
+      exit,
+      variants,
+      transition,
+      layout,
+      layoutId,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      onAnimationStart,
+      onAnimationComplete,
+      onDragStart,
+      onDragEnd,
+      onDrag,
+      ...props
+    }) => <div {...props}>{children}</div>,
+    span: ({
+      children,
+      whileHover,
+      whileTap,
+      whileFocus,
+      whileDrag,
+      whileInView,
+      animate,
+      initial,
+      exit,
+      variants,
+      transition,
+      layout,
+      layoutId,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      onAnimationStart,
+      onAnimationComplete,
+      onDragStart,
+      onDragEnd,
+      onDrag,
+      ...props
+    }) => <span {...props}>{children}</span>,
+    button: ({
+      children,
+      whileHover,
+      whileTap,
+      whileFocus,
+      whileDrag,
+      whileInView,
+      animate,
+      initial,
+      exit,
+      variants,
+      transition,
+      layout,
+      layoutId,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      onAnimationStart,
+      onAnimationComplete,
+      onDragStart,
+      onDragEnd,
+      onDrag,
+      ...props
+    }) => <button {...props}>{children}</button>,
+    h1: ({
+      children,
+      whileHover,
+      whileTap,
+      whileFocus,
+      whileDrag,
+      whileInView,
+      animate,
+      initial,
+      exit,
+      variants,
+      transition,
+      layout,
+      layoutId,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      onAnimationStart,
+      onAnimationComplete,
+      onDragStart,
+      onDragEnd,
+      onDrag,
+      ...props
+    }) => <h1 {...props}>{children}</h1>,
+    h2: ({
+      children,
+      whileHover,
+      whileTap,
+      whileFocus,
+      whileDrag,
+      whileInView,
+      animate,
+      initial,
+      exit,
+      variants,
+      transition,
+      layout,
+      layoutId,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      onAnimationStart,
+      onAnimationComplete,
+      onDragStart,
+      onDragEnd,
+      onDrag,
+      ...props
+    }) => <h2 {...props}>{children}</h2>,
+    p: ({
+      children,
+      whileHover,
+      whileTap,
+      whileFocus,
+      whileDrag,
+      whileInView,
+      animate,
+      initial,
+      exit,
+      variants,
+      transition,
+      layout,
+      layoutId,
+      drag,
+      dragConstraints,
+      dragElastic,
+      dragMomentum,
+      onAnimationStart,
+      onAnimationComplete,
+      onDragStart,
+      onDragEnd,
+      onDrag,
+      ...props
+    }) => <p {...props}>{children}</p>,
   },
   AnimatePresence: ({ children }) => children,
   useAnimation: () => ({
@@ -127,10 +273,34 @@ jest.mock("next/server", () => ({
   },
 }));
 
+const SUPPRESSED_WARNINGS = [
+  "Warning: An update to",
+  "Warning: ReactDOM.render is no longer supported",
+  "Warning: `ReactDOMTestUtils.act` is deprecated",
+  "Multiple GoTrueClient instances detected",
+  "Skipping achievement progress update after boss completion because character rewards update failed:",
+];
+
+const SUPPRESSED_ERRORS = [
+  // React act() warning — async state updates in component effects during tests
+  "An update to",
+  "Error: Not implemented: navigation",
+];
+
 beforeAll(() => {
-  jest.spyOn(console, "log").mockImplementation(() => undefined);
-  jest.spyOn(console, "warn").mockImplementation(() => undefined);
-  jest.spyOn(console, "error").mockImplementation(() => undefined);
+  const originalWarn = console.warn.bind(console);
+  const originalError = console.error.bind(console);
+
+  jest.spyOn(console, "warn").mockImplementation((...args) => {
+    const msg = String(args[0] ?? "");
+    if (SUPPRESSED_WARNINGS.some((s) => msg.includes(s))) return;
+    originalWarn(...args);
+  });
+  jest.spyOn(console, "error").mockImplementation((...args) => {
+    const msg = String(args[0] ?? "");
+    if (SUPPRESSED_ERRORS.some((s) => msg.includes(s))) return;
+    originalError(...args);
+  });
 });
 
 afterAll(() => {

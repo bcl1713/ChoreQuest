@@ -65,11 +65,14 @@ export async function POST(request: NextRequest) {
     }
 
     const serviceSupabase = createServiceSupabaseClient();
-    const { data: character, error: charError } = await serviceSupabase
+    const { data: characters, error: charError } = await serviceSupabase
       .from("characters")
       .select("id")
       .eq("user_id", resolvedUserId)
-      .maybeSingle();
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    const character = characters?.[0] ?? null;
 
     if (charError || !character) {
       throw new ValidationError(
@@ -79,6 +82,8 @@ export async function POST(request: NextRequest) {
     }
 
     const progressService = new AchievementProgressService(serviceSupabase);
+    // This is an explicit utility endpoint, not a background/non-blocking hook.
+    // Surface updateProgress failures to the caller via the route error handler.
     await progressService.updateProgress(character.id, {
       type: "REWARD_APPROVED",
     });

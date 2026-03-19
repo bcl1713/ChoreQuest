@@ -45,7 +45,10 @@ describe("AchievementProgressService - service level", () => {
     // rows exist → scoped path
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 5, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: "ach-qc" }],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();
@@ -90,82 +93,84 @@ describe("AchievementProgressService - service level", () => {
         }),
       }),
     };
+    const allAchievementsData = [
+      {
+        id: "a1",
+        criteria_type: "quest_complete",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a2",
+        criteria_type: "quest_volunteer",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a3",
+        criteria_type: "quest_difficulty",
+        criteria_config: { difficulty: "HARD", threshold: 5 },
+      },
+      {
+        id: "a4",
+        criteria_type: "boss_defeated",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a5",
+        criteria_type: "boss_participated",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a6",
+        criteria_type: "gold_earned",
+        criteria_config: { threshold: 100 },
+      },
+      {
+        id: "a7",
+        criteria_type: "gold_spent",
+        criteria_config: { threshold: 100 },
+      },
+      {
+        id: "a8",
+        criteria_type: "reward_redeemed",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a9",
+        criteria_type: "xp_earned",
+        criteria_config: { threshold: 1000 },
+      },
+      {
+        id: "a10",
+        criteria_type: "level_reached",
+        criteria_config: { threshold: 2 },
+      },
+      {
+        id: "a11",
+        criteria_type: "streak_reached",
+        criteria_config: { threshold: 3 },
+      },
+      {
+        id: "a12",
+        criteria_type: "class_change",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a13",
+        criteria_type: "honor_earned",
+        criteria_config: { threshold: 1 },
+      },
+    ];
+    const achievementsResult = { data: allAchievementsData, error: null };
     const achievementsChain = {
-      select: jest.fn().mockResolvedValue({
-        data: [
-          {
-            id: "a1",
-            criteria_type: "quest_complete",
-            criteria_config: { threshold: 1 },
-          },
-          {
-            id: "a2",
-            criteria_type: "quest_volunteer",
-            criteria_config: { threshold: 1 },
-          },
-          {
-            id: "a3",
-            criteria_type: "quest_difficulty",
-            criteria_config: { difficulty: "HARD", threshold: 5 },
-          },
-          {
-            id: "a4",
-            criteria_type: "boss_defeated",
-            criteria_config: { threshold: 1 },
-          },
-          {
-            id: "a5",
-            criteria_type: "boss_participated",
-            criteria_config: { threshold: 1 },
-          },
-          {
-            id: "a6",
-            criteria_type: "gold_earned",
-            criteria_config: { threshold: 100 },
-          },
-          {
-            id: "a7",
-            criteria_type: "gold_spent",
-            criteria_config: { threshold: 100 },
-          },
-          {
-            id: "a8",
-            criteria_type: "reward_redeemed",
-            criteria_config: { threshold: 1 },
-          },
-          {
-            id: "a9",
-            criteria_type: "xp_earned",
-            criteria_config: { threshold: 1000 },
-          },
-          {
-            id: "a10",
-            criteria_type: "level_reached",
-            criteria_config: { threshold: 2 },
-          },
-          {
-            id: "a11",
-            criteria_type: "streak_reached",
-            criteria_config: { threshold: 3 },
-          },
-          {
-            id: "a12",
-            criteria_type: "class_change",
-            criteria_config: { threshold: 1 },
-          },
-          {
-            id: "a13",
-            criteria_type: "honor_earned",
-            criteria_config: { threshold: 1 },
-          },
-        ],
-        error: null,
+      select: jest.fn().mockReturnValue({
+        or: jest.fn().mockResolvedValue(achievementsResult),
+        is: jest.fn().mockResolvedValue(achievementsResult),
       }),
     };
     // No existing rows → backfill
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
       }),
     };
     const writeUpsert = makeUpsertResult();
@@ -180,9 +185,11 @@ describe("AchievementProgressService - service level", () => {
           eq: jest.fn().mockReturnValue({
             head: countResult,
             single: singleResult,
-            eq: jest
-              .fn()
-              .mockReturnValue({ head: countResult, or: countResult }),
+            eq: jest.fn().mockReturnValue({
+              head: countResult,
+              or: countResult,
+              not: jest.fn().mockResolvedValue({ count: 0, error: null }),
+            }),
             or: jest.fn().mockResolvedValue({ data: [], error: null }),
             in: jest
               .fn()
@@ -220,7 +227,10 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: "a-rr" }],
+          error: null,
+        }),
       }),
     };
     const redemptionChain = {
@@ -248,6 +258,57 @@ describe("AchievementProgressService - service level", () => {
     expect(rows[0].achievement_id).toBe("a-rr");
   });
 
+  it("excludes honor_earned from BOSS_COMPLETED scoped evaluation", async () => {
+    const charChain = makeDataResult({ user_id: USER_ID });
+    const achievementsChain = makeDataResult([
+      {
+        id: "a-boss",
+        criteria_type: "boss_participated",
+        criteria_config: { threshold: 1 },
+      },
+      {
+        id: "a-honor",
+        criteria_type: "honor_earned",
+        criteria_config: { threshold: 10 },
+      },
+    ]);
+    const charAchChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [
+            { achievement_id: "a-boss" },
+            { achievement_id: "a-honor" },
+          ],
+          error: null,
+        }),
+      }),
+    };
+    const bossParticipantsChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        }),
+      }),
+    };
+    const writeUpsert = makeUpsertResult();
+
+    const readClient = makeReadClient({
+      characters: charChain as unknown as MockChain,
+      achievements: achievementsChain as unknown as MockChain,
+      character_achievements: charAchChain,
+      boss_battle_participants:
+        bossParticipantsChain as unknown as MockChain,
+    });
+    mockWriteClient.from.mockReturnValue(writeUpsert);
+
+    const service = new AchievementProgressService(readClient as never);
+    await service.updateProgress(CHARACTER_ID, { type: "BOSS_COMPLETED" });
+
+    const rows = writeUpsert.upsert.mock.calls[0][0];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].achievement_id).toBe("a-boss");
+  });
+
   // 8.4 progress JSONB shape
   it("writes progress JSONB with { current, threshold } shape", async () => {
     const questChain = {
@@ -267,7 +328,10 @@ describe("AchievementProgressService - service level", () => {
     ]);
     const charAchChain = {
       select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        eq: jest.fn().mockResolvedValue({
+          data: [{ achievement_id: ACHIEVEMENT_ID }],
+          error: null,
+        }),
       }),
     };
     const writeUpsert = makeUpsertResult();

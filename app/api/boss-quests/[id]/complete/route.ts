@@ -188,7 +188,11 @@ export async function POST(
             character.id,
             characterUpdateError,
           );
-        } else if (appliedDecision.status !== "DENIED") {
+          console.warn(
+            "Skipping achievement progress update after boss completion because character rewards update failed:",
+            character.id,
+          );
+        } else {
           try {
             const progressService = new AchievementProgressService(
               serviceSupabase,

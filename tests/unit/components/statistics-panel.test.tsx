@@ -251,6 +251,7 @@ describe("StatisticsPanel", () => {
   });
 
   it("should handle error state", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     const getFamilyStatisticsMock = getStatsMock();
     getFamilyStatisticsMock.mockRejectedValue(new Error("Test error"));
 

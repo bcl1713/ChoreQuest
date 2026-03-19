@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useRewardStoreActions } from "../useRewardStoreActions";
 import type { RewardRedemptionWithUser } from "@/lib/reward-service";
 import type { RewardRedemption } from "@/lib/types/database";
@@ -33,7 +33,6 @@ jest.mock("@/lib/supabase", () => ({
   },
 }));
 
-// Mock global fetch for the reward-redemptions approve route
 const mockFetch = jest.fn().mockResolvedValue({
   ok: true,
   json: () => Promise.resolve({ redemption: {} }),
@@ -98,16 +97,19 @@ function makeArgs(overrides: Record<string, unknown> = {}) {
   };
 }
 
-beforeEach(() => {
-  jest.clearAllMocks();
-});
+// ─── Reward approval → server-side route integration ─────────────────────────
 
-describe("useRewardStoreActions - mergeRedemption integration", () => {
-  it("calls mergeRedemption with updated row after APPROVED mutation", async () => {
-    mockFetch.mockResolvedValueOnce({
+describe("useRewardStoreActions - APPROVED calls server-side approve route", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ redemption: approvedRow }),
     });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("calls /api/reward-redemptions/[id]/approve after APPROVED status update", async () => {
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
 
@@ -118,10 +120,18 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
       );
     });
 
-    expect(args.mergeRedemption).toHaveBeenCalledWith(approvedRow);
+    expect(mockFetch).toHaveBeenCalledWith(
+      `/api/reward-redemptions/${pendingRedemption.id}/approve`,
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer test-token",
+        }),
+      }),
+    );
   });
 
-  it("calls mergeRedemption with updated row after DENIED mutation", async () => {
+  it("does NOT call the approve route when status is DENIED", async () => {
     mockUpdateRedemptionStatus.mockResolvedValue(deniedRow);
     mockRefundGold.mockResolvedValue(undefined);
     const args = makeArgs();
@@ -131,10 +141,10 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
       await result.current.updateRedemptionStatus(pendingRedemption, "DENIED");
     });
 
-    expect(args.mergeRedemption).toHaveBeenCalledWith(deniedRow);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("calls mergeRedemption with updated row after FULFILLED mutation", async () => {
+  it("does NOT call the approve route when status is FULFILLED", async () => {
     mockUpdateRedemptionStatus.mockResolvedValue(fulfilledRow);
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
@@ -146,11 +156,10 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
       );
     });
 
-    expect(args.mergeRedemption).toHaveBeenCalledWith(fulfilledRow);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("does NOT call mergeRedemption when mutation throws", async () => {
-    jest.spyOn(console, "error").mockImplementation(() => {});
+  it("does not call mergeRedemption when approve route fetch fails", async () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
@@ -165,10 +174,11 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
     expect(args.mergeRedemption).not.toHaveBeenCalled();
   });
 
-  it("clears updatingId after mutation regardless of success or failure", async () => {
+  it("does not call mergeRedemption when approve route returns non-ok response", async () => {
     mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ redemption: approvedRow }),
+      ok: false,
+      status: 403,
+      json: () => Promise.resolve({ error: "Forbidden" }),
     });
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
@@ -180,6 +190,47 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
       );
     });
 
-    await waitFor(() => expect(result.current.updatingId).toBeNull());
+    expect(args.mergeRedemption).not.toHaveBeenCalled();
+  });
+
+  it("merges the redemption returned by the approve route", async () => {
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        pendingRedemption,
+        "APPROVED",
+      );
+    });
+
+    expect(args.mergeRedemption).toHaveBeenCalledWith(approvedRow);
+  });
+
+  it("falls back to refreshSession when getSession returns no access_token", async () => {
+    const { supabase: mockSupabase } = jest.requireMock("@/lib/supabase");
+    mockSupabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: null },
+    });
+
+    const args = makeArgs();
+    const { result } = renderHook(() => useRewardStoreActions(args));
+
+    await act(async () => {
+      await result.current.updateRedemptionStatus(
+        pendingRedemption,
+        "APPROVED",
+      );
+    });
+
+    expect(mockSupabase.auth.refreshSession).toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledWith(
+      `/api/reward-redemptions/${pendingRedemption.id}/approve`,
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer refreshed-token",
+        }),
+      }),
+    );
   });
 });

@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { RewardService } from "@/lib/reward-service";
 import { supabase } from "@/lib/supabase";
-import { Reward } from "@/lib/types/database";
+import { Reward, RewardRedemption } from "@/lib/types/database";
 import { useRewards } from "@/hooks/useRewards";
 import type { UserProfile } from "@/lib/types/database";
 import type { User } from "@supabase/supabase-js";
@@ -158,57 +158,37 @@ export function useRewardManagerController(
       if (!user) return;
 
       try {
-        const updated = await rewardService.updateRedemptionStatus(
-          redemptionId,
-          "APPROVED",
-          user.id,
-        );
-        mergeRedemption(updated);
-
-        const redemption = redemptions.find((r) => r.id === redemptionId);
-        if (redemption?.user_id) {
-          supabase.auth
-            .getSession()
-            .then(({ data }) => {
-              const token = data.session?.access_token;
-              fetch("/api/achievement-progress/evaluate", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify({
-                  eventType: "REWARD_APPROVED",
-                  userId: redemption.user_id,
-                }),
-              })
-                .then((response) => {
-                  if (!response.ok) {
-                    console.error(
-                      "Achievement progress evaluation failed (non-blocking):",
-                      response.status,
-                    );
-                  }
-                })
-                .catch((err) => {
-                  console.error(
-                    "Achievement progress evaluation failed (non-blocking):",
-                    err,
-                  );
-                });
-            })
-            .catch((err) => {
-              console.error(
-                "Achievement progress evaluation failed (non-blocking):",
-                err,
-              );
-            });
+        let { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session?.access_token) {
+          ({ data: sessionData } = await supabase.auth.refreshSession());
         }
+        const token = sessionData?.session?.access_token;
+        const response = await fetch(
+          `/api/reward-redemptions/${redemptionId}/approve`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
+        );
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            (errorData as { error?: string }).error ??
+              "Failed to approve redemption",
+          );
+        }
+        const data = (await response.json()) as {
+          redemption: RewardRedemption;
+        };
+        mergeRedemption(data.redemption);
       } catch (err) {
         console.error("Failed to approve redemption:", err);
       }
     },
-    [user, mergeRedemption, redemptions],
+    [user, mergeRedemption],
   );
 
   const handleDenyRedemption = useCallback(

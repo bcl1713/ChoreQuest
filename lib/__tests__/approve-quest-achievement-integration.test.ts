@@ -171,6 +171,7 @@ describe("approveQuest - achievement progress integration (task 9.1)", () => {
   });
 
   it("does not block quest approval when updateProgress throws", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     mockUpdateProgress.mockRejectedValueOnce(new Error("Progress DB error"));
 
     const from = makeFromMock();

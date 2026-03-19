@@ -175,6 +175,44 @@ export type Database = {
           },
         ];
       };
+      character_change_history: {
+        Row: {
+          id: string;
+          character_id: string;
+          change_type: string;
+          old_value: string | null;
+          new_value: string | null;
+          gold_cost: number | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          character_id: string;
+          change_type: string;
+          old_value?: string | null;
+          new_value?: string | null;
+          gold_cost?: number | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          character_id?: string;
+          change_type?: string;
+          old_value?: string | null;
+          new_value?: string | null;
+          gold_cost?: number | null;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "character_change_history_character_id_fkey";
+            columns: ["character_id"];
+            isOneToOne: false;
+            referencedRelation: "characters";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       boss_battle_participants: {
         Row: {
           approved_at: string | null;
@@ -367,6 +405,7 @@ export type Database = {
           gold: number | null;
           honor_points: number | null;
           id: string;
+          last_class_change_at: string | null;
           level: number | null;
           name: string;
           updated_at: string | null;
@@ -382,6 +421,7 @@ export type Database = {
           gold?: number | null;
           honor_points?: number | null;
           id?: string;
+          last_class_change_at?: string | null;
           level?: number | null;
           name: string;
           updated_at?: string | null;
@@ -397,6 +437,7 @@ export type Database = {
           gold?: number | null;
           honor_points?: number | null;
           id?: string;
+          last_class_change_at?: string | null;
           level?: number | null;
           name?: string;
           updated_at?: string | null;
@@ -964,6 +1005,23 @@ export type Database = {
           test_user_id: string;
         };
         Returns: Json;
+      };
+      fn_change_character_class: {
+        Args: { p_character_id: string; p_new_class: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          name: string;
+          class: string;
+          level: number;
+          gold: number;
+          experience: number;
+          health: number;
+          max_health: number;
+          last_class_change_at: string;
+          created_at: string;
+          updated_at: string;
+        }[];
       };
     };
     Enums: {

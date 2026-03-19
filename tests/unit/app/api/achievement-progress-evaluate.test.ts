@@ -64,9 +64,11 @@ function setupAuth(role = "GUILD_MASTER") {
       return {
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: { id: CHAR_ID },
-              error: null,
+            order: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue({
+                data: [{ id: CHAR_ID }],
+                error: null,
+              }),
             }),
           }),
         }),
@@ -155,9 +157,11 @@ describe("POST /api/achievement-progress/evaluate", () => {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              maybeSingle: jest
-                .fn()
-                .mockResolvedValue({ data: null, error: null }),
+              order: jest.fn().mockReturnValue({
+                limit: jest
+                  .fn()
+                  .mockResolvedValue({ data: [], error: null }),
+              }),
             }),
           }),
         };
@@ -246,6 +250,7 @@ describe("POST /api/achievement-progress/evaluate", () => {
   });
 
   it("returns 500 when updateProgress throws", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     setupAuth("GUILD_MASTER");
     mockUpdateProgress.mockRejectedValueOnce(new Error("DB failure"));
 

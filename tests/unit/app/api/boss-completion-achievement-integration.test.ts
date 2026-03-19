@@ -162,6 +162,7 @@ describe("Boss completion - achievement progress integration (task 10.1)", () =>
   });
 
   it("does not fail boss completion when updateProgress throws for one participant", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     mockUpdateProgress
       .mockRejectedValueOnce(new Error("Progress error for participant 1"))
       .mockResolvedValueOnce(undefined);
@@ -183,6 +184,7 @@ describe("Boss completion - achievement progress integration (task 10.1)", () =>
   });
 
   it("does not call updateProgress when character reward write fails", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: "gm-user" } },
       error: null,

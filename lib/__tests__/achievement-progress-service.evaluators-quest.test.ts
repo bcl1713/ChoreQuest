@@ -141,6 +141,46 @@ describe("AchievementProgressService evaluators", () => {
       expect(upsertCall[0].progress.current).toBe(3);
     });
 
+    it("counts approved volunteered quests even when volunteer_bonus is null", async () => {
+      const approvedStatusSpy = jest
+        .fn()
+        .mockResolvedValue({ count: 1, error: null });
+      const questChain: MockChain = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: approvedStatusSpy,
+          }),
+        }),
+      };
+      const charChain = makeDataResult({ user_id: USER_ID });
+      const achievementsChain = makeDataResult([
+        {
+          id: ACHIEVEMENT_ID,
+          criteria_type: "quest_volunteer",
+          criteria_config: { threshold: 1 },
+        },
+      ]);
+      const charAchChain = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        }),
+      };
+      const writeUpsert = makeUpsertResult();
+
+      const readClient = makeReadClient({
+        characters: charChain as unknown as MockChain,
+        achievements: achievementsChain as unknown as MockChain,
+        character_achievements: charAchChain,
+        quest_instances: questChain,
+      });
+      mockWriteClient.from.mockReturnValue(writeUpsert);
+
+      const service = new AchievementProgressService(readClient as never);
+      await service.updateProgress(CHARACTER_ID, { type: "QUEST_APPROVED" });
+
+      expect(approvedStatusSpy).toHaveBeenCalledWith("status", "APPROVED");
+    });
+
     it("returns 0 when character has no volunteer completions", async () => {
       const questChain: MockChain = {
         select: jest.fn().mockReturnValue({

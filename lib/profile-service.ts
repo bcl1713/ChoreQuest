@@ -25,12 +25,16 @@ export interface ClassChangeCost {
 export class ProfileService {
   /**
    * Calculate cost to change class based on character level
-   * Formula: 25 * character_level
+   * Tiered pricing: 100 (≤5), 250 (≤10), 500 (≤15), 1000 (≤20), 2000 (>20)
    * @param level - Character level
    * @returns Gold cost for class change
    */
   static getClassChangeCost(level: number): number {
-    return 25 * level;
+    if (level <= 5) return 100;
+    if (level <= 10) return 250;
+    if (level <= 15) return 500;
+    if (level <= 20) return 1000;
+    return 2000;
   }
 
   /**

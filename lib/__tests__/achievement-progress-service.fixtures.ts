@@ -18,23 +18,26 @@ export function makeDataResult<T>(data: T): {
   in: jest.Mock;
   single: jest.Mock;
   or: jest.Mock;
+  is: jest.Mock;
 } {
   const single = jest.fn().mockResolvedValue({ data, error: null });
-  const or = jest.fn().mockResolvedValue({
-    data: Array.isArray(data) ? data : [data],
-    error: null,
-  });
+  const directData = Array.isArray(data) ? data : [data];
+  const resolved = { data: directData, error: null };
+  const or = jest.fn().mockResolvedValue(resolved);
+  const is = jest.fn().mockResolvedValue(resolved);
   const inFn = jest.fn().mockResolvedValue({ data, error: null });
   const eq2 = jest.fn().mockReturnValue({ single, in: inFn });
   const eq1 = jest.fn().mockReturnValue({ eq: eq2, single, in: inFn, or });
   // Make selectReturn both a Promise (for direct await) and chainable (for .eq, .single, etc.)
-  const directData = Array.isArray(data) ? data : [data];
-  const selectReturn = Object.assign(
-    Promise.resolve({ data: directData, error: null }),
-    { eq: eq1, single, in: inFn, or },
-  );
+  const selectReturn = Object.assign(Promise.resolve(resolved), {
+    eq: eq1,
+    single,
+    in: inFn,
+    or,
+    is,
+  });
   const select = jest.fn().mockReturnValue(selectReturn);
-  return { select, eq: eq1, in: inFn, single, or };
+  return { select, eq: eq1, in: inFn, single, or, is };
 }
 
 export function makeErrorResult(message: string) {

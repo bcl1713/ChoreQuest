@@ -1,20 +1,25 @@
-import React, { useLayoutEffect, useState } from 'react';
-import { render, act, cleanup } from '@testing-library/react';
-import { NetworkReadyProvider, useNetworkReady } from '../network-ready-context';
+import React, { useLayoutEffect, useState } from "react";
+import { render, act, cleanup } from "@testing-library/react";
+import {
+  NetworkReadyProvider,
+  useNetworkReady,
+} from "../network-ready-context";
 
-describe('NetworkReadyProvider', () => {
+describe("NetworkReadyProvider", () => {
   const originalUserAgent = navigator.userAgent;
   const originalReadyState = document.readyState;
 
   beforeEach(() => {
     jest.useFakeTimers();
-    Object.defineProperty(window.navigator, 'userAgent', {
-      value: 'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/129.0.0.0 Mobile Safari/537.36',
+    jest.spyOn(console, "log").mockImplementation(() => {});
+    Object.defineProperty(window.navigator, "userAgent", {
+      value:
+        "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 Chrome/129.0.0.0 Mobile Safari/537.36",
       configurable: true,
     });
 
-    Object.defineProperty(document, 'readyState', {
-      value: 'complete',
+    Object.defineProperty(document, "readyState", {
+      value: "complete",
       configurable: true,
     });
   });
@@ -24,18 +29,18 @@ describe('NetworkReadyProvider', () => {
     jest.runOnlyPendingTimers();
     jest.useRealTimers();
 
-    Object.defineProperty(window.navigator, 'userAgent', {
+    Object.defineProperty(window.navigator, "userAgent", {
       value: originalUserAgent,
       configurable: true,
     });
 
-    Object.defineProperty(document, 'readyState', {
+    Object.defineProperty(document, "readyState", {
       value: originalReadyState,
       configurable: true,
     });
   });
 
-  it('keeps waitForReady pending until initialization finishes even when called before effects run', async () => {
+  it("keeps waitForReady pending until initialization finishes even when called before effects run", async () => {
     let waitPromise: Promise<void> | null = null;
 
     const TestComponent = () => {
@@ -50,20 +55,16 @@ describe('NetworkReadyProvider', () => {
         waitPromise.then(() => setReady(true));
       }, [waitForReady]);
 
-      return (
-        <div data-testid="status">
-          {ready ? 'ready' : 'pending'}
-        </div>
-      );
+      return <div data-testid="status">{ready ? "ready" : "pending"}</div>;
     };
 
     const { getByTestId } = render(
       <NetworkReadyProvider>
         <TestComponent />
-      </NetworkReadyProvider>
+      </NetworkReadyProvider>,
     );
 
-    expect(getByTestId('status').textContent).toBe('pending');
+    expect(getByTestId("status").textContent).toBe("pending");
     expect(waitPromise).not.toBeNull();
 
     let resolved = false;
@@ -86,7 +87,7 @@ describe('NetworkReadyProvider', () => {
       await waitPromise;
     });
 
-    expect(getByTestId('status').textContent).toBe('ready');
+    expect(getByTestId("status").textContent).toBe("ready");
     expect(resolved).toBe(true);
   });
 });

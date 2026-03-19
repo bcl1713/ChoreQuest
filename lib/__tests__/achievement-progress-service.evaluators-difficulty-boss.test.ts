@@ -186,10 +186,12 @@ describe("AchievementProgressService evaluators", () => {
 
   // 4.3 + 4.4 boss_participated
   describe("boss_participated evaluator", () => {
-    it("counts all boss battle participations regardless of status", async () => {
+    it("counts only APPROVED and PARTIAL boss battle participations", async () => {
       const bossChain: MockChain = {
         select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ count: 5, error: null }),
+          eq: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({ count: 5, error: null }),
+          }),
         }),
       };
       const charChain = makeDataResult({ user_id: USER_ID });
@@ -220,6 +222,45 @@ describe("AchievementProgressService evaluators", () => {
 
       const upsertCall = writeUpsert.upsert.mock.calls[0][0];
       expect(upsertCall[0].progress.current).toBe(5);
+    });
+
+    it("treats PENDING and DENIED boss battle participations as not participating", async () => {
+      const inSpy = jest.fn().mockResolvedValue({ count: 0, error: null });
+      const bossChain: MockChain = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({ in: inSpy }),
+        }),
+      };
+      const charChain = makeDataResult({ user_id: USER_ID });
+      const achievementsChain = makeDataResult([
+        {
+          id: ACHIEVEMENT_ID,
+          criteria_type: "boss_participated",
+          criteria_config: { threshold: 5 },
+        },
+      ]);
+      const charAchChain = {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ count: 1, error: null }),
+        }),
+      };
+      const writeUpsert = makeUpsertResult();
+
+      const readClient = makeReadClient({
+        characters: charChain as unknown as MockChain,
+        achievements: achievementsChain as unknown as MockChain,
+        character_achievements: charAchChain,
+        boss_battle_participants: bossChain,
+      });
+      mockWriteClient.from.mockReturnValue(writeUpsert);
+
+      const service = new AchievementProgressService(readClient as never);
+      await service.updateProgress(CHARACTER_ID, { type: "BOSS_COMPLETED" });
+
+      expect(inSpy).toHaveBeenCalledWith("participation_status", [
+        "APPROVED",
+        "PARTIAL",
+      ]);
     });
   });
 });

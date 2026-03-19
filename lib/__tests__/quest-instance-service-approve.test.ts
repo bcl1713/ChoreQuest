@@ -25,12 +25,13 @@ describe("QuestInstanceService - approveQuest", () => {
       {} as StreakService,
     );
 
-    await expect(questService.approveQuest("quest-approve-123")).rejects.toThrow(
-      "Failed to fetch quest: Database offline",
-    );
+    await expect(
+      questService.approveQuest("quest-approve-123"),
+    ).rejects.toThrow("Failed to fetch quest: Database offline");
   });
 
   it("applies volunteer and streak bonuses and updates metadata", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     const questId = "quest-approve-123";
     const templateId = "template-approve-456";
     const characterId = "character-approve-789";

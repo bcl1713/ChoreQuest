@@ -96,56 +96,46 @@ export function useRewardStoreActions({
 
       setUpdatingId(redemption.id);
       try {
-        const updated = await rewardService.updateRedemptionStatus(
-          redemption.id,
-          status,
-          userId ?? undefined,
-        );
-        mergeRedemption(updated);
-
-        if (status === "DENIED") {
-          const refundAmount = redemption.cost ?? 0;
-          await rewardService.refundGold(redemption.user_id, refundAmount);
-          await refreshCharacter();
-        }
-
         if (status === "APPROVED") {
-          supabase.auth
-            .getSession()
-            .then(({ data }) => {
-              const token = data.session?.access_token;
-              fetch("/api/achievement-progress/evaluate", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify({
-                  eventType: "REWARD_APPROVED",
-                  userId: redemption.user_id,
-                }),
-              })
-                .then((response) => {
-                  if (!response.ok) {
-                    console.error(
-                      "Achievement progress evaluation failed (non-blocking):",
-                      response.status,
-                    );
-                  }
-                })
-                .catch((err) => {
-                  console.error(
-                    "Achievement progress evaluation failed (non-blocking):",
-                    err,
-                  );
-                });
-            })
-            .catch((err) => {
-              console.error(
-                "Achievement progress evaluation failed (non-blocking):",
-                err,
-              );
-            });
+          let { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData?.session?.access_token) {
+            ({ data: sessionData } = await supabase.auth.refreshSession());
+          }
+          const token = sessionData?.session?.access_token;
+          const response = await fetch(
+            `/api/reward-redemptions/${redemption.id}/approve`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            },
+          );
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              (errorData as { error?: string }).error ??
+                "Failed to approve redemption",
+            );
+          }
+          const data = (await response.json()) as {
+            redemption: RewardRedemption;
+          };
+          mergeRedemption(data.redemption);
+        } else {
+          const updated = await rewardService.updateRedemptionStatus(
+            redemption.id,
+            status,
+            userId ?? undefined,
+          );
+          mergeRedemption(updated);
+
+          if (status === "DENIED") {
+            const refundAmount = redemption.cost ?? 0;
+            await rewardService.refundGold(redemption.user_id, refundAmount);
+            await refreshCharacter();
+          }
         }
       } catch (error) {
         console.error("Failed to update redemption:", error);

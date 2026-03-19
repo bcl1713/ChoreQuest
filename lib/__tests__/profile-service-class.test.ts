@@ -8,6 +8,7 @@ jest.mock("../supabase", () => ({
     },
   },
 }));
+
 import { supabase } from "../supabase";
 
 const mockFrom = supabase.from as jest.Mock;

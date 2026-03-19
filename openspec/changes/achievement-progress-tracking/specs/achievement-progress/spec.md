@@ -44,9 +44,11 @@ The `updateProgress` method SHALL accept a
 `characterId` (string) and an event object containing
 `type` (the triggering event type) and optional
 metadata. It SHALL resolve the character's `user_id`
-from the `characters` table, fetch all achievements
-from the `achievements` table, run the appropriate
-evaluators, and upsert results into
+and the owning user's `family_id` from the
+`characters` and `user_profiles` tables, fetch all
+visible achievements (global plus matching
+family-scoped rows) from the `achievements` table,
+run the appropriate evaluators, and upsert results into
 `character_achievements`.
 
 #### Scenario: Progress updated after quest approval
@@ -73,6 +75,13 @@ evaluators, and upsert results into
 - **THEN** it SHALL evaluate `boss_defeated`,
   `boss_participated`, `gold_earned`, `xp_earned`,
   and `level_reached` criteria for that character
+
+#### Scenario: Progress updated after class change
+
+- **WHEN** `updateProgress` is called with a
+  `characterId` and event type `CLASS_CHANGED`
+- **THEN** it SHALL evaluate `class_change` criteria
+  for that character
 
 #### Scenario: Invalid character ID
 
@@ -218,36 +227,48 @@ AND `participation_status` = 'APPROVED'.
 
 ### Requirement: boss_participated evaluator
 
-The `boss_participated` evaluator SHALL count all
-rows in `boss_battle_participants` where `user_id`
-= userId, regardless of `participation_status`.
+The `boss_participated` evaluator SHALL count rows
+in `boss_battle_participants` where `user_id` =
+userId AND `participation_status` IN ('APPROVED',
+'PARTIAL'). PENDING and DENIED rows SHALL NOT be
+counted.
 
 #### Scenario: Character with any boss participation
 
 - **WHEN** a character has 5 rows in
-  `boss_battle_participants` (any status)
+  `boss_battle_participants` with
+  participation_status APPROVED or PARTIAL
 - **THEN** the evaluator SHALL return
   `{ current: 5 }`
+
+#### Scenario: Pending and denied participations excluded
+
+- **WHEN** a character has boss battle
+  participations with participation_status PENDING
+  or DENIED
+- **THEN** those rows SHALL NOT be counted
 
 ### Requirement: gold_earned evaluator
 
 The `gold_earned` evaluator SHALL compute the sum of
-base gold rewards from two sources: (1) SUM of
-`gold_reward` from `quest_instances` where
-(`assigned_to_id` = userId OR `volunteered_by` =
-characterId) AND `status` = 'APPROVED', plus (2) SUM
-of `awarded_gold` from `boss_battle_participants`
-where `user_id` = userId AND `participation_status`
-= 'APPROVED'. This represents base rewards only;
-volunteer/streak/class bonuses are excluded because
-they are not stored separately on the quest row.
+gold rewards from two sources: (1) approved quest
+gold, including volunteer and streak bonuses as
+stored on the quest row, from `quest_instances`
+where (`assigned_to_id` = userId OR
+`volunteered_by` = characterId) AND `status` =
+'APPROVED', plus (2) SUM of `awarded_gold` from
+`boss_battle_participants` where `user_id` = userId
+AND `participation_status` IN ('APPROVED',
+'PARTIAL').
 
 #### Scenario: Gold earned from quests and bosses
 
-- **WHEN** a character has earned 200 base gold from
-  approved quests and 100 gold from boss victories
+- **WHEN** a character has earned 200 gold from
+  approved quests, plus 20 gold in quest bonuses,
+  and 100 gold from approved or partial boss
+  participations
 - **THEN** the evaluator SHALL return
-  `{ current: 300 }`
+  `{ current: 320 }`
 
 #### Scenario: No gold earned
 
@@ -337,15 +358,34 @@ a streak resets.
 
 ### Requirement: class_change evaluator
 
-The `class_change` evaluator is backfill-only. It
-SHALL return `{ current: 0 }` because no class change
-history table exists. A runtime trigger will be added
-when the class change flow is defined.
+The `class_change` evaluator SHALL count rows in
+`character_change_history` where `character_id` =
+characterId and `change_type` = `class`. It SHALL
+support both first-run backfill and runtime
+re-evaluation when the class change flow emits a
+`CLASS_CHANGED` event.
 
-#### Scenario: Class change always returns zero
+#### Scenario: Character with no class changes
 
-- **WHEN** the `class_change` evaluator runs
+- **WHEN** the character has no matching
+  `character_change_history` rows
 - **THEN** it SHALL return `{ current: 0 }`
+
+#### Scenario: Character with recorded class changes
+
+- **WHEN** the character has 2
+  `character_change_history` rows with
+  `change_type = class`
+- **THEN** the evaluator SHALL return
+  `{ current: 2 }`
+
+#### Scenario: Runtime class change event re-evaluates progress
+
+- **WHEN** the class change route records a new
+  `character_change_history` row and then calls
+  `updateProgress` with event type `CLASS_CHANGED`
+- **THEN** the evaluator SHALL return the updated
+  total count of `class` history rows
 
 ### Requirement: honor_earned evaluator
 
@@ -522,44 +562,49 @@ the boss completion to fail.
 
 ### Requirement: Reward approval integration
 
-The reward approval flow currently runs client-side
-in `useRewardStoreActions.ts` via `RewardService`,
-which uses a browser Supabase client. Because the
-progress service requires a service-role client, a
-lightweight internal API route SHALL be added at
-`app/api/achievement-progress/evaluate/route.ts`.
-After a successful redemption approval, the client
-hook SHALL call this route to trigger server-side
-progress evaluation. The route SHALL authenticate
-the caller, resolve the character ID from the
-authenticated user, and call
-`AchievementProgressService.updateProgress()`. This
-route is an internal implementation detail, not a
-public API — it accepts only a `REWARD_APPROVED`
-event type and is called only from the reward
-approval flow.
+The reward approval flow crosses from the client
+into the server through
+`app/api/reward-redemptions/[id]/approve/route.ts`.
+After a Guild Master approves a redemption in
+`useRewardStoreActions.ts`, the client hook SHALL
+call this approve route. The approve route SHALL
+perform the redemption status update and, after a
+successful approval, SHALL trigger server-side
+progress evaluation by calling
+`AchievementProgressService.updateProgress()` with
+event type `REWARD_APPROVED`. Progress evaluation
+SHALL run server-side with a service-role client and
+SHALL be non-blocking with respect to the approval
+response if evaluation fails.
+
+`app/api/achievement-progress/evaluate/route.ts`
+MAY exist as an internal utility endpoint for
+server-side evaluation, but it is not required to be
+part of the primary reward approval flow.
 
 #### Scenario: Progress evaluated on redemption approval
 
 - **WHEN** a Guild Master approves a reward
   redemption via the client-side hook
 - **THEN** the hook SHALL call the internal
-  `/api/achievement-progress/evaluate` route with
-  the redeemer's user ID and event type
-  `REWARD_APPROVED`
-- **AND** the route SHALL resolve the character ID,
-  call `updateProgress`, and return success
+  `/api/reward-redemptions/[id]/approve` route
+- **AND** the approve route SHALL update the
+  redemption status, resolve the redeemer's
+  character, call `updateProgress` with
+  `REWARD_APPROVED`, and return success
 
 #### Scenario: Denied redemptions do not trigger progress
 
 - **WHEN** a Guild Master denies a reward redemption
 - **THEN** the client hook SHALL NOT call the
-  progress evaluation route
+  approve route
+- **AND** no progress evaluation SHALL run
 
-#### Scenario: Evaluation route failure is non-blocking
+#### Scenario: Evaluation failure is non-blocking
 
-- **WHEN** the internal route call fails (network
-  error, server error)
+- **WHEN** progress evaluation fails inside the
+  approve route after the redemption status is
+  updated
 - **THEN** the redemption approval SHALL still
   complete successfully and the error SHALL be
-  silently caught by the client hook
+  handled server-side without failing the approval

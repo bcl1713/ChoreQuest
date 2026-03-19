@@ -4,7 +4,7 @@
 
 - [x] 1.1 Define event types and event payload
   interface (`QUEST_APPROVED`, `REWARD_APPROVED`,
-  `BOSS_COMPLETED`)
+  `BOSS_COMPLETED`, `CLASS_CHANGED`)
 - [x] 1.2 Define `EvaluatorFn` type signature
   `(client, characterId, userId, criteriaConfig?)`
   returning `{ current: number }`
@@ -22,10 +22,13 @@
   separate service-role client via
   `createServiceSupabaseClient()` regardless
   of injected read client
-- [x] 2.2 Implement `resolveUserId(characterId)`
-  helper that queries `characters.user_id`
-- [x] 2.3 Implement `fetchAchievements()` to load
-  all achievements from the `achievements` table
+- [x] 2.2 Implement `resolveCharacterContext(
+  characterId)` helper that queries
+  `characters.user_id` and the owning user's
+  `family_id` for achievement scoping
+- [x] 2.3 Implement `fetchAchievements(familyId)` to
+  load global achievements plus family-scoped
+  achievements from the `achievements` table
 - [x] 2.4 Implement backfill detection: query
   `character_achievements` count for character,
   branch on zero vs non-zero
@@ -79,20 +82,23 @@
   `user_id` = userId AND
   `participation_status` = 'APPROVED'
 - [x] 4.3 Write tests for `boss_participated`
-  evaluator (all participations regardless of
-  status)
+  evaluator (approved/partial participations,
+  pending/denied excluded)
 - [x] 4.4 Implement `boss_participated` evaluator:
   COUNT `boss_battle_participants` where
-  `user_id` = userId
+  `user_id` = userId AND
+  `participation_status` IN ('APPROVED', 'PARTIAL')
 
 ## 5. Evaluators — Economy
 
 - [x] 5.1 Write tests for `gold_earned` evaluator
-  (quest gold + boss gold, zero case)
+  (quest gold including bonuses + boss gold from
+  approved/partial participations, zero case)
 - [x] 5.2 Implement `gold_earned` evaluator: SUM
-  `quest_instances.gold_reward` (approved) + SUM
+  effective approved `quest_instances` gold
+  including volunteer/streak bonuses + SUM
   `boss_battle_participants.awarded_gold`
-  (approved)
+  (approved/partial)
 - [x] 5.3 Write tests for `gold_spent` evaluator
   (approved/fulfilled only, pending excluded)
 - [x] 5.4 Implement `gold_spent` evaluator: SUM
@@ -121,12 +127,14 @@
   MAX `character_quest_streaks.longest_streak`
   where `character_id` = characterId
 
-## 7. Evaluators — Backfill-Only
+## 7. Evaluators — Backfill and Deferred-Trigger
 
 - [x] 7.1 Write tests for `class_change` evaluator
-  (always returns 0)
+  (history count, zero-record case)
 - [x] 7.2 Implement `class_change` evaluator:
-  return `{ current: 0 }`
+  count `character_change_history` rows where
+  `character_id` = characterId and
+  `change_type` = `class`
 - [x] 7.3 Write tests for `honor_earned` evaluator
   (reads honor_points, null/zero case)
 - [x] 7.4 Implement `honor_earned` evaluator: read
@@ -192,27 +200,40 @@
 
 ## 11. Reward Approval Integration
 
-- [x] 11.1 Create internal API route at
+- [x] 11.1 Create internal utility route at
   `app/api/achievement-progress/evaluate/route.ts`
   that authenticates caller, resolves character
   ID, accepts only `REWARD_APPROVED` event type,
   and calls `updateProgress`
-- [x] 11.2 Write tests for the internal API route:
+- [x] 11.2 Write tests for the utility route:
   auth check, character resolution,
   success/error responses, and rejection of
   unsupported event types (non-`REWARD_APPROVED`
   requests return 400)
-- [x] 11.3 Add fetch call to
-  `useRewardStoreActions.ts` that calls the
-  evaluate route only after successful
-  redemption approval (not on denial),
-  fire-and-catch on client side
+- [x] 11.3 Add approve-route integration to
+  `useRewardStoreActions.ts` so successful
+  `APPROVED` updates call
+  `/api/reward-redemptions/[id]/approve`, which
+  performs approval and inline progress evaluation;
+  denials do not use this route
 - [x] 11.4 Write tests for reward hook integration:
-  route called on approval only, not called on
-  denial, failure non-blocking
+  approve route called on approval only, not on
+  denial, with evaluation failures remaining
+  non-blocking for approval
 
 ## 12. Quality Gates
 
 - [x] 12.1 Verify all tests pass (`npm run test`)
 - [x] 12.2 Verify build succeeds (`npm run build`)
 - [x] 12.3 Verify lint passes (`npm run lint`)
+
+## 13. Class Change Integration
+
+- [x] 13.1 Write tests for class change
+  integration: `updateProgress` called after a
+  successful class change and failures remain
+  non-blocking
+- [x] 13.2 Add `updateProgress` call to
+  `app/api/characters/[id]/change-class/route.ts`
+  with event type `CLASS_CHANGED` after class
+  change history is recorded
