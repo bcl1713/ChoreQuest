@@ -248,6 +248,7 @@ describe("ActivityFeed", () => {
     });
   });
   it("should handle error state", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     const getRecentActivityMock = getActivityMock();
     getRecentActivityMock.mockRejectedValue(new Error("Test error"));
     render(<ActivityFeed />);

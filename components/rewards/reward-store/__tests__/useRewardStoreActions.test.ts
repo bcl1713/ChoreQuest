@@ -16,6 +16,14 @@ jest.mock("@/lib/reward-service", () => {
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
+    auth: {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: { access_token: "test-token" } },
+      }),
+      refreshSession: jest.fn().mockResolvedValue({
+        data: { session: { access_token: "refreshed-token" } },
+      }),
+    },
     from: jest.fn(() => ({
       insert: jest.fn().mockResolvedValue({ error: null }),
       update: jest.fn(() => ({
@@ -24,6 +32,13 @@ jest.mock("@/lib/supabase", () => ({
     })),
   },
 }));
+
+// Mock global fetch for the reward-redemptions approve route
+const mockFetch = jest.fn().mockResolvedValue({
+  ok: true,
+  json: () => Promise.resolve({ redemption: {} }),
+});
+global.fetch = mockFetch;
 
 import { RewardService as MockedRewardService } from "@/lib/reward-service";
 
@@ -89,7 +104,10 @@ beforeEach(() => {
 
 describe("useRewardStoreActions - mergeRedemption integration", () => {
   it("calls mergeRedemption with updated row after APPROVED mutation", async () => {
-    mockUpdateRedemptionStatus.mockResolvedValue(approvedRow);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ redemption: approvedRow }),
+    });
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
 
@@ -132,7 +150,8 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
   });
 
   it("does NOT call mergeRedemption when mutation throws", async () => {
-    mockUpdateRedemptionStatus.mockRejectedValue(new Error("Network error"));
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    mockFetch.mockRejectedValueOnce(new Error("Network error"));
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
 
@@ -147,7 +166,10 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
   });
 
   it("clears updatingId after mutation regardless of success or failure", async () => {
-    mockUpdateRedemptionStatus.mockResolvedValue(approvedRow);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ redemption: approvedRow }),
+    });
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
 

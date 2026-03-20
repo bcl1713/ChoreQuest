@@ -93,6 +93,7 @@ describe("GuildMasterManager - actions", () => {
     });
 
     it("handles promotion API error", async () => {
+      jest.spyOn(console, "error").mockImplementation(() => {});
       const mockFetch = jest.fn().mockResolvedValue({
         ok: false,
         json: jest.fn().mockResolvedValue({ error: "Permission denied" }),

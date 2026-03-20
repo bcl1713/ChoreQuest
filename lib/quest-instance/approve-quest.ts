@@ -7,6 +7,8 @@ import type {
 } from "@/lib/types/database";
 import { AppError, ConflictError, NotFoundError } from "@/lib/errors";
 import { StreakService } from "@/lib/streak-service";
+import { AchievementProgressService } from "@/lib/achievement-progress-service";
+import { createServiceSupabaseClient } from "@/lib/supabase-server";
 import {
   applyStreaks,
   buildCharacterUpdatePayload,
@@ -37,10 +39,7 @@ const fetchQuest = async (
   }
 
   if (!quest) {
-    throw new NotFoundError(
-      "Quest not found",
-      "QUEST_NOT_FOUND",
-    );
+    throw new NotFoundError("Quest not found", "QUEST_NOT_FOUND");
   }
 
   if (
@@ -82,10 +81,7 @@ const resolveAssignedCharacter = async (
       );
     }
     if (!result.data) {
-      throw new NotFoundError(
-        "Character not found",
-        "CHARACTER_NOT_FOUND",
-      );
+      throw new NotFoundError("Character not found", "CHARACTER_NOT_FOUND");
     }
     return result.data as Character;
   }
@@ -232,6 +228,20 @@ export const approveQuest = async (
       `Failed to approve quest: ${questUpdateError.message}`,
       500,
       "QUEST_APPROVE_FAILED",
+    );
+  }
+
+  try {
+    const progressService = new AchievementProgressService(
+      createServiceSupabaseClient(),
+    );
+    await progressService.updateProgress(character.id, {
+      type: "QUEST_APPROVED",
+    });
+  } catch (progressError) {
+    console.error(
+      "Achievement progress update failed after quest approval (non-blocking):",
+      progressError,
     );
   }
 

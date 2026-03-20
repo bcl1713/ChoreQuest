@@ -26,7 +26,15 @@ interface MockFantasyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, className, onClick, ...props }: MockMotionDivProps) => (
+    div: ({
+      children,
+      className,
+      onClick,
+      whileHover: _wh,
+      whileTap: _wt,
+      transition: _tr,
+      ...props
+    }: MockMotionDivProps) => (
       <div className={className} onClick={onClick} {...props}>
         {children}
       </div>
@@ -37,7 +45,14 @@ jest.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: () => false,
 }));
 jest.mock("@/components/ui", () => ({
-  FantasyButton: ({ children, className, disabled, type, isLoading, ...props }: MockFantasyButtonProps) => (
+  FantasyButton: ({
+    children,
+    className,
+    disabled,
+    type,
+    isLoading,
+    ...props
+  }: MockFantasyButtonProps) => (
     <button className={className} disabled={disabled} type={type} {...props}>
       {isLoading ? "Loading..." : children}
     </button>
@@ -133,9 +148,10 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
 
       // Count how many cards have the selected styling
       const allCards = [knightCard, mageCard, rogueCard];
-      const selectedCards = allCards.filter((card) =>
-        card.className.includes("ring-4") &&
-        card.className.includes("glow-effect-gold")
+      const selectedCards = allCards.filter(
+        (card) =>
+          card.className.includes("ring-4") &&
+          card.className.includes("glow-effect-gold"),
       );
 
       expect(selectedCards).toHaveLength(1);
@@ -197,17 +213,24 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
         }),
       });
 
-      type SupabaseFromReturnType = { select?: typeof mockSelect; insert?: typeof mockInsert };
+      type SupabaseFromReturnType = {
+        select?: typeof mockSelect;
+        insert?: typeof mockInsert;
+      };
 
-      mockSupabase.from.mockImplementation((table: string): SupabaseFromReturnType => {
-        if (table === "user_profiles") {
-          return { select: mockSelect };
-        }
-        if (table === "characters") {
-          return { insert: mockInsert };
-        }
-        throw new Error(`Unexpected table access in test: "${table}". Please add a mock for this table.`);
-      });
+      mockSupabase.from.mockImplementation(
+        (table: string): SupabaseFromReturnType => {
+          if (table === "user_profiles") {
+            return { select: mockSelect };
+          }
+          if (table === "characters") {
+            return { insert: mockInsert };
+          }
+          throw new Error(
+            `Unexpected table access in test: "${table}". Please add a mock for this table.`,
+          );
+        },
+      );
 
       render(<CharacterCreation onCharacterCreated={mockOnCharacterCreated} />);
 
@@ -220,7 +243,9 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
       fireEvent.click(knightCard);
 
       // Submit form
-      const submitButton = screen.getByRole("button", { name: /Begin Your Quest/i });
+      const submitButton = screen.getByRole("button", {
+        name: /Begin Your Quest/i,
+      });
       fireEvent.click(submitButton);
 
       // Wait for character creation to complete
@@ -235,7 +260,9 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
       const nameInput = screen.getByLabelText(/Hero Name/i);
       fireEvent.change(nameInput, { target: { value: "Test Hero" } });
 
-      const submitButton = screen.getByRole("button", { name: /Begin Your Quest/i });
+      const submitButton = screen.getByRole("button", {
+        name: /Begin Your Quest/i,
+      });
 
       // Button should be disabled when no class is selected
       expect(submitButton).toBeDisabled();
@@ -250,7 +277,9 @@ describe("CharacterCreation - Class Selection Visual Indicator", () => {
       const knightCard = screen.getByTestId("class-knight");
       fireEvent.click(knightCard);
 
-      const submitButton = screen.getByRole("button", { name: /Begin Your Quest/i });
+      const submitButton = screen.getByRole("button", {
+        name: /Begin Your Quest/i,
+      });
 
       // Button should now be enabled
       expect(submitButton).not.toBeDisabled();
