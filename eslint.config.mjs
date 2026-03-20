@@ -54,12 +54,17 @@ const eslintConfig = [
       "max-lines": "off",
     },
   },
-  // Test files: allow any and display-name for mocked components and fixtures
+  // Test files: allow any and display-name for mocked components and fixtures;
+  // allow underscore-prefixed vars to signal intentionally unused destructured props.
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**/*.ts", "**/__tests__/**/*.tsx"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "react/display-name": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+      }],
     },
   },
 ];
