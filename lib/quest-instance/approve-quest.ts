@@ -8,6 +8,7 @@ import type {
 import { AppError, ConflictError, NotFoundError } from "@/lib/errors";
 import { StreakService } from "@/lib/streak-service";
 import { AchievementProgressService } from "@/lib/achievement-progress-service";
+import { createServiceSupabaseClient } from "@/lib/supabase-server";
 import {
   applyStreaks,
   buildCharacterUpdatePayload,
@@ -231,7 +232,9 @@ export const approveQuest = async (
   }
 
   try {
-    const progressService = new AchievementProgressService(client);
+    const progressService = new AchievementProgressService(
+      createServiceSupabaseClient(),
+    );
     await progressService.updateProgress(character.id, {
       type: "QUEST_APPROVED",
     });

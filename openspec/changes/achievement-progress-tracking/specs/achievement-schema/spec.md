@@ -46,27 +46,38 @@ tracking service writes to this table using
 
 ### Requirement: Backfill row detection
 
-The absence of `character_achievements` rows for a
-given `character_id` SHALL be used as the signal that
-backfill has not yet run for that character. No
-additional columns or flags are required. Backfill
+The absence of any expected `character_achievements`
+rows for a given `character_id` SHALL be used as the
+signal that backfill is needed. The service checks
+whether the character is missing rows for any
+achievement in the family's current achievement set —
+if any achievement row is absent, it runs all
+evaluators. This is intentionally stricter than a
+simple "zero rows" check: it allows the system to
+self-heal partial backfills and automatically backfill
+newly seeded achievements for characters that were
+already evaluated before those achievements existed.
+No additional columns or flags are required. Backfill
 writes SHALL be performed as a single batch upsert
 (atomic) so that partial writes cannot leave a false
 "complete" signal.
 
-#### Scenario: No rows means backfill needed
+#### Scenario: Missing achievement rows means backfill needed
 
-- **WHEN** a query for `character_achievements` where
-  `character_id` = X returns zero rows
+- **WHEN** a character is missing one or more
+  `character_achievements` rows for the family's
+  current achievement set
 - **THEN** the progress service SHALL interpret this
-  as "backfill has not run" and evaluate all criteria
+  as "backfill incomplete" and evaluate all 13
+  criteria types
 
-#### Scenario: Any rows means backfill complete
+#### Scenario: All achievement rows present means backfill complete
 
-- **WHEN** a query for `character_achievements` where
-  `character_id` = X returns one or more rows
+- **WHEN** a character has a `character_achievements`
+  row for every achievement in the family's current
+  achievement set
 - **THEN** the progress service SHALL interpret this
-  as "backfill has already run" and evaluate only
+  as "backfill already run" and evaluate only
   event-scoped criteria
 
 #### Scenario: Failed batch upsert leaves no partial rows
