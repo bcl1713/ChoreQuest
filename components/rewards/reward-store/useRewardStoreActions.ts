@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { getAuthToken } from "@/lib/utils/get-auth-token";
 import {
   RewardService,

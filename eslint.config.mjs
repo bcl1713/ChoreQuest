@@ -13,8 +13,6 @@ const compat = new FlatCompat({
 const legacyMaxLineWaivers = [
   "lib/types/database-generated.ts",
   "lib/types/database.ts",
-  "lib/statistics-service.ts", // TODO: Refactor to reduce complexity and line count
-  "lib/achievement-progress-service.ts", // TODO: Refactor to reduce complexity and line count
 ];
 
 const eslintConfig = [

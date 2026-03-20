@@ -1,7 +1,5 @@
-/**
- * Tests for boss quest completion achievement progress integration (task 10.1)
- * Verifies updateProgress is called per participant and failures are isolated.
- */
+// Tests for boss quest completion achievement progress integration (task 10.1)
+// Verifies updateProgress is called per participant and failures are isolated.
 const mockUpdateProgress = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("@/lib/achievement-progress-service", () => ({
