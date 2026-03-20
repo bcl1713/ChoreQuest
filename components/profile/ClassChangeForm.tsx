@@ -7,7 +7,7 @@ import { getCharacterClassInfo } from "@/lib/constants/character-classes";
 import { ProfileService } from "@/lib/profile-service";
 import { ErrorAlert } from "@/components/profile/shared/ErrorAlert";
 import { Character, CharacterClass } from "@/lib/types/database";
-import { supabase } from "@/lib/supabase";
+import { getAuthToken } from "@/lib/utils/get-auth-token";
 import { ClassSelectionGrid } from "./class-change/ClassSelectionGrid";
 import { CooldownNotice } from "./class-change/CooldownNotice";
 import { CostInfo } from "./class-change/CostInfo";
@@ -101,11 +101,7 @@ export default function ClassChangeForm({
 
       setError(null);
 
-      let { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session?.access_token) {
-        ({ data: sessionData } = await supabase.auth.refreshSession());
-      }
-      const token = sessionData?.session?.access_token;
+      const token = await getAuthToken();
       if (!token) {
         throw new Error("Not authenticated");
       }

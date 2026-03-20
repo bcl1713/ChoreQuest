@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { getAuthToken } from "@/lib/utils/get-auth-token";
 import {
   RewardService,
   type RewardRedemptionWithUser,
@@ -97,11 +97,7 @@ export function useRewardStoreActions({
       setUpdatingId(redemption.id);
       try {
         if (status === "APPROVED") {
-          let { data: sessionData } = await supabase.auth.getSession();
-          if (!sessionData?.session?.access_token) {
-            ({ data: sessionData } = await supabase.auth.refreshSession());
-          }
-          const token = sessionData?.session?.access_token;
+          const token = await getAuthToken();
           const response = await fetch(
             `/api/reward-redemptions/${redemption.id}/approve`,
             {
@@ -115,7 +111,8 @@ export function useRewardStoreActions({
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(
-              (errorData as { error?: string }).error ??
+              (errorData as { error?: string; message?: string }).error ??
+                (errorData as { message?: string }).message ??
                 "Failed to approve redemption",
             );
           }
