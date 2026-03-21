@@ -130,7 +130,9 @@ export async function runUnlockEvaluation(
   // Skip character stats update when total rewards are zero
   if (totalXp === 0 && totalGold === 0) return;
 
-  // P1: Wrap reward grant and cascade in try-catch to revert on failure
+  let statsApplied = false,
+    levelApplied = false;
+  let prevLevel: number | null = null;
   try {
     // Atomically increment XP and gold to prevent concurrent read-modify-write races.
     // Returns the new values after the increment.
@@ -147,6 +149,9 @@ export async function runUnlockEvaluation(
         `Failed to increment character stats: ${rpcError.message}`,
       );
     }
+
+    statsApplied = true;
+    prevLevel = newStats?.level ?? null;
 
     // Compute level from previous XP (new xp minus the increment) to detect level-up
     const prevXp = (newStats?.xp ?? 0) - totalXp;
@@ -167,6 +172,8 @@ export async function runUnlockEvaluation(
           `Failed to update character level: ${levelError.message}`,
         );
       }
+
+      levelApplied = true;
     }
 
     // P2 + P3: Unified cascade section
@@ -250,18 +257,43 @@ export async function runUnlockEvaluation(
       }
     }
   } catch (err) {
-    // P1: Attempt to revert unlocked_at to null on any failure
-    try {
-      await writeClient
-        .from("character_achievements")
-        .update({ unlocked_at: null })
-        .eq("character_id", characterId)
-        .in("achievement_id", lockedIds);
-    } catch (revertError) {
+    const { error: revertError } = await writeClient
+      .from("character_achievements")
+      .update({ unlocked_at: null })
+      .eq("character_id", characterId)
+      .in("achievement_id", lockedIds);
+    if (revertError) {
       console.error(
         "Critical: failed to revert unlock after reward failure:",
         revertError,
       );
+    }
+    if (levelApplied && prevLevel !== null) {
+      const { error: lvlRevertErr } = await writeClient
+        .from("characters")
+        .update({ level: prevLevel })
+        .eq("id", characterId);
+      if (lvlRevertErr) {
+        console.error(
+          "Critical: failed to revert level after reward failure:",
+          lvlRevertErr,
+        );
+      }
+    }
+    if (statsApplied) {
+      const { error: statsRevertErr } = await writeClient
+        .rpc("fn_increment_character_stats", {
+          p_character_id: characterId,
+          p_xp: 0 - totalXp,
+          p_gold: 0 - totalGold,
+        })
+        .single();
+      if (statsRevertErr) {
+        console.error(
+          "Critical: failed to revert stats after reward failure:",
+          statsRevertErr,
+        );
+      }
     }
     throw err;
   }

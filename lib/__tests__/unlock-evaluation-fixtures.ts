@@ -31,6 +31,14 @@ export type WriteMocksOptions = {
   unlockedIds?: string[];
   /** Stats the RPC mock should return after the atomic increment. */
   rpcReturn?: { xp: number; gold: number; level: number };
+  /** If set, the characters level update resolves with this error message. */
+  levelUpdateError?: string;
+  /** If set, the second (cascade) upsert resolves with this error message. */
+  cascadeUpsertError?: string;
+  /** If set, the second RPC call (stats compensation) resolves with this error. */
+  rpcCompensationError?: string;
+  /** If set, the unlocked_at revert update resolves with this error message. */
+  revertUnlockError?: string;
 };
 
 /** Build mock write client mocks for unlock evaluation tests */
@@ -38,38 +46,82 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
   const {
     unlockedIds = [DEFAULT_ACHIEVEMENT.id],
     rpcReturn = { xp: 150, gold: 75, level: 1 },
+    levelUpdateError,
+    cascadeUpsertError,
+    rpcCompensationError,
+    revertUnlockError,
   } = options ?? {};
 
-  const upsert = jest.fn().mockResolvedValue({ error: null });
+  // Upsert: first call = initial progress upsert (always succeeds), subsequent = cascade
+  let upsertCallCount = 0;
+  const upsert = jest.fn().mockImplementation(() => {
+    upsertCallCount++;
+    if (upsertCallCount === 1) return Promise.resolve({ error: null });
+    return Promise.resolve({
+      error: cascadeUpsertError ? { message: cascadeUpsertError } : null,
+    });
+  });
+
+  // Lock chain: .update().eq().in().is().select() → data
   const selectAfterIs = jest.fn().mockResolvedValue({
     data: unlockedIds.map((id) => ({ achievement_id: id })),
     error: null,
   });
   const isNull = jest.fn().mockReturnValue({ select: selectAfterIs });
-  const inFn = jest.fn().mockReturnValue({ is: isNull });
-  const eqUpdate = jest.fn().mockReturnValue({ in: inFn });
-  const charAchUpdate = jest.fn().mockReturnValue({ eq: eqUpdate });
-  const statsEq = jest.fn().mockResolvedValue({ error: null });
+  const inForLock = jest.fn().mockReturnValue({ is: isNull });
+  const eqForLock = jest.fn().mockReturnValue({ in: inForLock });
+
+  // Revert chain: .update().eq().in() → awaited directly
+  const inForRevert = jest.fn().mockResolvedValue({
+    error: revertUnlockError ? { message: revertUnlockError } : null,
+  });
+  const eqForRevert = jest.fn().mockReturnValue({ in: inForRevert });
+
+  // charAchUpdate routes by payload: unlocked_at=null means revert, otherwise lock
+  const charAchUpdate = jest.fn().mockImplementation((payload: unknown) => {
+    const p = payload as Record<string, unknown>;
+    return "unlocked_at" in p && p.unlocked_at === null
+      ? { eq: eqForRevert }
+      : { eq: eqForLock };
+  });
+
+  const statsEq = jest.fn().mockResolvedValue({
+    error: levelUpdateError ? { message: levelUpdateError } : null,
+  });
   const statsUpdate = jest.fn().mockReturnValue({ eq: statsEq });
+
   const from = jest.fn((table: string) => {
     if (table === "character_achievements")
       return { upsert, update: charAchUpdate };
     if (table === "characters") return { update: statsUpdate };
     return { upsert };
   });
-  const rpcSingle = jest
-    .fn()
-    .mockResolvedValue({ data: rpcReturn, error: null });
+
+  // RPC: first call = stats increment, second = compensation (reverse)
+  let rpcSingleCallCount = 0;
+  const rpcSingle = jest.fn().mockImplementation(() => {
+    rpcSingleCallCount++;
+    if (rpcSingleCallCount === 1)
+      return Promise.resolve({ data: rpcReturn, error: null });
+    return Promise.resolve({
+      data: null,
+      error: rpcCompensationError ? { message: rpcCompensationError } : null,
+    });
+  });
   const rpc = jest.fn().mockReturnValue({ single: rpcSingle });
+
   return {
     upsert,
     selectAfterIs,
     isNull,
-    inFn,
+    inForLock,
+    inForRevert,
     charAchUpdate,
     statsUpdate,
+    statsEq,
     from,
     rpc,
+    rpcSingle,
   };
 }
 
