@@ -11,7 +11,7 @@ import {
   USER_ID,
 } from "./unlock-evaluation-fixtures";
 
-const mockWriteClient = { from: jest.fn() };
+const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };
 jest.mock("@/lib/supabase-server", () => ({
   createServiceSupabaseClient: jest.fn(() => mockWriteClient),
 }));
@@ -71,8 +71,23 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
   afterEach(() => jest.clearAllMocks());
 
   it("7.3 cascades to unlock level_reached achievement after XP-triggered level-up", async () => {
-    const write = makeWriteMocks();
+    // prevXp=40, award xp=60 → new xp=100 → level 2; cascade unlocks LEVEL_ACH
+    const write = makeWriteMocks({
+      unlockedIds: [QUEST_ACH.id],
+      rpcReturn: { xp: 100, gold: 0, level: 1 },
+    });
     mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
+    // First IS NULL update unlocks QUEST_ACH; cascade update unlocks LEVEL_ACH
+    write.selectAfterIs
+      .mockResolvedValueOnce({
+        data: [{ achievement_id: QUEST_ACH.id }],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [{ achievement_id: LEVEL_ACH.id }],
+        error: null,
+      });
 
     let charAchN = 0;
     const charAchChain = {
@@ -123,9 +138,13 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
   });
 
   it("7.3 no cascade when XP reward does not trigger level-up", async () => {
-    const write = makeWriteMocks();
-    mockWriteClient.from.mockImplementation(write.from);
     const noLevelUpAch = { ...QUEST_ACH, xp_reward: 10 };
+    const write = makeWriteMocks({
+      unlockedIds: [noLevelUpAch.id],
+      rpcReturn: { xp: 10, gold: 0, level: 1 },
+    });
+    mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
 
     const readClient = makeReadClient({
       characters: makeCharChain({

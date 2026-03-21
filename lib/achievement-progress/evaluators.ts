@@ -16,16 +16,18 @@ export const EVENT_CRITERIA_MAP: Record<AchievementEventType, string[]> = {
     "xp_earned",
     "level_reached",
     "streak_reached",
+    "compound",
   ],
-  REWARD_APPROVED: ["gold_spent", "reward_redeemed"],
+  REWARD_APPROVED: ["gold_spent", "reward_redeemed", "compound"],
   BOSS_COMPLETED: [
     "boss_defeated",
     "boss_participated",
     "gold_earned",
     "xp_earned",
     "level_reached",
+    "compound",
   ],
-  CLASS_CHANGED: ["class_change"],
+  CLASS_CHANGED: ["class_change", "compound"],
 };
 
 export const ALL_CRITERIA_TYPES = [

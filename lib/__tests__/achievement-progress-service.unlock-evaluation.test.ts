@@ -13,7 +13,7 @@ import {
   USER_ID,
 } from "./unlock-evaluation-fixtures";
 
-const mockWriteClient = { from: jest.fn() };
+const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };
 jest.mock("@/lib/supabase-server", () => ({
   createServiceSupabaseClient: jest.fn(() => mockWriteClient),
 }));
@@ -24,6 +24,7 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
   it("5.5 sets unlocked_at when criteria newly met and unlocked_at is null", async () => {
     const write = makeWriteMocks();
     mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
     const readClient = makeUnlockReadClient({
       questCount: 5,
       unlockedAt: null,
@@ -36,6 +37,7 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
   it("5.5 skips unlock when achievement already has unlocked_at set", async () => {
     const write = makeWriteMocks();
     mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
     const readClient = makeUnlockReadClient({
       questCount: 10,
       unlockedAt: "2026-01-01T00:00:00Z",
@@ -49,6 +51,7 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
   it("5.5 skips unlock when progress is below threshold", async () => {
     const write = makeWriteMocks();
     mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
     const readClient = makeUnlockReadClient({
       questCount: 3,
       unlockedAt: null,
@@ -64,8 +67,10 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
   });
 
   it("5.5 unlocks compound achievement when top-level met flag is true", async () => {
-    const write = makeWriteMocks();
+    const achId = "ach-compound";
+    const write = makeWriteMocks({ unlockedIds: [achId] });
     mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
     const charChain = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -89,7 +94,6 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
         }),
       }),
     };
-    const achId = "ach-compound";
     const achievementsChain = makeDataResult([
       {
         id: achId,
@@ -137,7 +141,10 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
   });
 
   it("5.6 IS NULL filter is applied on unlock update for concurrency safety", async () => {
-    const isNull = jest.fn().mockResolvedValue({ error: null });
+    const selectAfterIs = jest
+      .fn()
+      .mockResolvedValue({ data: [], error: null });
+    const isNull = jest.fn().mockReturnValue({ select: selectAfterIs });
     const inFn = jest.fn().mockReturnValue({ is: isNull });
     const eqFn = jest.fn().mockReturnValue({ in: inFn });
     const charAchUpdate = jest.fn().mockReturnValue({ eq: eqFn });
@@ -146,6 +153,9 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
       if (t === "character_achievements")
         return { upsert, update: charAchUpdate };
       return { upsert };
+    });
+    mockWriteClient.rpc.mockReturnValue({
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
     });
     const readClient = makeUnlockReadClient({
       questCount: 5,
@@ -161,38 +171,33 @@ describe("AchievementProgressService - unlock detection (5.5, 5.6)", () => {
 describe("AchievementProgressService - reward granting (6.6, 6.7)", () => {
   afterEach(() => jest.clearAllMocks());
 
-  function setupRewardTest(charStats: {
+  function setupRewardTest(rpcReturn: {
     xp: number;
     gold: number;
     level: number;
   }) {
-    const write = makeWriteMocks();
+    const write = makeWriteMocks({ rpcReturn });
     mockWriteClient.from.mockImplementation(write.from);
-    let charCallCount = 0;
+    mockWriteClient.rpc.mockImplementation(write.rpc);
     const charChain = {
-      select: jest.fn().mockImplementation(() => {
-        charCallCount++;
-        return {
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data:
-                charCallCount === 1
-                  ? { user_id: USER_ID, user_profiles: null }
-                  : charStats,
-              error: null,
-            }),
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: { user_id: USER_ID, user_profiles: null },
+            error: null,
           }),
-        };
+        }),
       }),
     };
     return { write, charChain };
   }
 
   it("6.6 increments character xp and gold on single unlock", async () => {
+    // prevXp=100, award (50,25); already level 2 (needs 200 for L3) → new xp=150, no level-up
     const { write, charChain } = setupRewardTest({
-      xp: 100,
-      gold: 50,
-      level: 1,
+      xp: 150,
+      gold: 75,
+      level: 2,
     });
     const questChain: MockChain = {
       select: jest.fn().mockReturnValue({
@@ -211,9 +216,11 @@ describe("AchievementProgressService - reward granting (6.6, 6.7)", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    expect(write.statsUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ xp: 150, gold: 75 }),
+    expect(mockWriteClient.rpc).toHaveBeenCalledWith(
+      "fn_increment_character_stats",
+      { p_character_id: CHAR_ID, p_xp: 50, p_gold: 25 },
     );
+    expect(write.statsUpdate).not.toHaveBeenCalled();
   });
 
   it("6.6 skips character stats update when total rewards are zero", async () => {
@@ -230,8 +237,13 @@ describe("AchievementProgressService - reward granting (6.6, 6.7)", () => {
   });
 
   it("6.7 includes level in update when XP reward triggers level-up", async () => {
-    // Level 1 with 40 XP + 60 XP = 100 >= 50*(2-1)^2=50 → level 2
-    const { write, charChain } = setupRewardTest({ xp: 40, gold: 0, level: 1 });
+    // prevXp=40, award xp=60 → new xp=100; 100 >= 50*(2-1)^2=50 → level 2
+    // RPC returns new totals with level still at 1 (level update is separate)
+    const { write, charChain } = setupRewardTest({
+      xp: 100,
+      gold: 0,
+      level: 1,
+    });
     const questChain: MockChain = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -252,14 +264,16 @@ describe("AchievementProgressService - reward granting (6.6, 6.7)", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    expect(write.statsUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ xp: 100, level: 2 }),
+    expect(mockWriteClient.rpc).toHaveBeenCalledWith(
+      "fn_increment_character_stats",
+      { p_character_id: CHAR_ID, p_xp: 60, p_gold: 0 },
     );
+    expect(write.statsUpdate).toHaveBeenCalledWith({ level: 2 });
   });
 
-  it("6.7 does not include level when XP reward does not trigger level-up", async () => {
-    // Level 1 with 0 XP + 10 XP = 10 < 50 → stays level 1
-    const { write, charChain } = setupRewardTest({ xp: 0, gold: 0, level: 1 });
+  it("6.7 does not update level when XP reward does not trigger level-up", async () => {
+    // prevXp=0, award xp=10 → new xp=10 < 50; stays level 1 → no level update
+    const { write, charChain } = setupRewardTest({ xp: 10, gold: 0, level: 1 });
     const questChain: MockChain = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -280,8 +294,7 @@ describe("AchievementProgressService - reward granting (6.6, 6.7)", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    const updateArg = write.statsUpdate.mock.calls[0]?.[0];
-    expect(updateArg).toBeDefined();
-    expect(updateArg).not.toHaveProperty("level");
+    expect(mockWriteClient.rpc).toHaveBeenCalled();
+    expect(write.statsUpdate).not.toHaveBeenCalled();
   });
 });

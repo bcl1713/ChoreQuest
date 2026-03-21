@@ -26,10 +26,26 @@ export const DEFAULT_ACHIEVEMENT: UnlockTestAchievement = {
   gold_reward: 25,
 };
 
+export type WriteMocksOptions = {
+  /** Achievement IDs to return as actually-unlocked from the IS NULL update. */
+  unlockedIds?: string[];
+  /** Stats the RPC mock should return after the atomic increment. */
+  rpcReturn?: { xp: number; gold: number; level: number };
+};
+
 /** Build mock write client mocks for unlock evaluation tests */
-export function makeWriteMocks() {
+export function makeWriteMocks(options?: WriteMocksOptions) {
+  const {
+    unlockedIds = [DEFAULT_ACHIEVEMENT.id],
+    rpcReturn = { xp: 150, gold: 75, level: 1 },
+  } = options ?? {};
+
   const upsert = jest.fn().mockResolvedValue({ error: null });
-  const isNull = jest.fn().mockResolvedValue({ error: null });
+  const selectAfterIs = jest.fn().mockResolvedValue({
+    data: unlockedIds.map((id) => ({ achievement_id: id })),
+    error: null,
+  });
+  const isNull = jest.fn().mockReturnValue({ select: selectAfterIs });
   const inFn = jest.fn().mockReturnValue({ is: isNull });
   const eqUpdate = jest.fn().mockReturnValue({ in: inFn });
   const charAchUpdate = jest.fn().mockReturnValue({ eq: eqUpdate });
@@ -41,7 +57,20 @@ export function makeWriteMocks() {
     if (table === "characters") return { update: statsUpdate };
     return { upsert };
   });
-  return { upsert, isNull, inFn, charAchUpdate, statsUpdate, from };
+  const rpcSingle = jest
+    .fn()
+    .mockResolvedValue({ data: rpcReturn, error: null });
+  const rpc = jest.fn().mockReturnValue({ single: rpcSingle });
+  return {
+    upsert,
+    selectAfterIs,
+    isNull,
+    inFn,
+    charAchUpdate,
+    statsUpdate,
+    from,
+    rpc,
+  };
 }
 
 /** Build charAchChain that returns unlocked_at state on second call */

@@ -87,8 +87,11 @@ export async function runUnlockEvaluation(
 
   if (newlyEligible.length === 0) return;
 
-  // Batch update unlocked_at = now() with IS NULL concurrency filter
-  const { error: unlockError } = await writeClient
+  // Batch update unlocked_at = now() with IS NULL concurrency filter.
+  // .select() returns only the rows that matched and were updated by this call.
+  // Under concurrent unlock evaluations, only one caller wins the IS NULL race;
+  // the other receives an empty set and returns early without granting rewards.
+  const { data: actuallyUnlocked, error: unlockError } = await writeClient
     .from("character_achievements")
     .update({ unlocked_at: new Date().toISOString() })
     .eq("character_id", characterId)
@@ -96,19 +99,23 @@ export async function runUnlockEvaluation(
       "achievement_id",
       newlyEligible.map((r) => r.achievement_id),
     )
-    .is("unlocked_at", null);
+    .is("unlocked_at", null)
+    .select("achievement_id");
 
   if (unlockError) {
     throw new Error(`Failed to set unlocked_at: ${unlockError.message}`);
   }
 
-  // Sum xp_reward and gold_reward across newly-unlocked achievements
-  const totalXp = newlyEligible.reduce(
+  // Only grant rewards for achievements actually unlocked by this call
+  if (!actuallyUnlocked || actuallyUnlocked.length === 0) return;
+
+  // Sum xp_reward and gold_reward across actually-unlocked achievements
+  const totalXp = actuallyUnlocked.reduce(
     (sum, row) =>
       sum + (achievementMap.get(row.achievement_id)?.xp_reward ?? 0),
     0,
   );
-  const totalGold = newlyEligible.reduce(
+  const totalGold = actuallyUnlocked.reduce(
     (sum, row) =>
       sum + (achievementMap.get(row.achievement_id)?.gold_reward ?? 0),
     0,
@@ -117,44 +124,39 @@ export async function runUnlockEvaluation(
   // Skip character stats update when total rewards are zero
   if (totalXp === 0 && totalGold === 0) return;
 
-  // Fetch character's current XP, gold, and level
-  const { data: charData, error: charError } = await readClient
-    .from("characters")
-    .select("xp, gold, level")
-    .eq("id", characterId)
+  // Atomically increment XP and gold to prevent concurrent read-modify-write races.
+  // Returns the new values after the increment.
+  const { data: newStats, error: rpcError } = await writeClient
+    .rpc("fn_increment_character_stats", {
+      p_character_id: characterId,
+      p_xp: totalXp,
+      p_gold: totalGold,
+    })
     .single();
 
-  if (charError) {
-    throw new Error(`Failed to fetch character stats: ${charError.message}`);
+  if (rpcError) {
+    throw new Error(`Failed to increment character stats: ${rpcError.message}`);
   }
 
-  const currentXp = charData?.xp ?? 0;
-  const currentGold = charData?.gold ?? 0;
-  const currentLevel = charData?.level ?? 1;
-
-  // Call RewardCalculator.calculateLevelUp
+  // Compute level from previous XP (new xp minus the increment) to detect level-up
+  const prevXp = (newStats?.xp ?? 0) - totalXp;
   const levelUpResult = RewardCalculator.calculateLevelUp(
-    currentXp,
+    prevXp,
     totalXp,
-    currentLevel,
+    newStats?.level ?? 1,
   );
 
-  // Increment characters.xp, characters.gold, and optionally level
-  const statsUpdate: Record<string, number> = {
-    xp: currentXp + totalXp,
-    gold: currentGold + totalGold,
-  };
   if (levelUpResult) {
-    statsUpdate.level = levelUpResult.newLevel;
-  }
+    const { error: levelError } = await writeClient
+      .from("characters")
+      .update({ level: levelUpResult.newLevel })
+      .eq("id", characterId);
 
-  const { error: statsError } = await writeClient
-    .from("characters")
-    .update(statsUpdate)
-    .eq("id", characterId);
-
-  if (statsError) {
-    throw new Error(`Failed to update character stats: ${statsError.message}`);
+    if (levelError) {
+      throw new Error(
+        `Failed to update character level: ${levelError.message}`,
+      );
+    }
   }
 
   // Level-up cascade: re-evaluate level_reached achievements
