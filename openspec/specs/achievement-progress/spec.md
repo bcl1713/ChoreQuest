@@ -476,19 +476,25 @@ accumulating from event payloads.
   canonical state, not just the delta from the
   latest event
 
-### Requirement: Retroactive backfill on first evaluation
+### Requirement: Retroactive backfill on missing achievements
 
-On the first `updateProgress` call for a character
-(detected by absence of any `character_achievements`
-rows for that character), the service SHALL run all
-13 evaluators to backfill progress from existing
-database state. The full set of backfill upserts
-SHALL be written in a single batch upsert call so
-that the operation is atomic — either all rows are
-written or none are. This prevents partial backfill
-from being misinterpreted as complete on subsequent
-calls. Subsequent calls SHALL run only the evaluators
-mapped to the triggering event type.
+The service SHALL detect when any achievements are
+missing from a character's `character_achievements`
+rows (i.e., some achievements exist in the
+`achievements` table that have no corresponding row
+for this character). When such gaps are detected,
+the service SHALL run all 13 evaluators to backfill
+progress from existing database state. The full set
+of backfill upserts SHALL be written in a single
+batch upsert call so that the operation is atomic —
+either all rows are written or none are. This
+prevents partial backfill from being misinterpreted
+as complete on subsequent calls. It also ensures
+newly seeded achievements are backfilled for
+returning characters on their next `updateProgress`
+call. Subsequent calls with no missing achievements
+SHALL run only the evaluators mapped to the
+triggering event type.
 
 #### Scenario: First evaluation triggers full backfill
 
@@ -498,17 +504,27 @@ mapped to the triggering event type.
   types and upsert progress for every achievement in
   a single batch upsert
 
+#### Scenario: New achievement seeds trigger backfill for returning characters
+
+- **WHEN** `updateProgress` is called for a character
+  that has some `character_achievements` rows, but a
+  newly seeded achievement has no row for that
+  character
+- **THEN** the service SHALL detect the gap and run a
+  full backfill for all 13 criteria types
+
 #### Scenario: Partial backfill failure leaves no rows
 
 - **WHEN** the batch upsert during backfill fails
-- **THEN** no `character_achievements` rows SHALL be
-  written for that character, and the next
+- **THEN** no new `character_achievements` rows SHALL
+  be written for that character, and the next
   `updateProgress` call SHALL retry the full backfill
 
 #### Scenario: Subsequent evaluation is scoped
 
 - **WHEN** `updateProgress` is called for a character
-  that already has `character_achievements` rows
+  that has `character_achievements` rows for every
+  known achievement
 - **THEN** the service SHALL evaluate only the
   criteria types mapped to the event type
 
