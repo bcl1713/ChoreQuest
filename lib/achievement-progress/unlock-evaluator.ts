@@ -3,6 +3,7 @@ import type {
   AchievementProgressValue,
   StandardProgress,
   CompoundProgress,
+  CompoundConditionResult,
 } from "./types";
 
 export type EvaluationStrategy = "threshold" | "boolean" | "compound";
@@ -23,6 +24,26 @@ export function evaluateBoolean(progress: StandardProgress): boolean {
 
 export function evaluateCompound(progress: CompoundProgress): boolean {
   return progress.met === true;
+}
+
+// ─── Progress value builder ───────────────────────────────────────────────────
+
+export function buildProgressValue(
+  criteriaType: string,
+  result: {
+    current: number;
+    compoundConditions?: CompoundConditionResult[];
+    compoundMet?: boolean;
+  },
+  config: CriteriaConfig,
+): AchievementProgressValue {
+  if (criteriaType === "compound" && result.compoundConditions !== undefined) {
+    return {
+      conditions: result.compoundConditions,
+      met: result.compoundMet ?? false,
+    } satisfies CompoundProgress;
+  }
+  return { current: result.current, threshold: config?.threshold ?? 0 };
 }
 
 // ─── Strategy dispatch ────────────────────────────────────────────────────────

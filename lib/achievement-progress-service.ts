@@ -6,10 +6,8 @@ import {
   ALL_CRITERIA_TYPES,
   EVALUATOR_REGISTRY,
 } from "./achievement-progress/evaluators";
-import {
-  runUnlockEvaluation,
-  buildProgressValue,
-} from "./achievement-progress/unlock-engine";
+import { runUnlockEvaluation } from "./achievement-progress/unlock-engine";
+import { buildProgressValue } from "./achievement-progress/unlock-evaluator";
 import type {
   AchievementEvent,
   AchievementProgressRecord,

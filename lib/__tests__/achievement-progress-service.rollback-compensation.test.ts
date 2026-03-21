@@ -170,6 +170,98 @@ describe("AchievementProgressService - rollback compensation (P1/P2 fixes)", () 
     );
   });
 
+  it("reverts cascade progress rows when recursive unlock fails after upsert succeeds", async () => {
+    const questAch = {
+      id: "ach-quest",
+      name: "Quest Master",
+      criteria_type: "quest_complete",
+      criteria_config: { threshold: 5 },
+      xp_reward: 50,
+      gold_reward: 0,
+    };
+    const xpEarnedAch = {
+      id: "ach-xp",
+      name: "XP Earner",
+      criteria_type: "xp_earned",
+      criteria_config: { threshold: 100 },
+      xp_reward: 0,
+      gold_reward: 0,
+    };
+    const write = makeWriteMocks({
+      unlockedIds: [questAch.id],
+      rpcReturn: { xp: 50, gold: 0, level: 1 },
+      levelSelectRows: [], // no level-up
+    });
+    mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
+
+    let charAchN = 0;
+    const charAchChain = {
+      select: jest.fn().mockImplementation(() => {
+        charAchN++;
+        if (charAchN === 1) {
+          return {
+            eq: jest.fn().mockResolvedValue({
+              data: [
+                { achievement_id: questAch.id },
+                { achievement_id: xpEarnedAch.id },
+              ],
+              error: null,
+            }),
+          };
+        }
+        if (charAchN === 2) {
+          return {
+            eq: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({
+                data: [{ achievement_id: questAch.id, unlocked_at: null }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        // depth=1 recursive fetch fails → triggers outer catch
+        return {
+          eq: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: "recursive-fetch-fail" },
+            }),
+          }),
+        };
+      }),
+    };
+    const readClient = makeReadClient({
+      characters: {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { user_id: USER_ID, user_profiles: null },
+              error: null,
+            }),
+          }),
+        }),
+      } as unknown as MockChain,
+      achievements: makeDataResult([
+        questAch,
+        xpEarnedAch,
+      ]) as unknown as MockChain,
+      character_achievements: charAchChain,
+      quest_instances: {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            or: jest.fn().mockResolvedValue({ count: 5, error: null }),
+          }),
+        }),
+      } as unknown as MockChain,
+    });
+    const svc = new AchievementProgressService(readClient as never);
+    await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
+    expect(write.inForCascadeRevert).toHaveBeenCalledWith("achievement_id", [
+      xpEarnedAch.id,
+    ]);
+  });
+
   it("detects revert failure when Supabase returns { error } not throw", async () => {
     const write = makeWriteMocks({
       unlockedIds: [LEVEL_UP_ACHIEVEMENT.id],

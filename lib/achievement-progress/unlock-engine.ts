@@ -1,13 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
 import { RewardCalculator } from "@/lib/reward-calculator";
-import { evaluateCriteriaMet } from "./unlock-evaluator";
+import { evaluateCriteriaMet, buildProgressValue } from "./unlock-evaluator";
 import { EVALUATOR_REGISTRY } from "./evaluators";
 import type {
   AchievementProgressValue,
   CriteriaConfig,
-  CompoundProgress,
-  CompoundConditionResult,
   CompoundCondition,
 } from "./types";
 
@@ -25,24 +23,6 @@ export type UpsertRow = {
   achievement_id: string;
   progress: AchievementProgressValue;
 };
-
-export function buildProgressValue(
-  criteriaType: string,
-  result: {
-    current: number;
-    compoundConditions?: CompoundConditionResult[];
-    compoundMet?: boolean;
-  },
-  config: CriteriaConfig,
-): AchievementProgressValue {
-  if (criteriaType === "compound" && result.compoundConditions !== undefined) {
-    return {
-      conditions: result.compoundConditions,
-      met: result.compoundMet ?? false,
-    } satisfies CompoundProgress;
-  }
-  return { current: result.current, threshold: config?.threshold ?? 0 };
-}
 
 const MAX_CASCADE_DEPTH = 10;
 
@@ -82,7 +62,6 @@ export async function runUnlockEvaluation(
 
   if (newlyEligible.length === 0) return;
 
-  // IS NULL concurrency filter: only one concurrent caller wins the race.
   const { data: actuallyUnlocked, error: unlockError } = await writeClient
     .from("character_achievements")
     .update({ unlocked_at: new Date().toISOString() })
@@ -118,6 +97,7 @@ export async function runUnlockEvaluation(
   let statsApplied = false,
     levelApplied = false;
   let prevLevel: number | null = null;
+  const cascadeRows: UpsertRow[] = [];
   try {
     const { data: newStats, error: rpcError } = await writeClient
       .rpc("fn_increment_character_stats", {
@@ -161,12 +141,9 @@ export async function runUnlockEvaluation(
       levelApplied = (levelData?.length ?? 0) > 0;
     }
 
-    // P2 + P3: Unified cascade section
     if (depth < MAX_CASCADE_DEPTH) {
-      const cascadeRows: UpsertRow[] = [];
       const cascadeAchievementIds = new Set<string>();
 
-      // P3: Re-evaluate xp_earned with post-reward XP total
       if (totalXp > 0) {
         for (const a of achievementMap.values()) {
           if (a.criteria_type !== "xp_earned") continue;
@@ -289,6 +266,22 @@ export async function runUnlockEvaluation(
         console.error(
           "Critical: failed to revert stats after reward failure:",
           statsRevertErr,
+        );
+      }
+    }
+    if (cascadeRows.length > 0) {
+      const { error: cascadeRevertErr } = await writeClient
+        .from("character_achievements")
+        .update({ progress: null })
+        .eq("character_id", characterId)
+        .in(
+          "achievement_id",
+          cascadeRows.map((r) => r.achievement_id),
+        );
+      if (cascadeRevertErr) {
+        console.error(
+          "Critical: failed to revert cascade progress after failure:",
+          cascadeRevertErr,
         );
       }
     }

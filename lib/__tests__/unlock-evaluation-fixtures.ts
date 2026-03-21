@@ -45,6 +45,8 @@ export type WriteMocksOptions = {
   rpcCompensationError?: string;
   /** If set, the unlocked_at revert update resolves with this error message. */
   revertUnlockError?: string;
+  /** If set, the cascade progress revert update resolves with this error. */
+  cascadeProgressRevertError?: string;
 };
 
 /** Build mock write client mocks for unlock evaluation tests */
@@ -57,6 +59,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     cascadeUpsertError,
     rpcCompensationError,
     revertUnlockError,
+    cascadeProgressRevertError,
   } = options ?? {};
 
   // Upsert: first call = initial progress upsert (always succeeds), subsequent = cascade
@@ -84,9 +87,21 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
   });
   const eqForRevert = jest.fn().mockReturnValue({ in: inForRevert });
 
-  // charAchUpdate routes by payload: unlocked_at=null means revert, otherwise lock
+  // Cascade progress revert chain: .update({progress:null}).eq().in()
+  const inForCascadeRevert = jest.fn().mockResolvedValue({
+    error: cascadeProgressRevertError
+      ? { message: cascadeProgressRevertError }
+      : null,
+  });
+  const eqForCascadeRevert = jest.fn().mockReturnValue({
+    in: inForCascadeRevert,
+  });
+
+  // charAchUpdate routes by payload
   const charAchUpdate = jest.fn().mockImplementation((payload: unknown) => {
     const p = payload as Record<string, unknown>;
+    if ("progress" in p && p.progress === null)
+      return { eq: eqForCascadeRevert };
     return "unlocked_at" in p && p.unlocked_at === null
       ? { eq: eqForRevert }
       : { eq: eqForLock };
@@ -137,6 +152,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     isNull,
     inForLock,
     inForRevert,
+    inForCascadeRevert,
     charAchUpdate,
     statsUpdate,
     statsEq,
