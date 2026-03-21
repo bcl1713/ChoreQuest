@@ -41,11 +41,14 @@ export type WriteMocksOptions = {
   levelSelectRows?: Array<{ level: number }>;
   /** If set, the second (cascade) upsert resolves with this error message. */
   cascadeUpsertError?: string;
-  /** If set, the second RPC call (stats compensation) resolves with this error. */
-  rpcCompensationError?: string;
+  /**
+   * If set, the stats rollback UPDATE resolves with this error message.
+   * (Replaces the old rpcCompensationError now that rollback uses a direct SET.)
+   */
+  statsRevertError?: string;
   /** If set, the unlocked_at revert update resolves with this error message. */
   revertUnlockError?: string;
-  /** If set, the cascade progress revert update resolves with this error. */
+  /** If set, the cascade progress revert upsert resolves with this error. */
   cascadeProgressRevertError?: string;
 };
 
@@ -57,18 +60,25 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     levelUpdateError,
     levelSelectRows,
     cascadeUpsertError,
-    rpcCompensationError,
+    statsRevertError,
     revertUnlockError,
     cascadeProgressRevertError,
   } = options ?? {};
 
-  // Upsert: first call = initial progress upsert (always succeeds), subsequent = cascade
+  // Upsert: call 1 = initial progress, call 2 = cascade, call 3+ = cascade revert
   let upsertCallCount = 0;
   const upsert = jest.fn().mockImplementation(() => {
     upsertCallCount++;
     if (upsertCallCount === 1) return Promise.resolve({ error: null });
+    if (upsertCallCount === 2)
+      return Promise.resolve({
+        error: cascadeUpsertError ? { message: cascadeUpsertError } : null,
+      });
+    // call 3+ = cascade revert upsert (Fix P2)
     return Promise.resolve({
-      error: cascadeUpsertError ? { message: cascadeUpsertError } : null,
+      error: cascadeProgressRevertError
+        ? { message: cascadeProgressRevertError }
+        : null,
     });
   });
 
@@ -87,29 +97,18 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
   });
   const eqForRevert = jest.fn().mockReturnValue({ in: inForRevert });
 
-  // Cascade progress revert chain: .update({progress:null}).eq().in()
-  const inForCascadeRevert = jest.fn().mockResolvedValue({
-    error: cascadeProgressRevertError
-      ? { message: cascadeProgressRevertError }
-      : null,
-  });
-  const eqForCascadeRevert = jest.fn().mockReturnValue({
-    in: inForCascadeRevert,
-  });
-
-  // charAchUpdate routes by payload
+  // charAchUpdate routes by payload — cascade revert now goes through upsert
   const charAchUpdate = jest.fn().mockImplementation((payload: unknown) => {
     const p = payload as Record<string, unknown>;
-    if ("progress" in p && p.progress === null)
-      return { eq: eqForCascadeRevert };
     return "unlocked_at" in p && p.unlocked_at === null
       ? { eq: eqForRevert }
       : { eq: eqForLock };
   });
 
-  // Forward path: .update().eq().lt().select() — resolves to { data, error }
-  // Revert path:  .update().eq()              — awaited directly to { error }
-  // Both call statsUpdate then statsEq; differentiate by call count.
+  // characters.update paths:
+  //   Forward level:  .update({level}).eq("id").lt().select() → { data, error }
+  //   Level rollback: .update({level}).eq("id").eq("level")   → { error }  (Fix P1)
+  //   Stats rollback: .update({xp,gold}).eq("id").eq("xp").eq("gold") → { error }  (Fix P1)
   const statsSelectData = levelUpdateError
     ? null
     : (levelSelectRows ?? [{ level: 2 }]);
@@ -118,13 +117,32 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     error: levelUpdateError ? { message: levelUpdateError } : null,
   });
   const statsLt = jest.fn().mockReturnValue({ select: statsSelect });
-  let statsEqCallCount = 0;
-  const statsEq = jest.fn().mockImplementation(() => {
-    statsEqCallCount++;
-    if (statsEqCallCount === 1) return { lt: statsLt }; // forward path
-    return Promise.resolve({ error: null }); // revert path
+  const levelForwardEq = jest.fn().mockReturnValue({ lt: statsLt });
+
+  // Level rollback chain (Fix P1): .eq("id").eq("level") → await
+  const levelRevertEq2 = jest.fn().mockResolvedValue({ error: null });
+  const levelRevertEq1 = jest.fn().mockReturnValue({ eq: levelRevertEq2 });
+
+  // Stats rollback chain (Fix P1): .eq("id").eq("xp").eq("gold") → await
+  const statsRevertEq3 = jest.fn().mockResolvedValue({
+    error: statsRevertError ? { message: statsRevertError } : null,
   });
-  const statsUpdate = jest.fn().mockReturnValue({ eq: statsEq });
+  const statsRevertEq2 = jest.fn().mockReturnValue({ eq: statsRevertEq3 });
+  const statsRevertEq1 = jest.fn().mockReturnValue({ eq: statsRevertEq2 });
+
+  let levelUpdateCallCount = 0;
+  const statsUpdate = jest.fn().mockImplementation((payload: unknown) => {
+    const p = payload as Record<string, unknown>;
+    if ("xp" in p || "gold" in p) {
+      // Stats rollback path
+      return { eq: statsRevertEq1 };
+    }
+    // Level update path (forward on call 1, rollback on call 2+)
+    levelUpdateCallCount++;
+    return levelUpdateCallCount === 1
+      ? { eq: levelForwardEq }
+      : { eq: levelRevertEq1 };
+  });
 
   const from = jest.fn((table: string) => {
     if (table === "character_achievements")
@@ -133,17 +151,10 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     return { upsert };
   });
 
-  // RPC: first call = stats increment, second = compensation (reverse)
-  let rpcSingleCallCount = 0;
-  const rpcSingle = jest.fn().mockImplementation(() => {
-    rpcSingleCallCount++;
-    if (rpcSingleCallCount === 1)
-      return Promise.resolve({ data: rpcReturn, error: null });
-    return Promise.resolve({
-      data: null,
-      error: rpcCompensationError ? { message: rpcCompensationError } : null,
-    });
-  });
+  // RPC: only the forward increment; compensation is now a direct UPDATE (Fix P1)
+  const rpcSingle = jest
+    .fn()
+    .mockResolvedValue({ data: rpcReturn, error: null });
   const rpc = jest.fn().mockReturnValue({ single: rpcSingle });
 
   return {
@@ -152,12 +163,15 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     isNull,
     inForLock,
     inForRevert,
-    inForCascadeRevert,
     charAchUpdate,
     statsUpdate,
-    statsEq,
     statsLt,
     statsSelect,
+    levelRevertEq1,
+    levelRevertEq2,
+    statsRevertEq1,
+    statsRevertEq2,
+    statsRevertEq3,
     from,
     rpc,
     rpcSingle,

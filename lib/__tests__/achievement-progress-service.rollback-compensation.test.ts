@@ -25,7 +25,7 @@ const LEVEL_UP_ACHIEVEMENT = {
 };
 const LEVEL_UP_RPC_RETURN = { xp: 100, gold: 0, level: 1 };
 
-describe("AchievementProgressService - rollback compensation (P1/P2 fixes)", () => {
+describe("AchievementProgressService - rollback compensation", () => {
   let consoleSpy: jest.SpyInstance;
   beforeEach(() => {
     consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
@@ -50,16 +50,8 @@ describe("AchievementProgressService - rollback compensation (P1/P2 fixes)", () 
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    expect(mockWriteClient.rpc).toHaveBeenNthCalledWith(
-      1,
-      "fn_increment_character_stats",
-      { p_character_id: CHAR_ID, p_xp: 60, p_gold: 0 },
-    );
-    expect(mockWriteClient.rpc).toHaveBeenNthCalledWith(
-      2,
-      "fn_increment_character_stats",
-      { p_character_id: CHAR_ID, p_xp: -60, p_gold: 0 },
-    );
+    // Fix P1: stats rollback uses direct UPDATE (xp: 100-60=40, gold: 0-0=0)
+    expect(write.statsUpdate).toHaveBeenCalledWith({ xp: 40, gold: 0 });
   });
 
   it("reverts stats and level when cascade upsert fails", async () => {
@@ -140,20 +132,18 @@ describe("AchievementProgressService - rollback compensation (P1/P2 fixes)", () 
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    expect(mockWriteClient.rpc).toHaveBeenNthCalledWith(
-      2,
-      "fn_increment_character_stats",
-      { p_character_id: CHAR_ID, p_xp: -60, p_gold: 0 },
-    );
+    // Fix P1: level rollback still uses direct UPDATE with prevLevel=1
     expect(write.statsUpdate).toHaveBeenCalledWith({ level: 1 });
+    // Fix P1: stats rollback uses direct UPDATE (xp: 100-60=40, gold: 0-0=0)
+    expect(write.statsUpdate).toHaveBeenCalledWith({ xp: 40, gold: 0 });
   });
 
-  it("logs critical error if stats revert RPC fails", async () => {
+  it("logs critical error if stats revert UPDATE fails", async () => {
     const write = makeWriteMocks({
       unlockedIds: [LEVEL_UP_ACHIEVEMENT.id],
       rpcReturn: LEVEL_UP_RPC_RETURN,
       levelUpdateError: "trigger-rollback",
-      rpcCompensationError: "stats-revert-fail",
+      statsRevertError: "stats-revert-fail",
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -220,6 +210,14 @@ describe("AchievementProgressService - rollback compensation (P1/P2 fixes)", () 
             }),
           };
         }
+        if (charAchN === 3) {
+          // Fix P2: cascade snapshot read — no prior progress for xpEarnedAch
+          return {
+            eq: jest.fn().mockReturnValue({
+              in: jest.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          };
+        }
         // depth=1 recursive fetch fails → triggers outer catch
         return {
           eq: jest.fn().mockReturnValue({
@@ -257,9 +255,18 @@ describe("AchievementProgressService - rollback compensation (P1/P2 fixes)", () 
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    expect(write.inForCascadeRevert).toHaveBeenCalledWith("achievement_id", [
-      xpEarnedAch.id,
-    ]);
+    // Fix P2: cascade revert uses upsert with prior progress (null = not existed)
+    expect(write.upsert).toHaveBeenNthCalledWith(
+      3,
+      [
+        {
+          character_id: CHAR_ID,
+          achievement_id: xpEarnedAch.id,
+          progress: null,
+        },
+      ],
+      { onConflict: "character_id,achievement_id" },
+    );
   });
 
   it("detects revert failure when Supabase returns { error } not throw", async () => {

@@ -3,6 +3,7 @@ import type { Database } from "@/lib/types/database-generated";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { evaluateCriteriaMet, buildProgressValue } from "./unlock-evaluator";
 import { EVALUATOR_REGISTRY } from "./evaluators";
+import { performRollback } from "./unlock-rollback";
 import type {
   AchievementProgressValue,
   CriteriaConfig,
@@ -97,6 +98,12 @@ export async function runUnlockEvaluation(
   let statsApplied = false,
     levelApplied = false;
   let prevLevel: number | null = null;
+  let appliedLevel: number | null = null;
+  let capturedNewStats: { xp: number; gold: number } | null = null;
+  let prevCascadeSnapshot: Array<{
+    achievement_id: string;
+    progress: unknown;
+  }> = [];
   const cascadeRows: UpsertRow[] = [];
   try {
     const { data: newStats, error: rpcError } = await writeClient
@@ -115,6 +122,9 @@ export async function runUnlockEvaluation(
 
     statsApplied = true;
     prevLevel = newStats?.level ?? null;
+    capturedNewStats = newStats
+      ? { xp: newStats.xp ?? 0, gold: newStats.gold ?? 0 }
+      : null;
 
     // Compute level from previous XP (new xp minus the increment) to detect level-up
     const prevXp = (newStats?.xp ?? 0) - totalXp;
@@ -139,6 +149,7 @@ export async function runUnlockEvaluation(
       }
 
       levelApplied = (levelData?.length ?? 0) > 0;
+      if (levelApplied) appliedLevel = levelUpResult.newLevel;
     }
 
     if (depth < MAX_CASCADE_DEPTH) {
@@ -205,7 +216,20 @@ export async function runUnlockEvaluation(
       }
 
       if (cascadeRows.length > 0) {
-        // P2: Persist cascade progress before recursing
+        // Fix P2: snapshot existing progress before upserting so rollback can
+        // restore prior values rather than blindly writing null.
+        const { data: existingCascade } = await readClient
+          .from("character_achievements")
+          .select("achievement_id, progress")
+          .eq("character_id", characterId)
+          .in(
+            "achievement_id",
+            cascadeRows.map((r) => r.achievement_id),
+          );
+        prevCascadeSnapshot =
+          (existingCascade as typeof prevCascadeSnapshot) ?? [];
+
+        // Persist cascade progress before recursing
         const { error: cascadeUpsertError } = await writeClient
           .from("character_achievements")
           .upsert(cascadeRows, {
@@ -231,60 +255,18 @@ export async function runUnlockEvaluation(
       }
     }
   } catch (err) {
-    const { error: revertError } = await writeClient
-      .from("character_achievements")
-      .update({ unlocked_at: null })
-      .eq("character_id", characterId)
-      .in("achievement_id", lockedIds);
-    if (revertError) {
-      console.error(
-        "Critical: failed to revert unlock after reward failure:",
-        revertError,
-      );
-    }
-    if (levelApplied && prevLevel !== null) {
-      const { error: lvlRevertErr } = await writeClient
-        .from("characters")
-        .update({ level: prevLevel })
-        .eq("id", characterId);
-      if (lvlRevertErr) {
-        console.error(
-          "Critical: failed to revert level after reward failure:",
-          lvlRevertErr,
-        );
-      }
-    }
-    if (statsApplied) {
-      const { error: statsRevertErr } = await writeClient
-        .rpc("fn_increment_character_stats", {
-          p_character_id: characterId,
-          p_xp: 0 - totalXp,
-          p_gold: 0 - totalGold,
-        })
-        .single();
-      if (statsRevertErr) {
-        console.error(
-          "Critical: failed to revert stats after reward failure:",
-          statsRevertErr,
-        );
-      }
-    }
-    if (cascadeRows.length > 0) {
-      const { error: cascadeRevertErr } = await writeClient
-        .from("character_achievements")
-        .update({ progress: null })
-        .eq("character_id", characterId)
-        .in(
-          "achievement_id",
-          cascadeRows.map((r) => r.achievement_id),
-        );
-      if (cascadeRevertErr) {
-        console.error(
-          "Critical: failed to revert cascade progress after failure:",
-          cascadeRevertErr,
-        );
-      }
-    }
+    await performRollback(writeClient, characterId, {
+      levelApplied,
+      prevLevel,
+      appliedLevel,
+      statsApplied,
+      capturedNewStats,
+      totalXp,
+      totalGold,
+      lockedIds,
+      cascadeRows,
+      prevCascadeSnapshot,
+    });
     throw err;
   }
 }
