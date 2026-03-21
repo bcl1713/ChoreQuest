@@ -112,6 +112,9 @@ export async function runUnlockEvaluation(
   // Only grant rewards for achievements actually unlocked by this call
   if (!actuallyUnlocked || actuallyUnlocked.length === 0) return;
 
+  // P1: Extract locked IDs for potential revert on failure
+  const lockedIds = actuallyUnlocked.map((r) => r.achievement_id);
+
   // Sum xp_reward and gold_reward across actually-unlocked achievements
   const totalXp = actuallyUnlocked.reduce(
     (sum, row) =>
@@ -127,88 +130,139 @@ export async function runUnlockEvaluation(
   // Skip character stats update when total rewards are zero
   if (totalXp === 0 && totalGold === 0) return;
 
-  // Atomically increment XP and gold to prevent concurrent read-modify-write races.
-  // Returns the new values after the increment.
-  const { data: newStats, error: rpcError } = await writeClient
-    .rpc("fn_increment_character_stats", {
-      p_character_id: characterId,
-      p_xp: totalXp,
-      p_gold: totalGold,
-    })
-    .single();
+  // P1: Wrap reward grant and cascade in try-catch to revert on failure
+  try {
+    // Atomically increment XP and gold to prevent concurrent read-modify-write races.
+    // Returns the new values after the increment.
+    const { data: newStats, error: rpcError } = await writeClient
+      .rpc("fn_increment_character_stats", {
+        p_character_id: characterId,
+        p_xp: totalXp,
+        p_gold: totalGold,
+      })
+      .single();
 
-  if (rpcError) {
-    throw new Error(`Failed to increment character stats: ${rpcError.message}`);
-  }
-
-  // Compute level from previous XP (new xp minus the increment) to detect level-up
-  const prevXp = (newStats?.xp ?? 0) - totalXp;
-  const levelUpResult = RewardCalculator.calculateLevelUp(
-    prevXp,
-    totalXp,
-    newStats?.level ?? 1,
-  );
-
-  if (levelUpResult) {
-    const { error: levelError } = await writeClient
-      .from("characters")
-      .update({ level: levelUpResult.newLevel })
-      .eq("id", characterId);
-
-    if (levelError) {
+    if (rpcError) {
       throw new Error(
-        `Failed to update character level: ${levelError.message}`,
+        `Failed to increment character stats: ${rpcError.message}`,
       );
     }
-  }
 
-  // Level-up cascade: re-evaluate level_reached and compound achievements
-  if (levelUpResult && depth < MAX_CASCADE_DEPTH) {
-    const newLevel = levelUpResult.newLevel;
-    const cascadeRows: UpsertRow[] = [];
+    // Compute level from previous XP (new xp minus the increment) to detect level-up
+    const prevXp = (newStats?.xp ?? 0) - totalXp;
+    const levelUpResult = RewardCalculator.calculateLevelUp(
+      prevXp,
+      totalXp,
+      newStats?.level ?? 1,
+    );
 
-    // Collect level_reached achievements
-    for (const a of achievementMap.values()) {
-      if (a.criteria_type !== "level_reached") continue;
-      const config = a.criteria_config as CriteriaConfig;
-      cascadeRows.push({
-        character_id: characterId,
-        achievement_id: a.id,
-        progress: { current: newLevel, threshold: config?.threshold ?? 0 },
-      });
+    if (levelUpResult) {
+      const { error: levelError } = await writeClient
+        .from("characters")
+        .update({ level: levelUpResult.newLevel })
+        .eq("id", characterId);
+
+      if (levelError) {
+        throw new Error(
+          `Failed to update character level: ${levelError.message}`,
+        );
+      }
     }
 
-    // Collect compound achievements with level_reached sub-conditions
-    for (const a of achievementMap.values()) {
-      if (a.criteria_type !== "compound") continue;
-      const config = a.criteria_config as CriteriaConfig;
-      const hasLevelCondition = (config?.conditions ?? []).some(
-        (c: CompoundCondition) => c.criteria_type === "level_reached",
-      );
-      if (!hasLevelCondition) continue;
-      const result = await EVALUATOR_REGISTRY.compound(
-        readClient,
-        characterId,
-        userId,
-        config,
-      );
-      cascadeRows.push({
-        character_id: characterId,
-        achievement_id: a.id,
-        progress: buildProgressValue("compound", result, config),
-      });
-    }
+    // P2 + P3: Unified cascade section
+    if (depth < MAX_CASCADE_DEPTH) {
+      const cascadeRows: UpsertRow[] = [];
 
-    if (cascadeRows.length > 0) {
-      await runUnlockEvaluation(
-        characterId,
-        userId,
-        cascadeRows,
-        achievementMap,
-        readClient,
-        writeClient,
-        depth + 1,
+      // P3: Re-evaluate xp_earned with post-reward XP total
+      if (totalXp > 0) {
+        for (const a of achievementMap.values()) {
+          if (a.criteria_type !== "xp_earned") continue;
+          const config = a.criteria_config as CriteriaConfig;
+          cascadeRows.push({
+            character_id: characterId,
+            achievement_id: a.id,
+            progress: {
+              current: newStats?.xp ?? 0,
+              threshold: config?.threshold ?? 0,
+            },
+          });
+        }
+      }
+
+      // Level-up cascade: level_reached + compound achievements
+      if (levelUpResult) {
+        const newLevel = levelUpResult.newLevel;
+        for (const a of achievementMap.values()) {
+          if (a.criteria_type !== "level_reached") continue;
+          const config = a.criteria_config as CriteriaConfig;
+          cascadeRows.push({
+            character_id: characterId,
+            achievement_id: a.id,
+            progress: { current: newLevel, threshold: config?.threshold ?? 0 },
+          });
+        }
+
+        for (const a of achievementMap.values()) {
+          if (a.criteria_type !== "compound") continue;
+          const config = a.criteria_config as CriteriaConfig;
+          const hasLevelCondition = (config?.conditions ?? []).some(
+            (c: CompoundCondition) => c.criteria_type === "level_reached",
+          );
+          if (!hasLevelCondition) continue;
+          const result = await EVALUATOR_REGISTRY.compound(
+            readClient,
+            characterId,
+            userId,
+            config,
+          );
+          cascadeRows.push({
+            character_id: characterId,
+            achievement_id: a.id,
+            progress: buildProgressValue("compound", result, config),
+          });
+        }
+      }
+
+      if (cascadeRows.length > 0) {
+        // P2: Persist cascade progress before recursing
+        const { error: cascadeUpsertError } = await writeClient
+          .from("character_achievements")
+          .upsert(cascadeRows, {
+            onConflict: "character_id,achievement_id",
+            ignoreDuplicates: false,
+          });
+
+        if (cascadeUpsertError) {
+          throw new Error(
+            `Failed to persist cascade progress: ${cascadeUpsertError.message}`,
+          );
+        }
+
+        await runUnlockEvaluation(
+          characterId,
+          userId,
+          cascadeRows,
+          achievementMap,
+          readClient,
+          writeClient,
+          depth + 1,
+        );
+      }
+    }
+  } catch (err) {
+    // P1: Attempt to revert unlocked_at to null on any failure
+    try {
+      await writeClient
+        .from("character_achievements")
+        .update({ unlocked_at: null })
+        .eq("character_id", characterId)
+        .in("achievement_id", lockedIds);
+    } catch (revertError) {
+      console.error(
+        "Critical: failed to revert unlock after reward failure:",
+        revertError,
       );
     }
+    throw err;
   }
 }
