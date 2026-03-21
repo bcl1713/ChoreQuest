@@ -11,8 +11,6 @@ import type {
   CompoundCondition,
 } from "./types";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export type FetchedAchievement = {
   id: string;
   name: string;
@@ -27,8 +25,6 @@ export type UpsertRow = {
   achievement_id: string;
   progress: AchievementProgressValue;
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function buildProgressValue(
   criteriaType: string,
@@ -48,8 +44,6 @@ export function buildProgressValue(
   return { current: result.current, threshold: config?.threshold ?? 0 };
 }
 
-// ─── Core unlock evaluation engine ───────────────────────────────────────────
-
 const MAX_CASCADE_DEPTH = 10;
 
 export async function runUnlockEvaluation(
@@ -63,7 +57,6 @@ export async function runUnlockEvaluation(
 ): Promise<void> {
   if (depth > MAX_CASCADE_DEPTH || progressRows.length === 0) return;
 
-  // Fetch existing unlocked_at for the upserted achievement IDs
   const achievementIds = progressRows.map((r) => r.achievement_id);
   const { data: existingRows, error: fetchError } = await readClient
     .from("character_achievements")
@@ -79,7 +72,6 @@ export async function runUnlockEvaluation(
     (existingRows ?? []).map((r) => [r.achievement_id, r.unlocked_at]),
   );
 
-  // Apply strategy dispatch; filter to newly eligible (criteria met + unlocked_at IS NULL)
   const newlyEligible = progressRows.filter((row) => {
     if (unlockedAtMap.get(row.achievement_id)) return false;
     const achievement = achievementMap.get(row.achievement_id);
@@ -90,10 +82,7 @@ export async function runUnlockEvaluation(
 
   if (newlyEligible.length === 0) return;
 
-  // Batch update unlocked_at = now() with IS NULL concurrency filter.
-  // .select() returns only the rows that matched and were updated by this call.
-  // Under concurrent unlock evaluations, only one caller wins the IS NULL race;
-  // the other receives an empty set and returns early without granting rewards.
+  // IS NULL concurrency filter: only one concurrent caller wins the race.
   const { data: actuallyUnlocked, error: unlockError } = await writeClient
     .from("character_achievements")
     .update({ unlocked_at: new Date().toISOString() })
@@ -109,13 +98,10 @@ export async function runUnlockEvaluation(
     throw new Error(`Failed to set unlocked_at: ${unlockError.message}`);
   }
 
-  // Only grant rewards for achievements actually unlocked by this call
   if (!actuallyUnlocked || actuallyUnlocked.length === 0) return;
 
-  // P1: Extract locked IDs for potential revert on failure
   const lockedIds = actuallyUnlocked.map((r) => r.achievement_id);
 
-  // Sum xp_reward and gold_reward across actually-unlocked achievements
   const totalXp = actuallyUnlocked.reduce(
     (sum, row) =>
       sum + (achievementMap.get(row.achievement_id)?.xp_reward ?? 0),
@@ -127,15 +113,12 @@ export async function runUnlockEvaluation(
     0,
   );
 
-  // Skip character stats update when total rewards are zero
   if (totalXp === 0 && totalGold === 0) return;
 
   let statsApplied = false,
     levelApplied = false;
   let prevLevel: number | null = null;
   try {
-    // Atomically increment XP and gold to prevent concurrent read-modify-write races.
-    // Returns the new values after the increment.
     const { data: newStats, error: rpcError } = await writeClient
       .rpc("fn_increment_character_stats", {
         p_character_id: characterId,
@@ -162,10 +145,12 @@ export async function runUnlockEvaluation(
     );
 
     if (levelUpResult) {
-      const { error: levelError } = await writeClient
+      const { data: levelData, error: levelError } = await writeClient
         .from("characters")
         .update({ level: levelUpResult.newLevel })
-        .eq("id", characterId);
+        .eq("id", characterId)
+        .lt("level", levelUpResult.newLevel) // only advance, never downgrade
+        .select("level");
 
       if (levelError) {
         throw new Error(
@@ -173,12 +158,13 @@ export async function runUnlockEvaluation(
         );
       }
 
-      levelApplied = true;
+      levelApplied = (levelData?.length ?? 0) > 0;
     }
 
     // P2 + P3: Unified cascade section
     if (depth < MAX_CASCADE_DEPTH) {
       const cascadeRows: UpsertRow[] = [];
+      const cascadeAchievementIds = new Set<string>();
 
       // P3: Re-evaluate xp_earned with post-reward XP total
       if (totalXp > 0) {
@@ -193,11 +179,12 @@ export async function runUnlockEvaluation(
               threshold: config?.threshold ?? 0,
             },
           });
+          cascadeAchievementIds.add(a.id);
         }
       }
 
-      // Level-up cascade: level_reached + compound achievements
-      if (levelUpResult) {
+      // Level-up cascade: level_reached achievements
+      if (levelUpResult && levelApplied) {
         const newLevel = levelUpResult.newLevel;
         for (const a of achievementMap.values()) {
           if (a.criteria_type !== "level_reached") continue;
@@ -207,15 +194,24 @@ export async function runUnlockEvaluation(
             achievement_id: a.id,
             progress: { current: newLevel, threshold: config?.threshold ?? 0 },
           });
+          cascadeAchievementIds.add(a.id);
         }
+      }
 
+      // Compound cascade: re-evaluate compound achievements with an xp_earned
+      // or level_reached sub-condition, deduplicating across both triggers.
+      const shouldEvalCompound = totalXp > 0 || (levelUpResult && levelApplied);
+      if (shouldEvalCompound) {
         for (const a of achievementMap.values()) {
           if (a.criteria_type !== "compound") continue;
+          if (cascadeAchievementIds.has(a.id)) continue; // already queued
           const config = a.criteria_config as CriteriaConfig;
-          const hasLevelCondition = (config?.conditions ?? []).some(
-            (c: CompoundCondition) => c.criteria_type === "level_reached",
+          const hasRelevantCondition = (config?.conditions ?? []).some(
+            (c: CompoundCondition) =>
+              c.criteria_type === "xp_earned" ||
+              c.criteria_type === "level_reached",
           );
-          if (!hasLevelCondition) continue;
+          if (!hasRelevantCondition) continue;
           const result = await EVALUATOR_REGISTRY.compound(
             readClient,
             characterId,
@@ -227,6 +223,7 @@ export async function runUnlockEvaluation(
             achievement_id: a.id,
             progress: buildProgressValue("compound", result, config),
           });
+          cascadeAchievementIds.add(a.id);
         }
       }
 

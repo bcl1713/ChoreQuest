@@ -33,6 +33,12 @@ export type WriteMocksOptions = {
   rpcReturn?: { xp: number; gold: number; level: number };
   /** If set, the characters level update resolves with this error message. */
   levelUpdateError?: string;
+  /**
+   * Rows returned from the level UPDATE ... RETURNING select.
+   * Defaults to [{ level: 2 }] (update applied). Pass [] to simulate a
+   * concurrent race where this caller's write was a no-op (levelApplied=false).
+   */
+  levelSelectRows?: Array<{ level: number }>;
   /** If set, the second (cascade) upsert resolves with this error message. */
   cascadeUpsertError?: string;
   /** If set, the second RPC call (stats compensation) resolves with this error. */
@@ -47,6 +53,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     unlockedIds = [DEFAULT_ACHIEVEMENT.id],
     rpcReturn = { xp: 150, gold: 75, level: 1 },
     levelUpdateError,
+    levelSelectRows,
     cascadeUpsertError,
     rpcCompensationError,
     revertUnlockError,
@@ -85,8 +92,22 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
       : { eq: eqForLock };
   });
 
-  const statsEq = jest.fn().mockResolvedValue({
+  // Forward path: .update().eq().lt().select() — resolves to { data, error }
+  // Revert path:  .update().eq()              — awaited directly to { error }
+  // Both call statsUpdate then statsEq; differentiate by call count.
+  const statsSelectData = levelUpdateError
+    ? null
+    : (levelSelectRows ?? [{ level: 2 }]);
+  const statsSelect = jest.fn().mockResolvedValue({
+    data: statsSelectData,
     error: levelUpdateError ? { message: levelUpdateError } : null,
+  });
+  const statsLt = jest.fn().mockReturnValue({ select: statsSelect });
+  let statsEqCallCount = 0;
+  const statsEq = jest.fn().mockImplementation(() => {
+    statsEqCallCount++;
+    if (statsEqCallCount === 1) return { lt: statsLt }; // forward path
+    return Promise.resolve({ error: null }); // revert path
   });
   const statsUpdate = jest.fn().mockReturnValue({ eq: statsEq });
 
@@ -119,6 +140,8 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     charAchUpdate,
     statsUpdate,
     statsEq,
+    statsLt,
+    statsSelect,
     from,
     rpc,
     rpcSingle,
