@@ -67,6 +67,22 @@ function makeCharChain(secondCallStats: {
   };
 }
 
+const COMPOUND_ACH = {
+  id: "ach-compound",
+  name: "Quest & Ascend Master",
+  criteria_type: "compound",
+  criteria_config: {
+    operator: "AND",
+    evaluation_strategy: "compound",
+    conditions: [
+      { criteria_type: "quest_complete", threshold: 5 },
+      { criteria_type: "level_reached", threshold: 3 },
+    ],
+  },
+  xp_reward: 0,
+  gold_reward: 0,
+};
+
 describe("AchievementProgressService - level-up cascade (7.3)", () => {
   afterEach(() => jest.clearAllMocks());
 
@@ -164,5 +180,74 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
     expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("7.3b cascades to unlock compound achievement with level_reached sub-condition after level-up", async () => {
+    // Character at level 2 with 5 quests done.
+    // Quest achievement (xp_reward: 60) unlocks → level-up to 3.
+    // Compound achievement (quest_complete >= 5 AND level_reached >= 3) should also unlock in cascade.
+    const write = makeWriteMocks({
+      unlockedIds: [QUEST_ACH.id, COMPOUND_ACH.id],
+      rpcReturn: { xp: 260, gold: 0, level: 2 },
+    });
+    mockWriteClient.from.mockImplementation(write.from);
+    mockWriteClient.rpc.mockImplementation(write.rpc);
+
+    write.selectAfterIs
+      .mockResolvedValueOnce({
+        data: [{ achievement_id: QUEST_ACH.id }],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [{ achievement_id: COMPOUND_ACH.id }],
+        error: null,
+      });
+
+    let charAchN = 0;
+    const charAchChain = {
+      select: jest.fn().mockImplementation(() => {
+        charAchN++;
+        if (charAchN === 1) {
+          return {
+            eq: jest.fn().mockResolvedValue({
+              data: [
+                { achievement_id: QUEST_ACH.id },
+                { achievement_id: COMPOUND_ACH.id },
+              ],
+              error: null,
+            }),
+          };
+        }
+        const id = charAchN === 2 ? QUEST_ACH.id : COMPOUND_ACH.id;
+        return {
+          eq: jest.fn().mockReturnValue({
+            in: jest.fn().mockResolvedValue({
+              data: [{ achievement_id: id, unlocked_at: null }],
+              error: null,
+            }),
+          }),
+        };
+      }),
+    };
+
+    const readClient = makeReadClient({
+      characters: makeCharChain({
+        xp: 260,
+        gold: 0,
+        level: 3,
+      }) as unknown as MockChain,
+      achievements: makeDataResult([
+        QUEST_ACH,
+        COMPOUND_ACH,
+      ]) as unknown as MockChain,
+      character_achievements: charAchChain,
+      quest_instances: makeQuestChain(5),
+    });
+
+    const svc = new AchievementProgressService(readClient as never);
+    await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
+
+    // Unlock called twice: quest_complete then compound in cascade
+    expect(write.charAchUpdate).toHaveBeenCalledTimes(2);
   });
 });

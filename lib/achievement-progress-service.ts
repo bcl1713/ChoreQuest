@@ -192,6 +192,7 @@ export class AchievementProgressService {
       const allAchievementsMap = new Map(achievements.map((a) => [a.id, a]));
       await runUnlockEvaluation(
         characterId,
+        userId,
         upsertRows,
         allAchievementsMap,
         this.readClient,

@@ -2,11 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
 import { RewardCalculator } from "@/lib/reward-calculator";
 import { evaluateCriteriaMet } from "./unlock-evaluator";
+import { EVALUATOR_REGISTRY } from "./evaluators";
 import type {
   AchievementProgressValue,
   CriteriaConfig,
   CompoundProgress,
   CompoundConditionResult,
+  CompoundCondition,
 } from "./types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,6 +54,7 @@ const MAX_CASCADE_DEPTH = 10;
 
 export async function runUnlockEvaluation(
   characterId: string,
+  userId: string,
   progressRows: UpsertRow[],
   achievementMap: Map<string, FetchedAchievement>,
   readClient: SupabaseClient<Database>,
@@ -159,23 +162,47 @@ export async function runUnlockEvaluation(
     }
   }
 
-  // Level-up cascade: re-evaluate level_reached achievements
+  // Level-up cascade: re-evaluate level_reached and compound achievements
   if (levelUpResult && depth < MAX_CASCADE_DEPTH) {
     const newLevel = levelUpResult.newLevel;
-    const levelAchievements = [...achievementMap.values()].filter(
-      (a) => a.criteria_type === "level_reached",
-    );
-    if (levelAchievements.length > 0) {
-      const cascadeRows: UpsertRow[] = levelAchievements.map((a) => {
-        const config = a.criteria_config as CriteriaConfig;
-        return {
-          character_id: characterId,
-          achievement_id: a.id,
-          progress: { current: newLevel, threshold: config?.threshold ?? 0 },
-        };
+    const cascadeRows: UpsertRow[] = [];
+
+    // Collect level_reached achievements
+    for (const a of achievementMap.values()) {
+      if (a.criteria_type !== "level_reached") continue;
+      const config = a.criteria_config as CriteriaConfig;
+      cascadeRows.push({
+        character_id: characterId,
+        achievement_id: a.id,
+        progress: { current: newLevel, threshold: config?.threshold ?? 0 },
       });
+    }
+
+    // Collect compound achievements with level_reached sub-conditions
+    for (const a of achievementMap.values()) {
+      if (a.criteria_type !== "compound") continue;
+      const config = a.criteria_config as CriteriaConfig;
+      const hasLevelCondition = (config?.conditions ?? []).some(
+        (c: CompoundCondition) => c.criteria_type === "level_reached",
+      );
+      if (!hasLevelCondition) continue;
+      const result = await EVALUATOR_REGISTRY.compound(
+        readClient,
+        characterId,
+        userId,
+        config,
+      );
+      cascadeRows.push({
+        character_id: characterId,
+        achievement_id: a.id,
+        progress: buildProgressValue("compound", result, config),
+      });
+    }
+
+    if (cascadeRows.length > 0) {
       await runUnlockEvaluation(
         characterId,
+        userId,
         cascadeRows,
         achievementMap,
         readClient,
