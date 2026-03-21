@@ -17,6 +17,11 @@ jest.mock("@/lib/supabase-server", () => ({
   createServiceSupabaseClient: jest.fn(() => mockWriteClient),
 }));
 
+jest.mock("@/lib/achievement-progress/unlock-engine", () => ({
+  ...jest.requireActual("@/lib/achievement-progress/unlock-engine"),
+  runUnlockEvaluation: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe("AchievementProgressService - service level", () => {
   afterEach(() => {
     jest.clearAllMocks();

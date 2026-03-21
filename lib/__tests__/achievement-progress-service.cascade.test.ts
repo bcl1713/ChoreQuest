@@ -109,7 +109,7 @@ describe("AchievementProgressService - cascade integration", () => {
       }),
     };
 
-    const orig = write.from;
+    const origImpl = write.from.getMockImplementation()!;
     write.from.mockImplementation((table: string) => {
       if (table === "character_achievements") {
         return {
@@ -118,7 +118,7 @@ describe("AchievementProgressService - cascade integration", () => {
           select: charAchChain.select,
         };
       }
-      return orig(table);
+      return origImpl(table);
     });
 
     const readClient = makeReadClient({
