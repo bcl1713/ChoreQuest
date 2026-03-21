@@ -54,6 +54,14 @@ export function createCompoundEvaluator(
       });
     }
 
+    if (results.length === 0) {
+      return {
+        current: 0,
+        compoundConditions: [],
+        compoundMet: false,
+      };
+    }
+
     const overallMet =
       operator === "OR"
         ? results.some((r) => r.met)

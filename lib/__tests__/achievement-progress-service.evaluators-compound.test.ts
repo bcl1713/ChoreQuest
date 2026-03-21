@@ -140,6 +140,29 @@ describe("createCompoundEvaluator", () => {
     warnSpy.mockRestore();
   });
 
+  it("returns compoundMet false for empty conditions array", async () => {
+    const evaluator = createCompoundEvaluator(() => ({}));
+    const result = await evaluator(makeMockClient(), CHARACTER_ID, USER_ID, {
+      operator: "AND",
+      conditions: [],
+    });
+
+    expect(result.compoundMet).toBe(false);
+    expect(result.current).toBe(0);
+    expect(result.compoundConditions).toEqual([]);
+  });
+
+  it("returns compoundMet false for missing conditions (defaults to [])", async () => {
+    const evaluator = createCompoundEvaluator(() => ({}));
+    const result = await evaluator(makeMockClient(), CHARACTER_ID, USER_ID, {
+      operator: "AND",
+    });
+
+    expect(result.compoundMet).toBe(false);
+    expect(result.current).toBe(0);
+    expect(result.compoundConditions).toEqual([]);
+  });
+
   it("returns current as count of met conditions", async () => {
     const registry: Record<string, EvaluatorFn> = {
       quest_complete: jest.fn().mockResolvedValue({ current: 7 }),
