@@ -3,6 +3,7 @@ import type {
   CriteriaConfig,
   EvaluatorFn,
 } from "./types";
+import { createCompoundEvaluator } from "./compound-evaluator";
 
 // ─── Event → criteria-type mapping ──────────────────────────────────────────
 
@@ -41,6 +42,7 @@ export const ALL_CRITERIA_TYPES = [
   "streak_reached",
   "class_change",
   "honor_earned",
+  "compound",
 ] as const;
 
 // ─── Evaluators ──────────────────────────────────────────────────────────────
@@ -240,6 +242,7 @@ const evaluateHonorEarned: EvaluatorFn = async (client, characterId) => {
 // ─── Evaluator registry ──────────────────────────────────────────────────────
 
 export const EVALUATOR_REGISTRY: Record<string, EvaluatorFn> = {
+  compound: createCompoundEvaluator(() => EVALUATOR_REGISTRY),
   quest_complete: evaluateQuestComplete,
   quest_volunteer: evaluateQuestVolunteer,
   quest_difficulty: evaluateQuestDifficulty,

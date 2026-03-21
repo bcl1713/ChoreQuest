@@ -11,10 +11,45 @@ export type AchievementEvent = {
   type: AchievementEventType;
 };
 
+export type CompoundCondition = {
+  criteria_type: string;
+  threshold?: number;
+  boolean?: boolean;
+};
+
+export type CompoundConditionResult = {
+  criteria_type: string;
+  current: number;
+  threshold: number;
+  met: boolean;
+};
+
+export type StandardProgress = {
+  current: number;
+  threshold: number;
+};
+
+export type CompoundProgress = {
+  conditions: CompoundConditionResult[];
+  met: boolean;
+};
+
+export type AchievementProgressValue = StandardProgress | CompoundProgress;
+
 export type CriteriaConfig = {
   threshold?: number;
   difficulty?: string;
+  evaluation_strategy?: string;
+  operator?: "AND" | "OR";
+  conditions?: CompoundCondition[];
+  boolean?: boolean;
   [key: string]: unknown;
+};
+
+export type EvaluatorResult = {
+  current: number;
+  compoundConditions?: CompoundConditionResult[];
+  compoundMet?: boolean;
 };
 
 export type EvaluatorFn = (
@@ -22,13 +57,13 @@ export type EvaluatorFn = (
   characterId: string,
   userId: string,
   criteriaConfig?: CriteriaConfig,
-) => Promise<{ current: number }>;
+) => Promise<EvaluatorResult>;
 
 export type AchievementProgressRecord = {
   character_id: string;
   achievement_id: string;
   unlocked_at: string | null;
-  progress: { current: number; threshold: number } | null;
+  progress: AchievementProgressValue | null;
   notified: boolean | null;
   achievement: {
     id: string;
