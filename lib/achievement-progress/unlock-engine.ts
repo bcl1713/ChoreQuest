@@ -155,32 +155,35 @@ export async function runUnlockEvaluation(
     if (depth < MAX_CASCADE_DEPTH) {
       const cascadeAchievementIds = new Set<string>();
 
-      if (totalXp > 0) {
+      const cascadeTriggers: Array<{
+        shouldRun: boolean;
+        criteriaType: "xp_earned" | "level_reached";
+        newValue: number;
+      }> = [
+        {
+          shouldRun: totalXp > 0,
+          criteriaType: "xp_earned",
+          newValue: newStats?.xp ?? 0,
+        },
+        {
+          shouldRun: !!(levelUpResult && levelApplied),
+          criteriaType: "level_reached",
+          newValue: levelUpResult?.newLevel ?? 0,
+        },
+      ];
+
+      for (const trigger of cascadeTriggers) {
+        if (!trigger.shouldRun) continue;
         for (const a of achievementMap.values()) {
-          if (a.criteria_type !== "xp_earned") continue;
+          if (a.criteria_type !== trigger.criteriaType) continue;
           const config = a.criteria_config as CriteriaConfig;
           cascadeRows.push({
             character_id: characterId,
             achievement_id: a.id,
             progress: {
-              current: newStats?.xp ?? 0,
+              current: trigger.newValue,
               threshold: config?.threshold ?? 0,
             },
-          });
-          cascadeAchievementIds.add(a.id);
-        }
-      }
-
-      // Level-up cascade: level_reached achievements
-      if (levelUpResult && levelApplied) {
-        const newLevel = levelUpResult.newLevel;
-        for (const a of achievementMap.values()) {
-          if (a.criteria_type !== "level_reached") continue;
-          const config = a.criteria_config as CriteriaConfig;
-          cascadeRows.push({
-            character_id: characterId,
-            achievement_id: a.id,
-            progress: { current: newLevel, threshold: config?.threshold ?? 0 },
           });
           cascadeAchievementIds.add(a.id);
         }
