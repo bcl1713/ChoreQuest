@@ -1006,6 +1006,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      fn_increment_character_stats: {
+        Args: { p_character_id: string; p_xp: number; p_gold: number };
+        Returns: { xp: number; gold: number; level: number }[];
+      };
       fn_change_character_class: {
         Args: { p_character_id: string; p_new_class: string };
         Returns: {

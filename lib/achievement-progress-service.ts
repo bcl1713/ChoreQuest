@@ -6,11 +6,15 @@ import {
   ALL_CRITERIA_TYPES,
   EVALUATOR_REGISTRY,
 } from "./achievement-progress/evaluators";
+import { runUnlockEvaluation } from "./achievement-progress/unlock-engine";
+import { buildProgressValue } from "./achievement-progress/unlock-evaluator";
 import type {
   AchievementEvent,
   AchievementProgressRecord,
+  AchievementProgressValue,
   CriteriaConfig,
 } from "./achievement-progress/types";
+import type { FetchedAchievement } from "./achievement-progress/unlock-engine";
 
 export type {
   AchievementEventType,
@@ -63,10 +67,14 @@ export class AchievementProgressService {
     };
   }
 
-  private async fetchAchievements(familyId: string | null) {
+  private async fetchAchievements(
+    familyId: string | null,
+  ): Promise<FetchedAchievement[]> {
     let query = this.readClient
       .from("achievements")
-      .select("id, criteria_type, criteria_config");
+      .select(
+        "id, name, criteria_type, criteria_config, xp_reward, gold_reward",
+      );
 
     if (familyId) {
       query = query.or(`family_id.eq.${familyId},family_id.is.null`);
@@ -80,7 +88,7 @@ export class AchievementProgressService {
       throw new Error(`Failed to fetch achievements: ${error.message}`);
     }
 
-    return data ?? [];
+    return (data ?? []) as FetchedAchievement[];
   }
 
   private async fetchExistingAchievementIds(
@@ -107,15 +115,17 @@ export class AchievementProgressService {
     const achievements = await this.fetchAchievements(familyId);
     const existingAchievementIds =
       await this.fetchExistingAchievementIds(characterId);
+    // Backfill when any achievement row is missing, not just on zero rows.
+    // This handles both first-call and post-deployment cases where new
+    // achievements are added after a character's initial backfill.
     const needsBackfill = achievements.some(
       (a) => !existingAchievementIds.has(a.id),
     );
 
     const criteriaTypesToEvaluate = needsBackfill
-      ? ALL_CRITERIA_TYPES.slice() // full backfill
+      ? ALL_CRITERIA_TYPES.slice()
       : (EVENT_CRITERIA_MAP[event.type] ?? []);
 
-    // Warn about achievements with unrecognized criteria types
     for (const a of achievements) {
       if (!EVALUATOR_REGISTRY[a.criteria_type]) {
         console.warn(
@@ -124,7 +134,6 @@ export class AchievementProgressService {
       }
     }
 
-    // Filter achievements to the relevant criteria types
     const relevantAchievements = achievements.filter(
       (a) =>
         criteriaTypesToEvaluate.includes(a.criteria_type) &&
@@ -133,11 +142,10 @@ export class AchievementProgressService {
 
     if (relevantAchievements.length === 0) return;
 
-    // Run evaluators for each relevant achievement
     const upsertRows: {
       character_id: string;
       achievement_id: string;
-      progress: { current: number; threshold: number };
+      progress: AchievementProgressValue;
     }[] = [];
 
     for (const achievement of relevantAchievements) {
@@ -156,20 +164,16 @@ export class AchievementProgressService {
         userId,
         config,
       );
-      const threshold = config?.threshold ?? 0;
 
       upsertRows.push({
         character_id: characterId,
         achievement_id: achievement.id,
-        progress: { current: result.current, threshold },
+        progress: buildProgressValue(achievement.criteria_type, result, config),
       });
     }
 
     if (upsertRows.length === 0) return;
 
-    // Deliberately omit unlocked_at from upsertRows so Supabase only updates
-    // character_id, achievement_id, and progress on conflict, preserving any
-    // existing unlocked_at timestamp.
     const { error } = await this.writeClient
       .from("character_achievements")
       .upsert(upsertRows, {
@@ -179,6 +183,24 @@ export class AchievementProgressService {
 
     if (error) {
       throw new Error(`Failed to upsert progress: ${error.message}`);
+    }
+
+    // 8.1 Wire unlock evaluation as post-step; 8.2 wrap so failures are non-blocking
+    try {
+      const allAchievementsMap = new Map(achievements.map((a) => [a.id, a]));
+      await runUnlockEvaluation(
+        characterId,
+        userId,
+        upsertRows,
+        allAchievementsMap,
+        this.readClient,
+        this.writeClient,
+      );
+    } catch (unlockErr) {
+      console.error(
+        `Unlock evaluation failed for character ${characterId}:`,
+        unlockErr,
+      );
     }
   }
 
@@ -217,7 +239,7 @@ export class AchievementProgressService {
         character_id: row.character_id,
         achievement_id: row.achievement_id,
         unlocked_at: row.unlocked_at,
-        progress: row.progress as { current: number; threshold: number } | null,
+        progress: row.progress as AchievementProgressValue | null,
         notified: row.notified,
         achievement: achievement as AchievementProgressRecord["achievement"],
       };
