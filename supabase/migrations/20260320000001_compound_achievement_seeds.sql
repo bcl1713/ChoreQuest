@@ -44,7 +44,7 @@ INSERT INTO achievements (
 SELECT
   'Path of Glory',
   'Defeat 3 bosses or earn 500 gold.',
-  (SELECT id FROM achievement_categories WHERE name = 'Combat'),
+  (SELECT id FROM achievement_categories WHERE name = 'Adventurer'),
   150,
   50,
   'compound',

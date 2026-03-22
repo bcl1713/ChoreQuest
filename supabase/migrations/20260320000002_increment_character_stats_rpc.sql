@@ -10,8 +10,8 @@ CREATE OR REPLACE FUNCTION fn_increment_character_stats(
 RETURNS TABLE (xp INTEGER, gold INTEGER, level INTEGER) AS $$
   UPDATE characters
   SET
-    xp = xp + p_xp,
-    gold = gold + p_gold
+    xp = COALESCE(xp, 0) + p_xp,
+    gold = COALESCE(gold, 0) + p_gold
   WHERE id = p_character_id
   RETURNING xp, gold, level;
 $$ LANGUAGE sql SECURITY DEFINER;
