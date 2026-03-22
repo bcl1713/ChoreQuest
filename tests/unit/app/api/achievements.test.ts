@@ -192,13 +192,16 @@ describe("GET /api/achievements", () => {
     expect(ach1.unlocked_at).toBe("2026-03-20T10:00:00Z");
     expect(ach1.progress).toEqual({ current: 1, threshold: 1 });
 
-    // Hidden achievement has no progress
+    // Hidden locked achievement has metadata redacted
     const ach3 = cat1.achievements.find(
       (a: { id: string }) => a.id === "ach-3",
     );
     expect(ach3.is_hidden).toBe(true);
     expect(ach3.unlocked_at).toBeNull();
     expect(ach3.progress).toBeNull();
+    expect(ach3.name).toBe("???");
+    expect(ach3.description).toBe("???");
+    expect(ach3.icon).toBeNull();
 
     // Category 2 has 1 achievement with partial progress
     const cat2 = body.categories[1];
@@ -244,6 +247,33 @@ describe("GET /api/achievements", () => {
       expect(ach.unlocked_at).toBeNull();
       expect(ach.progress).toBeNull();
     }
+  });
+
+  it("exposes metadata for hidden achievements that are unlocked", async () => {
+    setupAuth();
+    const progressWithHidden = [
+      ...MOCK_PROGRESS,
+      {
+        id: "ca-3",
+        achievement_id: "ach-3",
+        unlocked_at: "2026-03-21T12:00:00Z",
+        progress: { current: 1, threshold: 1 },
+      },
+    ];
+    setupServiceQueries(MOCK_CATEGORIES, MOCK_ACHIEVEMENTS, progressWithHidden);
+
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    const cat1 = body.categories[0];
+    const ach3 = cat1.achievements.find(
+      (a: { id: string }) => a.id === "ach-3",
+    );
+    expect(ach3.unlocked_at).toBe("2026-03-21T12:00:00Z");
+    expect(ach3.name).toBe("Secret Find");
+    expect(ach3.description).toBe("Find the hidden treasure");
+    expect(ach3.icon).toBe("eye-off");
   });
 
   it("returns 400 when characterId is missing", async () => {

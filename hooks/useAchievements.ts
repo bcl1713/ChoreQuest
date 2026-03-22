@@ -48,7 +48,7 @@ export function useAchievements(
   characterId: string | null | undefined,
 ): UseAchievementsReturn {
   const [categories, setCategories] = useState<AchievementCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!characterId);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 

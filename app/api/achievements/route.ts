@@ -99,11 +99,12 @@ export async function GET(request: NextRequest) {
         .filter((a) => a.category_id === category.id)
         .map((achievement) => {
           const progress = progressByAchievementId.get(achievement.id);
+          const isLocked = achievement.is_hidden && !progress?.unlocked_at;
           return {
             id: achievement.id,
-            name: achievement.name,
-            description: achievement.description,
-            icon: achievement.icon,
+            name: isLocked ? "???" : achievement.name,
+            description: isLocked ? "???" : achievement.description,
+            icon: isLocked ? null : achievement.icon,
             xp_reward: achievement.xp_reward,
             gold_reward: achievement.gold_reward,
             is_hidden: achievement.is_hidden,
