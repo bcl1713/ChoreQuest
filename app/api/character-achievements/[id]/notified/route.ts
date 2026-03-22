@@ -8,6 +8,7 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
+import { ForbiddenError } from "@/lib/errors";
 
 /**
  * PATCH /api/character-achievements/[id]/notified
@@ -25,14 +26,17 @@ export async function PATCH(
 
     // Auth check — 401 if unauthenticated
     const userSupabase = createServerSupabaseClient(token);
-    await authenticateAndFetchUserProfile(userSupabase, token);
+    const requesterProfile = await authenticateAndFetchUserProfile(
+      userSupabase,
+      token,
+    );
 
     // Record lookup via service-role client — 404 if not found
     const serviceSupabase = createServiceSupabaseClient();
 
     const { data: existing, error: lookupError } = await serviceSupabase
       .from("character_achievements")
-      .select("id")
+      .select("id, characters(family_id)")
       .eq("id", id)
       .maybeSingle();
 
@@ -40,6 +44,20 @@ export async function PATCH(
       return NextResponse.json(
         { error: "Character achievement not found" },
         { status: 404 },
+      );
+    }
+
+    // Ownership check — 403 if the character belongs to a different family
+    const characterFamily = (
+      existing as { id: string; characters: { family_id: string } | null }
+    ).characters;
+    if (
+      !characterFamily ||
+      characterFamily.family_id !== requesterProfile.family_id
+    ) {
+      throw new ForbiddenError(
+        "Character achievement does not belong to your family",
+        "NOTIFIED_FORBIDDEN",
       );
     }
 

@@ -122,6 +122,30 @@ describe("useAchievementNotifications — catch-up query and deduplication", () 
     expect(result.current.current).toBeNull();
   });
 
+  it("clears queue when characterId transitions to null", async () => {
+    const catchUpRows = [
+      { id: CA_ID, achievement_id: ACH_ID, achievements: makeAchievement() },
+    ];
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements")
+        return makeCatchUpChain(catchUpRows);
+      return makeAchievementChain(makeAchievement());
+    });
+
+    const { result, rerender } = renderHook(
+      ({ charId }: { charId: string | null }) =>
+        useAchievementNotifications(charId),
+      { initialProps: { charId: CHAR_ID } },
+    );
+
+    await waitFor(() => expect(result.current.current).not.toBeNull());
+
+    rerender({ charId: null });
+
+    await waitFor(() => expect(result.current.current).toBeNull());
+  });
+
   it("calls notified API when an item becomes current", async () => {
     const catchUpRows = [
       { id: CA_ID, achievement_id: ACH_ID, achievements: makeAchievement() },

@@ -136,4 +136,50 @@ describe("useAchievementNotifications — character-scoped filtering", () => {
     renderHook(() => useAchievementNotifications(null));
     expect(mockOnAchievementUnlockUpdate).not.toHaveBeenCalled();
   });
+
+  it("discards in-flight fetch results when character changes before fetch resolves", async () => {
+    let resolveAchievementFetch!: (data: unknown) => void;
+    const pendingFetch = new Promise((resolve) => {
+      resolveAchievementFetch = resolve;
+    });
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements") return makeCatchUpChain([]);
+      if (table === "achievements")
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockReturnValue(pendingFetch),
+        };
+      return {};
+    });
+
+    const { result, rerender } = renderHook(
+      ({ charId }: { charId: string | null }) =>
+        useAchievementNotifications(charId),
+      { initialProps: { charId: CHAR_ID } },
+    );
+
+    await waitFor(() =>
+      expect(mockOnAchievementUnlockUpdate).toHaveBeenCalled(),
+    );
+
+    // Fire unlock event for CHAR_ID — starts the async fetch but doesn't resolve yet
+    act(() => {
+      capturedListener?.(makeUnlockEvent());
+    });
+
+    // Switch to a different character before fetch resolves
+    rerender({ charId: null });
+
+    // Now resolve the fetch for the old character
+    act(() => {
+      resolveAchievementFetch({ data: makeAchievement(), error: null });
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    // The stale result must not appear in the queue
+    expect(result.current.current).toBeNull();
+  });
 });

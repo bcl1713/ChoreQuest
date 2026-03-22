@@ -47,9 +47,18 @@ function setupAuth() {
   });
 }
 
-function setupServiceRecord(exists: boolean) {
+function setupServiceRecord(
+  exists: boolean,
+  familyId: string | null = "fam-1",
+) {
   const maybeSingleResult = exists
-    ? { data: { id: VALID_UUID }, error: null }
+    ? {
+        data: {
+          id: VALID_UUID,
+          characters: familyId ? { family_id: familyId } : null,
+        },
+        error: null,
+      }
     : { data: null, error: null };
 
   const updateChain = {
@@ -108,5 +117,21 @@ describe("PATCH /api/character-achievements/[id]/notified", () => {
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error).toMatch(/not found/i);
+  });
+
+  it("returns 403 when the character achievement belongs to a different family", async () => {
+    setupAuth(); // requesterProfile.family_id = "fam-1"
+    setupServiceRecord(true, "fam-other");
+
+    const res = await PATCH(makeRequest(), params(VALID_UUID));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 when the character achievement has no associated character", async () => {
+    setupAuth();
+    setupServiceRecord(true, null);
+
+    const res = await PATCH(makeRequest(), params(VALID_UUID));
+    expect(res.status).toBe(403);
   });
 });

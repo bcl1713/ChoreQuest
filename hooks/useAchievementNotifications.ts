@@ -107,6 +107,9 @@ export function useAchievementNotifications(
   const [queue, setQueue] = useState<AchievementNotification[]>([]);
   // Track achievement IDs already in the queue to deduplicate catch-up + realtime
   const queuedAchievementIds = useRef<Set<string>>(new Set());
+  // Track the current characterId so in-flight async fetches can detect stale results
+  const currentCharacterIdRef = useRef<string | null | undefined>(characterId);
+  currentCharacterIdRef.current = characterId;
 
   const enqueue = useCallback((notification: AchievementNotification) => {
     if (queuedAchievementIds.current.has(notification.achievementId)) return;
@@ -116,7 +119,12 @@ export function useAchievementNotifications(
 
   // Catch-up query: runs on mount and on character switch
   useEffect(() => {
-    if (!characterId) return;
+    if (!characterId) {
+      // Clear stale queue when character is deselected (logout, reload, etc.)
+      queuedAchievementIds.current = new Set();
+      setQueue([]);
+      return;
+    }
 
     // Clear queue when character changes
     queuedAchievementIds.current = new Set();
@@ -157,10 +165,14 @@ export function useAchievementNotifications(
 
       const achievementId = record.achievement_id as string;
       const caId = record.id as string;
+      // Capture the characterId at event-receive time so we can detect a switch
+      const capturedCharId = characterId;
 
       // Fetch achievement data and enqueue
       fetchAchievementById(achievementId).then((achievement) => {
         if (!achievement) return;
+        // Discard if the active character changed while the fetch was in-flight
+        if (currentCharacterIdRef.current !== capturedCharId) return;
         enqueue({
           id: caId,
           achievementId,
