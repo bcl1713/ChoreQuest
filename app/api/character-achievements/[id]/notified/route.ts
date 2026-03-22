@@ -36,7 +36,7 @@ export async function PATCH(
 
     const { data: existing, error: lookupError } = await serviceSupabase
       .from("character_achievements")
-      .select("id, characters(family_id)")
+      .select("id, characters(user_profiles(family_id))")
       .eq("id", id)
       .maybeSingle();
 
@@ -48,12 +48,16 @@ export async function PATCH(
     }
 
     // Ownership check — 403 if the character belongs to a different family
-    const characterFamily = (
-      existing as { id: string; characters: { family_id: string } | null }
-    ).characters;
+    const characters = existing.characters;
+    const userProfile =
+      characters && !Array.isArray(characters)
+        ? characters.user_profiles
+        : null;
+    const characterFamilyId =
+      userProfile && !Array.isArray(userProfile) ? userProfile.family_id : null;
     if (
-      !characterFamily ||
-      characterFamily.family_id !== requesterProfile.family_id
+      !characterFamilyId ||
+      characterFamilyId !== requesterProfile.family_id
     ) {
       throw new ForbiddenError(
         "Character achievement does not belong to your family",

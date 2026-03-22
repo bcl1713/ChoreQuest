@@ -57,7 +57,8 @@ export function AchievementUnlockToast({
               </p>
 
               {/* Rewards */}
-              {(notification.xpReward || notification.goldReward) && (
+              {(notification.xpReward != null ||
+                notification.goldReward != null) && (
                 <div className="flex gap-3 mt-2">
                   {notification.xpReward != null && (
                     <span className="text-xs font-semibold bg-white/20 rounded px-2 py-0.5">

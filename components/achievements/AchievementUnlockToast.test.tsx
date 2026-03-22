@@ -93,6 +93,18 @@ describe("AchievementUnlockToast", () => {
       expect(screen.getByText("+50 Gold")).toBeInTheDocument();
     });
 
+    it("renders rewards section when xpReward is 0 and goldReward is null", () => {
+      render(
+        <AchievementUnlockToast
+          notification={makeNotification({ xpReward: 0, goldReward: null })}
+          onDismiss={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByText("+0 XP")).toBeInTheDocument();
+      expect(screen.queryByText(/Gold/)).not.toBeInTheDocument();
+    });
+
     it("hides rewards section when both are null", () => {
       render(
         <AchievementUnlockToast

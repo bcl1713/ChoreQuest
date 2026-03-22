@@ -55,7 +55,9 @@ function setupServiceRecord(
     ? {
         data: {
           id: VALID_UUID,
-          characters: familyId ? { family_id: familyId } : null,
+          characters: familyId
+            ? { user_profiles: { family_id: familyId } }
+            : null,
         },
         error: null,
       }

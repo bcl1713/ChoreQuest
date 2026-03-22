@@ -127,18 +127,14 @@ export function useAchievementNotifications(
 
   // Catch-up query: runs on mount and on character switch
   useEffect(() => {
-    if (!characterId) {
-      // Clear stale queue when character is deselected (logout, reload, etc.)
-      queuedAchievementIds.current = new Set();
-      prevCurrentIdRef.current = null;
-      setQueue([]);
-      return;
-    }
-
-    // Clear queue when character changes
+    // Clear queue and refs on character change or deselection
     queuedAchievementIds.current = new Set();
     prevCurrentIdRef.current = null;
     setQueue([]);
+
+    if (!characterId) {
+      return;
+    }
 
     let cancelled = false;
 

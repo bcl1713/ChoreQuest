@@ -156,8 +156,7 @@ RLS restricts direct client writes to service-role only.
 #### Scenario: PATCH updates notified flag
 
 - **WHEN** a `PATCH` request is sent to
-  `/api/character-achievements/[id]/notified` with
-  `{ "notified": true }`
+  `/api/character-achievements/[id]/notified`
 - **THEN** the API SHALL update the
   `character_achievements` row and return 200
 
