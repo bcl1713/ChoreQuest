@@ -42,25 +42,11 @@ export async function performRollback(
     prevCascadeSnapshot,
   } = state;
 
-  // Fix P1: guard with appliedLevel so a concurrent advance is not reversed.
-  if (levelApplied && prevLevel !== null && appliedLevel !== null) {
-    const { error: lvlRevertErr } = await writeClient
-      .from("characters")
-      .update({ level: prevLevel })
-      .eq("id", characterId)
-      .eq("level", appliedLevel); // no-op if level changed again
-    if (lvlRevertErr) {
-      console.error(
-        "Critical: failed to revert level after reward failure:",
-        lvlRevertErr,
-      );
-    }
-  }
-
-  // Fix P1: revert rewards before clearing unlocked_at.
-  // If stats revert fails, leave unlocked_at set so the achievement is not
-  // treated as unlockable again — the character keeps the rewards they already
-  // have rather than being allowed to receive them a second time.
+  // Revert stats first. If stats revert fails (concurrent write changed xp/gold),
+  // we intentionally keep the rewards AND the level — reverting only the level
+  // would leave the character with high XP/gold at a low level, which is
+  // inconsistent. We also leave unlocked_at set so the achievement cannot be
+  // re-triggered for a duplicate reward payout.
   let statsReverted = true;
   if (statsApplied && capturedNewStats) {
     const { error: statsRevertErr } = await writeClient
@@ -81,6 +67,28 @@ export async function performRollback(
     }
   }
 
+  // Only revert level after stats are successfully reverted. If stats rollback
+  // was skipped (concurrent write), the character keeps rewards + level to stay
+  // consistent. The appliedLevel guard prevents clobbering a concurrent advance.
+  if (
+    statsReverted &&
+    levelApplied &&
+    prevLevel !== null &&
+    appliedLevel !== null
+  ) {
+    const { error: lvlRevertErr } = await writeClient
+      .from("characters")
+      .update({ level: prevLevel })
+      .eq("id", characterId)
+      .eq("level", appliedLevel); // no-op if level changed again
+    if (lvlRevertErr) {
+      console.error(
+        "Critical: failed to revert level after reward failure:",
+        lvlRevertErr,
+      );
+    }
+  }
+
   // Only clear unlocked_at after rewards are successfully reverted.
   if (statsReverted && lockedIds.length > 0) {
     const { error: revertError } = await writeClient
@@ -96,10 +104,12 @@ export async function performRollback(
     }
   }
 
-  // Fix P2: rows that existed before get upserted with their prior progress;
-  // rows that are brand-new (not in prevCascadeSnapshot) get deleted so no
-  // phantom achievement rows remain after a failed cascade rollback.
-  if (cascadeRows.length > 0) {
+  // Cascade progress rollback: only revert when stats were successfully rolled
+  // back. When stats rollback failed, the character keeps their rewards and
+  // unlocked achievements, so cascade progress (xp_earned, level_reached,
+  // compound) must also be preserved to stay consistent with the actual
+  // character state.
+  if (statsReverted && cascadeRows.length > 0) {
     const snapshotIds = new Set(
       prevCascadeSnapshot.map((p) => p.achievement_id),
     );
