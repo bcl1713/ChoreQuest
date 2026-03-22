@@ -32,18 +32,36 @@ function makeRequest(
   return new NextRequest(url, { method: "GET", headers });
 }
 
-function setupAuth() {
+function setupAuth(characterOwned = true) {
   mockServerSupabase.auth.getUser.mockResolvedValue({
     data: { user: { id: "user-1" } },
     error: null,
   });
-  mockServerSupabase.from.mockReturnValue({
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue({
-      data: { role: "HERO", family_id: "fam-1" },
-      error: null,
-    }),
+  mockServerSupabase.from.mockImplementation((table: string) => {
+    if (table === "user_profiles") {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: { role: "HERO", family_id: "fam-1" },
+          error: null,
+        }),
+      };
+    }
+    if (table === "characters") {
+      const maybeSingle = jest.fn().mockResolvedValue({
+        data: characterOwned ? { id: CHARACTER_ID } : null,
+        error: null,
+      });
+      const eq2 = jest.fn().mockReturnValue({ maybeSingle });
+      const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
+      return { select: jest.fn().mockReturnValue({ eq: eq1 }) };
+    }
+    return {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
   });
 }
 
@@ -233,6 +251,13 @@ describe("GET /api/achievements", () => {
 
     const res = await GET(makeRequest("Bearer token", null));
     expect(res.status).toBe(400);
+  });
+
+  it("returns 403 when character does not belong to the authenticated user", async () => {
+    setupAuth(false);
+
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(403);
   });
 });
 

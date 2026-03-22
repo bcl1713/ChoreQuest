@@ -8,7 +8,7 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
-import { ValidationError } from "@/lib/errors";
+import { ForbiddenError, ValidationError } from "@/lib/errors";
 
 /**
  * GET /api/achievements?characterId=<uuid>
@@ -21,7 +21,10 @@ export async function GET(request: NextRequest) {
   try {
     const token = extractBearerToken(request);
     const userSupabase = createServerSupabaseClient(token);
-    await authenticateAndFetchUserProfile(userSupabase, token);
+    const requesterProfile = await authenticateAndFetchUserProfile(
+      userSupabase,
+      token,
+    );
 
     const { searchParams } = new URL(request.url);
     const characterId = searchParams.get("characterId");
@@ -30,6 +33,21 @@ export async function GET(request: NextRequest) {
       throw new ValidationError(
         "characterId is required",
         "CHARACTER_ID_REQUIRED",
+      );
+    }
+
+    // Verify the character belongs to the authenticated user
+    const { data: character, error: charError } = await userSupabase
+      .from("characters")
+      .select("id")
+      .eq("id", characterId)
+      .eq("user_id", requesterProfile.id)
+      .maybeSingle();
+
+    if (charError || !character) {
+      throw new ForbiddenError(
+        "Cannot access achievements for another user's character",
+        "CHARACTER_ACCESS_FORBIDDEN",
       );
     }
 
