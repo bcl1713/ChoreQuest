@@ -16,4 +16,5 @@ RETURNS TABLE (xp INTEGER, gold INTEGER, level INTEGER) AS $$
   RETURNING xp, gold, level;
 $$ LANGUAGE sql SECURITY DEFINER;
 
+REVOKE ALL ON FUNCTION fn_increment_character_stats(UUID, INTEGER, INTEGER) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION fn_increment_character_stats(UUID, INTEGER, INTEGER) TO service_role;
