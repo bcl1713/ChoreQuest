@@ -166,4 +166,70 @@ describe("useAchievementNotifications — catch-up query and deduplication", () 
       ),
     );
   });
+
+  it("still shows toast when notified PATCH returns non-OK", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+
+    const catchUpRows = [
+      { id: CA_ID, achievement_id: ACH_ID, achievements: makeAchievement() },
+    ];
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements")
+        return makeCatchUpChain(catchUpRows);
+      return makeAchievementChain(makeAchievement());
+    });
+
+    const { result } = renderHook(() => useAchievementNotifications(CHAR_ID));
+
+    await waitFor(() => expect(result.current.current?.id).toBe(CA_ID));
+  });
+
+  it("retries notified PATCH on remount after a failed write", async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
+
+    const catchUpRows = [
+      { id: CA_ID, achievement_id: ACH_ID, achievements: makeAchievement() },
+    ];
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements")
+        return makeCatchUpChain(catchUpRows);
+      return makeAchievementChain(makeAchievement());
+    });
+
+    const { unmount } = renderHook(() => useAchievementNotifications(CHAR_ID));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    unmount();
+
+    // Remount — guard was not set (PATCH failed), so the write should be retried
+    renderHook(() => useAchievementNotifications(CHAR_ID));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  });
+
+  it("resets notified guard on character switch so failed writes can retry", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+
+    const catchUpRows = [
+      { id: CA_ID, achievement_id: ACH_ID, achievements: makeAchievement() },
+    ];
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements")
+        return makeCatchUpChain(catchUpRows);
+      return makeAchievementChain(makeAchievement());
+    });
+
+    const { rerender } = renderHook(
+      ({ charId }: { charId: string | null }) =>
+        useAchievementNotifications(charId),
+      { initialProps: { charId: CHAR_ID } },
+    );
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+    // Switch away resets the guard
+    rerender({ charId: null });
+    // Switch back — catch-up re-fetches the still-unnotified row
+    rerender({ charId: CHAR_ID });
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  });
 });

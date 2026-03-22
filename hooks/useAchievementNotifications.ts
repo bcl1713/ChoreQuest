@@ -46,14 +46,19 @@ async function fetchAchievementById(achievementId: string): Promise<{
   return data;
 }
 
-async function markCharacterAchievementNotified(id: string): Promise<void> {
+async function markCharacterAchievementNotified(id: string): Promise<boolean> {
   const token = await getAuthToken();
-  if (!token) return;
+  if (!token) return false;
 
-  await fetch(`/api/character-achievements/${id}/notified`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const response = await fetch(`/api/character-achievements/${id}/notified`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 type CatchUpRow = {
@@ -110,6 +115,9 @@ export function useAchievementNotifications(
   // Track the current characterId so in-flight async fetches can detect stale results
   const currentCharacterIdRef = useRef<string | null | undefined>(characterId);
   currentCharacterIdRef.current = characterId;
+  // Guard to avoid re-firing the mark-notified effect for the same id;
+  // reset when the queue is cleared so failed writes can be retried
+  const prevCurrentIdRef = useRef<string | null>(null);
 
   const enqueue = useCallback((notification: AchievementNotification) => {
     if (queuedAchievementIds.current.has(notification.achievementId)) return;
@@ -122,12 +130,14 @@ export function useAchievementNotifications(
     if (!characterId) {
       // Clear stale queue when character is deselected (logout, reload, etc.)
       queuedAchievementIds.current = new Set();
+      prevCurrentIdRef.current = null;
       setQueue([]);
       return;
     }
 
     // Clear queue when character changes
     queuedAchievementIds.current = new Set();
+    prevCurrentIdRef.current = null;
     setQueue([]);
 
     let cancelled = false;
@@ -188,15 +198,16 @@ export function useAchievementNotifications(
     return unsubscribe;
   }, [characterId, onAchievementUnlockUpdate, enqueue]);
 
-  // Mark notified when a new item becomes current
-  const prevCurrentIdRef = useRef<string | null>(null);
+  // Mark notified when a new item becomes current; only set the guard on success
+  // so transient failures (auth not ready, network, 5xx) can be retried on remount
   const current = queue[0] ?? null;
 
   useEffect(() => {
     if (!current) return;
     if (current.id === prevCurrentIdRef.current) return;
-    prevCurrentIdRef.current = current.id;
-    markCharacterAchievementNotified(current.id);
+    markCharacterAchievementNotified(current.id).then((success) => {
+      if (success) prevCurrentIdRef.current = current.id;
+    });
   }, [current]);
 
   const onDismiss = useCallback(() => {
