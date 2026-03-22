@@ -5,6 +5,7 @@ import { useCharacter } from "@/lib/character-context";
 import { LoadingSpinner, Button } from "@/components/ui";
 import ProfileSettings from "@/components/profile/ProfileSettings";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
+import { AchievementsSection } from "@/components/achievements/AchievementsSection";
 import { AuthenticatedPageShell } from "@/components/layout/authenticated-page-shell";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -108,6 +109,10 @@ export default function ProfilePage() {
             character={character}
             onRefreshNeeded={refreshCharacter}
           />
+        </div>
+
+        <div className="max-w-4xl mx-auto mt-8 sm:mt-12">
+          <AchievementsSection characterId={character.id} />
         </div>
       </AuthenticatedPageShell>
     </ProfileErrorBoundary>
