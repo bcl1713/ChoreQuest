@@ -5,7 +5,11 @@ import { FantasyIcon } from "@/components/icons/FantasyIcon";
 import { ProgressBar } from "@/components/animations/ProgressBar";
 import { Lock } from "lucide-react";
 import { getAchievementIcon } from "./achievement-icon-map";
-import type { AchievementDisplay } from "@/hooks/useAchievements";
+import type {
+  AchievementDisplay,
+  AchievementProgressValue,
+  StandardProgress,
+} from "@/hooks/useAchievements";
 import type {
   FantasyCardVariant,
   FantasyCardGlow,
@@ -17,13 +21,29 @@ export type AchievementBadgeState =
   | "locked"
   | "hidden";
 
+function isStandardProgress(
+  p: AchievementProgressValue,
+): p is StandardProgress {
+  return "current" in p;
+}
+
+export function progressCurrent(p: AchievementProgressValue): number {
+  if (isStandardProgress(p)) return p.current;
+  return p.conditions.filter((c) => c.met).length;
+}
+
+export function progressMax(p: AchievementProgressValue): number {
+  if (isStandardProgress(p)) return p.threshold;
+  return p.conditions.length;
+}
+
 export function getAchievementState(
   achievement: AchievementDisplay,
 ): AchievementBadgeState {
   // Hidden achievement that's unlocked displays as normal unlocked
   if (achievement.unlocked_at) return "unlocked";
   if (achievement.is_hidden) return "hidden";
-  if (achievement.progress && achievement.progress.current > 0) {
+  if (achievement.progress && progressCurrent(achievement.progress) > 0) {
     return "locked-progress";
   }
   return "locked";
@@ -103,8 +123,8 @@ export function AchievementBadge({
       {state === "locked-progress" && achievement.progress && (
         <div className="mt-3">
           <ProgressBar
-            current={achievement.progress.current}
-            max={achievement.progress.threshold}
+            current={progressCurrent(achievement.progress)}
+            max={progressMax(achievement.progress)}
             showValues
             showPercentage={false}
             variant="default"

@@ -6,7 +6,11 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { FantasyIcon } from "@/components/icons/FantasyIcon";
 import { ProgressBar } from "@/components/animations/ProgressBar";
 import { getAchievementIcon } from "./achievement-icon-map";
-import { getAchievementState } from "./AchievementBadge";
+import {
+  getAchievementState,
+  progressCurrent,
+  progressMax,
+} from "./AchievementBadge";
 import type { AchievementDisplay } from "@/hooks/useAchievements";
 
 interface AchievementDetailModalProps {
@@ -99,8 +103,8 @@ export function AchievementDetailModal({
           {hasProgress && achievement.progress && (
             <div className="mb-4">
               <ProgressBar
-                current={achievement.progress.current}
-                max={achievement.progress.threshold}
+                current={progressCurrent(achievement.progress)}
+                max={progressMax(achievement.progress)}
                 showValues
                 showPercentage
                 variant="default"

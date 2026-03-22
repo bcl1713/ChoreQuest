@@ -3,6 +3,25 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 
+export type StandardProgress = {
+  current: number;
+  threshold: number;
+};
+
+export type CompoundConditionResult = {
+  criteria_type: string;
+  current: number;
+  threshold: number;
+  met: boolean;
+};
+
+export type CompoundProgress = {
+  conditions: CompoundConditionResult[];
+  met: boolean;
+};
+
+export type AchievementProgressValue = StandardProgress | CompoundProgress;
+
 export type AchievementDisplay = {
   id: string;
   name: string;
@@ -13,7 +32,7 @@ export type AchievementDisplay = {
   is_hidden: boolean | null;
   criteria_type: string;
   unlocked_at: string | null;
-  progress: { current: number; threshold: number } | null;
+  progress: AchievementProgressValue | null;
 };
 
 export type AchievementCategory = {
