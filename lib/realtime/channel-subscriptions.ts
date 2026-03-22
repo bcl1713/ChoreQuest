@@ -11,6 +11,7 @@ type ChannelRegistries = {
   familyMember: ListenerRegistry;
   bossQuest: ListenerRegistry;
   bossParticipant: ListenerRegistry;
+  achievementUnlock: ListenerRegistry;
 };
 
 const mapEvent =
@@ -96,6 +97,14 @@ export const createFamilyRealtimeChannels = (
       table: "boss_battle_participants",
       eventType: "boss_participant_updated",
       registry: registries.bossParticipant,
+    },
+    {
+      channelName: `family_${familyId}_character_achievements`,
+      table: "character_achievements",
+      // character_achievements has no family_id column; omit filter so events
+      // are delivered. The notification hook filters client-side by character_id.
+      eventType: "achievement_unlock_updated",
+      registry: registries.achievementUnlock,
     },
   ];
 

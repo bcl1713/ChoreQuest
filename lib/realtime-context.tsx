@@ -34,6 +34,7 @@ export const useRealtime = () => {
       onFamilyMemberUpdate: () => () => {},
       onBossQuestUpdate: () => () => {},
       onBossParticipantUpdate: () => () => {},
+      onAchievementUnlockUpdate: () => () => {},
       refreshQuests: () => {},
       refreshQuestTemplates: () => {},
       refreshCharacters: () => {},
@@ -60,6 +61,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const familyMemberListeners = useRef(createListenerRegistry());
   const bossQuestListeners = useRef(createListenerRegistry());
   const bossParticipantListeners = useRef(createListenerRegistry());
+  const achievementUnlockListeners = useRef(createListenerRegistry());
 
   const clearListenersRef = useRef(() => {
     questListeners.current.clear();
@@ -70,6 +72,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     familyMemberListeners.current.clear();
     bossQuestListeners.current.clear();
     bossParticipantListeners.current.clear();
+    achievementUnlockListeners.current.clear();
   });
 
   const setUpChannel = useCallback(async () => {
@@ -108,6 +111,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       familyMember: familyMemberListeners.current,
       bossQuest: bossQuestListeners.current,
       bossParticipant: bossParticipantListeners.current,
+      achievementUnlock: achievementUnlockListeners.current,
     };
 
     const channels = createFamilyRealtimeChannels(familyId, registries);
@@ -234,6 +238,10 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     (cb: Listener) => bossParticipantListeners.current.add(cb),
     [],
   );
+  const onAchievementUnlockUpdate = useCallback(
+    (cb: Listener) => achievementUnlockListeners.current.add(cb),
+    [],
+  );
 
   const value = React.useMemo(
     () => ({
@@ -247,6 +255,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       onFamilyMemberUpdate,
       onBossQuestUpdate,
       onBossParticipantUpdate,
+      onAchievementUnlockUpdate,
       refreshQuests,
       refreshQuestTemplates,
       refreshCharacters,
@@ -263,6 +272,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       onQuestUpdate,
       onRewardRedemptionUpdate,
       onRewardUpdate,
+      onAchievementUnlockUpdate,
       refreshQuests,
       refreshQuestTemplates,
       refreshCharacters,
