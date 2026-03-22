@@ -42,18 +42,6 @@ export async function performRollback(
     prevCascadeSnapshot,
   } = state;
 
-  const { error: revertError } = await writeClient
-    .from("character_achievements")
-    .update({ unlocked_at: null })
-    .eq("character_id", characterId)
-    .in("achievement_id", lockedIds);
-  if (revertError) {
-    console.error(
-      "Critical: failed to revert unlock after reward failure:",
-      revertError,
-    );
-  }
-
   // Fix P1: guard with appliedLevel so a concurrent advance is not reversed.
   if (levelApplied && prevLevel !== null && appliedLevel !== null) {
     const { error: lvlRevertErr } = await writeClient
@@ -69,7 +57,11 @@ export async function performRollback(
     }
   }
 
-  // Fix P1: conditional SET (not negative RPC increment) — no-op if values changed.
+  // Fix P1: revert rewards before clearing unlocked_at.
+  // If stats revert fails, leave unlocked_at set so the achievement is not
+  // treated as unlockable again — the character keeps the rewards they already
+  // have rather than being allowed to receive them a second time.
+  let statsReverted = true;
   if (statsApplied && capturedNewStats) {
     const { error: statsRevertErr } = await writeClient
       .from("characters")
@@ -81,6 +73,7 @@ export async function performRollback(
       .eq("xp", capturedNewStats.xp)
       .eq("gold", capturedNewStats.gold);
     if (statsRevertErr) {
+      statsReverted = false;
       console.error(
         "Critical: failed to revert stats after reward failure:",
         statsRevertErr,
@@ -88,26 +81,68 @@ export async function performRollback(
     }
   }
 
-  // Fix P2: restore prior progress (null only for rows that didn't exist before).
-  if (cascadeRows.length > 0) {
-    const restoreRows = cascadeRows.map((r) => {
-      const prior = prevCascadeSnapshot.find(
-        (p) => p.achievement_id === r.achievement_id,
-      );
-      return {
-        character_id: characterId,
-        achievement_id: r.achievement_id,
-        progress: (prior?.progress ?? null) as AchievementProgressValue,
-      };
-    });
-    const { error: cascadeRevertErr } = await writeClient
+  // Only clear unlocked_at after rewards are successfully reverted.
+  if (statsReverted && lockedIds.length > 0) {
+    const { error: revertError } = await writeClient
       .from("character_achievements")
-      .upsert(restoreRows, { onConflict: "character_id,achievement_id" });
-    if (cascadeRevertErr) {
+      .update({ unlocked_at: null })
+      .eq("character_id", characterId)
+      .in("achievement_id", lockedIds);
+    if (revertError) {
       console.error(
-        "Critical: failed to revert cascade progress after failure:",
-        cascadeRevertErr,
+        "Critical: failed to revert unlock after reward failure:",
+        revertError,
       );
+    }
+  }
+
+  // Fix P2: rows that existed before get upserted with their prior progress;
+  // rows that are brand-new (not in prevCascadeSnapshot) get deleted so no
+  // phantom achievement rows remain after a failed cascade rollback.
+  if (cascadeRows.length > 0) {
+    const snapshotIds = new Set(
+      prevCascadeSnapshot.map((p) => p.achievement_id),
+    );
+    const newIds = cascadeRows
+      .filter((r) => !snapshotIds.has(r.achievement_id))
+      .map((r) => r.achievement_id);
+    const restoreRows = cascadeRows
+      .filter((r) => snapshotIds.has(r.achievement_id))
+      .map((r) => {
+        const prior = prevCascadeSnapshot.find(
+          (p) => p.achievement_id === r.achievement_id,
+        )!;
+        return {
+          character_id: characterId,
+          achievement_id: r.achievement_id,
+          progress: prior.progress as AchievementProgressValue,
+        };
+      });
+
+    if (restoreRows.length > 0) {
+      const { error: cascadeRevertErr } = await writeClient
+        .from("character_achievements")
+        .upsert(restoreRows, { onConflict: "character_id,achievement_id" });
+      if (cascadeRevertErr) {
+        console.error(
+          "Critical: failed to revert cascade progress after failure:",
+          cascadeRevertErr,
+        );
+      }
+    }
+
+    if (newIds.length > 0) {
+      const { error: cascadeDeleteErr } = await writeClient
+        .from("character_achievements")
+        .delete()
+        .eq("character_id", characterId)
+        .in("achievement_id", newIds);
+      if (cascadeDeleteErr) {
+        console.error(
+          "Critical: failed to delete phantom cascade rows after failure:",
+          cascadeDeleteErr,
+        );
+      }
     }
   }
 }

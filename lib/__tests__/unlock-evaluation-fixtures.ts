@@ -50,6 +50,8 @@ export type WriteMocksOptions = {
   revertUnlockError?: string;
   /** If set, the cascade progress revert upsert resolves with this error. */
   cascadeProgressRevertError?: string;
+  /** If set, the phantom-row delete resolves with this error message. */
+  cascadeDeleteError?: string;
 };
 
 /** Build mock write client mocks for unlock evaluation tests */
@@ -63,6 +65,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     statsRevertError,
     revertUnlockError,
     cascadeProgressRevertError,
+    cascadeDeleteError,
   } = options ?? {};
 
   // Upsert: call 1 = initial progress, call 2 = cascade, call 3+ = cascade revert
@@ -144,9 +147,16 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
       : { eq: levelRevertEq1 };
   });
 
+  // Phantom-row delete chain (P2): .delete().eq("character_id").in("achievement_id")
+  const cascadeDeleteIn = jest.fn().mockResolvedValue({
+    error: cascadeDeleteError ? { message: cascadeDeleteError } : null,
+  });
+  const cascadeDeleteEq = jest.fn().mockReturnValue({ in: cascadeDeleteIn });
+  const cascadeDelete = jest.fn().mockReturnValue({ eq: cascadeDeleteEq });
+
   const from = jest.fn((table: string) => {
     if (table === "character_achievements")
-      return { upsert, update: charAchUpdate };
+      return { upsert, update: charAchUpdate, delete: cascadeDelete };
     if (table === "characters") return { update: statsUpdate };
     return { upsert };
   });
@@ -172,6 +182,9 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     statsRevertEq1,
     statsRevertEq2,
     statsRevertEq3,
+    cascadeDelete,
+    cascadeDeleteEq,
+    cascadeDeleteIn,
     from,
     rpc,
     rpcSingle,

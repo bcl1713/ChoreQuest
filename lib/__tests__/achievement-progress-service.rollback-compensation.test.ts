@@ -255,18 +255,12 @@ describe("AchievementProgressService - rollback compensation", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    // Fix P2: cascade revert uses upsert with prior progress (null = not existed)
-    expect(write.upsert).toHaveBeenNthCalledWith(
-      3,
-      [
-        {
-          character_id: CHAR_ID,
-          achievement_id: xpEarnedAch.id,
-          progress: null,
-        },
-      ],
-      { onConflict: "character_id,achievement_id" },
-    );
+    // P2 fix: brand-new cascade rows are deleted, not upserted with null
+    expect(write.upsert).toHaveBeenCalledTimes(2); // no 3rd upsert
+    expect(write.cascadeDelete).toHaveBeenCalled();
+    expect(write.cascadeDeleteIn).toHaveBeenCalledWith("achievement_id", [
+      xpEarnedAch.id,
+    ]);
   });
 
   it("detects revert failure when Supabase returns { error } not throw", async () => {
