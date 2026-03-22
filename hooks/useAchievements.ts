@@ -52,6 +52,14 @@ export function useAchievements(
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  // Synchronize loading state immediately when characterId changes so there
+  // is no brief render with isLoading=false and empty categories between the
+  // characterId becoming available and the fetch effect firing.
+  useEffect(() => {
+    setIsLoading(!!characterId);
+    if (!characterId) setCategories([]);
+  }, [characterId]);
+
   const fetchAchievements = useCallback(async () => {
     if (!characterId) return;
 

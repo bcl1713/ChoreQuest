@@ -7,8 +7,27 @@ import ProfileSettings from "@/components/profile/ProfileSettings";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
 import { AchievementsSection } from "@/components/achievements/AchievementsSection";
 import { AuthenticatedPageShell } from "@/components/layout/authenticated-page-shell";
+import { TabBar, type TabItem } from "@/components/ui/tab-bar";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Settings, Trophy } from "lucide-react";
+
+type ProfileTab = "settings" | "achievements";
+
+const PROFILE_TABS: TabItem<ProfileTab>[] = [
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    testId: "profile-tab-settings",
+  },
+  {
+    id: "achievements",
+    label: "Achievements",
+    icon: Trophy,
+    testId: "profile-tab-achievements",
+  },
+];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -19,6 +38,8 @@ export default function ProfilePage() {
     error: characterError,
     refreshCharacter,
   } = useCharacter();
+  const [activeTab, setActiveTab] = useState<ProfileTab>("settings");
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -95,24 +116,24 @@ export default function ProfilePage() {
           </>
         }
       >
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4">
-            Profile Settings
-          </h2>
-          <p className="text-base sm:text-lg text-gray-400">
-            Manage your character and account settings
-          </p>
-        </div>
-
         <div className="max-w-4xl mx-auto">
-          <ProfileSettings
-            character={character}
-            onRefreshNeeded={refreshCharacter}
+          <TabBar
+            tabs={PROFILE_TABS}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className="mb-6 rounded-t-lg"
           />
-        </div>
 
-        <div className="max-w-4xl mx-auto mt-8 sm:mt-12">
-          <AchievementsSection characterId={character.id} />
+          {activeTab === "settings" && (
+            <ProfileSettings
+              character={character}
+              onRefreshNeeded={refreshCharacter}
+            />
+          )}
+
+          {activeTab === "achievements" && (
+            <AchievementsSection characterId={character.id} />
+          )}
         </div>
       </AuthenticatedPageShell>
     </ProfileErrorBoundary>
