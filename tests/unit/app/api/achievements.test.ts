@@ -146,7 +146,8 @@ function setupServiceQueries(
   const orderAchFn = jest
     .fn()
     .mockResolvedValue({ data: achievements, error: null });
-  const selectAchievements = jest.fn().mockReturnValue({ order: orderAchFn });
+  const orAchFn = jest.fn().mockReturnValue({ order: orderAchFn });
+  const selectAchievements = jest.fn().mockReturnValue({ or: orAchFn });
 
   const eqFn = jest.fn().mockResolvedValue({ data: progress, error: null });
   const selectProgress = jest.fn().mockReturnValue({ eq: eqFn });

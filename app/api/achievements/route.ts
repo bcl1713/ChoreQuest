@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
           .select(
             "id, name, description, icon, category_id, xp_reward, gold_reward, is_hidden, criteria_type",
           )
+          .or(`family_id.is.null,family_id.eq.${requesterProfile.family_id}`)
           .order("name", { ascending: true }),
         serviceSupabase
           .from("character_achievements")
