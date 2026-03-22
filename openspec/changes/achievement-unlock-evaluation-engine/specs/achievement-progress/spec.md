@@ -78,26 +78,43 @@ achievement criteria.
   error SHALL be logged but SHALL NOT cause
   `updateProgress` to throw
 
-### Requirement: Retroactive backfill on first evaluation
+### Requirement: Retroactive backfill on missing rows
 
-On the first `updateProgress` call for a character
-(detected by absence of any `character_achievements`
-rows for that character), the service SHALL run all
-13 evaluators to backfill progress from existing
-database state. The full set of backfill upserts
+Whenever `updateProgress` is called for a character
+and any achievement lacks a corresponding
+`character_achievements` row for that character, the
+service SHALL run all 13 evaluators to backfill
+progress from existing database state. This covers
+two cases: (1) the first evaluation for a character
+who has no rows yet, and (2) post-deployment cases
+where new achievements are added after a character's
+initial backfill. The full set of backfill upserts
 SHALL be written in a single batch upsert call so
 that the operation is atomic — either all rows are
 written or none are. After the backfill upsert, the
 unlock evaluation engine SHALL run against all
 backfilled progress to retroactively unlock and
 reward any achievements whose criteria are already
-met. Subsequent calls SHALL run only the evaluators
-mapped to the triggering event type.
+met. Subsequent calls WHERE all achievements have
+rows SHALL run only the evaluators mapped to the
+triggering event type.
 
 #### Scenario: First evaluation triggers full backfill
 
 - **WHEN** `updateProgress` is called for a character
   with zero `character_achievements` rows
+- **THEN** the service SHALL evaluate all 13 criteria
+  types and upsert progress for every achievement in
+  a single batch upsert
+- **AND** the unlock evaluation engine SHALL run
+  against all backfilled progress
+
+#### Scenario: New achievements trigger partial backfill
+
+- **WHEN** `updateProgress` is called for a character
+  that has some `character_achievements` rows but
+  is missing rows for one or more achievements
+  (e.g., new achievements added post-deployment)
 - **THEN** the service SHALL evaluate all 13 criteria
   types and upsert progress for every achievement in
   a single batch upsert
@@ -114,7 +131,8 @@ mapped to the triggering event type.
 #### Scenario: Subsequent evaluation is scoped
 
 - **WHEN** `updateProgress` is called for a character
-  that already has `character_achievements` rows
+  that already has `character_achievements` rows for
+  every achievement
 - **THEN** the service SHALL evaluate only the
   criteria types mapped to the event type
 - **AND** unlock evaluation SHALL run only against
