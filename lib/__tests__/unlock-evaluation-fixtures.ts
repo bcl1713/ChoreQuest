@@ -46,6 +46,8 @@ export type WriteMocksOptions = {
    * (Replaces the old rpcCompensationError now that rollback uses a direct SET.)
    */
   statsRevertError?: string;
+  /** If true, the stats rollback UPDATE matches zero rows (concurrent write). */
+  statsRevertZeroRows?: boolean;
   /** If set, the unlocked_at revert update resolves with this error message. */
   revertUnlockError?: string;
   /** If set, the cascade progress revert upsert resolves with this error. */
@@ -63,6 +65,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     levelSelectRows,
     cascadeUpsertError,
     statsRevertError,
+    statsRevertZeroRows,
     revertUnlockError,
     cascadeProgressRevertError,
     cascadeDeleteError,
@@ -126,10 +129,14 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
   const levelRevertEq2 = jest.fn().mockResolvedValue({ error: null });
   const levelRevertEq1 = jest.fn().mockReturnValue({ eq: levelRevertEq2 });
 
-  // Stats rollback chain (Fix P1): .eq("id").eq("xp").eq("gold") → await
-  const statsRevertEq3 = jest.fn().mockResolvedValue({
+  // Stats rollback chain (Fix P1): .eq("id").eq("xp").eq("gold").select("id")
+  const statsRevertSelect = jest.fn().mockResolvedValue({
+    data: statsRevertError || statsRevertZeroRows ? [] : [{ id: "char-001" }],
     error: statsRevertError ? { message: statsRevertError } : null,
   });
+  const statsRevertEq3 = jest
+    .fn()
+    .mockReturnValue({ select: statsRevertSelect });
   const statsRevertEq2 = jest.fn().mockReturnValue({ eq: statsRevertEq3 });
   const statsRevertEq1 = jest.fn().mockReturnValue({ eq: statsRevertEq2 });
 
@@ -182,6 +189,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     statsRevertEq1,
     statsRevertEq2,
     statsRevertEq3,
+    statsRevertSelect,
     cascadeDelete,
     cascadeDeleteEq,
     cascadeDeleteIn,

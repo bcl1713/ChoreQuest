@@ -218,7 +218,7 @@ export async function runUnlockEvaluation(
       if (cascadeRows.length > 0) {
         // Fix P2: snapshot existing progress before upserting so rollback can
         // restore prior values rather than blindly writing null.
-        const { data: existingCascade } = await readClient
+        const { data: existingCascade, error: snapshotErr } = await readClient
           .from("character_achievements")
           .select("achievement_id, progress")
           .eq("character_id", characterId)
@@ -226,6 +226,11 @@ export async function runUnlockEvaluation(
             "achievement_id",
             cascadeRows.map((r) => r.achievement_id),
           );
+        if (snapshotErr) {
+          throw new Error(
+            `Failed to snapshot cascade progress: ${snapshotErr.message}`,
+          );
+        }
         prevCascadeSnapshot =
           (existingCascade as typeof prevCascadeSnapshot) ?? [];
 

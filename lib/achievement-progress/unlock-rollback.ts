@@ -49,7 +49,7 @@ export async function performRollback(
   // re-triggered for a duplicate reward payout.
   let statsReverted = true;
   if (statsApplied && capturedNewStats) {
-    const { error: statsRevertErr } = await writeClient
+    const { data: revertedRows, error: statsRevertErr } = await writeClient
       .from("characters")
       .update({
         xp: capturedNewStats.xp - totalXp,
@@ -57,12 +57,23 @@ export async function performRollback(
       })
       .eq("id", characterId)
       .eq("xp", capturedNewStats.xp)
-      .eq("gold", capturedNewStats.gold);
+      .eq("gold", capturedNewStats.gold)
+      .select("id");
     if (statsRevertErr) {
       statsReverted = false;
       console.error(
         "Critical: failed to revert stats after reward failure:",
         statsRevertErr,
+      );
+    } else if (!revertedRows || revertedRows.length === 0) {
+      // PostgREST returns error: null even when zero rows matched the
+      // conditional UPDATE. A zero-row result means a concurrent write changed
+      // xp or gold, so the compensation was a no-op. Treat this as a failed
+      // rollback to avoid clearing unlocked_at (which would let the same
+      // achievement pay out again).
+      statsReverted = false;
+      console.error(
+        "Critical: stats revert matched zero rows (concurrent update); treating as failed rollback",
       );
     }
   }
