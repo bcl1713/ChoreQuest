@@ -73,20 +73,16 @@ export async function GET(request: NextRequest) {
           .eq("character_id", characterId),
       ]);
 
-    if (categoriesResult.error) {
-      throw new Error(
-        `Failed to fetch categories: ${categoriesResult.error.message}`,
-      );
-    }
-    if (achievementsResult.error) {
-      throw new Error(
-        `Failed to fetch achievements: ${achievementsResult.error.message}`,
-      );
-    }
-    if (progressResult.error) {
-      throw new Error(
-        `Failed to fetch progress: ${progressResult.error.message}`,
-      );
+    const dbResults = [
+      { name: "categories", response: categoriesResult },
+      { name: "achievements", response: achievementsResult },
+      { name: "progress", response: progressResult },
+    ];
+
+    for (const { name, response } of dbResults) {
+      if (response.error) {
+        throw new Error(`Failed to fetch ${name}: ${response.error.message}`);
+      }
     }
 
     // Build a progress lookup by achievement_id

@@ -11,6 +11,7 @@ import {
   progressCurrent,
   progressMax,
 } from "./AchievementBadge";
+import { cn } from "@/lib/utils";
 import type { AchievementDisplay } from "@/hooks/useAchievements";
 
 interface AchievementDetailModalProps {
@@ -50,11 +51,12 @@ export function AchievementDetailModal({
           animate={{ scale: 1 }}
           exit={{ scale: prefersReducedMotion ? 1 : 0.95 }}
           transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-          className={`max-w-md w-full p-6 rounded-lg border shadow-xl ${
+          className={cn(
+            "max-w-md w-full p-6 rounded-lg border shadow-xl",
             isUnlocked
               ? "bg-gradient-to-br from-gold-900 to-gold-950 border-gold-700"
-              : "bg-gradient-to-br from-dark-800 to-dark-900 border-dark-600"
-          }`}
+              : "bg-gradient-to-br from-dark-800 to-dark-900 border-dark-600",
+          )}
           onClick={(e) => e.stopPropagation()}
           data-testid="achievement-detail-modal"
         >
@@ -62,9 +64,10 @@ export function AchievementDetailModal({
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  isUnlocked ? "bg-gold-500/20" : "bg-dark-700"
-                }`}
+                className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center",
+                  isUnlocked ? "bg-gold-500/20" : "bg-dark-700",
+                )}
               >
                 <FantasyIcon
                   icon={IconComponent}
@@ -74,9 +77,10 @@ export function AchievementDetailModal({
                 />
               </div>
               <h3
-                className={`font-fantasy text-lg ${
-                  isUnlocked ? "text-gold-300" : "text-gray-100"
-                }`}
+                className={cn(
+                  "font-fantasy text-lg",
+                  isUnlocked ? "text-gold-300" : "text-gray-100",
+                )}
               >
                 {isHidden ? "???" : achievement.name}
               </h3>

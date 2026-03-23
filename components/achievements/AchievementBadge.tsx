@@ -10,6 +10,7 @@ import type {
   AchievementProgressValue,
   StandardProgress,
 } from "@/hooks/useAchievements";
+import { cn } from "@/lib/utils";
 import type {
   FantasyCardVariant,
   FantasyCardGlow,
@@ -86,14 +87,15 @@ export function AchievementBadge({
       glow={glowMap[state]}
       hoverable
       onClick={() => onClick?.(achievement)}
-      className={`p-4 ${isDimmed ? "opacity-50" : ""}`}
+      className={cn("p-4", isDimmed && "opacity-50")}
       data-testid={`achievement-badge-${achievement.id}`}
     >
       <div className="flex items-start gap-3">
         <div
-          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-            isUnlocked ? "bg-gold-500/20" : "bg-dark-700"
-          }`}
+          className={cn(
+            "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
+            isUnlocked ? "bg-gold-500/20" : "bg-dark-700",
+          )}
         >
           <FantasyIcon
             icon={IconComponent}
@@ -106,9 +108,10 @@ export function AchievementBadge({
 
         <div className="flex-1 min-w-0">
           <h3
-            className={`font-fantasy text-sm leading-tight truncate ${
-              isUnlocked ? "text-gold-300" : "text-gray-200"
-            }`}
+            className={cn(
+              "font-fantasy text-sm leading-tight truncate",
+              isUnlocked ? "text-gold-300" : "text-gray-200",
+            )}
           >
             {isHidden ? "???" : achievement.name}
           </h3>
