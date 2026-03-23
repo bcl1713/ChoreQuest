@@ -15,6 +15,7 @@ import type {
   CriteriaConfig,
 } from "./achievement-progress/types";
 import type { FetchedAchievement } from "./achievement-progress/unlock-engine";
+import { FamilyAchievementProgressService } from "./family-achievement-progress-service";
 
 export type {
   AchievementEventType,
@@ -201,6 +202,21 @@ export class AchievementProgressService {
         `Unlock evaluation failed for character ${characterId}:`,
         unlockErr,
       );
+    }
+
+    // Trigger family achievement progress evaluation (non-blocking)
+    if (familyId) {
+      try {
+        const familyService = new FamilyAchievementProgressService(
+          this.readClient,
+        );
+        await familyService.updateProgress(familyId, event);
+      } catch (familyErr) {
+        console.error(
+          `Family achievement progress failed for family ${familyId}:`,
+          familyErr,
+        );
+      }
     }
   }
 

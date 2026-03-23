@@ -6,6 +6,7 @@ import { LoadingSpinner, Button } from "@/components/ui";
 import ProfileSettings from "@/components/profile/ProfileSettings";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
 import { AchievementsSection } from "@/components/achievements/AchievementsSection";
+import { FamilyAchievementsSection } from "@/components/achievements/FamilyAchievementsSection";
 import { AuthenticatedPageShell } from "@/components/layout/authenticated-page-shell";
 import { TabBar, type TabItem } from "@/components/ui/tab-bar";
 import { useRouter } from "next/navigation";
@@ -132,7 +133,12 @@ export default function ProfilePage() {
           )}
 
           {activeTab === "achievements" && (
-            <AchievementsSection characterId={character.id} />
+            <>
+              <AchievementsSection characterId={character.id} />
+              <div className="mt-8">
+                <FamilyAchievementsSection familyId={profile?.family_id} />
+              </div>
+            </>
           )}
         </div>
       </AuthenticatedPageShell>

@@ -175,6 +175,117 @@ export type Database = {
           },
         ];
       };
+      family_achievements: {
+        Row: {
+          category_id: string | null;
+          created_at: string | null;
+          criteria_config: Json;
+          criteria_type: string;
+          description: string;
+          family_id: string;
+          gold_reward: number | null;
+          icon: string | null;
+          id: string;
+          is_hidden: boolean | null;
+          name: string;
+          updated_at: string | null;
+          xp_reward: number | null;
+        };
+        Insert: {
+          category_id?: string | null;
+          created_at?: string | null;
+          criteria_config: Json;
+          criteria_type: string;
+          description: string;
+          family_id: string;
+          gold_reward?: number | null;
+          icon?: string | null;
+          id?: string;
+          is_hidden?: boolean | null;
+          name: string;
+          updated_at?: string | null;
+          xp_reward?: number | null;
+        };
+        Update: {
+          category_id?: string | null;
+          created_at?: string | null;
+          criteria_config?: Json;
+          criteria_type?: string;
+          description?: string;
+          family_id?: string;
+          gold_reward?: number | null;
+          icon?: string | null;
+          id?: string;
+          is_hidden?: boolean | null;
+          name?: string;
+          updated_at?: string | null;
+          xp_reward?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_achievements_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "achievement_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "family_achievements_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      family_achievement_progress: {
+        Row: {
+          created_at: string | null;
+          family_achievement_id: string;
+          family_id: string;
+          id: string;
+          notified: boolean | null;
+          progress: Json | null;
+          unlocked_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          family_achievement_id: string;
+          family_id: string;
+          id?: string;
+          notified?: boolean | null;
+          progress?: Json | null;
+          unlocked_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          family_achievement_id?: string;
+          family_id?: string;
+          id?: string;
+          notified?: boolean | null;
+          progress?: Json | null;
+          unlocked_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_achievement_progress_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "family_achievement_progress_family_achievement_id_fkey";
+            columns: ["family_achievement_id"];
+            isOneToOne: false;
+            referencedRelation: "family_achievements";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       character_change_history: {
         Row: {
           id: string;

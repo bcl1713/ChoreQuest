@@ -24,9 +24,11 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 const mockOnAchievementUnlockUpdate = jest.fn();
+const mockOnFamilyAchievementUnlockUpdate = jest.fn();
 jest.mock("@/lib/realtime-context", () => ({
   useRealtime: () => ({
     onAchievementUnlockUpdate: mockOnAchievementUnlockUpdate,
+    onFamilyAchievementUnlockUpdate: mockOnFamilyAchievementUnlockUpdate,
   }),
 }));
 

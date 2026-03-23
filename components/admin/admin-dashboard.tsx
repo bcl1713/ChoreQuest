@@ -11,6 +11,7 @@ import {
   Settings,
   FolderOpen,
   Medal,
+  Users,
 } from "lucide-react";
 import StatisticsPanel from "./statistics-panel";
 import ActivityFeed from "./activity-feed";
@@ -21,6 +22,7 @@ import RewardManager from "@/components/rewards/reward-manager";
 import { QuestManagementTab } from "./quest-management-tab";
 import AchievementCategoryAdmin from "./achievement-category-admin";
 import AchievementAdmin from "./achievement-admin";
+import FamilyAchievementAdmin from "./family-achievement-admin";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 
 type TabName =
@@ -30,6 +32,7 @@ type TabName =
   | "rewards"
   | "achievement-categories"
   | "achievements"
+  | "family-achievements"
   | "guild-masters"
   | "family-settings";
 
@@ -42,6 +45,7 @@ const TAB_ICONS = {
   Settings,
   FolderOpen,
   Medal,
+  Users,
 };
 
 export function AdminDashboard() {
@@ -63,6 +67,11 @@ export function AdminDashboard() {
           icon: "FolderOpen",
         },
         { name: "achievements", label: "Achievements", icon: "Medal" },
+        {
+          name: "family-achievements",
+          label: "Family Achievements",
+          icon: "Users",
+        },
         { name: "guild-masters", label: "Guild Masters", icon: "Crown" },
         { name: "family-settings", label: "Family Settings", icon: "Settings" },
       ],
@@ -131,6 +140,11 @@ export function AdminDashboard() {
           {/* Achievements Tab */}
           <TabPanel unmount={false}>
             <AchievementAdmin />
+          </TabPanel>
+
+          {/* Family Achievements Tab */}
+          <TabPanel unmount={false}>
+            <FamilyAchievementAdmin />
           </TabPanel>
 
           {/* Guild Masters Tab */}
