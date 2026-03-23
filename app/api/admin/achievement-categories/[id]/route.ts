@@ -15,6 +15,28 @@ import {
   ValidationError,
 } from "@/lib/errors";
 
+async function verifyCategoryExists(
+  serviceSupabase: ReturnType<typeof createServiceSupabaseClient>,
+  id: string,
+) {
+  const { data: existing, error: fetchError } = await serviceSupabase
+    .from("achievement_categories")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch category: ${fetchError.message}`);
+  }
+
+  if (!existing) {
+    throw new NotFoundError(
+      "Achievement category not found",
+      "CATEGORY_NOT_FOUND",
+    );
+  }
+}
+
 /**
  * PATCH /api/admin/achievement-categories/[id]
  *
@@ -57,23 +79,7 @@ export async function PATCH(
 
     const serviceSupabase = createServiceSupabaseClient();
 
-    // Verify category exists
-    const { data: existing, error: fetchError } = await serviceSupabase
-      .from("achievement_categories")
-      .select("id")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch category: ${fetchError.message}`);
-    }
-
-    if (!existing) {
-      throw new NotFoundError(
-        "Achievement category not found",
-        "CATEGORY_NOT_FOUND",
-      );
-    }
+    await verifyCategoryExists(serviceSupabase, id);
 
     const updateData: Record<string, unknown> = {};
     if (name !== undefined) updateData.name = name.trim();
@@ -127,23 +133,7 @@ export async function DELETE(
 
     const serviceSupabase = createServiceSupabaseClient();
 
-    // Verify category exists
-    const { data: existing, error: fetchError } = await serviceSupabase
-      .from("achievement_categories")
-      .select("id")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch category: ${fetchError.message}`);
-    }
-
-    if (!existing) {
-      throw new NotFoundError(
-        "Achievement category not found",
-        "CATEGORY_NOT_FOUND",
-      );
-    }
+    await verifyCategoryExists(serviceSupabase, id);
 
     // Check if category has achievements
     const { count, error: countError } = await serviceSupabase

@@ -34,39 +34,24 @@ export async function GET(request: NextRequest) {
 
     const serviceSupabase = createServiceSupabaseClient();
 
-    // Fetch categories with achievement counts
-    const { data: categories, error: catError } = await serviceSupabase
+    // Fetch categories with achievement counts via join
+    const { data: categoriesData, error: catError } = await serviceSupabase
       .from("achievement_categories")
-      .select("id, name, description, icon, display_order")
+      .select("id, name, description, icon, display_order, achievements(count)")
       .order("display_order", { ascending: true });
 
     if (catError) {
       throw new Error(`Failed to fetch categories: ${catError.message}`);
     }
 
-    // Get achievement counts per category
-    const { data: achievements, error: achError } = await serviceSupabase
-      .from("achievements")
-      .select("id, category_id");
-
-    if (achError) {
-      throw new Error(
-        `Failed to fetch achievement counts: ${achError.message}`,
-      );
-    }
-
-    const countByCategory = new Map<string, number>();
-    for (const a of achievements ?? []) {
-      countByCategory.set(
-        a.category_id,
-        (countByCategory.get(a.category_id) ?? 0) + 1,
-      );
-    }
-
-    const categoriesWithCounts = (categories ?? []).map((cat) => ({
-      ...cat,
-      achievement_count: countByCategory.get(cat.id) ?? 0,
-    }));
+    const categoriesWithCounts = (categoriesData ?? []).map((cat) => {
+      const { achievements, ...rest } = cat;
+      return {
+        ...rest,
+        achievement_count:
+          (achievements as unknown as { count: number }[])?.[0]?.count ?? 0,
+      };
+    });
 
     return NextResponse.json({ categories: categoriesWithCounts });
   } catch (error) {

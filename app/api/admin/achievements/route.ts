@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
 
     const serviceSupabase = createServiceSupabaseClient();
 
-    const { data: achievements, error: achError } = await serviceSupabase
+    const { data: achievementsData, error: achError } = await serviceSupabase
       .from("achievements")
       .select(
-        "id, name, description, icon, category_id, xp_reward, gold_reward, is_hidden, criteria_type, criteria_config, family_id",
+        "id, name, description, icon, category_id, xp_reward, gold_reward, is_hidden, criteria_type, criteria_config, family_id, achievement_categories(name)",
       )
       .order("name", { ascending: true });
 
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch achievements: ${achError.message}`);
     }
 
-    // Fetch category names for display
+    // Fetch categories for the admin dropdown
     const { data: categories, error: catError } = await serviceSupabase
       .from("achievement_categories")
       .select("id, name")
@@ -55,12 +55,15 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch categories: ${catError.message}`);
     }
 
-    const categoryMap = new Map((categories ?? []).map((c) => [c.id, c.name]));
-
-    const achievementsWithCategory = (achievements ?? []).map((a) => ({
-      ...a,
-      category_name: categoryMap.get(a.category_id) ?? "Unknown",
-    }));
+    const achievementsWithCategory = (achievementsData ?? []).map((a) => {
+      const { achievement_categories, ...rest } = a;
+      return {
+        ...rest,
+        category_name:
+          (achievement_categories as { name: string } | null)?.name ??
+          "Unknown",
+      };
+    });
 
     return NextResponse.json({
       achievements: achievementsWithCategory,

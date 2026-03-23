@@ -64,6 +64,7 @@ const MOCK_CATEGORIES = [
     description: "Questing achievements",
     icon: "sword",
     display_order: 1,
+    achievements: [{ count: 1 }],
   },
   {
     id: "cat-2",
@@ -71,6 +72,7 @@ const MOCK_CATEGORIES = [
     description: "Gold achievements",
     icon: "coins",
     display_order: 2,
+    achievements: [{ count: 0 }],
   },
 ];
 
@@ -93,14 +95,6 @@ function setupServiceCategories(categories = MOCK_CATEGORIES) {
               error: null,
             }),
           }),
-        }),
-      };
-    }
-    if (table === "achievements") {
-      return {
-        select: jest.fn().mockResolvedValue({
-          data: [{ id: "ach-1", category_id: "cat-1" }],
-          error: null,
         }),
       };
     }

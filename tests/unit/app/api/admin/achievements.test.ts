@@ -70,6 +70,7 @@ const MOCK_ACHIEVEMENTS = [
     criteria_type: "quest_complete",
     criteria_config: {},
     family_id: "fam-1",
+    achievement_categories: { name: "Adventurer" },
   },
 ];
 
