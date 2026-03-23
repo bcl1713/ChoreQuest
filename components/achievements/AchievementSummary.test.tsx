@@ -164,4 +164,33 @@ describe("AchievementSummary", () => {
       "0/0 Achievements Unlocked",
     );
   });
+
+  it("shows category-scoped counts when selectedCategoryId is set", () => {
+    render(
+      <AchievementSummary
+        categories={MOCK_CATEGORIES}
+        selectedCategoryId="cat-1"
+      />,
+    );
+
+    // cat-1 (Adventurer): 1 unlocked (ach-1), 2 total (ach-1 + ach-2)
+    expect(screen.getByTestId("achievement-count")).toHaveTextContent(
+      "1/2 Achievements Unlocked",
+    );
+    expect(screen.getByText("Adventurer")).toBeInTheDocument();
+  });
+
+  it("shows all counts when selectedCategoryId is null", () => {
+    render(
+      <AchievementSummary
+        categories={MOCK_CATEGORIES}
+        selectedCategoryId={null}
+      />,
+    );
+
+    expect(screen.getByTestId("achievement-count")).toHaveTextContent(
+      "2/3 Achievements Unlocked",
+    );
+    expect(screen.getByText("Achievements")).toBeInTheDocument();
+  });
 });
