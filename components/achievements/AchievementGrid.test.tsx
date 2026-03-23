@@ -210,6 +210,40 @@ describe("AchievementGrid", () => {
     expect(screen.getAllByText("Secrets (2/2)")[0]).toBeInTheDocument();
   });
 
+  it("resets to All tab when the active category is removed from categories", async () => {
+    const user = userEvent.setup();
+    const onCategoryChange = jest.fn();
+    const { rerender } = render(
+      <AchievementGrid
+        categories={MOCK_CATEGORIES}
+        onActiveCategoryChange={onCategoryChange}
+      />,
+    );
+
+    // Select cat-2 (Wealth)
+    await user.click(screen.getByTestId("achievement-tab-cat-2"));
+    expect(onCategoryChange).toHaveBeenLastCalledWith("cat-2");
+
+    // Re-render with cat-2 removed
+    rerender(
+      <AchievementGrid
+        categories={[MOCK_CATEGORIES[0]]}
+        onActiveCategoryChange={onCategoryChange}
+      />,
+    );
+
+    // Should auto-reset to All and call the callback with null
+    expect(screen.getByTestId("achievement-tab-all")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(onCategoryChange).toHaveBeenLastCalledWith(null);
+
+    // Remaining achievements should be visible
+    expect(screen.getByText("First Quest")).toBeInTheDocument();
+    expect(screen.queryByText("Rich Adventurer")).not.toBeInTheDocument();
+  });
+
   it("shows empty state when category has no achievements", async () => {
     const user = userEvent.setup();
     const emptyCategory: AchievementCategory[] = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { LayoutGrid } from "lucide-react";
 import { TabBar, type TabItem } from "@/components/ui/tab-bar";
 import { AchievementBadge } from "./AchievementBadge";
@@ -46,6 +46,16 @@ export function AchievementGrid({
   onActiveCategoryChange,
 }: AchievementGridProps) {
   const [activeTab, setActiveTab] = useState(ALL_TAB_ID);
+
+  useEffect(() => {
+    if (
+      activeTab !== ALL_TAB_ID &&
+      !categories.find((c) => c.id === activeTab)
+    ) {
+      setActiveTab(ALL_TAB_ID);
+      onActiveCategoryChange?.(null);
+    }
+  }, [categories, activeTab, onActiveCategoryChange]);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
