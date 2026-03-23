@@ -244,6 +244,34 @@ describe("AchievementGrid", () => {
     expect(screen.queryByText("Rich Adventurer")).not.toBeInTheDocument();
   });
 
+  it("shows completion indicator only on fully-completed category tabs", () => {
+    // cat-full uses the already-unlocked ach-1 fixture so it is 1/1 complete
+    const categories: AchievementCategory[] = [
+      {
+        id: "cat-full",
+        name: "Done",
+        description: null,
+        icon: null,
+        display_order: 0,
+        achievements: [MOCK_CATEGORIES[0].achievements[0]],
+      },
+      ...MOCK_CATEGORIES,
+    ];
+    render(<AchievementGrid categories={categories} />);
+
+    // cat-full is 1/1 — should show indicator
+    expect(
+      screen.getByTestId("achievement-tab-cat-full-complete"),
+    ).toBeInTheDocument();
+    // Adventurer 1/2, Wealth 0/1 — incomplete, no indicator
+    expect(
+      screen.queryByTestId("achievement-tab-cat-1-complete"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("achievement-tab-cat-2-complete"),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows empty state when category has no achievements", async () => {
     const user = userEvent.setup();
     const emptyCategory: AchievementCategory[] = [

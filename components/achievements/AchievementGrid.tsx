@@ -75,6 +75,7 @@ export function AchievementGrid({
         label: `${cat.name} (${counts.unlocked}/${counts.total})`,
         shortLabel: `${cat.name} (${counts.unlocked}/${counts.total})`,
         icon: getAchievementIcon(cat.icon),
+        complete: counts.total > 0 && counts.unlocked === counts.total,
         testId: `achievement-tab-${cat.id}`,
       };
     });
