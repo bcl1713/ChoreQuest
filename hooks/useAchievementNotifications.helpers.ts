@@ -140,19 +140,41 @@ type FamilyCatchUpRow = {
 export async function fetchUnnotifiedFamilyAchievements(
   familyId: string,
 ): Promise<AchievementNotification[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  // Step 1: all unlocked progress rows for this family
   const { data, error } = await supabase
     .from("family_achievement_progress")
     .select(
       "id, family_achievement_id, family_achievements(name, description, icon, xp_reward, gold_reward)",
     )
     .eq("family_id", familyId)
-    .not("unlocked_at", "is", null)
-    .eq("notified", false);
+    .not("unlocked_at", "is", null);
 
-  if (error || !data) return [];
+  if (error || !data || data.length === 0) return [];
+
+  // Step 2: which of those has this user already been notified about?
+  const progressIds = (data as unknown as FamilyCatchUpRow[]).map((r) => r.id);
+  const { data: notifiedData } = await supabase
+    .from("family_achievement_user_notifications")
+    .select("family_achievement_progress_id")
+    .eq("user_id", user.id)
+    .in("family_achievement_progress_id", progressIds);
+
+  const notifiedSet = new Set(
+    (notifiedData ?? []).map(
+      (r: { family_achievement_progress_id: string }) =>
+        r.family_achievement_progress_id,
+    ),
+  );
 
   return (data as unknown as FamilyCatchUpRow[])
-    .filter((row) => row.family_achievements !== null)
+    .filter(
+      (row) => row.family_achievements !== null && !notifiedSet.has(row.id),
+    )
     .map((row) => ({
       id: row.id,
       achievementId: `family_${row.family_achievement_id}`,

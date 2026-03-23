@@ -9,6 +9,7 @@ import {
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
+import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 
 async function requireGuildMaster(request: NextRequest) {
   const token = extractBearerToken(request);
@@ -143,6 +144,21 @@ export async function PUT(
       throw new Error(
         `Failed to update family achievement: ${updateError.message}`,
       );
+    }
+
+    // Criteria changed — recompute progress so stored values and unlock state
+    // stay consistent with the new definition.
+    if (criteria_type !== undefined || criteria_config !== undefined) {
+      const service = new FamilyAchievementProgressService();
+      try {
+        await service.recomputeAchievement(requesterProfile.family_id, id);
+      } catch (err) {
+        // Log but don't fail the request — the definition update succeeded.
+        console.error(
+          `Failed to recompute progress after criteria change for achievement ${id}:`,
+          err,
+        );
+      }
     }
 
     return NextResponse.json({ success: true, achievement });

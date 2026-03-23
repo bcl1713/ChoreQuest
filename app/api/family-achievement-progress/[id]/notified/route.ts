@@ -54,14 +54,23 @@ export async function PATCH(
       );
     }
 
-    // Update notified flag
-    const { error: updateError } = await serviceSupabase
-      .from("family_achievement_progress")
-      .update({ notified: true })
-      .eq("id", id);
+    // Record that this user has been notified — per-user so every family member
+    // gets their own toast regardless of whether a sibling dismissed it first.
+    const { error: insertError } = await serviceSupabase
+      .from("family_achievement_user_notifications")
+      .upsert(
+        {
+          user_id: requesterProfile.id,
+          family_achievement_progress_id: id,
+        },
+        {
+          onConflict: "user_id,family_achievement_progress_id",
+          ignoreDuplicates: true,
+        },
+      );
 
-    if (updateError) {
-      throw new Error(`Failed to update notified flag: ${updateError.message}`);
+    if (insertError) {
+      throw new Error(`Failed to record notification: ${insertError.message}`);
     }
 
     return NextResponse.json({ success: true });

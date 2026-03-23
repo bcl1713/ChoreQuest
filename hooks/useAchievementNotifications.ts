@@ -144,9 +144,6 @@ export function useAchievementNotifications(
         if (!record.unlocked_at) return;
         if (oldRecord?.unlocked_at != null) return;
 
-        // Skip if already notified
-        if (record.notified) return;
-
         const familyAchievementId = record.family_achievement_id as string;
         const progressId = record.id as string;
 

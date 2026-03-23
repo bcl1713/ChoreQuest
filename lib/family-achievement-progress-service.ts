@@ -253,6 +253,103 @@ export class FamilyAchievementProgressService {
     }
   }
 
+  async recomputeAchievement(
+    familyId: string,
+    achievementId: string,
+  ): Promise<void> {
+    const { userIds, characterIds, totalMemberCount, membersWithCharCount } =
+      await this.resolveFamilyCharacters(familyId);
+
+    const { data: achievementData, error: achievementError } =
+      await this.readClient
+        .from("family_achievements")
+        .select(
+          "id, name, criteria_type, criteria_config, xp_reward, gold_reward",
+        )
+        .eq("id", achievementId)
+        .eq("family_id", familyId)
+        .maybeSingle();
+
+    if (achievementError || !achievementData) return;
+
+    const achievement = achievementData as FetchedFamilyAchievement;
+    const evaluator = FAMILY_EVALUATOR_REGISTRY[achievement.criteria_type];
+    if (!evaluator) {
+      console.warn(
+        `Unknown family criteria type: ${achievement.criteria_type} — skipping recompute for ${achievementId}`,
+      );
+      return;
+    }
+
+    const config = achievement.criteria_config as FamilyCriteriaConfig;
+    const mode = config.family_evaluation_mode ?? "sum";
+    const threshold = config.threshold ?? 0;
+
+    const result = await evaluator(
+      this.readClient,
+      familyId,
+      userIds,
+      characterIds,
+      mode,
+    );
+
+    const current =
+      mode === "all" && membersWithCharCount < totalMemberCount
+        ? 0
+        : result.current;
+
+    const { error: upsertError } = await this.writeClient
+      .from("family_achievement_progress")
+      .upsert(
+        {
+          family_id: familyId,
+          family_achievement_id: achievementId,
+          progress: { current, threshold },
+        },
+        {
+          onConflict: "family_id,family_achievement_id",
+          ignoreDuplicates: false,
+        },
+      );
+
+    if (upsertError) {
+      throw new Error(
+        `Failed to upsert family progress: ${upsertError.message}`,
+      );
+    }
+
+    if (current >= threshold) {
+      // Set unlocked_at only if not already set — preserves original unlock time
+      const { error: unlockError } = await this.writeClient
+        .from("family_achievement_progress")
+        .update({ unlocked_at: new Date().toISOString() })
+        .eq("family_id", familyId)
+        .eq("family_achievement_id", achievementId)
+        .is("unlocked_at", null);
+
+      if (unlockError) {
+        console.error(
+          `Failed to unlock family achievement ${achievementId}:`,
+          unlockError,
+        );
+      }
+    } else {
+      // Threshold no longer met (criteria were raised or changed) — revoke unlock
+      const { error: clearError } = await this.writeClient
+        .from("family_achievement_progress")
+        .update({ unlocked_at: null })
+        .eq("family_id", familyId)
+        .eq("family_achievement_id", achievementId);
+
+      if (clearError) {
+        console.error(
+          `Failed to clear unlock for family achievement ${achievementId}:`,
+          clearError,
+        );
+      }
+    }
+  }
+
   async getProgress(
     familyId: string,
   ): Promise<FamilyAchievementProgressRecord[]> {

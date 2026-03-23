@@ -20,6 +20,9 @@ jest.mock("@/lib/supabase", () => ({
       getSession: jest
         .fn()
         .mockResolvedValue({ data: { session: { access_token: "tok" } } }),
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: { id: "user-001" } } }),
     },
   },
 }));
@@ -36,13 +39,21 @@ jest.mock("@/lib/realtime-context", () => ({
 global.fetch = jest.fn().mockResolvedValue({ ok: true });
 
 function makeFamilyCatchUpChain(rows: unknown[] = []) {
-  const resolvedChain = {
-    eq: jest.fn().mockResolvedValue({ data: rows, error: null }),
-  };
   return {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
-    not: jest.fn().mockReturnValue(resolvedChain),
+    not: jest.fn().mockResolvedValue({ data: rows, error: null }),
+  };
+}
+
+function makeUserNotificationsChain(notifiedIds: string[] = []) {
+  const rows = notifiedIds.map((id) => ({
+    family_achievement_progress_id: id,
+  }));
+  return {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockResolvedValue({ data: rows, error: null }),
   };
 }
 
@@ -104,6 +115,8 @@ beforeEach(() => {
     if (table === "character_achievements") return makeCatchUpChain([]);
     if (table === "family_achievement_progress")
       return makeFamilyCatchUpChain([]);
+    if (table === "family_achievement_user_notifications")
+      return makeUserNotificationsChain([]);
     if (table === "achievements")
       return makeAchievementChain(makeAchievement());
     if (table === "family_achievements")
@@ -140,6 +153,8 @@ describe("useAchievementNotifications — family queue integration", () => {
         return makeCatchUpChain(individualRows);
       if (table === "family_achievement_progress")
         return makeFamilyCatchUpChain(familyRows);
+      if (table === "family_achievement_user_notifications")
+        return makeUserNotificationsChain([]);
       if (table === "achievements")
         return makeAchievementChain(makeAchievement());
       if (table === "family_achievements")
@@ -187,6 +202,8 @@ describe("useAchievementNotifications — family queue integration", () => {
       if (table === "character_achievements") return makeCatchUpChain([]);
       if (table === "family_achievement_progress")
         return makeFamilyCatchUpChain(familyRows);
+      if (table === "family_achievement_user_notifications")
+        return makeUserNotificationsChain([]);
       if (table === "family_achievements")
         return makeFamilyAchievementChain(makeAchievement());
       return {};
@@ -229,6 +246,8 @@ describe("useAchievementNotifications — family queue integration", () => {
       if (table === "character_achievements") return makeCatchUpChain([]);
       if (table === "family_achievement_progress")
         return makeFamilyCatchUpChain(familyRows);
+      if (table === "family_achievement_user_notifications")
+        return makeUserNotificationsChain([]);
       if (table === "family_achievements")
         return makeFamilyAchievementChain(makeAchievement());
       return {};

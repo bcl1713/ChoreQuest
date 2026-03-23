@@ -203,7 +203,7 @@ describe("Family achievement API routes", () => {
       mockServiceSupabase.from.mockImplementation(() => {
         serviceCallCount++;
         if (serviceCallCount === 1) {
-          // Lookup
+          // Lookup family_achievement_progress
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
@@ -213,11 +213,9 @@ describe("Family achievement API routes", () => {
             }),
           };
         }
-        // Update
+        // Upsert into family_achievement_user_notifications
         return {
-          update: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ error: null }),
-          }),
+          upsert: jest.fn().mockResolvedValue({ error: null }),
         };
       });
 
