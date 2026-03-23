@@ -98,6 +98,24 @@ describe("AchievementDetailModal", () => {
     expect(screen.queryByText("First Quest")).not.toBeInTheDocument();
   });
 
+  it("renders hidden unlocked achievement with full details and rewards", () => {
+    render(
+      <AchievementDetailModal
+        achievement={makeAchievement({
+          is_hidden: true,
+          unlocked_at: "2026-03-20T10:00:00Z",
+        })}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("First Quest")).toBeInTheDocument();
+    expect(screen.getByText("Complete your first quest")).toBeInTheDocument();
+    expect(screen.getByText("+50 XP")).toBeInTheDocument();
+    expect(screen.getByText("+10 Gold")).toBeInTheDocument();
+    expect(screen.queryByText("???")).not.toBeInTheDocument();
+  });
+
   it("calls onClose when close button is clicked", async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();

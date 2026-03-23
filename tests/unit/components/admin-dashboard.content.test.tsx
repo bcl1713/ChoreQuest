@@ -86,6 +86,8 @@ describe("AdminDashboard content", () => {
         "Quest Management",
         "Quest Templates",
         "Rewards",
+        "Achievement Categories",
+        "Achievements",
         "Guild Masters",
         "Family Settings",
       ]);

@@ -1,3 +1,4 @@
+import { CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -6,6 +7,7 @@ export interface TabItem<T extends string> {
   label: string;
   shortLabel?: string;
   icon: LucideIcon;
+  complete?: boolean;
   testId?: string;
 }
 
@@ -56,6 +58,16 @@ export function TabBar<T extends string>({
             <Icon size={18} className="flex-shrink-0" />
             <span className="hidden sm:inline">{tab.label}</span>
             <span className="sm:hidden text-xs">{mobileLabel}</span>
+            {tab.complete && (
+              <CheckCircle2
+                size={14}
+                className="flex-shrink-0 text-gold-400"
+                aria-label="Category complete"
+                {...(tab.testId
+                  ? { "data-testid": `${tab.testId}-complete` }
+                  : {})}
+              />
+            )}
           </button>
         );
       })}

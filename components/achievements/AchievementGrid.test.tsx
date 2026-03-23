@@ -77,13 +77,16 @@ describe("AchievementGrid", () => {
     expect(screen.getByText("Rich Adventurer")).toBeInTheDocument();
   });
 
-  it("shows category tabs with achievement counts", () => {
+  it("shows category tabs with completion counts", () => {
     render(<AchievementGrid categories={MOCK_CATEGORIES} />);
 
-    // Tab labels include counts (visible on larger screens)
-    expect(screen.getByText("All (3)")).toBeInTheDocument();
-    expect(screen.getByText("Adventurer (2)")).toBeInTheDocument();
-    expect(screen.getByText("Wealth (1)")).toBeInTheDocument();
+    // Tab labels include unlocked/total counts (visible on all screen sizes)
+    // Adventurer: 1 unlocked (ach-1), 2 total (both non-hidden)
+    // Wealth: 0 unlocked, 1 total
+    // All: 1 unlocked, 3 total
+    expect(screen.getAllByText("All (1/3)")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Adventurer (1/2)")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Wealth (0/1)")[0]).toBeInTheDocument();
   });
 
   it("filters achievements when a category tab is clicked", async () => {
@@ -133,6 +136,140 @@ describe("AchievementGrid", () => {
 
     await user.click(screen.getByTestId("achievement-badge-ach-1"));
     expect(onClick).toHaveBeenCalledWith(MOCK_CATEGORIES[0].achievements[0]);
+  });
+
+  it("calls onActiveCategoryChange when switching tabs", async () => {
+    const user = userEvent.setup();
+    const onCategoryChange = jest.fn();
+    render(
+      <AchievementGrid
+        categories={MOCK_CATEGORIES}
+        onActiveCategoryChange={onCategoryChange}
+      />,
+    );
+
+    await user.click(screen.getByTestId("achievement-tab-cat-2"));
+    expect(onCategoryChange).toHaveBeenCalledWith("cat-2");
+
+    await user.click(screen.getByTestId("achievement-tab-all"));
+    expect(onCategoryChange).toHaveBeenCalledWith(null);
+  });
+
+  it("excludes locked hidden achievements from completion total", () => {
+    const categoriesWithHidden: AchievementCategory[] = [
+      {
+        id: "cat-h",
+        name: "Secrets",
+        description: null,
+        icon: null,
+        display_order: 1,
+        achievements: [
+          {
+            id: "visible-1",
+            name: "Normal",
+            description: "A normal achievement",
+            icon: null,
+            xp_reward: 10,
+            gold_reward: 0,
+            is_hidden: false,
+            criteria_type: "test",
+            unlocked_at: "2026-03-20T10:00:00Z",
+            progress: null,
+          },
+          {
+            id: "hidden-locked",
+            name: "???",
+            description: "???",
+            icon: null,
+            xp_reward: 10,
+            gold_reward: 0,
+            is_hidden: true,
+            criteria_type: "test",
+            unlocked_at: null,
+            progress: null,
+          },
+          {
+            id: "hidden-unlocked",
+            name: "Secret Found",
+            description: "Found a secret",
+            icon: null,
+            xp_reward: 10,
+            gold_reward: 0,
+            is_hidden: true,
+            criteria_type: "test",
+            unlocked_at: "2026-03-20T10:00:00Z",
+            progress: null,
+          },
+        ],
+      },
+    ];
+    render(<AchievementGrid categories={categoriesWithHidden} />);
+
+    // 2 unlocked (visible-1 + hidden-unlocked), 2 total (excludes locked hidden)
+    expect(screen.getAllByText("All (2/2)")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Secrets (2/2)")[0]).toBeInTheDocument();
+  });
+
+  it("resets to All tab when the active category is removed from categories", async () => {
+    const user = userEvent.setup();
+    const onCategoryChange = jest.fn();
+    const { rerender } = render(
+      <AchievementGrid
+        categories={MOCK_CATEGORIES}
+        onActiveCategoryChange={onCategoryChange}
+      />,
+    );
+
+    // Select cat-2 (Wealth)
+    await user.click(screen.getByTestId("achievement-tab-cat-2"));
+    expect(onCategoryChange).toHaveBeenLastCalledWith("cat-2");
+
+    // Re-render with cat-2 removed
+    rerender(
+      <AchievementGrid
+        categories={[MOCK_CATEGORIES[0]]}
+        onActiveCategoryChange={onCategoryChange}
+      />,
+    );
+
+    // Should auto-reset to All and call the callback with null
+    expect(screen.getByTestId("achievement-tab-all")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(onCategoryChange).toHaveBeenLastCalledWith(null);
+
+    // Remaining achievements should be visible
+    expect(screen.getByText("First Quest")).toBeInTheDocument();
+    expect(screen.queryByText("Rich Adventurer")).not.toBeInTheDocument();
+  });
+
+  it("shows completion indicator only on fully-completed category tabs", () => {
+    // cat-full uses the already-unlocked ach-1 fixture so it is 1/1 complete
+    const categories: AchievementCategory[] = [
+      {
+        id: "cat-full",
+        name: "Done",
+        description: null,
+        icon: null,
+        display_order: 0,
+        achievements: [MOCK_CATEGORIES[0].achievements[0]],
+      },
+      ...MOCK_CATEGORIES,
+    ];
+    render(<AchievementGrid categories={categories} />);
+
+    // cat-full is 1/1 — should show indicator
+    expect(
+      screen.getByTestId("achievement-tab-cat-full-complete"),
+    ).toBeInTheDocument();
+    // Adventurer 1/2, Wealth 0/1 — incomplete, no indicator
+    expect(
+      screen.queryByTestId("achievement-tab-cat-1-complete"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("achievement-tab-cat-2-complete"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows empty state when category has no achievements", async () => {

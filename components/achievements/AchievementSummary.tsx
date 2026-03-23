@@ -9,14 +9,22 @@ import type { AchievementCategory } from "@/hooks/useAchievements";
 
 interface AchievementSummaryProps {
   categories: AchievementCategory[];
+  selectedCategoryId?: string | null;
 }
 
-export function AchievementSummary({ categories }: AchievementSummaryProps) {
+export function AchievementSummary({
+  categories,
+  selectedCategoryId,
+}: AchievementSummaryProps) {
   const { unlocked, total } = useMemo(() => {
     let unlockedCount = 0;
     let totalCount = 0;
 
-    for (const category of categories) {
+    const filteredCategories = selectedCategoryId
+      ? categories.filter((c) => c.id === selectedCategoryId)
+      : categories;
+
+    for (const category of filteredCategories) {
       for (const achievement of category.achievements) {
         const isLockedHidden =
           achievement.is_hidden && !achievement.unlocked_at;
@@ -31,7 +39,11 @@ export function AchievementSummary({ categories }: AchievementSummaryProps) {
     }
 
     return { unlocked: unlockedCount, total: totalCount };
-  }, [categories]);
+  }, [categories, selectedCategoryId]);
+
+  const label = selectedCategoryId
+    ? (categories.find((c) => c.id === selectedCategoryId)?.name ?? "Category")
+    : "Achievements";
 
   return (
     <FantasyCard
@@ -42,7 +54,7 @@ export function AchievementSummary({ categories }: AchievementSummaryProps) {
       <div className="flex items-center gap-3 mb-3">
         <FantasyIcon icon={Trophy} type="gold" size="lg" glow />
         <div>
-          <h3 className="font-fantasy text-lg text-gold-300">Achievements</h3>
+          <h3 className="font-fantasy text-lg text-gold-300">{label}</h3>
           <p className="text-sm text-gray-400" data-testid="achievement-count">
             {unlocked}/{total} Achievements Unlocked
           </p>

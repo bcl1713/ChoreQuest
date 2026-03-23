@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { useAchievements } from "@/hooks/useAchievements";
 import { LoadingSpinner, Button } from "@/components/ui";
@@ -17,6 +17,18 @@ export function AchievementsSection({ characterId }: AchievementsSectionProps) {
   const { categories, isLoading, error, retry } = useAchievements(characterId);
   const [selectedAchievement, setSelectedAchievement] =
     useState<AchievementDisplay | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (
+      selectedCategoryId !== null &&
+      !categories.some((c) => c.id === selectedCategoryId)
+    ) {
+      setSelectedCategoryId(null);
+    }
+  }, [categories, selectedCategoryId]);
 
   if (isLoading) {
     return (
@@ -53,10 +65,14 @@ export function AchievementsSection({ characterId }: AchievementsSectionProps) {
 
   return (
     <div data-testid="achievements-section">
-      <AchievementSummary categories={categories} />
+      <AchievementSummary
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+      />
       <AchievementGrid
         categories={categories}
         onBadgeClick={setSelectedAchievement}
+        onActiveCategoryChange={setSelectedCategoryId}
       />
       <AchievementDetailModal
         achievement={selectedAchievement}
