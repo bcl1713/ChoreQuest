@@ -93,8 +93,14 @@ export async function GET(request: NextRequest) {
     const mergedAchievements = (achievements ?? []).map((a) => {
       const p = progressMap.get(a.id);
       const { achievement_categories, ...rest } = a;
+      const isLocked = a.is_hidden && !p?.unlocked_at;
       return {
         ...rest,
+        name: isLocked ? "???" : a.name,
+        description: isLocked ? "???" : a.description,
+        icon: isLocked ? null : a.icon,
+        xp_reward: isLocked ? null : a.xp_reward,
+        gold_reward: isLocked ? null : a.gold_reward,
         category: achievement_categories,
         unlocked_at: p?.unlocked_at ?? null,
         progress: p?.progress ?? null,

@@ -9,6 +9,7 @@ import {
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
 import { ForbiddenError, ValidationError } from "@/lib/errors";
+import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 
 /**
  * GET /api/admin/family-achievements
@@ -62,9 +63,37 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch progress: ${progressError.message}`);
     }
 
-    const progressMap = new Map(
+    let progressMap = new Map(
       (progress ?? []).map((p) => [p.family_achievement_id, p]),
     );
+
+    // Backfill missing progress rows so the admin dashboard shows accurate
+    // state for all achievements, including newly-created ones.
+    const hasMissingProgress = (achievements ?? []).some(
+      (a) => !progressMap.has(a.id),
+    );
+    if (hasMissingProgress) {
+      try {
+        const familyService = new FamilyAchievementProgressService(
+          serviceSupabase,
+        );
+        await familyService.backfillProgress(familyId);
+
+        const { data: freshProgress } = await serviceSupabase
+          .from("family_achievement_progress")
+          .select("family_achievement_id, unlocked_at, progress")
+          .eq("family_id", familyId);
+
+        progressMap = new Map(
+          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
+        );
+      } catch (backfillErr) {
+        console.error(
+          "Family achievement backfill failed (admin):",
+          backfillErr,
+        );
+      }
+    }
 
     const { data: categories, error: catError } = await serviceSupabase
       .from("achievement_categories")

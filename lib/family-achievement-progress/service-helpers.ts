@@ -95,17 +95,35 @@ export async function recomputeAchievementImpl(
       );
     }
   } else {
-    const { error: clearError } = await writeClient
+    const { data: progressRow, error: clearError } = await writeClient
       .from("family_achievement_progress")
       .update({ unlocked_at: null })
       .eq("family_id", familyId)
-      .eq("family_achievement_id", achievementId);
+      .eq("family_achievement_id", achievementId)
+      .select("id")
+      .maybeSingle();
 
     if (clearError) {
       console.error(
         `Failed to clear unlock for family achievement ${achievementId}:`,
         clearError,
       );
+    }
+
+    // Clear per-user notification records so members are notified again if
+    // the achievement is unlocked a second time after this re-lock.
+    if (progressRow?.id) {
+      const { error: notifClearError } = await writeClient
+        .from("family_achievement_user_notifications")
+        .delete()
+        .eq("family_achievement_progress_id", progressRow.id);
+
+      if (notifClearError) {
+        console.error(
+          `Failed to clear notifications for family achievement ${achievementId}:`,
+          notifClearError,
+        );
+      }
     }
   }
 }
