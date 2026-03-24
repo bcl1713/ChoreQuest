@@ -24,6 +24,7 @@ import {
   PUT as updateFamilyAchievement,
   DELETE as deleteFamilyAchievement,
 } from "@/app/api/admin/family-achievements/[id]/route";
+import { POST as createFamilyAchievement } from "@/app/api/admin/family-achievements/route";
 
 const makeParams = (id: string) =>
   Promise.resolve({ id }) as Promise<{ id: string }>;
@@ -126,6 +127,39 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
+  });
+
+  it("returns 400 when family_evaluation_mode is invalid (PUT)", async () => {
+    authAs("GUILD_MASTER");
+    const response = await updateFamilyAchievement(
+      createRequest("PUT", {
+        criteria_config: { threshold: 5, family_evaluation_mode: "ALL" },
+      }),
+      { params: makeParams("ach-1") },
+    );
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.code).toBe("FAMILY_ACHIEVEMENT_EVAL_MODE_INVALID");
+  });
+});
+
+describe("POST /api/admin/family-achievements — eval mode validation", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("returns 400 when family_evaluation_mode is not 'sum' or 'all'", async () => {
+    authAs("GUILD_MASTER");
+    const response = await createFamilyAchievement(
+      createRequest("POST", {
+        name: "Bad Mode",
+        criteria_type: "quest_complete",
+        criteria_config: { threshold: 10, family_evaluation_mode: "ALL" },
+      }),
+    );
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.code).toBe("FAMILY_ACHIEVEMENT_EVAL_MODE_INVALID");
   });
 });
 

@@ -46,7 +46,13 @@ export async function recomputeAchievementImpl(
   }
 
   const config = achievement.criteria_config as FamilyCriteriaConfig;
-  const mode = config.family_evaluation_mode ?? "sum";
+  const rawMode = config.family_evaluation_mode ?? "sum";
+  if (rawMode !== "sum" && rawMode !== "all") {
+    throw new Error(
+      `Invalid family_evaluation_mode "${rawMode}" for achievement ${achievementId} — expected "sum" or "all"`,
+    );
+  }
+  const mode = rawMode;
   const threshold = config.threshold ?? 0;
 
   const {
@@ -83,6 +89,7 @@ export async function recomputeAchievementImpl(
           current,
           threshold,
           member_count: familyContext.totalMemberCount,
+          members_with_char_count: familyContext.membersWithCharCount,
         },
       },
       {

@@ -210,6 +210,13 @@ export async function POST(request: NextRequest) {
         "FAMILY_ACHIEVEMENT_CRITERIA_CONFIG_THRESHOLD_REQUIRED",
       );
     }
+    const evalMode = cfg.family_evaluation_mode;
+    if (evalMode !== undefined && evalMode !== "sum" && evalMode !== "all") {
+      throw new ValidationError(
+        `criteria_config.family_evaluation_mode must be "sum" or "all"`,
+        "FAMILY_ACHIEVEMENT_EVAL_MODE_INVALID",
+      );
+    }
 
     const serviceSupabase = createServiceSupabaseClient();
 

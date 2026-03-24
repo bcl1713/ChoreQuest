@@ -103,7 +103,12 @@ describe("recomputeAchievementImpl", () => {
 
     expect(upsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        progress: { current: 5, threshold: 5, member_count: 1 },
+        progress: {
+          current: 5,
+          threshold: 5,
+          member_count: 1,
+          members_with_char_count: 1,
+        },
       }),
       expect.any(Object),
     );
@@ -158,6 +163,74 @@ describe("recomputeAchievementImpl", () => {
       "family_achievement_progress_id",
       progressId,
     );
+  });
+
+  it("writes members_with_char_count snapshot into progress", async () => {
+    mockEvaluator.mockResolvedValue({ current: 3 });
+
+    const upsertMock = jest.fn().mockResolvedValue({ error: null });
+
+    writeClient.from.mockImplementation((table: string) => {
+      const chain = makeChain();
+      if (table === "family_achievement_progress") {
+        chain.upsert = upsertMock;
+      }
+      return chain;
+    });
+
+    const contextWithChars = {
+      ...familyContext,
+      totalMemberCount: 4,
+      membersWithCharCount: 3,
+    };
+
+    await recomputeAchievementImpl(
+      readClient as never,
+      writeClient as never,
+      "fam-1",
+      "ach-1",
+      contextWithChars,
+    );
+
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        progress: expect.objectContaining({
+          member_count: 4,
+          members_with_char_count: 3,
+        }),
+      }),
+      expect.any(Object),
+    );
+  });
+
+  it("throws when family_evaluation_mode is an invalid value", async () => {
+    const badAchievement = {
+      ...achievementRow,
+      criteria_config: { threshold: 5, family_evaluation_mode: "ALL" },
+    };
+
+    readClient = {
+      from: jest.fn().mockImplementation((table: string) => {
+        if (table === "family_achievements") {
+          return makeChain({
+            maybeSingle: jest
+              .fn()
+              .mockResolvedValue({ data: badAchievement, error: null }),
+          });
+        }
+        return makeChain();
+      }),
+    };
+
+    await expect(
+      recomputeAchievementImpl(
+        readClient as never,
+        writeClient as never,
+        "fam-1",
+        "ach-1",
+        familyContext,
+      ),
+    ).rejects.toThrow(/Invalid family_evaluation_mode "ALL"/);
   });
 
   it("skips notification deletion when progress row id is absent", async () => {
