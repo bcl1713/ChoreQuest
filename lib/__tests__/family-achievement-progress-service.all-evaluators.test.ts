@@ -111,7 +111,7 @@ describe("FamilyAchievementProgressService — all-mode evaluators", () => {
 
     const upsertCall = writeUpsert.upsert.mock.calls[0][0];
     // Min of [7, 5] = 5
-    expect(upsertCall[0].progress).toEqual({ current: 5, threshold: 5 });
+    expect(upsertCall[0].progress).toEqual(expect.objectContaining({ current: 5, threshold: 5 }));
   });
 
   it("returns minimum level when not all members meet threshold", async () => {
@@ -135,7 +135,7 @@ describe("FamilyAchievementProgressService — all-mode evaluators", () => {
 
     const upsertCall = writeUpsert.upsert.mock.calls[0][0];
     // Min of [7, 3] = 3, below threshold 5
-    expect(upsertCall[0].progress).toEqual({ current: 3, threshold: 5 });
+    expect(upsertCall[0].progress).toEqual(expect.objectContaining({ current: 3, threshold: 5 }));
   });
 
   it("returns minimum streak across members for streak_reached", async () => {
@@ -163,7 +163,7 @@ describe("FamilyAchievementProgressService — all-mode evaluators", () => {
 
     const upsertCall = writeUpsert.upsert.mock.calls[0][0];
     // Min of [10, 4] = 4
-    expect(upsertCall[0].progress).toEqual({ current: 4, threshold: 7 });
+    expect(upsertCall[0].progress).toEqual(expect.objectContaining({ current: 4, threshold: 7 }));
   });
 
   it("defaults to sum mode when family_evaluation_mode is missing", async () => {

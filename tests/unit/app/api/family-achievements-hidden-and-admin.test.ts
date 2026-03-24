@@ -149,6 +149,8 @@ describe("Family achievements — hidden redaction & admin backfill", () => {
       expect(hidden.icon).toBeNull();
       expect(hidden.xp_reward).toBeNull();
       expect(hidden.gold_reward).toBeNull();
+      expect(hidden.criteria_type).toBeNull();
+      expect(hidden.criteria_config).toBeNull();
 
       const visible = body.achievements.find(
         (a: { id: string }) => a.id === "fa-visible",
@@ -163,6 +165,11 @@ describe("Family achievements — hidden redaction & admin backfill", () => {
       expect(unlockedHidden.name).toBe("Unlocked Secret");
       expect(unlockedHidden.icon).toBe("gem");
       expect(unlockedHidden.xp_reward).toBe(200);
+      // Unlocked hidden / visible achievements must expose criteria.
+      expect(unlockedHidden.criteria_type).toBe("quest_complete");
+      expect(unlockedHidden.criteria_config).toEqual({});
+      expect(visible.criteria_type).toBe("quest_complete");
+      expect(visible.criteria_config).toEqual({});
     });
   });
 

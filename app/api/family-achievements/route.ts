@@ -63,13 +63,40 @@ export async function GET(request: NextRequest) {
       (progress ?? []).map((p) => [p.family_achievement_id, p]),
     );
 
-    // Lazy backfill: seed progress rows for achievements that have none yet.
-    // Covers existing families that satisfy thresholds at deploy time before
-    // any event-driven update has fired.
+    // Lazy backfill: seed progress rows for achievements that have none yet,
+    // or re-evaluate when the family roster has grown or shrunk (which can
+    // change "all"-mode achievements that were previously unlocked/locked).
     const hasMissingProgress = (achievements ?? []).some(
       (a) => !progressMap.has(a.id),
     );
-    if (hasMissingProgress) {
+
+    // If any stored progress row carries a member_count snapshot, compare it
+    // to the current roster size.  A difference means a member joined or left
+    // since the last evaluation, which can invalidate cached unlock state.
+    const firstStoredProgress = [...progressMap.values()][0];
+    const storedMemberCount = (
+      firstStoredProgress?.progress as
+        | { member_count?: number }
+        | null
+        | undefined
+    )?.member_count;
+
+    let memberCountChanged = false;
+    if (progressMap.size > 0 && storedMemberCount !== undefined) {
+      const { count: currentMemberCount, error: memberCountError } =
+        await serviceSupabase
+          .from("user_profiles")
+          .select("*", { count: "exact", head: true })
+          .eq("family_id", familyId);
+      if (memberCountError) {
+        throw new Error(
+          `Failed to fetch family member count: ${memberCountError.message}`,
+        );
+      }
+      memberCountChanged = storedMemberCount !== (currentMemberCount ?? 0);
+    }
+
+    if (hasMissingProgress || memberCountChanged) {
       try {
         const familyService = new FamilyAchievementProgressService(
           serviceSupabase,
@@ -92,10 +119,31 @@ export async function GET(request: NextRequest) {
     // Merge achievements with progress
     const mergedAchievements = (achievements ?? []).map((a) => {
       const p = progressMap.get(a.id);
-      const { achievement_categories, ...rest } = a;
+      const {
+        achievement_categories,
+        criteria_type,
+        criteria_config,
+        ...rest
+      } = a;
       const isLocked = a.is_hidden && !p?.unlocked_at;
+
+      // Strip the internal member_count tracking key from the stored progress
+      // so the public API only exposes { current, threshold }.
+      const rawProgress = p?.progress as
+        | { current: number; threshold: number; member_count?: number }
+        | null
+        | undefined;
+      const progressForResponse = rawProgress
+        ? { current: rawProgress.current, threshold: rawProgress.threshold }
+        : null;
+
       return {
         ...rest,
+        // Redact criteria for hidden achievements that haven't been unlocked —
+        // exposing these fields would let users reverse-engineer the unlock
+        // condition even though the name/description are masked.
+        criteria_type: isLocked ? null : criteria_type,
+        criteria_config: isLocked ? null : criteria_config,
         name: isLocked ? "???" : a.name,
         description: isLocked ? "???" : a.description,
         icon: isLocked ? null : a.icon,
@@ -103,7 +151,7 @@ export async function GET(request: NextRequest) {
         gold_reward: isLocked ? null : a.gold_reward,
         category: achievement_categories,
         unlocked_at: p?.unlocked_at ?? null,
-        progress: p?.progress ?? null,
+        progress: progressForResponse,
         notified: p?.notified ?? null,
       };
     });

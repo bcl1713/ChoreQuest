@@ -32,6 +32,7 @@ export const FAMILY_EVENT_CRITERIA_MAP: Record<AchievementEventType, string[]> =
       "gold_earned",
       "xp_earned",
       "level_reached",
+      "honor_earned",
     ],
     CLASS_CHANGED: ["class_change"],
   };

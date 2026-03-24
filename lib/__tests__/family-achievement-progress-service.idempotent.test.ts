@@ -76,7 +76,9 @@ describe("FamilyAchievementProgressService — idempotent progress", () => {
     const call1 = writeUpsert.upsert.mock.calls[0][0];
     const call2 = writeUpsert.upsert.mock.calls[1][0];
     expect(call1[0].progress).toEqual(call2[0].progress);
-    expect(call1[0].progress).toEqual({ current: 7, threshold: 10 });
+    expect(call1[0].progress).toEqual(
+      expect.objectContaining({ current: 7, threshold: 10 }),
+    );
   });
 
   it("skips achievements with unknown criteria types without failing", async () => {

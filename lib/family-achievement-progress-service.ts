@@ -167,7 +167,7 @@ export class FamilyAchievementProgressService {
     const upsertRows: {
       family_id: string;
       family_achievement_id: string;
-      progress: { current: number; threshold: number };
+      progress: { current: number; threshold: number; member_count: number };
     }[] = [];
 
     for (const achievement of relevantAchievements) {
@@ -196,7 +196,7 @@ export class FamilyAchievementProgressService {
       upsertRows.push({
         family_id: familyId,
         family_achievement_id: achievement.id,
-        progress: { current, threshold },
+        progress: { current, threshold, member_count: totalMemberCount },
       });
     }
 
