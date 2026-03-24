@@ -10,6 +10,7 @@ import {
 } from "@/lib/supabase-server";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
+import { ALL_FAMILY_CRITERIA_TYPES } from "@/lib/family-achievement-progress/family-evaluators";
 
 async function requireGuildMaster(request: NextRequest) {
   const token = extractBearerToken(request);
@@ -97,6 +98,16 @@ export async function PUT(
       throw new ValidationError(
         "Achievement name cannot be empty",
         "FAMILY_ACHIEVEMENT_NAME_REQUIRED",
+      );
+    }
+
+    if (
+      criteria_type !== undefined &&
+      !(ALL_FAMILY_CRITERIA_TYPES as readonly string[]).includes(criteria_type)
+    ) {
+      throw new ValidationError(
+        `Unsupported criteria type "${criteria_type}". Supported types: ${ALL_FAMILY_CRITERIA_TYPES.join(", ")}`,
+        "FAMILY_ACHIEVEMENT_CRITERIA_TYPE_UNSUPPORTED",
       );
     }
 

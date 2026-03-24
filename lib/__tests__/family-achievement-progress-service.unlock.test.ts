@@ -220,13 +220,22 @@ describe("FamilyAchievementProgressService — unlock evaluation", () => {
     });
 
     const writeUpsert = makeUpsertResult();
-    mockWriteClient.from.mockReturnValue(writeUpsert);
+    const writeUpdate = makeUpdateResult();
+    let writeCallCount = 0;
+    mockWriteClient.from.mockImplementation(() => {
+      writeCallCount++;
+      return writeCallCount === 1 ? writeUpsert : writeUpdate;
+    });
 
     const service = new FamilyAchievementProgressService(readClient as never);
     await service.updateProgress(FAMILY_ID, { type: "QUEST_APPROVED" });
 
-    // Only upsert called, no unlock update
+    // Upsert called, re-lock update called (to clear unlocked_at),
+    // but NOT the unlock update (which would set unlocked_at to a timestamp)
     expect(writeUpsert.upsert).toHaveBeenCalled();
-    expect(mockWriteClient.from).toHaveBeenCalledTimes(1);
+    expect(writeUpdate.update).toHaveBeenCalledWith({ unlocked_at: null });
+    expect(writeUpdate.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ unlocked_at: expect.any(String) }),
+    );
   });
 });

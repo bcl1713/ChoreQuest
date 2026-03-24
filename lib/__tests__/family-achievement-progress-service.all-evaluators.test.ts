@@ -227,7 +227,12 @@ describe("FamilyAchievementProgressService — all-mode evaluators", () => {
     }) as jest.Mock;
 
     const writeUpsert = makeUpsertResult();
-    mockWriteClient.from.mockReturnValue(writeUpsert);
+    const writeUpdate = makeUpdateResult();
+    let writeCallCount = 0;
+    mockWriteClient.from.mockImplementation(() => {
+      writeCallCount++;
+      return writeCallCount === 1 ? writeUpsert : writeUpdate;
+    });
 
     const service = new FamilyAchievementProgressService(readClient as never);
     await service.updateProgress(FAMILY_ID, { type: "QUEST_APPROVED" });

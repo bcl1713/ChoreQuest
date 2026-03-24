@@ -245,5 +245,18 @@ describe("Family achievement API routes", () => {
       );
       expect(response.status).toBe(400);
     });
+
+    it("returns 400 when criteria_type is unsupported", async () => {
+      authAs("GUILD_MASTER");
+      const response = await createFamilyAchievement(
+        createRequest("POST", {
+          name: "Bad Achievement",
+          criteria_type: "not_a_real_type",
+        }),
+      );
+      expect(response.status).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe("FAMILY_ACHIEVEMENT_CRITERIA_TYPE_UNSUPPORTED");
+    });
   });
 });

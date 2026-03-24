@@ -15,6 +15,7 @@ import type {
 import {
   recomputeAchievementImpl,
   getProgressImpl,
+  evaluateUnlocksImpl,
 } from "./family-achievement-progress/service-helpers";
 
 export type {
@@ -224,53 +225,12 @@ export class FamilyAchievementProgressService {
       progress: { current: number; threshold: number };
     }[],
   ): Promise<void> {
-    // Find rows that meet their threshold
-    const eligibleRows = progressRows.filter(
-      (row) => row.progress.current >= row.progress.threshold,
+    await evaluateUnlocksImpl(
+      this.readClient,
+      this.writeClient,
+      familyId,
+      progressRows,
     );
-
-    if (eligibleRows.length === 0) return;
-
-    const achievementIds = eligibleRows.map((row) => row.family_achievement_id);
-
-    // Fetch existing progress to check unlocked_at
-    const { data: existingProgress, error: fetchError } = await this.readClient
-      .from("family_achievement_progress")
-      .select("family_achievement_id, unlocked_at")
-      .eq("family_id", familyId)
-      .in("family_achievement_id", achievementIds);
-
-    if (fetchError) {
-      throw new Error(`Failed to check unlock state: ${fetchError.message}`);
-    }
-
-    // Filter to only those not yet unlocked
-    const alreadyUnlocked = new Set(
-      (existingProgress ?? [])
-        .filter((row) => row.unlocked_at != null)
-        .map((row) => row.family_achievement_id),
-    );
-
-    const toUnlock = achievementIds.filter((id) => !alreadyUnlocked.has(id));
-
-    if (toUnlock.length === 0) return;
-
-    // Set unlocked_at for newly eligible achievements
-    for (const achievementId of toUnlock) {
-      const { error: unlockError } = await this.writeClient
-        .from("family_achievement_progress")
-        .update({ unlocked_at: new Date().toISOString() })
-        .eq("family_id", familyId)
-        .eq("family_achievement_id", achievementId)
-        .is("unlocked_at", null);
-
-      if (unlockError) {
-        console.error(
-          `Failed to unlock family achievement ${achievementId}:`,
-          unlockError,
-        );
-      }
-    }
   }
 
   async recomputeAchievement(

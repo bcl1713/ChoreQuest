@@ -3,6 +3,7 @@ import type { MockChain } from "./family-achievement-progress-service.fixtures";
 import {
   makeDataResult,
   makeUpsertResult,
+  makeUpdateResult,
   makeReadClient,
   FAMILY_ID,
   FAMILY_ACHIEVEMENT_ID,
@@ -57,7 +58,13 @@ describe("FamilyAchievementProgressService — idempotent progress", () => {
     });
 
     const writeUpsert = makeUpsertResult();
-    mockWriteClient.from.mockReturnValue(writeUpsert);
+    const writeUpdate = makeUpdateResult();
+    // Alternate: odd calls = upsert, even calls = update (re-lock)
+    let writeCallCount = 0;
+    mockWriteClient.from.mockImplementation(() => {
+      writeCallCount++;
+      return writeCallCount % 2 === 1 ? writeUpsert : writeUpdate;
+    });
 
     const service = new FamilyAchievementProgressService(readClient as never);
 

@@ -10,6 +10,7 @@ import {
 } from "@/lib/supabase-server";
 import { ForbiddenError, ValidationError } from "@/lib/errors";
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
+import { ALL_FAMILY_CRITERIA_TYPES } from "@/lib/family-achievement-progress/family-evaluators";
 
 /**
  * GET /api/admin/family-achievements
@@ -179,6 +180,15 @@ export async function POST(request: NextRequest) {
       throw new ValidationError(
         "Criteria type is required",
         "FAMILY_ACHIEVEMENT_CRITERIA_TYPE_REQUIRED",
+      );
+    }
+
+    if (
+      !(ALL_FAMILY_CRITERIA_TYPES as readonly string[]).includes(criteria_type)
+    ) {
+      throw new ValidationError(
+        `Unsupported criteria type "${criteria_type}". Supported types: ${ALL_FAMILY_CRITERIA_TYPES.join(", ")}`,
+        "FAMILY_ACHIEVEMENT_CRITERIA_TYPE_UNSUPPORTED",
       );
     }
 

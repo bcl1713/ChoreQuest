@@ -64,7 +64,11 @@ export function makeUpsertResult(error: null | { message: string } = null) {
 
 export function makeUpdateResult(error: null | { message: string } = null) {
   const isFn = jest.fn().mockResolvedValue({ error });
-  const eq2 = jest.fn().mockReturnValue({ is: isFn });
+  const maybeSingleFn = jest
+    .fn()
+    .mockResolvedValue({ data: null, error: null });
+  const selectFn = jest.fn().mockReturnValue({ maybeSingle: maybeSingleFn });
+  const eq2 = jest.fn().mockReturnValue({ is: isFn, select: selectFn });
   const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
   return {
     update: jest.fn().mockReturnValue({ eq: eq1 }),
