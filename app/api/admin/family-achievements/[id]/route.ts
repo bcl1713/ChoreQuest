@@ -111,6 +111,17 @@ export async function PUT(
       );
     }
 
+    if (criteria_config !== undefined) {
+      const cfg = criteria_config as Record<string, unknown>;
+      const t = cfg?.threshold;
+      if (typeof t !== "number" || t <= 0) {
+        throw new ValidationError(
+          "criteria_config.threshold must be a positive number",
+          "FAMILY_ACHIEVEMENT_CRITERIA_CONFIG_THRESHOLD_REQUIRED",
+        );
+      }
+    }
+
     // Verify exists and belongs to requester's family
     const { data: existing, error: fetchError } = await serviceSupabase
       .from("family_achievements")

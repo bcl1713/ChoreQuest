@@ -219,6 +219,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cfg = (criteria_config ?? {}) as Record<string, unknown>;
+    const t = cfg.threshold;
+    if (typeof t !== "number" || t <= 0) {
+      throw new ValidationError(
+        "criteria_config.threshold must be a positive number",
+        "FAMILY_ACHIEVEMENT_CRITERIA_CONFIG_THRESHOLD_REQUIRED",
+      );
+    }
+
     const serviceSupabase = createServiceSupabaseClient();
 
     const { data: achievement, error: insertError } = await serviceSupabase

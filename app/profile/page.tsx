@@ -84,8 +84,42 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user || !character) {
+  if (!user) {
     return null;
+  }
+
+  if (!character) {
+    return (
+      <ProfileErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
+          <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  variant="primary"
+                  size="sm"
+                  className="touch-target"
+                  data-testid="back-to-dashboard-button"
+                >
+                  <span className="hidden sm:inline">Back to Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </Button>
+                <Button
+                  onClick={logout}
+                  variant="destructive"
+                  size="sm"
+                  className="touch-target"
+                >
+                  Logout
+                </Button>
+              </div>
+              <FamilyAchievementsSection familyId={profile?.family_id} />
+            </div>
+          </main>
+        </div>
+      </ProfileErrorBoundary>
+    );
   }
 
   return (
