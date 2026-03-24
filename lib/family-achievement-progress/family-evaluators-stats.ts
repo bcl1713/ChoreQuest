@@ -12,13 +12,16 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
 ) => {
   const values: number[] = [];
   for (const { userId, characterIds } of memberPairs) {
-    const { data: questRows, error: questError } = await client
+    const base = client
       .from("quest_instances")
       .select("gold_reward, volunteer_bonus, streak_bonus")
-      .eq("status", "APPROVED")
-      .or(
-        `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
-      );
+      .eq("status", "APPROVED");
+    const { data: questRows, error: questError } =
+      characterIds.length > 0
+        ? await base.or(
+            `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
+          )
+        : await base.eq("assigned_to_id", userId);
     if (questError) throw questError;
 
     const questGold = (questRows ?? []).reduce((sum, row) => {

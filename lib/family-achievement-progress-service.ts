@@ -79,9 +79,7 @@ export class FamilyAchievementProgressService {
         usersWithChars.add(profile.id);
         charIds.push(charId);
       }
-      if (charIds.length > 0) {
-        memberPairs.push({ userId: profile.id, characterIds: charIds });
-      }
+      memberPairs.push({ userId: profile.id, characterIds: charIds });
     }
 
     return {

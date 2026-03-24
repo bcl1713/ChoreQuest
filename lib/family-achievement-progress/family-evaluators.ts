@@ -66,13 +66,16 @@ const evaluateQuestComplete: FamilyEvaluatorFn = async (
 ) => {
   const values: number[] = [];
   for (const { userId, characterIds } of memberPairs) {
-    const { count, error } = await client
+    const base = client
       .from("quest_instances")
       .select("*", { count: "exact", head: true })
-      .eq("status", "APPROVED")
-      .or(
-        `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
-      );
+      .eq("status", "APPROVED");
+    const { count, error } =
+      characterIds.length > 0
+        ? await base.or(
+            `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
+          )
+        : await base.eq("assigned_to_id", userId);
     if (error) throw error;
     values.push(count ?? 0);
   }
@@ -130,14 +133,17 @@ const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
 ) => {
   const values: number[] = [];
   for (const { userId, characterIds } of memberPairs) {
-    const { count, error } = await client
+    const base = client
       .from("quest_instances")
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED")
-      .eq("difficulty", "HARD")
-      .or(
-        `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
-      );
+      .eq("difficulty", "HARD");
+    const { count, error } =
+      characterIds.length > 0
+        ? await base.or(
+            `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
+          )
+        : await base.eq("assigned_to_id", userId);
     if (error) throw error;
     values.push(count ?? 0);
   }

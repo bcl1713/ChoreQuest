@@ -43,6 +43,9 @@ export function useAchievementNotifications(
   // Track the current characterId so in-flight async fetches can detect stale results
   const currentCharacterIdRef = useRef<string | null | undefined>(characterId);
   currentCharacterIdRef.current = characterId;
+  // Track the current familyId so in-flight family fetches can detect stale results
+  const currentFamilyIdRef = useRef<string | null | undefined>(familyId);
+  currentFamilyIdRef.current = familyId;
   // Guard to avoid re-firing the mark-notified effect for the same id;
   // reset when the queue is cleared so failed writes can be retried
   const prevCurrentIdRef = useRef<string | null>(null);
@@ -176,9 +179,13 @@ export function useAchievementNotifications(
 
         const familyAchievementId = record.family_achievement_id as string;
         const progressId = record.id as string;
+        // Capture familyId at event-receive time so we can detect a switch
+        const capturedFamilyId = familyId;
 
         fetchFamilyAchievementById(familyAchievementId).then((achievement) => {
           if (!achievement) return;
+          // Discard if the active family changed while the fetch was in-flight
+          if (currentFamilyIdRef.current !== capturedFamilyId) return;
           enqueue({
             id: progressId,
             achievementId: `family_${familyAchievementId}`,
