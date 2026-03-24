@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
         gold_reward: isLocked ? null : a.gold_reward,
         category: achievement_categories,
         unlocked_at: p?.unlocked_at ?? null,
-        progress: progressForResponse,
+        progress: isLocked ? null : progressForResponse,
         notified: p?.notified ?? null,
       };
     });
