@@ -12,6 +12,10 @@ import {
   makeAchievementChain,
 } from "./useAchievementNotifications.test-utils";
 
+const FAMILY_ID = "family-1";
+const FA_ID = "fa-1";
+const FAP_ID = "fap-1";
+
 const mockFrom = jest.fn();
 jest.mock("@/lib/supabase", () => ({
   supabase: {
@@ -20,9 +24,42 @@ jest.mock("@/lib/supabase", () => ({
       getSession: jest
         .fn()
         .mockResolvedValue({ data: { session: { access_token: "tok" } } }),
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: { id: "user-001" } } }),
     },
   },
 }));
+
+function makeFamilyCatchUpChain(rows: unknown[] = []) {
+  return {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    not: jest.fn().mockResolvedValue({ data: rows, error: null }),
+  };
+}
+
+function makeFamilyAchievementChain(data: unknown = null) {
+  return {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({
+      data,
+      error: data ? null : { message: "not found" },
+    }),
+  };
+}
+
+function makeUserNotificationsChain(notifiedIds: string[] = []) {
+  const rows = notifiedIds.map((id) => ({
+    family_achievement_progress_id: id,
+  }));
+  return {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockResolvedValue({ data: rows, error: null }),
+  };
+}
 
 const mockOnAchievementUnlockUpdate = jest.fn();
 const mockOnFamilyAchievementUnlockUpdate = jest.fn();
@@ -137,6 +174,50 @@ describe("useAchievementNotifications — character-scoped filtering", () => {
   it("does not subscribe when characterId is null", () => {
     renderHook(() => useAchievementNotifications(null));
     expect(mockOnAchievementUnlockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("preserves pending family notifications when characterId changes within the same family", async () => {
+    const familyCatchUpRows = [
+      {
+        id: FAP_ID,
+        family_achievement_id: FA_ID,
+        family_achievements: {
+          name: "Team Effort",
+          description: "Complete 50 quests as a family",
+          icon: "👨‍👩‍👧‍👦",
+          xp_reward: 0,
+          gold_reward: 0,
+        },
+      },
+    ];
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements") return makeCatchUpChain([]);
+      if (table === "family_achievement_progress")
+        return makeFamilyCatchUpChain(familyCatchUpRows);
+      if (table === "family_achievement_user_notifications")
+        return makeUserNotificationsChain([]);
+      if (table === "achievements")
+        return makeAchievementChain(makeAchievement());
+      if (table === "family_achievements")
+        return makeFamilyAchievementChain(makeAchievement());
+      return {};
+    });
+
+    const { result, rerender } = renderHook(
+      ({ charId }: { charId: string }) =>
+        useAchievementNotifications(charId, FAMILY_ID),
+      { initialProps: { charId: CHAR_ID } },
+    );
+
+    await waitFor(() => expect(result.current.current?.isFamily).toBe(true));
+
+    // Switch to a different character within the same family
+    rerender({ charId: OTHER_CHAR_ID });
+
+    // Family notification must survive the character switch
+    expect(result.current.current?.isFamily).toBe(true);
+    expect(result.current.current?.achievementId).toBe(`family_${FA_ID}`);
   });
 
   it("discards in-flight fetch results when character changes before fetch resolves", async () => {

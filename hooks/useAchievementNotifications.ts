@@ -46,6 +46,8 @@ export function useAchievementNotifications(
   // Guard to avoid re-firing the mark-notified effect for the same id;
   // reset when the queue is cleared so failed writes can be retried
   const prevCurrentIdRef = useRef<string | null>(null);
+  // Track previous familyId to distinguish family changes from character-only changes
+  const prevFamilyIdRef = useRef<string | null | undefined>(familyId);
 
   const enqueue = useCallback((notification: AchievementNotification) => {
     if (queuedAchievementIds.current.has(notification.achievementId)) return;
@@ -55,10 +57,24 @@ export function useAchievementNotifications(
 
   // Catch-up query: runs on mount and on character switch
   useEffect(() => {
-    // Clear queue and refs on character change or deselection
-    queuedAchievementIds.current = new Set();
+    const familyChanged = familyId !== prevFamilyIdRef.current;
+    prevFamilyIdRef.current = familyId;
     prevCurrentIdRef.current = null;
-    setQueue([]);
+
+    if (familyChanged) {
+      // Family changed — full reset
+      queuedAchievementIds.current = new Set();
+      setQueue([]);
+    } else {
+      // Only characterId changed within the same family — preserve pending family notifications
+      setQueue((prev) => {
+        const kept = prev.filter((n) => n.isFamily);
+        queuedAchievementIds.current = new Set(
+          kept.map((n) => n.achievementId),
+        );
+        return kept;
+      });
+    }
 
     if (!characterId && !familyId) {
       return;
