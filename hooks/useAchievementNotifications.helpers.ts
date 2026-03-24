@@ -145,6 +145,20 @@ export async function fetchUnnotifiedFamilyAchievements(
   } = await supabase.auth.getUser();
   if (!user) return [];
 
+  // Recompute family progress before reading catch-up notifications.
+  // A roster change (member join/leave) can leave unlocked_at stale until
+  // the member-count backfill in /api/family-achievements runs.  Triggering
+  // it here prevents newly joined members from receiving false unlock toasts
+  // or seeing hidden-achievement metadata that should still be locked.
+  const token = await getAuthToken();
+  if (token) {
+    await fetch("/api/family-achievements", {
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {
+      // Best-effort: a network failure should not block notifications.
+    });
+  }
+
   // Step 1: all unlocked progress rows for this family
   const { data, error } = await supabase
     .from("family_achievement_progress")
