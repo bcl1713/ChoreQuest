@@ -10,6 +10,7 @@ const mockServiceSupabase = {
 };
 
 const mockBackfillProgress = jest.fn().mockResolvedValue(undefined);
+const mockRecomputeAchievement = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: jest.fn(() => mockSupabase),
@@ -19,6 +20,7 @@ jest.mock("@/lib/supabase-server", () => ({
 jest.mock("@/lib/family-achievement-progress-service", () => ({
   FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
     backfillProgress: mockBackfillProgress,
+    recomputeAchievement: mockRecomputeAchievement,
   })),
 }));
 
@@ -236,6 +238,34 @@ describe("Family achievement API routes", () => {
       expect(response.status).toBe(201);
       const body = await response.json();
       expect(body.success).toBe(true);
+    });
+
+    it("seeds progress via recomputeAchievement after successful creation", async () => {
+      authAs("GUILD_MASTER");
+
+      mockServiceSupabase.from.mockImplementation(() => ({
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: { id: "fa-seeded", name: "Seeded Achievement" },
+              error: null,
+            }),
+          }),
+        }),
+      }));
+
+      const response = await createFamilyAchievement(
+        createRequest("POST", {
+          name: "Seeded Achievement",
+          criteria_type: "quest_complete",
+          criteria_config: { threshold: 10 },
+        }),
+      );
+      expect(response.status).toBe(201);
+      expect(mockRecomputeAchievement).toHaveBeenCalledWith(
+        "family-001",
+        "fa-seeded",
+      );
     });
 
     it("returns 400 when name is missing", async () => {

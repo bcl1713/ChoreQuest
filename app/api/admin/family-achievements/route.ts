@@ -244,6 +244,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Seed and evaluate progress immediately so families whose criteria are
+    // already satisfied receive an unlock row without waiting for a backfill.
+    const service = new FamilyAchievementProgressService();
+    try {
+      await service.recomputeAchievement(
+        requesterProfile.family_id,
+        achievement.id,
+      );
+    } catch (err) {
+      throw new Error(
+        `Achievement created but progress seeding failed for ${achievement.id}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
     return NextResponse.json({ success: true, achievement }, { status: 201 });
   } catch (error) {
     return handleRouteError(error);
