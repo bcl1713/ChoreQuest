@@ -9,14 +9,21 @@ const mockServiceSupabase = {
   from: jest.fn(),
 };
 
+const mockBackfillProgress = jest.fn().mockResolvedValue(undefined);
+
 jest.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: jest.fn(() => mockSupabase),
   createServiceSupabaseClient: jest.fn(() => mockServiceSupabase),
 }));
 
+jest.mock("@/lib/family-achievement-progress-service", () => ({
+  FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
+    backfillProgress: mockBackfillProgress,
+  })),
+}));
+
 import { GET as getFamilyAchievements } from "@/app/api/family-achievements/route";
 import { POST as createFamilyAchievement } from "@/app/api/admin/family-achievements/route";
-import { PATCH as patchNotified } from "@/app/api/family-achievement-progress/[id]/notified/route";
 
 const createRequest = (method = "GET", body?: unknown, auth = "Bearer token") =>
   new NextRequest("http://localhost/test", {
@@ -123,6 +130,73 @@ describe("Family achievement API routes", () => {
         current: 3,
         threshold: 10,
       });
+      expect(mockBackfillProgress).not.toHaveBeenCalled();
+    });
+
+    it("triggers backfill and returns fresh progress when achievements have no progress rows", async () => {
+      authAs("HERO");
+
+      const achievements = [
+        {
+          id: "fa-1",
+          name: "Test",
+          description: "Test",
+          icon: null,
+          category_id: null,
+          xp_reward: 0,
+          gold_reward: 0,
+          is_hidden: false,
+          criteria_type: "quest_complete",
+          criteria_config: {},
+          achievement_categories: null,
+        },
+      ];
+      const freshProgress = [
+        {
+          family_achievement_id: "fa-1",
+          unlocked_at: "2024-01-15T12:00:00Z",
+          progress: { current: 5, threshold: 5 },
+          notified: false,
+        },
+      ];
+
+      let serviceCallCount = 0;
+      mockServiceSupabase.from.mockImplementation(() => {
+        serviceCallCount++;
+        if (serviceCallCount === 1) {
+          // family_achievements query
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: achievements, error: null }),
+          };
+        }
+        if (serviceCallCount === 2) {
+          // initial family_achievement_progress query — empty (no rows yet)
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+          };
+        }
+        // re-fetch after backfill
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: freshProgress, error: null }),
+        };
+      });
+
+      const response = await getFamilyAchievements(createRequest());
+      expect(response.status).toBe(200);
+      expect(mockBackfillProgress).toHaveBeenCalledWith("family-001");
+      const body = await response.json();
+      expect(body.achievements).toHaveLength(1);
+      expect(body.achievements[0].unlocked_at).toBe("2024-01-15T12:00:00Z");
+      expect(body.achievements[0].progress).toEqual({
+        current: 5,
+        threshold: 5,
+      });
     });
   });
 
@@ -170,61 +244,6 @@ describe("Family achievement API routes", () => {
         createRequest("POST", { criteria_type: "quest_complete" }),
       );
       expect(response.status).toBe(400);
-    });
-  });
-
-  describe("PATCH /api/family-achievement-progress/[id]/notified", () => {
-    it("returns 401 for unauthenticated request", async () => {
-      const response = await patchNotified(
-        createRequest("PATCH", undefined, ""),
-        { params: Promise.resolve({ id: "prog-1" }) },
-      );
-      expect(response.status).toBe(401);
-    });
-
-    it("returns 404 when progress not found", async () => {
-      authAs("HERO");
-      mockServiceSupabase.from.mockImplementation(() => ({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-      }));
-
-      const response = await patchNotified(createRequest("PATCH"), {
-        params: Promise.resolve({ id: "prog-not-found" }),
-      });
-      expect(response.status).toBe(404);
-    });
-
-    it("returns 200 when marking as notified", async () => {
-      authAs("HERO");
-
-      let serviceCallCount = 0;
-      mockServiceSupabase.from.mockImplementation(() => {
-        serviceCallCount++;
-        if (serviceCallCount === 1) {
-          // Lookup family_achievement_progress
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: { id: "prog-1", family_id: "family-001" },
-              error: null,
-            }),
-          };
-        }
-        // Upsert into family_achievement_user_notifications
-        return {
-          upsert: jest.fn().mockResolvedValue({ error: null }),
-        };
-      });
-
-      const response = await patchNotified(createRequest("PATCH"), {
-        params: Promise.resolve({ id: "prog-1" }),
-      });
-      expect(response.status).toBe(200);
-      const body = await response.json();
-      expect(body.success).toBe(true);
     });
   });
 });

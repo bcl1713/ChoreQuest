@@ -8,6 +8,7 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
+import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 
 /**
  * GET /api/family-achievements
@@ -58,9 +59,35 @@ export async function GET(request: NextRequest) {
     }
 
     // Build progress lookup
-    const progressMap = new Map(
+    let progressMap = new Map(
       (progress ?? []).map((p) => [p.family_achievement_id, p]),
     );
+
+    // Lazy backfill: seed progress rows for achievements that have none yet.
+    // Covers existing families that satisfy thresholds at deploy time before
+    // any event-driven update has fired.
+    const hasMissingProgress = (achievements ?? []).some(
+      (a) => !progressMap.has(a.id),
+    );
+    if (hasMissingProgress) {
+      try {
+        const familyService = new FamilyAchievementProgressService(
+          serviceSupabase,
+        );
+        await familyService.backfillProgress(familyId);
+
+        const { data: freshProgress } = await serviceSupabase
+          .from("family_achievement_progress")
+          .select("family_achievement_id, unlocked_at, progress, notified")
+          .eq("family_id", familyId);
+
+        progressMap = new Map(
+          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
+        );
+      } catch (backfillErr) {
+        console.error("Family achievement backfill failed:", backfillErr);
+      }
+    }
 
     // Merge achievements with progress
     const mergedAchievements = (achievements ?? []).map((a) => {

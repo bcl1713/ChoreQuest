@@ -286,6 +286,42 @@ export type Database = {
           },
         ];
       };
+      family_achievement_user_notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          family_achievement_progress_id: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          family_achievement_progress_id: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          family_achievement_progress_id?: string;
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "family_achievement_user_notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "family_achievement_user_notifications_progress_id_fkey";
+            columns: ["family_achievement_progress_id"];
+            isOneToOne: false;
+            referencedRelation: "family_achievement_progress";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       character_change_history: {
         Row: {
           id: string;

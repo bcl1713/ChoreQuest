@@ -8,7 +8,7 @@ import {
   createServerSupabaseClient,
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
-import { ForbiddenError } from "@/lib/errors";
+import { ConflictError, ForbiddenError } from "@/lib/errors";
 
 /**
  * PATCH /api/family-achievement-progress/[id]/notified
@@ -36,7 +36,7 @@ export async function PATCH(
     // Verify the progress row exists and belongs to the requester's family
     const { data: existing, error: lookupError } = await serviceSupabase
       .from("family_achievement_progress")
-      .select("id, family_id")
+      .select("id, family_id, unlocked_at")
       .eq("id", id)
       .maybeSingle();
 
@@ -51,6 +51,13 @@ export async function PATCH(
       throw new ForbiddenError(
         "Family achievement progress does not belong to your family",
         "FAMILY_NOTIFIED_FORBIDDEN",
+      );
+    }
+
+    if (!existing.unlocked_at) {
+      throw new ConflictError(
+        "Family achievement has not been unlocked yet",
+        "FAMILY_NOTIFIED_NOT_UNLOCKED",
       );
     }
 
