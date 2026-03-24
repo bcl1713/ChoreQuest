@@ -58,19 +58,20 @@ export const ALL_FAMILY_CRITERIA_TYPES = [
 const evaluateQuestComplete: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
-  characterIds,
+  _userIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (let i = 0; i < userIds.length; i++) {
+  for (const { userId, characterIds } of memberPairs) {
     const { count, error } = await client
       .from("quest_instances")
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED")
       .or(
-        `assigned_to_id.eq.${userIds[i]},volunteered_by.eq.${characterIds[i]}`,
+        `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
       );
     if (error) throw error;
     values.push(count ?? 0);
@@ -82,19 +83,38 @@ const evaluateQuestVolunteer: FamilyEvaluatorFn = async (
   client,
   _familyId,
   _userIds,
-  characterIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (const characterId of characterIds) {
-    const { count, error } = await client
-      .from("quest_instances")
-      .select("*", { count: "exact", head: true })
-      .eq("volunteered_by", characterId)
-      .eq("status", "APPROVED");
-    if (error) throw error;
-    values.push(count ?? 0);
+  for (const { characterIds } of memberPairs) {
+    if (mode === "all") {
+      // One value per member: max of their characters' volunteer counts
+      let maxForMember = 0;
+      for (const characterId of characterIds) {
+        const { count, error } = await client
+          .from("quest_instances")
+          .select("*", { count: "exact", head: true })
+          .eq("volunteered_by", characterId)
+          .eq("status", "APPROVED");
+        if (error) throw error;
+        maxForMember = Math.max(maxForMember, count ?? 0);
+      }
+      values.push(maxForMember);
+    } else {
+      // One value per character: sum across all characters
+      for (const characterId of characterIds) {
+        const { count, error } = await client
+          .from("quest_instances")
+          .select("*", { count: "exact", head: true })
+          .eq("volunteered_by", characterId)
+          .eq("status", "APPROVED");
+        if (error) throw error;
+        values.push(count ?? 0);
+      }
+    }
   }
   return { current: aggregate(values, mode) };
 };
@@ -102,20 +122,21 @@ const evaluateQuestVolunteer: FamilyEvaluatorFn = async (
 const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
-  characterIds,
+  _userIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (let i = 0; i < userIds.length; i++) {
+  for (const { userId, characterIds } of memberPairs) {
     const { count, error } = await client
       .from("quest_instances")
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED")
       .eq("difficulty", "HARD")
       .or(
-        `assigned_to_id.eq.${userIds[i]},volunteered_by.eq.${characterIds[i]}`,
+        `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
       );
     if (error) throw error;
     values.push(count ?? 0);

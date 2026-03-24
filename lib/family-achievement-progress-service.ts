@@ -42,6 +42,7 @@ export class FamilyAchievementProgressService {
     allUserIds: string[];
     totalMemberCount: number;
     membersWithCharCount: number;
+    memberPairs: import("./family-achievement-progress/types").FamilyMemberPair[];
   }> {
     const { data, error } = await this.readClient
       .from("user_profiles")
@@ -60,6 +61,8 @@ export class FamilyAchievementProgressService {
     const characterIds: string[] = [];
     const allUserIds: string[] = [];
     const usersWithChars = new Set<string>();
+    const memberPairs: import("./family-achievement-progress/types").FamilyMemberPair[] =
+      [];
 
     for (const profile of data) {
       allUserIds.push(profile.id);
@@ -68,10 +71,16 @@ export class FamilyAchievementProgressService {
         : profile.characters
           ? [profile.characters]
           : [];
+      const charIds: string[] = [];
       for (const char of chars) {
+        const charId = (char as { id: string }).id;
         userIds.push(profile.id);
-        characterIds.push((char as { id: string }).id);
+        characterIds.push(charId);
         usersWithChars.add(profile.id);
+        charIds.push(charId);
+      }
+      if (charIds.length > 0) {
+        memberPairs.push({ userId: profile.id, characterIds: charIds });
       }
     }
 
@@ -81,6 +90,7 @@ export class FamilyAchievementProgressService {
       allUserIds,
       totalMemberCount: data.length,
       membersWithCharCount: usersWithChars.size,
+      memberPairs,
     };
   }
 
@@ -130,6 +140,7 @@ export class FamilyAchievementProgressService {
       allUserIds,
       totalMemberCount,
       membersWithCharCount,
+      memberPairs,
     } = await this.resolveFamilyCharacters(familyId);
     const achievements = await this.fetchFamilyAchievements(familyId);
     const existingProgressIds = await this.fetchExistingProgressIds(familyId);
@@ -185,6 +196,7 @@ export class FamilyAchievementProgressService {
         characterIds,
         allUserIds,
         mode,
+        memberPairs,
       );
 
       // "all"-mode: members without characters haven't met any threshold.

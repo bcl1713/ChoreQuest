@@ -5,6 +5,7 @@ import type {
   FetchedFamilyAchievement,
   FamilyCriteriaConfig,
   FamilyAchievementProgressRecord,
+  FamilyMemberPair,
 } from "./types";
 
 type WriteClient = SupabaseClient<Database>;
@@ -23,6 +24,7 @@ export async function recomputeAchievementImpl(
     allUserIds: string[];
     totalMemberCount: number;
     membersWithCharCount: number;
+    memberPairs: FamilyMemberPair[];
   },
 ): Promise<void> {
   const { data: achievementData, error: achievementError } = await readClient
@@ -53,6 +55,7 @@ export async function recomputeAchievementImpl(
     allUserIds,
     totalMemberCount,
     membersWithCharCount,
+    memberPairs,
   } = familyContext;
 
   const result = await evaluator(
@@ -62,6 +65,7 @@ export async function recomputeAchievementImpl(
     characterIds,
     allUserIds,
     mode,
+    memberPairs,
   );
 
   const current =

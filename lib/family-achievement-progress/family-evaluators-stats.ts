@@ -4,19 +4,20 @@ import { aggregate } from "./family-evaluator-utils";
 export const evaluateGoldEarned: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
-  characterIds,
+  _userIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (let i = 0; i < userIds.length; i++) {
+  for (const { userId, characterIds } of memberPairs) {
     const { data: questRows, error: questError } = await client
       .from("quest_instances")
       .select("gold_reward, volunteer_bonus, streak_bonus")
       .eq("status", "APPROVED")
       .or(
-        `assigned_to_id.eq.${userIds[i]},volunteered_by.eq.${characterIds[i]}`,
+        `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
       );
     if (questError) throw questError;
 
@@ -30,7 +31,7 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
     const { data: bossRows, error: bossError } = await client
       .from("boss_battle_participants")
       .select("awarded_gold")
-      .eq("user_id", userIds[i])
+      .eq("user_id", userId)
       .in("participation_status", ["APPROVED", "PARTIAL"]);
     if (bossError) throw bossError;
 
@@ -91,19 +92,28 @@ export const evaluateXpEarned: FamilyEvaluatorFn = async (
   client,
   _familyId,
   _userIds,
-  characterIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (const characterId of characterIds) {
-    const { data, error } = await client
-      .from("characters")
-      .select("xp")
-      .eq("id", characterId)
-      .single();
-    if (error) throw error;
-    values.push(data?.xp ?? 0);
+  for (const { characterIds } of memberPairs) {
+    const charValues: number[] = [];
+    for (const characterId of characterIds) {
+      const { data, error } = await client
+        .from("characters")
+        .select("xp")
+        .eq("id", characterId)
+        .single();
+      if (error) throw error;
+      charValues.push(data?.xp ?? 0);
+    }
+    if (mode === "all") {
+      values.push(charValues.length > 0 ? Math.max(...charValues) : 0);
+    } else {
+      values.push(...charValues);
+    }
   }
   return { current: aggregate(values, mode) };
 };
@@ -112,19 +122,28 @@ export const evaluateLevelReached: FamilyEvaluatorFn = async (
   client,
   _familyId,
   _userIds,
-  characterIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (const characterId of characterIds) {
-    const { data, error } = await client
-      .from("characters")
-      .select("level")
-      .eq("id", characterId)
-      .single();
-    if (error) throw error;
-    values.push(data?.level ?? 0);
+  for (const { characterIds } of memberPairs) {
+    const charValues: number[] = [];
+    for (const characterId of characterIds) {
+      const { data, error } = await client
+        .from("characters")
+        .select("level")
+        .eq("id", characterId)
+        .single();
+      if (error) throw error;
+      charValues.push(data?.level ?? 0);
+    }
+    if (mode === "all") {
+      values.push(charValues.length > 0 ? Math.max(...charValues) : 0);
+    } else {
+      values.push(...charValues);
+    }
   }
   return { current: aggregate(values, mode) };
 };
@@ -133,21 +152,32 @@ export const evaluateStreakReached: FamilyEvaluatorFn = async (
   client,
   _familyId,
   _userIds,
-  characterIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (const characterId of characterIds) {
-    const { data, error } = await client
-      .from("character_quest_streaks")
-      .select("longest_streak")
-      .eq("character_id", characterId);
-    if (error) throw error;
-    if (!data || data.length === 0) {
-      values.push(0);
+  for (const { characterIds } of memberPairs) {
+    const charValues: number[] = [];
+    for (const characterId of characterIds) {
+      const { data, error } = await client
+        .from("character_quest_streaks")
+        .select("longest_streak")
+        .eq("character_id", characterId);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        charValues.push(0);
+      } else {
+        charValues.push(
+          Math.max(...data.map((row) => row.longest_streak ?? 0)),
+        );
+      }
+    }
+    if (mode === "all") {
+      values.push(charValues.length > 0 ? Math.max(...charValues) : 0);
     } else {
-      values.push(Math.max(...data.map((row) => row.longest_streak ?? 0)));
+      values.push(...charValues);
     }
   }
   return { current: aggregate(values, mode) };
@@ -157,19 +187,28 @@ export const evaluateClassChange: FamilyEvaluatorFn = async (
   client,
   _familyId,
   _userIds,
-  characterIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (const characterId of characterIds) {
-    const { count, error } = await client
-      .from("character_change_history")
-      .select("*", { count: "exact", head: true })
-      .eq("character_id", characterId)
-      .eq("change_type", "class");
-    if (error) throw error;
-    values.push(count ?? 0);
+  for (const { characterIds } of memberPairs) {
+    const charValues: number[] = [];
+    for (const characterId of characterIds) {
+      const { count, error } = await client
+        .from("character_change_history")
+        .select("*", { count: "exact", head: true })
+        .eq("character_id", characterId)
+        .eq("change_type", "class");
+      if (error) throw error;
+      charValues.push(count ?? 0);
+    }
+    if (mode === "all") {
+      values.push(charValues.length > 0 ? Math.max(...charValues) : 0);
+    } else {
+      values.push(...charValues);
+    }
   }
   return { current: aggregate(values, mode) };
 };
@@ -178,19 +217,28 @@ export const evaluateHonorEarned: FamilyEvaluatorFn = async (
   client,
   _familyId,
   _userIds,
-  characterIds,
+  _characterIds,
   _allUserIds,
   mode,
+  memberPairs,
 ) => {
   const values: number[] = [];
-  for (const characterId of characterIds) {
-    const { data, error } = await client
-      .from("characters")
-      .select("honor_points")
-      .eq("id", characterId)
-      .single();
-    if (error) throw error;
-    values.push(data?.honor_points ?? 0);
+  for (const { characterIds } of memberPairs) {
+    const charValues: number[] = [];
+    for (const characterId of characterIds) {
+      const { data, error } = await client
+        .from("characters")
+        .select("honor_points")
+        .eq("id", characterId)
+        .single();
+      if (error) throw error;
+      charValues.push(data?.honor_points ?? 0);
+    }
+    if (mode === "all") {
+      values.push(charValues.length > 0 ? Math.max(...charValues) : 0);
+    } else {
+      values.push(...charValues);
+    }
   }
   return { current: aggregate(values, mode) };
 };

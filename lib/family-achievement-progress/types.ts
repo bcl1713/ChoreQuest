@@ -7,6 +7,11 @@ import type {
 
 export type { AchievementEventType, AchievementEvent };
 
+export type FamilyMemberPair = {
+  userId: string;
+  characterIds: string[];
+};
+
 export type FamilyEvaluatorFn = (
   client: SupabaseClient<Database>,
   familyId: string,
@@ -14,6 +19,7 @@ export type FamilyEvaluatorFn = (
   characterIds: string[],
   allUserIds: string[],
   mode: "sum" | "all",
+  memberPairs: FamilyMemberPair[],
 ) => Promise<{ current: number }>;
 
 export type FamilyCriteriaConfig = {

@@ -132,7 +132,9 @@ describe("FamilyAchievementProgressService — sum-mode evaluators", () => {
     await service.updateProgress(FAMILY_ID, { type: "QUEST_APPROVED" });
 
     const upsertCall = writeUpsert.upsert.mock.calls[0][0];
-    expect(upsertCall[0].progress).toEqual(expect.objectContaining({ current: 7, threshold: 10 }));
+    expect(upsertCall[0].progress).toEqual(
+      expect.objectContaining({ current: 7, threshold: 10 }),
+    );
   });
 
   it("sums boss_defeated across family members", async () => {
@@ -155,7 +157,9 @@ describe("FamilyAchievementProgressService — sum-mode evaluators", () => {
     await service.updateProgress(FAMILY_ID, { type: "BOSS_COMPLETED" });
 
     const upsertCall = writeUpsert.upsert.mock.calls[0][0];
-    expect(upsertCall[0].progress).toEqual(expect.objectContaining({ current: 5, threshold: 5 }));
+    expect(upsertCall[0].progress).toEqual(
+      expect.objectContaining({ current: 5, threshold: 5 }),
+    );
   });
 
   it("sums xp_earned across family members", async () => {
@@ -184,7 +188,9 @@ describe("FamilyAchievementProgressService — sum-mode evaluators", () => {
     await service.updateProgress(FAMILY_ID, { type: "QUEST_APPROVED" });
 
     const upsertCall = writeUpsert.upsert.mock.calls[0][0];
-    expect(upsertCall[0].progress).toEqual(expect.objectContaining({ current: 300, threshold: 500 }));
+    expect(upsertCall[0].progress).toEqual(
+      expect.objectContaining({ current: 300, threshold: 500 }),
+    );
   });
 
   it("handles single family member (sum is just their value)", async () => {
