@@ -70,19 +70,20 @@ export async function GET(request: NextRequest) {
       (a) => !progressMap.has(a.id),
     );
 
-    // If any stored progress row carries a member_count snapshot, compare it
-    // to the current roster size.  A difference means a member joined or left
-    // since the last evaluation, which can invalidate cached unlock state.
-    const firstStoredProgress = [...progressMap.values()][0];
-    const storedMemberCount = (
-      firstStoredProgress?.progress as
-        | { member_count?: number }
-        | null
-        | undefined
-    )?.member_count;
+    // If ANY stored progress row carries a member_count snapshot, compare it
+    // to the current roster size.  A mismatch on any row means a member joined
+    // or left since that row was last evaluated, which can invalidate cached
+    // unlock state.  Checking all rows prevents a stale row from being skipped
+    // just because a different, fresh row happens to be checked first.
+    const storedMemberCounts = new Set<number>();
+    for (const p of progressMap.values()) {
+      const mc = (p.progress as { member_count?: number } | null | undefined)
+        ?.member_count;
+      if (mc !== undefined) storedMemberCounts.add(mc);
+    }
 
     let memberCountChanged = false;
-    if (progressMap.size > 0 && storedMemberCount !== undefined) {
+    if (storedMemberCounts.size > 0) {
       const { count: currentMemberCount, error: memberCountError } =
         await serviceSupabase
           .from("user_profiles")
@@ -93,7 +94,8 @@ export async function GET(request: NextRequest) {
           `Failed to fetch family member count: ${memberCountError.message}`,
         );
       }
-      memberCountChanged = storedMemberCount !== (currentMemberCount ?? 0);
+      const current = currentMemberCount ?? 0;
+      memberCountChanged = [...storedMemberCounts].some((mc) => mc !== current);
     }
 
     if (hasMissingProgress || memberCountChanged) {

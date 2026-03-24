@@ -75,7 +75,11 @@ export async function recomputeAchievementImpl(
       {
         family_id: familyId,
         family_achievement_id: achievementId,
-        progress: { current, threshold },
+        progress: {
+          current,
+          threshold,
+          member_count: familyContext.totalMemberCount,
+        },
       },
       {
         onConflict: "family_id,family_achievement_id",

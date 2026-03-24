@@ -73,7 +73,34 @@ export async function GET(request: NextRequest) {
     const hasMissingProgress = (achievements ?? []).some(
       (a) => !progressMap.has(a.id),
     );
-    if (hasMissingProgress) {
+
+    // Mirror the public API's roster-change detection: if ANY stored progress
+    // row carries a member_count snapshot that differs from the current family
+    // size, re-evaluate so the admin view reflects the correct unlock state.
+    const storedMemberCounts = new Set<number>();
+    for (const p of progressMap.values()) {
+      const mc = (p.progress as { member_count?: number } | null | undefined)
+        ?.member_count;
+      if (mc !== undefined) storedMemberCounts.add(mc);
+    }
+
+    let memberCountChanged = false;
+    if (storedMemberCounts.size > 0) {
+      const { count: currentMemberCount, error: memberCountError } =
+        await serviceSupabase
+          .from("user_profiles")
+          .select("*", { count: "exact", head: true })
+          .eq("family_id", familyId);
+      if (memberCountError) {
+        throw new Error(
+          `Failed to fetch family member count: ${memberCountError.message}`,
+        );
+      }
+      const current = currentMemberCount ?? 0;
+      memberCountChanged = [...storedMemberCounts].some((mc) => mc !== current);
+    }
+
+    if (hasMissingProgress || memberCountChanged) {
       try {
         const familyService = new FamilyAchievementProgressService(
           serviceSupabase,

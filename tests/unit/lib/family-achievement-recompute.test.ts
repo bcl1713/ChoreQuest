@@ -103,7 +103,7 @@ describe("recomputeAchievementImpl", () => {
 
     expect(upsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        progress: { current: 5, threshold: 5 },
+        progress: { current: 5, threshold: 5, member_count: 1 },
       }),
       expect.any(Object),
     );
