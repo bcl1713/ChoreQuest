@@ -9,7 +9,7 @@ const mockServiceSupabase = {
   from: jest.fn(),
 };
 
-const mockBackfillProgress = jest.fn().mockResolvedValue(undefined);
+const mockBackfillIfStale = jest.fn().mockResolvedValue(false);
 
 jest.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: jest.fn(() => mockSupabase),
@@ -18,7 +18,7 @@ jest.mock("@/lib/supabase-server", () => ({
 
 jest.mock("@/lib/family-achievement-progress-service", () => ({
   FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
-    backfillProgress: mockBackfillProgress,
+    backfillIfStale: mockBackfillIfStale,
   })),
 }));
 
@@ -113,6 +113,7 @@ const mixedProgress = [
 describe("Family achievements — hidden redaction & admin backfill", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBackfillIfStale.mockResolvedValue(false);
   });
 
   describe("GET /api/family-achievements — hidden achievement redaction", () => {
@@ -234,10 +235,11 @@ describe("Family achievements — hidden redaction & admin backfill", () => {
       });
 
       await getAdminFamilyAchievements(createRequest());
-      expect(mockBackfillProgress).not.toHaveBeenCalled();
+      expect(mockBackfillIfStale).toHaveBeenCalled();
     });
 
     it("triggers backfill when a newly-created achievement has no progress row", async () => {
+      mockBackfillIfStale.mockResolvedValueOnce(true);
       authAs("GUILD_MASTER");
 
       const freshProgress = [
@@ -287,7 +289,7 @@ describe("Family achievements — hidden redaction & admin backfill", () => {
 
       const response = await getAdminFamilyAchievements(createRequest());
       expect(response.status).toBe(200);
-      expect(mockBackfillProgress).toHaveBeenCalledWith("family-001");
+      expect(mockBackfillIfStale).toHaveBeenCalled();
       const body = await response.json();
       expect(body.achievements[0].progress).toEqual({
         current: 0,

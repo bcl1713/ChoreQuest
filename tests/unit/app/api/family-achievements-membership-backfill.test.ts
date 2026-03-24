@@ -9,7 +9,7 @@ const mockServiceSupabase = {
   from: jest.fn(),
 };
 
-const mockBackfillProgress = jest.fn().mockResolvedValue(undefined);
+const mockBackfillIfStale = jest.fn().mockResolvedValue(false);
 
 jest.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: jest.fn(() => mockSupabase),
@@ -18,7 +18,7 @@ jest.mock("@/lib/supabase-server", () => ({
 
 jest.mock("@/lib/family-achievement-progress-service", () => ({
   FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
-    backfillProgress: mockBackfillProgress,
+    backfillIfStale: mockBackfillIfStale,
   })),
 }));
 
@@ -70,9 +70,11 @@ const achievement = {
 describe("GET /api/family-achievements — membership-change backfill", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBackfillIfStale.mockResolvedValue(false);
   });
 
   it("triggers backfill when stored member_count differs from current family size", async () => {
+    mockBackfillIfStale.mockResolvedValueOnce(true);
     authAs("HERO");
 
     // Progress stored when family had 2 members; family now has 3.
@@ -115,13 +117,6 @@ describe("GET /api/family-achievements — membership-change backfill", () => {
           eq: jest.fn().mockResolvedValue({ data: staleProgress, error: null }),
         };
       }
-      if (serviceCallCount === 3) {
-        // user_profiles count — family has grown to 3
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
-        };
-      }
       // re-fetch after backfill
       return {
         select: jest.fn().mockReturnThis(),
@@ -131,7 +126,7 @@ describe("GET /api/family-achievements — membership-change backfill", () => {
 
     const response = await getFamilyAchievements(createRequest());
     expect(response.status).toBe(200);
-    expect(mockBackfillProgress).toHaveBeenCalledWith("family-001");
+    expect(mockBackfillIfStale).toHaveBeenCalled();
     const body = await response.json();
     expect(body.achievements[0].unlocked_at).toBeNull();
     // member_count must be stripped from the public progress payload
@@ -170,16 +165,11 @@ describe("GET /api/family-achievements — membership-change backfill", () => {
           }),
         };
       }
-      // user_profiles count — same 3 members
-      return {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
-      };
     });
 
     const response = await getFamilyAchievements(createRequest());
     expect(response.status).toBe(200);
-    expect(mockBackfillProgress).not.toHaveBeenCalled();
+    expect(mockBackfillIfStale).toHaveBeenCalled();
   });
 
   it("does not query user_profiles when no progress rows carry a member_count", async () => {
@@ -216,8 +206,7 @@ describe("GET /api/family-achievements — membership-change backfill", () => {
 
     const response = await getFamilyAchievements(createRequest());
     expect(response.status).toBe(200);
-    expect(mockBackfillProgress).not.toHaveBeenCalled();
-    // Only achievements + progress queries fired; user_profiles was skipped.
+    // Only achievements + progress queries fired; no re-fetch.
     expect(serviceCallCount).toBe(2);
   });
 });

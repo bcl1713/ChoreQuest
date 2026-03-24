@@ -9,7 +9,7 @@ const mockServiceSupabase = {
   from: jest.fn(),
 };
 
-const mockBackfillProgress = jest.fn().mockResolvedValue(undefined);
+const mockBackfillIfStale = jest.fn().mockResolvedValue(false);
 const mockRecomputeAchievement = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("@/lib/supabase-server", () => ({
@@ -19,7 +19,7 @@ jest.mock("@/lib/supabase-server", () => ({
 
 jest.mock("@/lib/family-achievement-progress-service", () => ({
   FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
-    backfillProgress: mockBackfillProgress,
+    backfillIfStale: mockBackfillIfStale,
     recomputeAchievement: mockRecomputeAchievement,
   })),
 }));
@@ -59,6 +59,7 @@ function authAs(role: string, familyId: string | null = "family-001") {
 describe("Family achievement API routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBackfillIfStale.mockResolvedValue(false);
   });
 
   describe("GET /api/family-achievements", () => {
@@ -132,10 +133,10 @@ describe("Family achievement API routes", () => {
         current: 3,
         threshold: 10,
       });
-      expect(mockBackfillProgress).not.toHaveBeenCalled();
     });
 
     it("triggers backfill and returns fresh progress when achievements have no progress rows", async () => {
+      mockBackfillIfStale.mockResolvedValueOnce(true);
       authAs("HERO");
 
       const achievements = [
@@ -191,7 +192,7 @@ describe("Family achievement API routes", () => {
 
       const response = await getFamilyAchievements(createRequest());
       expect(response.status).toBe(200);
-      expect(mockBackfillProgress).toHaveBeenCalledWith("family-001");
+      expect(mockBackfillIfStale).toHaveBeenCalled();
       const body = await response.json();
       expect(body.achievements).toHaveLength(1);
       expect(body.achievements[0].unlocked_at).toBe("2024-01-15T12:00:00Z");

@@ -11,7 +11,6 @@ import {
 import { ForbiddenError, ValidationError } from "@/lib/errors";
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 import { ALL_FAMILY_CRITERIA_TYPES } from "@/lib/family-achievement-progress/family-evaluators";
-
 /**
  * GET /api/admin/family-achievements
  *
@@ -68,59 +67,43 @@ export async function GET(request: NextRequest) {
       (progress ?? []).map((p) => [p.family_achievement_id, p]),
     );
 
-    // Backfill missing progress rows so the admin dashboard shows accurate
-    // state for all achievements, including newly-created ones.
     const hasMissingProgress = (achievements ?? []).some(
       (a) => !progressMap.has(a.id),
     );
-
-    // Mirror the public API's roster-change detection: if ANY stored progress
-    // row carries a member_count snapshot that differs from the current family
-    // size, re-evaluate so the admin view reflects the correct unlock state.
-    const storedMemberCounts = new Set<number>();
+    const storedCounts: number[] = [];
+    const storedWithChars: number[] = [];
     for (const p of progressMap.values()) {
-      const mc = (p.progress as { member_count?: number } | null | undefined)
-        ?.member_count;
-      if (mc !== undefined) storedMemberCounts.add(mc);
+      const snap = p.progress as {
+        member_count?: number;
+        members_with_char_count?: number;
+      } | null;
+      if (snap?.member_count !== undefined)
+        storedCounts.push(snap.member_count);
+      if (snap?.members_with_char_count !== undefined)
+        storedWithChars.push(snap.members_with_char_count);
     }
 
-    let memberCountChanged = false;
-    if (storedMemberCounts.size > 0) {
-      const { count: currentMemberCount, error: memberCountError } =
-        await serviceSupabase
-          .from("user_profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("family_id", familyId);
-      if (memberCountError) {
-        throw new Error(
-          `Failed to fetch family member count: ${memberCountError.message}`,
-        );
-      }
-      const current = currentMemberCount ?? 0;
-      memberCountChanged = [...storedMemberCounts].some((mc) => mc !== current);
+    const familyService = new FamilyAchievementProgressService(serviceSupabase);
+    let backfilled = false;
+    try {
+      backfilled = await familyService.backfillIfStale(
+        familyId,
+        hasMissingProgress,
+        storedCounts,
+        storedWithChars,
+      );
+    } catch (err) {
+      console.error("Family achievement backfill failed (admin):", err);
     }
 
-    if (hasMissingProgress || memberCountChanged) {
-      try {
-        const familyService = new FamilyAchievementProgressService(
-          serviceSupabase,
-        );
-        await familyService.backfillProgress(familyId);
-
-        const { data: freshProgress } = await serviceSupabase
-          .from("family_achievement_progress")
-          .select("family_achievement_id, unlocked_at, progress")
-          .eq("family_id", familyId);
-
-        progressMap = new Map(
-          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
-        );
-      } catch (backfillErr) {
-        console.error(
-          "Family achievement backfill failed (admin):",
-          backfillErr,
-        );
-      }
+    if (backfilled) {
+      const { data: freshProgress } = await serviceSupabase
+        .from("family_achievement_progress")
+        .select("family_achievement_id, unlocked_at, progress")
+        .eq("family_id", familyId);
+      progressMap = new Map(
+        (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
+      );
     }
 
     const { data: categories, error: catError } = await serviceSupabase

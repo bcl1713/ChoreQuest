@@ -128,6 +128,49 @@ export class FamilyAchievementProgressService {
     await this.updateProgress(familyId, null);
   }
 
+  // Returns true if progress was stale (missing rows or roster changed) and a backfill ran.
+  async backfillIfStale(
+    familyId: string,
+    hasMissingProgress: boolean,
+    storedMemberCounts: number[],
+    storedMembersWithCharCounts: number[],
+  ): Promise<boolean> {
+    let rosterChanged = false;
+
+    if (
+      storedMemberCounts.length > 0 ||
+      storedMembersWithCharCounts.length > 0
+    ) {
+      const { count, error: ce } = await this.readClient
+        .from("user_profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("family_id", familyId);
+      if (ce)
+        throw new Error(`Failed to fetch family member count: ${ce.message}`);
+      const current = count ?? 0;
+      rosterChanged = storedMemberCounts.some((mc) => mc !== current);
+
+      if (!rosterChanged && storedMembersWithCharCounts.length > 0) {
+        const { data: withChars, error: wce } = await this.readClient
+          .from("user_profiles")
+          .select("id, characters!inner(id)")
+          .eq("family_id", familyId);
+        if (wce)
+          throw new Error(
+            `Failed to fetch members with characters: ${wce.message}`,
+          );
+        const currentWithChars = (withChars ?? []).length;
+        rosterChanged = storedMembersWithCharCounts.some(
+          (mc) => mc !== currentWithChars,
+        );
+      }
+    }
+
+    if (!hasMissingProgress && !rosterChanged) return false;
+    await this.backfillProgress(familyId);
+    return true;
+  }
+
   async updateProgress(
     familyId: string,
     event: AchievementEvent | null,
@@ -145,7 +188,6 @@ export class FamilyAchievementProgressService {
 
     if (achievements.length === 0) return;
 
-    // Backfill when any achievement is missing a progress row
     const needsBackfill = achievements.some(
       (a) => !existingProgressIds.has(a.id),
     );
@@ -176,7 +218,7 @@ export class FamilyAchievementProgressService {
     const upsertRows: {
       family_id: string;
       family_achievement_id: string;
-      progress: { current: number; threshold: number; member_count: number };
+      progress: { current: number; threshold: number } & Record<string, number>;
     }[] = [];
 
     for (const achievement of relevantAchievements) {
@@ -206,7 +248,12 @@ export class FamilyAchievementProgressService {
       upsertRows.push({
         family_id: familyId,
         family_achievement_id: achievement.id,
-        progress: { current, threshold, member_count: totalMemberCount },
+        progress: {
+          current,
+          threshold,
+          member_count: totalMemberCount,
+          members_with_char_count: membersWithCharCount,
+        },
       });
     }
 
@@ -223,23 +270,11 @@ export class FamilyAchievementProgressService {
       throw new Error(`Failed to upsert family progress: ${error.message}`);
     }
 
-    // Unlock evaluation: detect newly met criteria
-    await this.evaluateUnlocks(familyId, upsertRows);
-  }
-
-  private async evaluateUnlocks(
-    familyId: string,
-    progressRows: {
-      family_id: string;
-      family_achievement_id: string;
-      progress: { current: number; threshold: number };
-    }[],
-  ): Promise<void> {
     await evaluateUnlocksImpl(
       this.readClient,
       this.writeClient,
       familyId,
-      progressRows,
+      upsertRows,
     );
   }
 

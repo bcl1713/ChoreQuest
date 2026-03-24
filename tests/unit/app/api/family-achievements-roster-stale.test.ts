@@ -9,7 +9,7 @@ const mockServiceSupabase = {
   from: jest.fn(),
 };
 
-const mockBackfillProgress = jest.fn().mockResolvedValue(undefined);
+const mockBackfillIfStale = jest.fn().mockResolvedValue(false);
 
 jest.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: jest.fn(() => mockSupabase),
@@ -18,7 +18,7 @@ jest.mock("@/lib/supabase-server", () => ({
 
 jest.mock("@/lib/family-achievement-progress-service", () => ({
   FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
-    backfillProgress: mockBackfillProgress,
+    backfillIfStale: mockBackfillIfStale,
   })),
 }));
 
@@ -85,10 +85,12 @@ const achievement2 = {
 describe("Roster-change staleness — mixed member_count snapshots", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBackfillIfStale.mockResolvedValue(false);
   });
 
   describe("GET /api/family-achievements", () => {
     it("triggers backfill when only some rows are stale", async () => {
+      mockBackfillIfStale.mockResolvedValueOnce(true);
       authAs("HERO");
 
       // fa-1 is current (member_count: 3); fa-2 is stale (member_count: 2).
@@ -145,13 +147,6 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
               .mockResolvedValue({ data: mixedProgress, error: null }),
           };
         }
-        if (callCount === 3) {
-          // user_profiles count — family has 3 members
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
-          };
-        }
         return {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockResolvedValue({ data: freshProgress, error: null }),
@@ -160,7 +155,7 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
 
       const response = await getFamilyAchievements(createRequest());
       expect(response.status).toBe(200);
-      expect(mockBackfillProgress).toHaveBeenCalledWith("family-001");
+      expect(mockBackfillIfStale).toHaveBeenCalled();
       const body = await response.json();
       expect(
         body.achievements.find((a: { id: string }) => a.id === "fa-2")
@@ -176,6 +171,7 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
     };
 
     it("triggers backfill when stored member_count differs from current family size", async () => {
+      mockBackfillIfStale.mockResolvedValueOnce(true);
       authAs("GUILD_MASTER");
 
       const staleProgress = [
@@ -215,13 +211,6 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
           };
         }
         if (callCount === 3) {
-          // user_profiles count — family has grown to 3
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
-          };
-        }
-        if (callCount === 4) {
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest
@@ -238,7 +227,7 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
 
       const response = await getAdminFamilyAchievements(createRequest());
       expect(response.status).toBe(200);
-      expect(mockBackfillProgress).toHaveBeenCalledWith("family-001");
+      expect(mockBackfillIfStale).toHaveBeenCalled();
       const body = await response.json();
       expect(body.achievements[0].unlocked_at).toBeNull();
     });
@@ -273,13 +262,6 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
             }),
           };
         }
-        if (callCount === 3) {
-          // user_profiles count — matches stored snapshot
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
-          };
-        }
         // categories
         return {
           select: jest.fn().mockReturnThis(),
@@ -289,7 +271,7 @@ describe("Roster-change staleness — mixed member_count snapshots", () => {
 
       const response = await getAdminFamilyAchievements(createRequest());
       expect(response.status).toBe(200);
-      expect(mockBackfillProgress).not.toHaveBeenCalled();
+      expect(mockBackfillIfStale).toHaveBeenCalled();
     });
   });
 });

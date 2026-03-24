@@ -63,59 +63,43 @@ export async function GET(request: NextRequest) {
       (progress ?? []).map((p) => [p.family_achievement_id, p]),
     );
 
-    // Lazy backfill: seed progress rows for achievements that have none yet,
-    // or re-evaluate when the family roster has grown or shrunk (which can
-    // change "all"-mode achievements that were previously unlocked/locked).
     const hasMissingProgress = (achievements ?? []).some(
       (a) => !progressMap.has(a.id),
     );
-
-    // If ANY stored progress row carries a member_count snapshot, compare it
-    // to the current roster size.  A mismatch on any row means a member joined
-    // or left since that row was last evaluated, which can invalidate cached
-    // unlock state.  Checking all rows prevents a stale row from being skipped
-    // just because a different, fresh row happens to be checked first.
-    const storedMemberCounts = new Set<number>();
+    const storedCounts: number[] = [];
+    const storedWithChars: number[] = [];
     for (const p of progressMap.values()) {
-      const mc = (p.progress as { member_count?: number } | null | undefined)
-        ?.member_count;
-      if (mc !== undefined) storedMemberCounts.add(mc);
+      const snap = p.progress as {
+        member_count?: number;
+        members_with_char_count?: number;
+      } | null;
+      if (snap?.member_count !== undefined)
+        storedCounts.push(snap.member_count);
+      if (snap?.members_with_char_count !== undefined)
+        storedWithChars.push(snap.members_with_char_count);
     }
 
-    let memberCountChanged = false;
-    if (storedMemberCounts.size > 0) {
-      const { count: currentMemberCount, error: memberCountError } =
-        await serviceSupabase
-          .from("user_profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("family_id", familyId);
-      if (memberCountError) {
-        throw new Error(
-          `Failed to fetch family member count: ${memberCountError.message}`,
-        );
-      }
-      const current = currentMemberCount ?? 0;
-      memberCountChanged = [...storedMemberCounts].some((mc) => mc !== current);
+    const familyService = new FamilyAchievementProgressService(serviceSupabase);
+    let backfilled = false;
+    try {
+      backfilled = await familyService.backfillIfStale(
+        familyId,
+        hasMissingProgress,
+        storedCounts,
+        storedWithChars,
+      );
+    } catch (backfillErr) {
+      console.error("Family achievement backfill failed:", backfillErr);
     }
 
-    if (hasMissingProgress || memberCountChanged) {
-      try {
-        const familyService = new FamilyAchievementProgressService(
-          serviceSupabase,
-        );
-        await familyService.backfillProgress(familyId);
-
-        const { data: freshProgress } = await serviceSupabase
-          .from("family_achievement_progress")
-          .select("family_achievement_id, unlocked_at, progress, notified")
-          .eq("family_id", familyId);
-
-        progressMap = new Map(
-          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
-        );
-      } catch (backfillErr) {
-        console.error("Family achievement backfill failed:", backfillErr);
-      }
+    if (backfilled) {
+      const { data: freshProgress } = await serviceSupabase
+        .from("family_achievement_progress")
+        .select("family_achievement_id, unlocked_at, progress, notified")
+        .eq("family_id", familyId);
+      progressMap = new Map(
+        (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
+      );
     }
 
     // Merge achievements with progress

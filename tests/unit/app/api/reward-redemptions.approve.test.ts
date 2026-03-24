@@ -1,9 +1,16 @@
 const mockUpdateProgress = jest.fn().mockResolvedValue(undefined);
+const mockFamilyUpdateProgress = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("@/lib/achievement-progress-service", () => ({
   AchievementProgressService: jest
     .fn()
     .mockImplementation(() => ({ updateProgress: mockUpdateProgress })),
+}));
+
+jest.mock("@/lib/family-achievement-progress-service", () => ({
+  FamilyAchievementProgressService: jest
+    .fn()
+    .mockImplementation(() => ({ updateProgress: mockFamilyUpdateProgress })),
 }));
 
 const mockServerSupabase = {
@@ -195,37 +202,20 @@ describe("POST /api/reward-redemptions/[id]/approve", () => {
     expect(body.code).toBe("APPROVE_REDEMPTION_FORBIDDEN");
   });
 
-  it("returns 409 when redemption is not in PENDING status", async () => {
-    setupServerAuth("GUILD_MASTER");
-    makeServiceFromMock({
-      redemption: {
-        id: VALID_UUID,
-        user_id: REDEEMER_USER_ID,
-        status: "APPROVED",
-      },
-    });
+  it.each(["APPROVED", "DENIED"])(
+    "returns 409 when redemption status is %s",
+    async (status) => {
+      setupServerAuth("GUILD_MASTER");
+      makeServiceFromMock({
+        redemption: { id: VALID_UUID, user_id: REDEEMER_USER_ID, status },
+      });
 
-    const res = await POST(makeRequest(), params(VALID_UUID));
-    expect(res.status).toBe(409);
-    const body = await res.json();
-    expect(body.code).toBe("REDEMPTION_NOT_PENDING");
-  });
-
-  it("returns 409 when redemption has been DENIED", async () => {
-    setupServerAuth("GUILD_MASTER");
-    makeServiceFromMock({
-      redemption: {
-        id: VALID_UUID,
-        user_id: REDEEMER_USER_ID,
-        status: "DENIED",
-      },
-    });
-
-    const res = await POST(makeRequest(), params(VALID_UUID));
-    expect(res.status).toBe(409);
-    const body = await res.json();
-    expect(body.code).toBe("REDEMPTION_NOT_PENDING");
-  });
+      const res = await POST(makeRequest(), params(VALID_UUID));
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.code).toBe("REDEMPTION_NOT_PENDING");
+    },
+  );
 
   it("skips family check when redemption has no user_id", async () => {
     setupServerAuth("GUILD_MASTER");
@@ -235,5 +225,65 @@ describe("POST /api/reward-redemptions/[id]/approve", () => {
 
     const res = await POST(makeRequest(), params(VALID_UUID));
     expect(res.status).toBe(200);
+  });
+
+  it("calls FamilyAchievementProgressService directly when redeemer has no character", async () => {
+    setupServerAuth("GUILD_MASTER");
+    mockServiceSupabase.from.mockImplementation((table: string) => {
+      if (table === "reward_redemptions") {
+        const chain = {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: {
+              id: VALID_UUID,
+              user_id: REDEEMER_USER_ID,
+              status: "PENDING",
+            },
+            error: null,
+          }),
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { id: VALID_UUID, status: "APPROVED" },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+        return chain;
+      }
+      if (table === "user_profiles") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest
+            .fn()
+            .mockResolvedValue({ data: { family_id: FAMILY_ID }, error: null }),
+        };
+      }
+      if (table === "characters") {
+        // No character for this user
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest.fn().mockResolvedValue({ data: [], error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    const res = await POST(makeRequest(), params(VALID_UUID));
+    expect(res.status).toBe(200);
+    expect(mockUpdateProgress).not.toHaveBeenCalled();
+    expect(mockFamilyUpdateProgress).toHaveBeenCalledWith(FAMILY_ID, {
+      type: "REWARD_APPROVED",
+    });
   });
 });

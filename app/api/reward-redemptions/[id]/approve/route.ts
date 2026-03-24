@@ -11,6 +11,7 @@ import {
 import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { assertValidUuidParam } from "@/lib/api-route-params";
 import { AchievementProgressService } from "@/lib/achievement-progress-service";
+import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 
 export async function POST(
   request: NextRequest,
@@ -104,6 +105,15 @@ export async function POST(
       if (character) {
         const progressService = new AchievementProgressService(serviceSupabase);
         await progressService.updateProgress(character.id, {
+          type: "REWARD_APPROVED",
+        });
+      } else if (redemption.user_id && requesterProfile.family_id) {
+        // User has no character yet — update family progress directly so
+        // user-id-based evaluators (reward_redeemed, gold_spent) are credited.
+        const familyService = new FamilyAchievementProgressService(
+          serviceSupabase,
+        );
+        await familyService.updateProgress(requesterProfile.family_id, {
           type: "REWARD_APPROVED",
         });
       }
