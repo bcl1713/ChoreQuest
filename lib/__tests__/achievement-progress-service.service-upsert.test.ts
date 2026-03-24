@@ -244,12 +244,33 @@ describe("AchievementProgressService - service level", () => {
       }),
     };
     const writeUpsert = makeUpsertResult();
+    const userProfilesChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [{ id: USER_ID, characters: [{ id: CHARACTER_ID }] }],
+          error: null,
+        }),
+      }),
+    };
+    const familyAchievementsChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+    };
+    const familyProgressChain = {
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+    };
 
     const readClient = makeReadClient({
       characters: charChain as unknown as MockChain,
       achievements: achievementsChain as unknown as MockChain,
       character_achievements: charAchChain,
       quest_instances: questChain as unknown as MockChain,
+      user_profiles: userProfilesChain as unknown as MockChain,
+      family_achievements: familyAchievementsChain as unknown as MockChain,
+      family_achievement_progress: familyProgressChain as unknown as MockChain,
     });
     mockWriteClient.from.mockReturnValue(writeUpsert);
 

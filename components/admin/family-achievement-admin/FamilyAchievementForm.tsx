@@ -140,6 +140,36 @@ export function FamilyAchievementForm({
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                XP Reward
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.xp_reward}
+                onChange={(e) => onChange("xp_reward", e.target.value)}
+                className="w-full bg-dark-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:border-gold-500 focus:outline-none"
+                data-testid="family-achievement-xp-reward-input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Gold Reward
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={formData.gold_reward}
+                onChange={(e) => onChange("gold_reward", e.target.value)}
+                className="w-full bg-dark-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:border-gold-500 focus:outline-none"
+                data-testid="family-achievement-gold-reward-input"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <input
               type="checkbox"

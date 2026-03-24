@@ -42,6 +42,7 @@ const achievementRow = {
 const familyContext = {
   userIds: ["u-1"],
   characterIds: ["c-1"],
+  allUserIds: ["u-1"],
   totalMemberCount: 1,
   membersWithCharCount: 1,
 };

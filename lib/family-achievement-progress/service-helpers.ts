@@ -20,6 +20,7 @@ export async function recomputeAchievementImpl(
   familyContext: {
     userIds: string[];
     characterIds: string[];
+    allUserIds: string[];
     totalMemberCount: number;
     membersWithCharCount: number;
   },
@@ -46,14 +47,20 @@ export async function recomputeAchievementImpl(
   const mode = config.family_evaluation_mode ?? "sum";
   const threshold = config.threshold ?? 0;
 
-  const { userIds, characterIds, totalMemberCount, membersWithCharCount } =
-    familyContext;
+  const {
+    userIds,
+    characterIds,
+    allUserIds,
+    totalMemberCount,
+    membersWithCharCount,
+  } = familyContext;
 
   const result = await evaluator(
     readClient,
     familyId,
     userIds,
     characterIds,
+    allUserIds,
     mode,
   );
 

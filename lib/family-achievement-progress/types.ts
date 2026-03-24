@@ -12,6 +12,7 @@ export type FamilyEvaluatorFn = (
   familyId: string,
   userIds: string[],
   characterIds: string[],
+  allUserIds: string[],
   mode: "sum" | "all",
 ) => Promise<{ current: number }>;
 

@@ -59,6 +59,7 @@ const evaluateQuestComplete: FamilyEvaluatorFn = async (
   _familyId,
   userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -81,6 +82,7 @@ const evaluateQuestVolunteer: FamilyEvaluatorFn = async (
   _familyId,
   _userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -101,6 +103,7 @@ const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
   _familyId,
   userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -122,12 +125,13 @@ const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
 const evaluateBossDefeated: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
+  _userIds,
   _characterIds,
+  allUserIds,
   mode,
 ) => {
   const values: number[] = [];
-  for (const userId of userIds) {
+  for (const userId of allUserIds) {
     const { count, error } = await client
       .from("boss_battle_participants")
       .select("*", { count: "exact", head: true })
@@ -142,12 +146,13 @@ const evaluateBossDefeated: FamilyEvaluatorFn = async (
 const evaluateBossParticipated: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
+  _userIds,
   _characterIds,
+  allUserIds,
   mode,
 ) => {
   const values: number[] = [];
-  for (const userId of userIds) {
+  for (const userId of allUserIds) {
     const { count, error } = await client
       .from("boss_battle_participants")
       .select("*", { count: "exact", head: true })

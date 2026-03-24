@@ -6,6 +6,7 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
   _familyId,
   userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -46,12 +47,13 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
 export const evaluateGoldSpent: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
+  _userIds,
   _characterIds,
+  allUserIds,
   mode,
 ) => {
   const values: number[] = [];
-  for (const userId of userIds) {
+  for (const userId of allUserIds) {
     const { data, error } = await client
       .from("reward_redemptions")
       .select("cost")
@@ -67,12 +69,13 @@ export const evaluateGoldSpent: FamilyEvaluatorFn = async (
 export const evaluateRewardRedeemed: FamilyEvaluatorFn = async (
   client,
   _familyId,
-  userIds,
+  _userIds,
   _characterIds,
+  allUserIds,
   mode,
 ) => {
   const values: number[] = [];
-  for (const userId of userIds) {
+  for (const userId of allUserIds) {
     const { count, error } = await client
       .from("reward_redemptions")
       .select("*", { count: "exact", head: true })
@@ -89,6 +92,7 @@ export const evaluateXpEarned: FamilyEvaluatorFn = async (
   _familyId,
   _userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -109,6 +113,7 @@ export const evaluateLevelReached: FamilyEvaluatorFn = async (
   _familyId,
   _userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -129,6 +134,7 @@ export const evaluateStreakReached: FamilyEvaluatorFn = async (
   _familyId,
   _userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -152,6 +158,7 @@ export const evaluateClassChange: FamilyEvaluatorFn = async (
   _familyId,
   _userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
@@ -172,6 +179,7 @@ export const evaluateHonorEarned: FamilyEvaluatorFn = async (
   _familyId,
   _userIds,
   characterIds,
+  _allUserIds,
   mode,
 ) => {
   const values: number[] = [];
