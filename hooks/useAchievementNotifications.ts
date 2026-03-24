@@ -60,16 +60,18 @@ export function useAchievementNotifications(
     prevCurrentIdRef.current = null;
     setQueue([]);
 
-    if (!characterId) {
+    if (!characterId && !familyId) {
       return;
     }
 
     let cancelled = false;
 
-    fetchUnnotifiedAchievements(characterId).then((notifications) => {
-      if (cancelled) return;
-      notifications.forEach(enqueue);
-    });
+    if (characterId) {
+      fetchUnnotifiedAchievements(characterId).then((notifications) => {
+        if (cancelled) return;
+        notifications.forEach(enqueue);
+      });
+    }
 
     if (familyId) {
       fetchUnnotifiedFamilyAchievements(familyId).then((notifications) => {
@@ -183,7 +185,10 @@ export function useAchievementNotifications(
 
   const onDismiss = useCallback(() => {
     setQueue((prev) => {
-      const next = prev.slice(1);
+      const [dismissed, ...next] = prev;
+      if (dismissed) {
+        queuedAchievementIds.current.delete(dismissed.achievementId);
+      }
       return next;
     });
   }, []);
