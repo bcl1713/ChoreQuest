@@ -64,10 +64,15 @@ export class FamilyAchievementProgressService {
         : profile.characters
           ? [profile.characters]
           : [];
-      for (const char of chars) {
+      if (chars.length > 0) {
+        for (const char of chars) {
+          userIds.push(profile.id);
+          characterIds.push((char as { id: string }).id);
+          usersWithChars.add(profile.id);
+        }
+      } else {
+        // Include members without characters so user-based evaluators count them
         userIds.push(profile.id);
-        characterIds.push((char as { id: string }).id);
-        usersWithChars.add(profile.id);
       }
     }
 

@@ -162,11 +162,15 @@ export function useFamilyAchievementAdmin() {
   const handleSubmit = async () => {
     setActionLoading(true);
     try {
-      let parsedConfig: Record<string, unknown> = {};
+      let parsedConfig: Record<string, unknown>;
       try {
         parsedConfig = JSON.parse(formData.criteria_config);
       } catch {
-        // Keep empty object if invalid JSON
+        setError(
+          "Criteria config contains invalid JSON. Please fix it before saving.",
+        );
+        setActionLoading(false);
+        return;
       }
 
       const payload = {
