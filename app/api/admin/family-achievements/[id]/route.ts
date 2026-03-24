@@ -164,11 +164,11 @@ export async function PUT(
       try {
         await service.recomputeAchievement(requesterProfile.family_id, id);
       } catch (err) {
-        // Recompute failed — the definition updated but progress/unlock state now
-        // reflects the old criteria. Surface this as a 500 so the caller knows the
-        // achievement is in an inconsistent state rather than silently succeeding.
-        throw new Error(
-          `Achievement definition updated but progress recomputation failed for ${id}: ${err instanceof Error ? err.message : String(err)}`,
+        // Recompute failure is non-fatal — the definition update is already committed.
+        // Log and continue so callers aren't told the edit failed and don't retry.
+        console.error(
+          `Achievement definition updated but progress recomputation failed for ${id}:`,
+          err,
         );
       }
     }

@@ -253,8 +253,11 @@ export async function POST(request: NextRequest) {
         achievement.id,
       );
     } catch (err) {
-      throw new Error(
-        `Achievement created but progress seeding failed for ${achievement.id}: ${err instanceof Error ? err.message : String(err)}`,
+      // Recompute failure is non-fatal — the achievement row is already committed.
+      // Log and return 201 so callers don't retry and create a duplicate row.
+      console.error(
+        `Achievement created but progress seeding failed for ${achievement.id}:`,
+        err,
       );
     }
 
