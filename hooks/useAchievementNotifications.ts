@@ -158,6 +158,18 @@ export function useAchievementNotifications(
         const record = event.record;
         const oldRecord = event.old_record;
 
+        // Handle non-null → null (re-lock): remove any stale queued toast
+        if (!record.unlocked_at && oldRecord?.unlocked_at != null) {
+          const reLockedKey = `family_${record.family_achievement_id as string}`;
+          if (queuedAchievementIds.current.has(reLockedKey)) {
+            queuedAchievementIds.current.delete(reLockedKey);
+            setQueue((prev) =>
+              prev.filter((n) => n.achievementId !== reLockedKey),
+            );
+          }
+          return;
+        }
+
         // Only process null → non-null unlocked_at transitions
         if (!record.unlocked_at) return;
         if (oldRecord?.unlocked_at != null) return;

@@ -23,3 +23,54 @@ CREATE POLICY "Family members can view family achievements"
       )
     )
   );
+
+-- The existing "Guild Masters can manage family achievements" FOR ALL policy
+-- covers SELECT and has no is_hidden / unlocked_at guard, so Guild Masters
+-- could still read locked hidden achievements directly.  Replace it with
+-- write-only policies; the family-member SELECT policy above (which does have
+-- the hidden filter) now handles SELECT for GMs as well.
+DROP POLICY IF EXISTS "Guild Masters can manage family achievements" ON family_achievements;
+
+CREATE POLICY "Guild Masters can insert family achievements"
+  ON family_achievements
+  FOR INSERT
+  WITH CHECK (
+    family_id = get_user_family_id()
+    AND EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid()
+        AND role = 'GUILD_MASTER'
+    )
+  );
+
+CREATE POLICY "Guild Masters can update family achievements"
+  ON family_achievements
+  FOR UPDATE
+  USING (
+    family_id = get_user_family_id()
+    AND EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid()
+        AND role = 'GUILD_MASTER'
+    )
+  )
+  WITH CHECK (
+    family_id = get_user_family_id()
+    AND EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid()
+        AND role = 'GUILD_MASTER'
+    )
+  );
+
+CREATE POLICY "Guild Masters can delete family achievements"
+  ON family_achievements
+  FOR DELETE
+  USING (
+    family_id = get_user_family_id()
+    AND EXISTS (
+      SELECT 1 FROM user_profiles
+      WHERE id = auth.uid()
+        AND role = 'GUILD_MASTER'
+    )
+  );
