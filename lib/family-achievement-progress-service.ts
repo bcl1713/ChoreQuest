@@ -5,6 +5,7 @@ import {
   FAMILY_EVALUATOR_REGISTRY,
   FAMILY_EVENT_CRITERIA_MAP,
   ALL_FAMILY_CRITERIA_TYPES,
+  isCharBased,
 } from "./family-achievement-progress/family-evaluators";
 import type {
   AchievementEvent,
@@ -238,12 +239,11 @@ export class FamilyAchievementProgressService {
         mode,
         memberPairs,
       );
-
-      // "all"-mode: members without characters haven't met any threshold.
-      const current =
-        mode === "all" && membersWithCharCount < totalMemberCount
-          ? 0
-          : result.current;
+      const guardFails =
+        mode === "all" &&
+        membersWithCharCount < totalMemberCount &&
+        isCharBased(achievement.criteria_type);
+      const current = guardFails ? 0 : result.current;
 
       upsertRows.push({
         family_id: familyId,

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
-import { FAMILY_EVALUATOR_REGISTRY } from "./family-evaluators";
+import { FAMILY_EVALUATOR_REGISTRY, isCharBased } from "./family-evaluators";
 import type {
   FetchedFamilyAchievement,
   FamilyCriteriaConfig,
@@ -74,10 +74,11 @@ export async function recomputeAchievementImpl(
     memberPairs,
   );
 
-  const current =
-    mode === "all" && membersWithCharCount < totalMemberCount
-      ? 0
-      : result.current;
+  const guardFails =
+    mode === "all" &&
+    membersWithCharCount < totalMemberCount &&
+    isCharBased(achievement.criteria_type);
+  const current = guardFails ? 0 : result.current;
 
   const { error: upsertError } = await writeClient
     .from("family_achievement_progress")

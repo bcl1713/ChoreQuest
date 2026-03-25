@@ -37,6 +37,24 @@ export const FAMILY_EVENT_CRITERIA_MAP: Record<AchievementEventType, string[]> =
     CLASS_CHANGED: ["class_change"],
   };
 
+// Criteria types that evaluate per-character data — members without a character
+// contribute 0, which in "all" mode naturally floors the aggregate.  The
+// character-presence guard in the progress service must be limited to these
+// types so that user-based criteria (gold_spent, reward_redeemed, …) are not
+// incorrectly zeroed when a family member has no character.
+const CHARACTER_BASED_FAMILY_CRITERIA_TYPES: ReadonlySet<string> = new Set([
+  "quest_volunteer",
+  "xp_earned",
+  "level_reached",
+  "streak_reached",
+  "class_change",
+  "honor_earned",
+]);
+
+export function isCharBased(type: string): boolean {
+  return CHARACTER_BASED_FAMILY_CRITERIA_TYPES.has(type);
+}
+
 export const ALL_FAMILY_CRITERIA_TYPES = [
   "quest_complete",
   "quest_volunteer",
