@@ -36,7 +36,10 @@ jest.mock("@/lib/realtime-context", () => ({
   }),
 }));
 
-global.fetch = jest.fn().mockResolvedValue({ ok: true });
+global.fetch = jest.fn().mockResolvedValue({
+  ok: true,
+  json: () => Promise.resolve({ achievements: [], backfill_ok: true }),
+});
 
 function makeFamilyCatchUpChain(rows: unknown[] = []) {
   return {
@@ -98,7 +101,10 @@ let capturedFamilyListener: ((event: RealtimeEvent) => void) | null = null;
 beforeEach(() => {
   jest.clearAllMocks();
   capturedFamilyListener = null;
-  (global.fetch as jest.Mock).mockResolvedValue({ ok: true });
+  (global.fetch as jest.Mock).mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ achievements: [], backfill_ok: true }),
+  });
 
   mockOnAchievementUnlockUpdate.mockImplementation(() => () => {});
   mockOnFamilyAchievementUnlockUpdate.mockImplementation((listener) => {

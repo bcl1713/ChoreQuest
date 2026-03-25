@@ -47,6 +47,15 @@ not just the member whose action triggered the unlock.
 - **THEN** the catch-up query SHALL include unnotified
   family achievement unlocks
 
+#### Scenario: Catch-up suppressed when backfill reports failure
+
+- **WHEN** `GET /api/family-achievements` returns HTTP 200
+  but with `backfill_ok: false` in the response body
+- **THEN** `fetchUnnotifiedFamilyAchievements` SHALL return
+  an empty array and suppress catch-up notifications, to
+  avoid false toasts from stale `unlocked_at` rows that
+  a failed backfill could not verify or correct
+
 ### Requirement: Family notification realtime subscription
 
 The notification system SHALL subscribe to

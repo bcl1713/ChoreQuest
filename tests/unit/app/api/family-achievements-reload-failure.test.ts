@@ -127,4 +127,42 @@ describe("POST-backfill reload failure — fail-closed redaction", () => {
     expect(hidden.unlocked_at).toBeNull();
     expect(hidden.xp_reward).toBeNull();
   });
+
+  it("returns backfill_ok: false when backfillIfStale throws", async () => {
+    mockBackfillIfStale.mockRejectedValueOnce(new Error("DB timeout"));
+    authAs("HERO");
+
+    mockServiceSupabase.from.mockImplementation(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest
+        .fn()
+        .mockResolvedValue({ data: [hiddenAchievement], error: null }),
+      then: jest.fn(),
+    }));
+
+    // Second call — initial progress fetch
+    let callCount = 0;
+    mockServiceSupabase.from.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest
+            .fn()
+            .mockResolvedValue({ data: [hiddenAchievement], error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: staleProgress, error: null }),
+      };
+    });
+
+    const response = await getFamilyAchievements(createRequest());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.backfill_ok).toBe(false);
+  });
 });

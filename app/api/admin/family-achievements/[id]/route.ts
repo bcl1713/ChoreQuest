@@ -204,10 +204,11 @@ export async function PUT(
     }
 
     // Criteria changed — recompute progress so stored values and unlock state
-    // stay consistent with the new definition.  This is non-fatal: the update
-    // has already committed, so we log and continue rather than returning an
-    // error that would prompt the caller to retry a change that already took
-    // effect (same treatment as POST /api/admin/family-achievements).
+    // stay consistent with the new definition.  Unlike POST (where no progress
+    // row exists yet and backfill will catch up naturally), PUT has an existing
+    // row with old state that will never be corrected without a recompute.
+    // Propagate failures so the caller knows to retry — retrying PUT with the
+    // same body is safe because the definition update is idempotent.
     if (criteria_type !== undefined || criteria_config !== undefined) {
       const service = new FamilyAchievementProgressService();
       try {
@@ -216,6 +217,9 @@ export async function PUT(
         console.error(
           `Achievement updated but progress recompute failed for ${id}:`,
           err,
+        );
+        throw new Error(
+          `Achievement definition was saved but progress recompute failed. Retry to recompute.`,
         );
       }
     }

@@ -363,6 +363,42 @@ family achievements via admin API routes.
   Supabase, consistent with how other parameterized
   routes in this codebase use `assertValidUuidParam`
 
+#### Scenario: PUT propagates recompute failure
+
+- **WHEN** a PUT to `/api/admin/family-achievements/[id]`
+  updates `criteria_type` or `criteria_config` and the
+  definition is saved successfully but
+  `recomputeAchievement()` subsequently throws
+- **THEN** the handler SHALL propagate the error and
+  return a 500 response so the caller knows to retry
+- **NOTE** Unlike the POST path (where no progress row
+  exists yet and a future backfill will catch up),
+  PUT has an existing `family_achievement_progress`
+  row with the old state that will never be corrected
+  without an explicit recompute.  Propagating the error
+  prompts a retry, and retrying PUT with the same body
+  is safe because the definition update is idempotent.
+
+### Requirement: backfill_ok field in GET /api/family-achievements response
+
+The `GET /api/family-achievements` response body SHALL
+include a `backfill_ok: boolean` field. It SHALL be
+`true` when the backfill completed successfully (or was
+not needed) and `false` when `backfillIfStale` threw or
+the post-backfill progress reload failed.
+
+#### Scenario: Successful response includes backfill_ok: true
+
+- **WHEN** the backfill completes without error
+- **THEN** the response SHALL include `backfill_ok: true`
+
+#### Scenario: Failed backfill signals backfill_ok: false
+
+- **WHEN** `backfillIfStale` throws during request handling
+- **THEN** the response SHALL include `backfill_ok: false`
+  so callers can distinguish a silent internal failure
+  from a successful (no-op) response
+
 ### Requirement: Family achievement unit tests
 
 The service SHALL have unit tests covering family

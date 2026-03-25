@@ -163,7 +163,10 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ achievements: mergedAchievements });
+    return NextResponse.json({
+      achievements: mergedAchievements,
+      backfill_ok: !backfillFailed,
+    });
   } catch (error) {
     return handleRouteError(error);
   }

@@ -159,8 +159,15 @@ export async function fetchUnnotifiedFamilyAchievements(
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!recomputeResponse.ok) return [];
+    // Even on HTTP 200 the route can fail-close internally (backfillIfStale
+    // throws) and return backfill_ok: false.  Treat that as a failure so we
+    // don't enqueue false toasts from stale unlocked_at rows.
+    const recomputeBody = (await recomputeResponse.json()) as {
+      backfill_ok?: boolean;
+    };
+    if (recomputeBody.backfill_ok === false) return [];
   } catch {
-    // Network failure — cannot verify that unlock state is fresh.
+    // Network failure or JSON parse failure — cannot verify unlock state is fresh.
     return [];
   }
 

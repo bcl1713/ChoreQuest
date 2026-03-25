@@ -143,6 +143,22 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
     expect(body.success).toBe(true);
   });
 
+  it("returns 500 when criteria changed but recompute fails", async () => {
+    authAs("GUILD_MASTER");
+    mockServiceWithExisting();
+    mockRecomputeAchievement.mockRejectedValueOnce(new Error("DB timeout"));
+
+    const response = await updateFamilyAchievement(
+      createRequest("PUT", {
+        name: "Updated Achievement",
+        criteria_type: "quest_complete",
+        criteria_config: { threshold: 50 },
+      }),
+      { params: makeParams(VALID_ACH_ID) },
+    );
+    expect(response.status).toBe(500);
+  });
+
   it("returns 400 when family_evaluation_mode is invalid (PUT)", async () => {
     authAs("GUILD_MASTER");
     const response = await updateFamilyAchievement(

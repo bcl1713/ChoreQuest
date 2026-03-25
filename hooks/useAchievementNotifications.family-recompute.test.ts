@@ -35,7 +35,10 @@ jest.mock("@/lib/realtime-context", () => ({
   }),
 }));
 
-global.fetch = jest.fn().mockResolvedValue({ ok: true });
+global.fetch = jest.fn().mockResolvedValue({
+  ok: true,
+  json: () => Promise.resolve({ achievements: [], backfill_ok: true }),
+});
 
 function makeFamilyCatchUpChain(rows: unknown[] = []) {
   return {
@@ -69,7 +72,10 @@ function makeFamilyAchievementChain(data: unknown = null) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (global.fetch as jest.Mock).mockResolvedValue({ ok: true });
+  (global.fetch as jest.Mock).mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ achievements: [], backfill_ok: true }),
+  });
   mockOnAchievementUnlockUpdate.mockImplementation(() => () => {});
   mockOnFamilyAchievementUnlockUpdate.mockImplementation(() => () => {});
   mockFrom.mockImplementation((table: string) => {
@@ -105,7 +111,10 @@ describe("useAchievementNotifications — family recompute before catch-up", () 
     const callOrder: string[] = [];
     (global.fetch as jest.Mock).mockImplementation((url: string) => {
       callOrder.push(url);
-      return Promise.resolve({ ok: true });
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ achievements: [], backfill_ok: true }),
+      });
     });
 
     mockFrom.mockImplementation((table: string) => {
@@ -221,6 +230,56 @@ describe("useAchievementNotifications — family recompute before catch-up", () 
     );
 
     await new Promise((r) => setTimeout(r, 50));
+    expect(result.current.current).toBeNull();
+  });
+
+  it("suppresses catch-up when recompute returns backfill_ok: false (silent backfill failure)", async () => {
+    const familyCatchUpRows = [
+      {
+        id: FAP_ID,
+        family_achievement_id: FA_ID,
+        family_achievements: {
+          name: "Team Effort",
+          description: "Complete 50 quests as a family",
+          icon: "👨‍👩‍👧‍👦",
+          xp_reward: 0,
+          gold_reward: 0,
+        },
+      },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if ((url as string).includes("/api/family-achievements")) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ achievements: [], backfill_ok: false }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+    });
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements") return makeCatchUpChain([]);
+      if (table === "family_achievement_progress")
+        return makeFamilyCatchUpChain(familyCatchUpRows);
+      if (table === "family_achievement_user_notifications")
+        return makeUserNotificationsChain([]);
+      if (table === "achievements")
+        return makeAchievementChain(makeAchievement());
+      if (table === "family_achievements")
+        return makeFamilyAchievementChain(makeAchievement());
+      return {};
+    });
+
+    const { result } = renderHook(() =>
+      useAchievementNotifications(CHAR_ID, FAMILY_ID),
+    );
+
+    await new Promise((r) => setTimeout(r, 50));
+    // backfill_ok: false means unlock state cannot be trusted — suppress catch-up.
     expect(result.current.current).toBeNull();
   });
 
