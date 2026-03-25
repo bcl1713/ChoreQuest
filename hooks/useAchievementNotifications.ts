@@ -170,6 +170,12 @@ export function useAchievementNotifications(
               prev.filter((n) => n.achievementId !== reLockedKey),
             );
           }
+          // Clear the notified guard so the next unlock of the same progress row
+          // triggers markFamilyAchievementNotified again (same id, different epoch).
+          const reLockedProgressId = record.id as string;
+          if (prevCurrentIdRef.current === reLockedProgressId) {
+            prevCurrentIdRef.current = null;
+          }
           return;
         }
 
