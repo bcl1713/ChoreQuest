@@ -43,13 +43,19 @@ describe("FamilyAchievementProgressService.backfillIfStale", () => {
     service = new FamilyAchievementProgressService(readClient as never);
     jest.spyOn(service, "backfillProgress").mockResolvedValue(undefined);
 
-    const result = await service.backfillIfStale("fam-1", false, [3], []);
+    const result = await service.backfillIfStale(
+      "fam-1",
+      false,
+      [3],
+      [],
+      false,
+    );
     expect(result).toBe(false);
     expect(service.backfillProgress).not.toHaveBeenCalled();
   });
 
   it("backfills and returns true when hasMissingProgress is true", async () => {
-    const result = await service.backfillIfStale("fam-1", true, [], []);
+    const result = await service.backfillIfStale("fam-1", true, [], [], false);
     expect(result).toBe(true);
     expect(service.backfillProgress).toHaveBeenCalledWith("fam-1");
   });
@@ -65,16 +71,45 @@ describe("FamilyAchievementProgressService.backfillIfStale", () => {
     service = new FamilyAchievementProgressService(readClient as never);
     jest.spyOn(service, "backfillProgress").mockResolvedValue(undefined);
 
-    const result = await service.backfillIfStale("fam-1", false, [3], []);
+    const result = await service.backfillIfStale(
+      "fam-1",
+      false,
+      [3],
+      [],
+      false,
+    );
     expect(result).toBe(true);
     expect(service.backfillProgress).toHaveBeenCalledWith("fam-1");
   });
 
-  it("backfills legacy rows that have no roster snapshot (both count arrays empty, no missing rows)", async () => {
-    // Simulate existing progress rows that pre-date member_count persistence.
-    // hasMissingProgress=false means rows exist, but both count arrays are empty
-    // because the stored progress objects lacked member_count fields.
-    const result = await service.backfillIfStale("fam-1", false, [], []);
+  it("backfills when all rows are legacy (no roster snapshots, no missing rows)", async () => {
+    // All progress rows pre-date member_count persistence — hasLegacyRows=true.
+    const result = await service.backfillIfStale("fam-1", false, [], [], true);
+    expect(result).toBe(true);
+    expect(service.backfillProgress).toHaveBeenCalledWith("fam-1");
+  });
+
+  it("backfills in mixed state where some rows have snapshots and some are legacy", async () => {
+    // A subset of rows have member_count snapshots; others are legacy.
+    // The snapshot comparison would pass (counts match), but legacy rows must
+    // still trigger a backfill — hasLegacyRows takes priority.
+    const readClient = {
+      from: jest.fn().mockImplementation(() =>
+        makeChain({
+          eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
+        }),
+      ),
+    };
+    service = new FamilyAchievementProgressService(readClient as never);
+    jest.spyOn(service, "backfillProgress").mockResolvedValue(undefined);
+
+    const result = await service.backfillIfStale(
+      "fam-1",
+      false,
+      [3], // snapshot from new-style row — matches current count
+      [],
+      true, // but another row has no snapshot
+    );
     expect(result).toBe(true);
     expect(service.backfillProgress).toHaveBeenCalledWith("fam-1");
   });

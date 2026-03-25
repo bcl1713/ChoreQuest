@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
     );
     const storedCounts: number[] = [];
     const storedWithChars: number[] = [];
+    let hasLegacyRows = false;
     for (const p of progressMap.values()) {
       const snap = p.progress as {
         member_count?: number;
@@ -77,6 +78,11 @@ export async function GET(request: NextRequest) {
         storedCounts.push(snap.member_count);
       if (snap?.members_with_char_count !== undefined)
         storedWithChars.push(snap.members_with_char_count);
+      if (
+        snap?.member_count === undefined &&
+        snap?.members_with_char_count === undefined
+      )
+        hasLegacyRows = true;
     }
 
     const familyService = new FamilyAchievementProgressService(serviceSupabase);
@@ -88,6 +94,7 @@ export async function GET(request: NextRequest) {
         hasMissingProgress,
         storedCounts,
         storedWithChars,
+        hasLegacyRows,
       );
     } catch (backfillErr) {
       console.error("Family achievement backfill failed:", backfillErr);

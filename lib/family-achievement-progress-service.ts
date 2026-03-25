@@ -135,10 +135,13 @@ export class FamilyAchievementProgressService {
     hasMissingProgress: boolean,
     storedMemberCounts: number[],
     storedMembersWithCharCounts: number[],
+    hasLegacyRows: boolean,
   ): Promise<boolean> {
     let rosterChanged = false;
 
-    if (
+    if (hasLegacyRows) {
+      rosterChanged = true;
+    } else if (
       storedMemberCounts.length > 0 ||
       storedMembersWithCharCounts.length > 0
     ) {
@@ -165,9 +168,6 @@ export class FamilyAchievementProgressService {
           (mc) => mc !== currentWithChars,
         );
       }
-    } else if (!hasMissingProgress) {
-      // Legacy rows lack roster snapshots — can't verify state, force backfill.
-      rosterChanged = true;
     }
 
     if (!hasMissingProgress && !rosterChanged) return false;
