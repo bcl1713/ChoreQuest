@@ -209,14 +209,19 @@ export async function DELETE(
     const { requesterProfile, serviceSupabase } =
       await requireGuildMaster(request);
 
-    const { error } = await serviceSupabase
+    const { data, error } = await serviceSupabase
       .from("family_achievements")
       .delete()
       .eq("id", id)
-      .eq("family_id", requesterProfile.family_id);
+      .eq("family_id", requesterProfile.family_id)
+      .select("id");
 
     if (error) {
       throw new Error(`Failed to delete family achievement: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      throw new NotFoundError("FAMILY_ACHIEVEMENT_NOT_FOUND");
     }
 
     return NextResponse.json({ success: true });

@@ -181,7 +181,11 @@ describe("DELETE /api/admin/family-achievements/[id]", () => {
     mockServiceSupabase.from.mockImplementation(() => ({
       delete: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockResolvedValue({ error: null }),
+          eq: jest.fn().mockReturnValue({
+            select: jest
+              .fn()
+              .mockResolvedValue({ data: [{ id: "ach-1" }], error: null }),
+          }),
         }),
       }),
     }));
@@ -192,5 +196,23 @@ describe("DELETE /api/admin/family-achievements/[id]", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
+  });
+
+  it("returns 404 when achievement does not exist", async () => {
+    authAs("GUILD_MASTER");
+    mockServiceSupabase.from.mockImplementation(() => ({
+      delete: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      }),
+    }));
+
+    const response = await deleteFamilyAchievement(createRequest("DELETE"), {
+      params: makeParams("nonexistent"),
+    });
+    expect(response.status).toBe(404);
   });
 });

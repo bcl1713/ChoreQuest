@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
         icon: isLocked ? null : a.icon,
         xp_reward: isLocked ? null : a.xp_reward,
         gold_reward: isLocked ? null : a.gold_reward,
-        category: isLocked ? null : achievement_categories,
+        category: achievement_categories,
         unlocked_at: p?.unlocked_at ?? null,
         progress: isLocked ? null : progressForResponse,
         notified: p?.notified ?? null,

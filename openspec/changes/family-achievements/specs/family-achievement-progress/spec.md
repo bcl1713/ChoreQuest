@@ -289,6 +289,30 @@ family with progress merged in.
   achievements for their family with progress,
   unlock status, and achievement metadata
 
+#### Scenario: Locked hidden achievement is redacted but categorized
+
+- **WHEN** the response includes a family achievement
+  with `is_hidden: true` and no `unlocked_at` (still
+  locked)
+- **THEN** `name` and `description` SHALL be replaced
+  with `"???"`, and `icon`, `xp_reward`, `gold_reward`,
+  `criteria_type`, `criteria_config`, and `progress`
+  SHALL be `null`
+- **AND** `category` SHALL still be returned with its
+  full value so the achievement appears under the
+  correct category tab and counts toward category
+  completion totals
+
+> **Design note (settled):** Redacting only name and
+> description is the correct privacy boundary for hidden
+> achievements. The category is metadata about
+> organization, not a spoiler for the unlock condition;
+> returning it lets the UI place the achievement in the
+> right tab and show accurate "N/M" completion counts.
+> Nulling out the category (as was previously
+> attempted) broke category filtering without adding
+> meaningful secrecy. Do not re-open this question.
+
 #### Scenario: Unauthenticated request
 
 - **WHEN** an unauthenticated request is sent to
