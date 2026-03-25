@@ -128,10 +128,11 @@ export async function GET(request: NextRequest) {
         ...rest
       } = a;
 
-      // When backfill threw we cannot verify that any achievement's cached
-      // unlock is still valid (the roster may have changed). Treat all as
-      // unverified so stale unlock state is never exposed to clients (fail closed).
-      const effectiveProgress = backfillFailed ? undefined : p;
+      // When backfill failed we cannot verify that a hidden achievement's cached
+      // unlock is still valid (the roster may have changed). Redact hidden
+      // achievements only — visible achievements can safely use the previously
+      // read progress row regardless of backfill outcome.
+      const effectiveProgress = backfillFailed && a.is_hidden ? undefined : p;
       const isLocked = a.is_hidden && !effectiveProgress?.unlocked_at;
 
       // Strip the internal member_count tracking key from the stored progress

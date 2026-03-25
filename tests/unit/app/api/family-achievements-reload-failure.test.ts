@@ -53,6 +53,20 @@ function authAs(role: string, familyId: string | null = "family-001") {
   }));
 }
 
+const visibleAchievement = {
+  id: "fa-visible",
+  name: "All Level 5",
+  description: "Everyone reaches level 5",
+  icon: "star",
+  category_id: null,
+  xp_reward: 100,
+  gold_reward: 50,
+  is_hidden: false,
+  criteria_type: "level_reached",
+  criteria_config: { threshold: 5, family_evaluation_mode: "all" },
+  achievement_categories: null,
+};
+
 const hiddenAchievement = {
   id: "fa-hidden",
   name: "Secret Quest",
@@ -126,6 +140,51 @@ describe("POST-backfill reload failure — fail-closed redaction", () => {
     expect(hidden.name).toBe("???");
     expect(hidden.unlocked_at).toBeNull();
     expect(hidden.xp_reward).toBeNull();
+  });
+
+  it("preserves progress for visible achievements when backfill throws", async () => {
+    mockBackfillIfStale.mockRejectedValueOnce(new Error("DB connection error"));
+    authAs("HERO");
+
+    // Visible achievement that was legitimately unlocked before backfill failed.
+    const earnedProgress = [
+      {
+        family_achievement_id: "fa-visible",
+        unlocked_at: "2024-06-01T00:00:00Z",
+        progress: { current: 5, threshold: 5, member_count: 3 },
+        notified: true,
+      },
+    ];
+
+    let callCount = 0;
+    mockServiceSupabase.from.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest
+            .fn()
+            .mockResolvedValue({ data: [visibleAchievement], error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: earnedProgress, error: null }),
+      };
+    });
+
+    const response = await getFamilyAchievements(createRequest());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const ach = body.achievements.find(
+      (a: { id: string }) => a.id === "fa-visible",
+    );
+    // Visible achievement must not be redacted by a backfill failure.
+    expect(ach.name).toBe("All Level 5");
+    expect(ach.unlocked_at).toBe("2024-06-01T00:00:00Z");
+    expect(ach.progress).toEqual({ current: 5, threshold: 5 });
+    expect(body.backfill_ok).toBe(false);
   });
 
   it("returns backfill_ok: false when backfillIfStale throws", async () => {
