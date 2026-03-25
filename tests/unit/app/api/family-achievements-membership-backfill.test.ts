@@ -67,6 +67,20 @@ const achievement = {
   achievement_categories: null,
 };
 
+const hiddenAchievement = {
+  id: "fa-hidden",
+  name: "Secret Achievement",
+  description: "Hidden details",
+  icon: "secret",
+  category_id: null,
+  xp_reward: 500,
+  gold_reward: 250,
+  is_hidden: true,
+  criteria_type: "level_reached",
+  criteria_config: { threshold: 5, family_evaluation_mode: "all" },
+  achievement_categories: null,
+};
+
 describe("GET /api/family-achievements — membership-change backfill", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -208,5 +222,51 @@ describe("GET /api/family-achievements — membership-change backfill", () => {
     expect(response.status).toBe(200);
     // Only achievements + progress queries fired; no re-fetch.
     expect(serviceCallCount).toBe(2);
+  });
+
+  it("redacts hidden achievements when backfill throws (fail closed)", async () => {
+    mockBackfillIfStale.mockRejectedValueOnce(new Error("DB connection error"));
+    authAs("HERO");
+
+    // Stale progress row claims the hidden achievement is unlocked.
+    const staleProgress = [
+      {
+        family_achievement_id: "fa-hidden",
+        unlocked_at: "2024-01-01T00:00:00Z",
+        progress: { current: 5, threshold: 5, member_count: 2 },
+        notified: true,
+      },
+    ];
+
+    let serviceCallCount = 0;
+    mockServiceSupabase.from.mockImplementation(() => {
+      serviceCallCount++;
+      if (serviceCallCount === 1) {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest
+            .fn()
+            .mockResolvedValue({ data: [hiddenAchievement], error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: staleProgress, error: null }),
+      };
+    });
+
+    const response = await getFamilyAchievements(createRequest());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const ach = body.achievements[0];
+    // Stale unlock must not bleed through — hidden achievement stays redacted.
+    expect(ach.name).toBe("???");
+    expect(ach.description).toBe("???");
+    expect(ach.icon).toBeNull();
+    expect(ach.xp_reward).toBeNull();
+    expect(ach.gold_reward).toBeNull();
+    expect(ach.unlocked_at).toBeNull();
+    expect(ach.progress).toBeNull();
   });
 });

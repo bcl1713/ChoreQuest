@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
 
     const familyService = new FamilyAchievementProgressService(serviceSupabase);
     let backfilled = false;
+    let backfillFailed = false;
     try {
       backfilled = await familyService.backfillIfStale(
         familyId,
@@ -90,6 +91,9 @@ export async function GET(request: NextRequest) {
       );
     } catch (backfillErr) {
       console.error("Family achievement backfill failed:", backfillErr);
+      // Fail closed: we cannot verify cached unlock state is still valid after
+      // a potential roster change, so hidden achievements will be redacted below.
+      backfillFailed = true;
     }
 
     if (backfilled) {
@@ -111,11 +115,16 @@ export async function GET(request: NextRequest) {
         criteria_config,
         ...rest
       } = a;
-      const isLocked = a.is_hidden && !p?.unlocked_at;
+
+      // When backfill threw we cannot verify that a hidden achievement's cached
+      // unlock is still valid (the roster may have changed). Treat it as locked
+      // so stale unlock state is never exposed to clients (fail closed).
+      const effectiveProgress = backfillFailed && a.is_hidden ? undefined : p;
+      const isLocked = a.is_hidden && !effectiveProgress?.unlocked_at;
 
       // Strip the internal member_count tracking key from the stored progress
       // so the public API only exposes { current, threshold }.
-      const rawProgress = p?.progress as
+      const rawProgress = effectiveProgress?.progress as
         | { current: number; threshold: number; member_count?: number }
         | null
         | undefined;
@@ -136,9 +145,9 @@ export async function GET(request: NextRequest) {
         xp_reward: isLocked ? null : a.xp_reward,
         gold_reward: isLocked ? null : a.gold_reward,
         category: achievement_categories,
-        unlocked_at: p?.unlocked_at ?? null,
+        unlocked_at: effectiveProgress?.unlocked_at ?? null,
         progress: isLocked ? null : progressForResponse,
-        notified: p?.notified ?? null,
+        notified: effectiveProgress?.notified ?? null,
       };
     });
 
