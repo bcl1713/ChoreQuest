@@ -97,13 +97,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (backfilled) {
-      const { data: freshProgress } = await serviceSupabase
+      const { data: freshProgress, error: refreshError } = await serviceSupabase
         .from("family_achievement_progress")
         .select("family_achievement_id, unlocked_at, progress, notified")
         .eq("family_id", familyId);
-      progressMap = new Map(
-        (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
-      );
+      if (refreshError) {
+        console.error(
+          "Failed to reload progress after backfill:",
+          refreshError,
+        );
+        // Keep the pre-backfill progressMap rather than replacing it with an
+        // empty map; this prevents hidden achievements from being re-redacted
+        // due to a transient read failure after a successful backfill.
+      } else {
+        progressMap = new Map(
+          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
+        );
+      }
     }
 
     // Merge achievements with progress

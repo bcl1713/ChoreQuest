@@ -313,6 +313,16 @@ family with progress merged in.
 > attempted) broke category filtering without adding
 > meaningful secrecy. Do not re-open this question.
 
+#### Scenario: Progress reload failure after backfill
+
+- **WHEN** `backfillIfStale` succeeds but the
+  follow-up `family_achievement_progress` read fails
+- **THEN** the handler SHALL log the error and keep
+  the pre-backfill progress map rather than replacing
+  it with an empty result, so hidden achievements are
+  not incorrectly re-redacted due to a transient read
+  failure
+
 #### Scenario: Unauthenticated request
 
 - **WHEN** an unauthenticated request is sent to
@@ -342,6 +352,16 @@ family achievements via admin API routes.
 - **WHEN** a HERO or YOUNG_HERO sends POST to
   `/api/admin/family-achievements`
 - **THEN** the request SHALL be denied with 403
+
+#### Scenario: Malformed UUID in admin achievement ID routes
+
+- **WHEN** a GET, PUT, or DELETE request is sent to
+  `/api/admin/family-achievements/[id]` with an `id`
+  that is not a valid UUID
+- **THEN** the handler SHALL return 400 with code
+  `FAMILY_ACHIEVEMENT_ID_INVALID` without querying
+  Supabase, consistent with how other parameterized
+  routes in this codebase use `assertValidUuidParam`
 
 ### Requirement: Family achievement unit tests
 

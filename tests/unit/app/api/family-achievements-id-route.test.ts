@@ -26,6 +26,9 @@ import {
 } from "@/app/api/admin/family-achievements/[id]/route";
 import { POST as createFamilyAchievement } from "@/app/api/admin/family-achievements/route";
 
+const VALID_ACH_ID = "123e4567-e89b-12d3-a456-426614174000";
+const VALID_ACH_ID_2 = "123e4567-e89b-12d3-a456-426614174001";
+
 const makeParams = (id: string) =>
   Promise.resolve({ id }) as Promise<{ id: string }>;
 
@@ -58,7 +61,7 @@ function authAs(role: string, familyId: string | null = "family-001") {
   }));
 }
 
-function mockServiceWithExisting(id = "ach-1") {
+function mockServiceWithExisting(id = VALID_ACH_ID) {
   mockServiceSupabase.from.mockImplementation(() => ({
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
@@ -79,11 +82,22 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
     jest.clearAllMocks();
   });
 
+  it("returns 400 for malformed UUID", async () => {
+    authAs("GUILD_MASTER");
+    const response = await updateFamilyAchievement(
+      createRequest("PUT", { name: "Updated" }),
+      { params: makeParams("not-a-uuid") },
+    );
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.code).toBe("FAMILY_ACHIEVEMENT_ID_INVALID");
+  });
+
   it("returns 403 for non-Guild-Master", async () => {
     authAs("HERO");
     const response = await updateFamilyAchievement(
       createRequest("PUT", { name: "Updated" }),
-      { params: makeParams("ach-1") },
+      { params: makeParams(VALID_ACH_ID) },
     );
     expect(response.status).toBe(403);
   });
@@ -95,7 +109,7 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
         name: "Valid Name",
         criteria_type: "typo_type",
       }),
-      { params: makeParams("ach-1") },
+      { params: makeParams(VALID_ACH_ID) },
     );
     expect(response.status).toBe(400);
     const body = await response.json();
@@ -106,7 +120,7 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
     authAs("GUILD_MASTER");
     const response = await updateFamilyAchievement(
       createRequest("PUT", { name: "   " }),
-      { params: makeParams("ach-1") },
+      { params: makeParams(VALID_ACH_ID) },
     );
     expect(response.status).toBe(400);
     const body = await response.json();
@@ -122,7 +136,7 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
         name: "Updated Achievement",
         criteria_type: "quest_complete",
       }),
-      { params: makeParams("ach-1") },
+      { params: makeParams(VALID_ACH_ID) },
     );
     expect(response.status).toBe(200);
     const body = await response.json();
@@ -135,7 +149,7 @@ describe("PUT /api/admin/family-achievements/[id]", () => {
       createRequest("PUT", {
         criteria_config: { threshold: 5, family_evaluation_mode: "ALL" },
       }),
-      { params: makeParams("ach-1") },
+      { params: makeParams(VALID_ACH_ID) },
     );
     expect(response.status).toBe(400);
     const body = await response.json();
@@ -168,10 +182,20 @@ describe("DELETE /api/admin/family-achievements/[id]", () => {
     jest.clearAllMocks();
   });
 
+  it("returns 400 for malformed UUID", async () => {
+    authAs("GUILD_MASTER");
+    const response = await deleteFamilyAchievement(createRequest("DELETE"), {
+      params: makeParams("not-a-uuid"),
+    });
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.code).toBe("FAMILY_ACHIEVEMENT_ID_INVALID");
+  });
+
   it("returns 403 for non-Guild-Master", async () => {
     authAs("HERO");
     const response = await deleteFamilyAchievement(createRequest("DELETE"), {
-      params: makeParams("ach-1"),
+      params: makeParams(VALID_ACH_ID),
     });
     expect(response.status).toBe(403);
   });
@@ -184,14 +208,14 @@ describe("DELETE /api/admin/family-achievements/[id]", () => {
           eq: jest.fn().mockReturnValue({
             select: jest
               .fn()
-              .mockResolvedValue({ data: [{ id: "ach-1" }], error: null }),
+              .mockResolvedValue({ data: [{ id: VALID_ACH_ID }], error: null }),
           }),
         }),
       }),
     }));
 
     const response = await deleteFamilyAchievement(createRequest("DELETE"), {
-      params: makeParams("ach-1"),
+      params: makeParams(VALID_ACH_ID),
     });
     expect(response.status).toBe(200);
     const body = await response.json();
@@ -211,7 +235,7 @@ describe("DELETE /api/admin/family-achievements/[id]", () => {
     }));
 
     const response = await deleteFamilyAchievement(createRequest("DELETE"), {
-      params: makeParams("nonexistent"),
+      params: makeParams(VALID_ACH_ID_2),
     });
     expect(response.status).toBe(404);
   });

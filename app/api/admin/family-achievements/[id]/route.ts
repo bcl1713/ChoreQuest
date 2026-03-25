@@ -9,6 +9,7 @@ import {
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
+import { assertValidUuidParam } from "@/lib/api-route-params";
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 import { ALL_FAMILY_CRITERIA_TYPES } from "@/lib/family-achievement-progress/family-evaluators";
 
@@ -39,6 +40,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    assertValidUuidParam(
+      id,
+      "family achievement",
+      "FAMILY_ACHIEVEMENT_ID_INVALID",
+    );
     const { requesterProfile, serviceSupabase } =
       await requireGuildMaster(request);
 
@@ -75,6 +81,11 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+    assertValidUuidParam(
+      id,
+      "family achievement",
+      "FAMILY_ACHIEVEMENT_ID_INVALID",
+    );
     const { requesterProfile, serviceSupabase } =
       await requireGuildMaster(request);
 
@@ -206,6 +217,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    assertValidUuidParam(
+      id,
+      "family achievement",
+      "FAMILY_ACHIEVEMENT_ID_INVALID",
+    );
     const { requesterProfile, serviceSupabase } =
       await requireGuildMaster(request);
 
