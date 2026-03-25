@@ -137,7 +137,7 @@ describe("useAchievementNotifications — family recompute before catch-up", () 
     expect(recomputeIdx).toBeLessThan(progressIdx);
   });
 
-  it("still loads notifications when the recompute fetch fails", async () => {
+  it("suppresses catch-up notifications when the recompute fetch throws a network error", async () => {
     const familyCatchUpRows = [
       {
         id: FAP_ID,
@@ -176,8 +176,52 @@ describe("useAchievementNotifications — family recompute before catch-up", () 
       useAchievementNotifications(CHAR_ID, FAMILY_ID),
     );
 
-    await waitFor(() => expect(result.current.current).not.toBeNull());
-    expect(result.current.current?.name).toBe("Team Effort");
+    await new Promise((r) => setTimeout(r, 50));
+    // Backfill failed — catch-up must return empty to avoid false toasts.
+    expect(result.current.current).toBeNull();
+  });
+
+  it("suppresses catch-up notifications when the recompute endpoint returns a non-OK status", async () => {
+    const familyCatchUpRows = [
+      {
+        id: FAP_ID,
+        family_achievement_id: FA_ID,
+        family_achievements: {
+          name: "Team Effort",
+          description: "Complete 50 quests as a family",
+          icon: "👨‍👩‍👧‍👦",
+          xp_reward: 0,
+          gold_reward: 0,
+        },
+      },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if ((url as string).includes("/api/family-achievements")) {
+        return Promise.resolve({ ok: false, status: 500 });
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "character_achievements") return makeCatchUpChain([]);
+      if (table === "family_achievement_progress")
+        return makeFamilyCatchUpChain(familyCatchUpRows);
+      if (table === "family_achievement_user_notifications")
+        return makeUserNotificationsChain([]);
+      if (table === "achievements")
+        return makeAchievementChain(makeAchievement());
+      if (table === "family_achievements")
+        return makeFamilyAchievementChain(makeAchievement());
+      return {};
+    });
+
+    const { result } = renderHook(() =>
+      useAchievementNotifications(CHAR_ID, FAMILY_ID),
+    );
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(result.current.current).toBeNull();
   });
 
   it("does not call /api/family-achievements when familyId is null", async () => {

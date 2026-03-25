@@ -147,16 +147,21 @@ export async function fetchUnnotifiedFamilyAchievements(
 
   // Recompute family progress before reading catch-up notifications.
   // A roster change (member join/leave) can leave unlocked_at stale until
-  // the member-count backfill in /api/family-achievements runs.  Triggering
-  // it here prevents newly joined members from receiving false unlock toasts
-  // or seeing hidden-achievement metadata that should still be locked.
+  // the member-count backfill in /api/family-achievements runs.  We must
+  // confirm the recompute succeeded before trusting any unlocked_at rows;
+  // otherwise stale unlock state can produce false toasts or expose hidden
+  // achievement metadata that the backfill would have re-locked.
   const token = await getAuthToken();
-  if (token) {
-    await fetch("/api/family-achievements", {
+  if (!token) return [];
+
+  try {
+    const recomputeResponse = await fetch("/api/family-achievements", {
       headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {
-      // Best-effort: a network failure should not block notifications.
     });
+    if (!recomputeResponse.ok) return [];
+  } catch {
+    // Network failure — cannot verify that unlock state is fresh.
+    return [];
   }
 
   // Step 1: all unlocked progress rows for this family

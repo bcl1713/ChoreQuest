@@ -106,9 +106,11 @@ export async function GET(request: NextRequest) {
           "Failed to reload progress after backfill:",
           refreshError,
         );
-        // Keep the pre-backfill progressMap rather than replacing it with an
-        // empty map; this prevents hidden achievements from being re-redacted
-        // due to a transient read failure after a successful backfill.
+        // Fail closed: backfillIfStale() may have cleared unlocked_at for
+        // re-locked hidden achievements, but we cannot confirm that without a
+        // fresh read.  Treat this as a failed backfill so hidden achievements
+        // are redacted below rather than served with stale metadata.
+        backfillFailed = true;
       } else {
         progressMap = new Map(
           (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
