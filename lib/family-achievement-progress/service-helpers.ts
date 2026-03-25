@@ -72,6 +72,7 @@ export async function recomputeAchievementImpl(
     allUserIds,
     mode,
     memberPairs,
+    config,
   );
 
   const guardFails =

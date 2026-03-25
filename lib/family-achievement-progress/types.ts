@@ -20,6 +20,7 @@ export type FamilyEvaluatorFn = (
   allUserIds: string[],
   mode: "sum" | "all",
   memberPairs: FamilyMemberPair[],
+  criteriaConfig: FamilyCriteriaConfig,
 ) => Promise<{ current: number }>;
 
 export type FamilyCriteriaConfig = {

@@ -165,6 +165,9 @@ export class FamilyAchievementProgressService {
           (mc) => mc !== currentWithChars,
         );
       }
+    } else if (!hasMissingProgress) {
+      // Legacy rows lack roster snapshots — can't verify state, force backfill.
+      rosterChanged = true;
     }
 
     if (!hasMissingProgress && !rosterChanged) return false;
@@ -189,13 +192,9 @@ export class FamilyAchievementProgressService {
 
     if (achievements.length === 0) return;
 
-    const needsBackfill = achievements.some(
-      (a) => !existingProgressIds.has(a.id),
-    );
-
     // null event means explicit backfill — always evaluate all criteria
     const criteriaTypesToEvaluate =
-      event === null || needsBackfill
+      event === null || achievements.some((a) => !existingProgressIds.has(a.id))
         ? ALL_FAMILY_CRITERIA_TYPES.slice()
         : (FAMILY_EVENT_CRITERIA_MAP[event.type] ?? []);
 
@@ -238,6 +237,7 @@ export class FamilyAchievementProgressService {
         allUserIds,
         mode,
         memberPairs,
+        config,
       );
       const guardFails =
         mode === "all" &&

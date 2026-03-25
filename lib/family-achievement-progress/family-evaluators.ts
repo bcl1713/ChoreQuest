@@ -148,14 +148,19 @@ const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
   _allUserIds,
   mode,
   memberPairs,
+  criteriaConfig,
 ) => {
+  const difficulty = (criteriaConfig.difficulty ?? "HARD") as
+    | "EASY"
+    | "MEDIUM"
+    | "HARD";
   const values: number[] = [];
   for (const { userId, characterIds } of memberPairs) {
     const base = client
       .from("quest_instances")
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED")
-      .eq("difficulty", "HARD");
+      .eq("difficulty", difficulty);
     const { count, error } =
       characterIds.length > 0
         ? await base.or(
