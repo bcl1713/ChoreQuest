@@ -16,8 +16,7 @@ function computeCategoryCounts(achievements: FamilyAchievementDisplay[]) {
   let unlocked = 0;
   let total = 0;
   for (const a of achievements) {
-    const isLockedHidden = a.is_hidden && !a.unlocked_at;
-    if (!isLockedHidden) total++;
+    total++;
     if (a.unlocked_at) unlocked++;
   }
   return { unlocked, total };
