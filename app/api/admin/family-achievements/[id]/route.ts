@@ -204,10 +204,20 @@ export async function PUT(
     }
 
     // Criteria changed — recompute progress so stored values and unlock state
-    // stay consistent with the new definition.
+    // stay consistent with the new definition.  This is non-fatal: the update
+    // has already committed, so we log and continue rather than returning an
+    // error that would prompt the caller to retry a change that already took
+    // effect (same treatment as POST /api/admin/family-achievements).
     if (criteria_type !== undefined || criteria_config !== undefined) {
       const service = new FamilyAchievementProgressService();
-      await service.recomputeAchievement(requesterProfile.family_id, id);
+      try {
+        await service.recomputeAchievement(requesterProfile.family_id, id);
+      } catch (err) {
+        console.error(
+          `Achievement updated but progress recompute failed for ${id}:`,
+          err,
+        );
+      }
     }
 
     return NextResponse.json({ success: true, achievement });
