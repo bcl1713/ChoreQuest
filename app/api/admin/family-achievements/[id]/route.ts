@@ -207,16 +207,7 @@ export async function PUT(
     // stay consistent with the new definition.
     if (criteria_type !== undefined || criteria_config !== undefined) {
       const service = new FamilyAchievementProgressService();
-      try {
-        await service.recomputeAchievement(requesterProfile.family_id, id);
-      } catch (err) {
-        // Recompute failure is non-fatal — the definition update is already committed.
-        // Log and continue so callers aren't told the edit failed and don't retry.
-        console.error(
-          `Achievement definition updated but progress recomputation failed for ${id}:`,
-          err,
-        );
-      }
+      await service.recomputeAchievement(requesterProfile.family_id, id);
     }
 
     return NextResponse.json({ success: true, achievement });
