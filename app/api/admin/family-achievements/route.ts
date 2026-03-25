@@ -217,6 +217,20 @@ export async function POST(request: NextRequest) {
         "FAMILY_ACHIEVEMENT_EVAL_MODE_INVALID",
       );
     }
+    if (criteria_type === "quest_difficulty") {
+      const difficulty = cfg.difficulty;
+      if (
+        difficulty !== undefined &&
+        difficulty !== "EASY" &&
+        difficulty !== "MEDIUM" &&
+        difficulty !== "HARD"
+      ) {
+        throw new ValidationError(
+          `criteria_config.difficulty must be "EASY", "MEDIUM", or "HARD"`,
+          "FAMILY_ACHIEVEMENT_CRITERIA_CONFIG_DIFFICULTY_INVALID",
+        );
+      }
+    }
 
     const serviceSupabase = createServiceSupabaseClient();
 

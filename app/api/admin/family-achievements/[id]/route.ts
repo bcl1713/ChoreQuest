@@ -138,6 +138,23 @@ export async function PUT(
           "FAMILY_ACHIEVEMENT_EVAL_MODE_INVALID",
         );
       }
+      if (
+        criteria_type === "quest_difficulty" ||
+        cfg.difficulty !== undefined
+      ) {
+        const difficulty = cfg.difficulty;
+        if (
+          difficulty !== undefined &&
+          difficulty !== "EASY" &&
+          difficulty !== "MEDIUM" &&
+          difficulty !== "HARD"
+        ) {
+          throw new ValidationError(
+            `criteria_config.difficulty must be "EASY", "MEDIUM", or "HARD"`,
+            "FAMILY_ACHIEVEMENT_CRITERIA_CONFIG_DIFFICULTY_INVALID",
+          );
+        }
+      }
     }
 
     // Verify exists and belongs to requester's family
@@ -237,7 +254,10 @@ export async function DELETE(
     }
 
     if (!data || data.length === 0) {
-      throw new NotFoundError("FAMILY_ACHIEVEMENT_NOT_FOUND");
+      throw new NotFoundError(
+        "Family achievement not found",
+        "FAMILY_ACHIEVEMENT_NOT_FOUND",
+      );
     }
 
     return NextResponse.json({ success: true });
