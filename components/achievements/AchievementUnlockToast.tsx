@@ -47,7 +47,9 @@ export function AchievementUnlockToast({
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold uppercase tracking-widest text-yellow-100 mb-0.5">
-                Achievement Unlocked!
+                {notification.isFamily
+                  ? "Family Achievement!"
+                  : "Achievement Unlocked!"}
               </p>
               <p className="font-bold text-base leading-tight truncate">
                 {notification.name}

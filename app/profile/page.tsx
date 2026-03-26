@@ -6,6 +6,7 @@ import { LoadingSpinner, Button } from "@/components/ui";
 import ProfileSettings from "@/components/profile/ProfileSettings";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
 import { AchievementsSection } from "@/components/achievements/AchievementsSection";
+import { FamilyAchievementsSection } from "@/components/achievements/FamilyAchievementsSection";
 import { AuthenticatedPageShell } from "@/components/layout/authenticated-page-shell";
 import { TabBar, type TabItem } from "@/components/ui/tab-bar";
 import { useRouter } from "next/navigation";
@@ -83,8 +84,42 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user || !character) {
+  if (!user) {
     return null;
+  }
+
+  if (!character) {
+    return (
+      <ProfileErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
+          <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  variant="primary"
+                  size="sm"
+                  className="touch-target"
+                  data-testid="back-to-dashboard-button"
+                >
+                  <span className="hidden sm:inline">Back to Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </Button>
+                <Button
+                  onClick={logout}
+                  variant="destructive"
+                  size="sm"
+                  className="touch-target"
+                >
+                  Logout
+                </Button>
+              </div>
+              <FamilyAchievementsSection familyId={profile?.family_id} />
+            </div>
+          </main>
+        </div>
+      </ProfileErrorBoundary>
+    );
   }
 
   return (
@@ -132,7 +167,12 @@ export default function ProfilePage() {
           )}
 
           {activeTab === "achievements" && (
-            <AchievementsSection characterId={character.id} />
+            <>
+              <AchievementsSection characterId={character.id} />
+              <div className="mt-8">
+                <FamilyAchievementsSection familyId={profile?.family_id} />
+              </div>
+            </>
           )}
         </div>
       </AuthenticatedPageShell>

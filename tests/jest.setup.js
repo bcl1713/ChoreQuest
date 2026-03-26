@@ -176,6 +176,11 @@ const SUPPRESSED_ERRORS = [
   // React act() warning — async state updates in component effects during tests
   "An update to",
   "Error: Not implemented: navigation",
+  // Expected errors from family achievement tests — backfill and recompute failures are tested behavior
+  "Failed to reload progress after backfill:",
+  "Family achievement backfill failed:",
+  "Achievement updated but progress recompute failed",
+  "Achievement definition was saved but progress recompute failed",
 ];
 
 beforeAll(() => {

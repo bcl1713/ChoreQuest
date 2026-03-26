@@ -88,6 +88,7 @@ describe("AdminDashboard content", () => {
         "Rewards",
         "Achievement Categories",
         "Achievements",
+        "Family Achievements",
         "Guild Masters",
         "Family Settings",
       ]);

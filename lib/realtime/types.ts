@@ -9,7 +9,8 @@ export type RealtimeEventType =
   | "family_member_updated"
   | "boss_quest_updated"
   | "boss_participant_updated"
-  | "achievement_unlock_updated";
+  | "achievement_unlock_updated"
+  | "family_achievement_unlock_updated";
 
 export interface RealtimeEvent {
   type: RealtimeEventType;
@@ -39,6 +40,7 @@ export interface RealtimeContextType {
   onBossQuestUpdate: (callback: Listener) => () => void;
   onBossParticipantUpdate: (callback: Listener) => () => void;
   onAchievementUnlockUpdate: (callback: Listener) => () => void;
+  onFamilyAchievementUnlockUpdate: (callback: Listener) => () => void;
   refreshQuests: () => void;
   refreshQuestTemplates: () => void;
   refreshCharacters: () => void;

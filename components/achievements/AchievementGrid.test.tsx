@@ -253,7 +253,9 @@ describe("AchievementGrid", () => {
         description: null,
         icon: null,
         display_order: 0,
-        achievements: [MOCK_CATEGORIES[0].achievements[0]],
+        achievements: [
+          { ...MOCK_CATEGORIES[0].achievements[0], id: "ach-full-1" },
+        ],
       },
       ...MOCK_CATEGORIES,
     ];

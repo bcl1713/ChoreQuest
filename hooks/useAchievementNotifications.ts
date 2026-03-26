@@ -1,104 +1,30 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRealtime } from "@/lib/realtime-context";
 import type { RealtimeEvent } from "@/lib/realtime-context";
+import {
+  fetchAchievementById,
+  fetchFamilyAchievementById,
+  fetchUnnotifiedAchievements,
+  fetchUnnotifiedFamilyAchievements,
+  markCharacterAchievementNotified,
+  markFamilyAchievementNotified,
+} from "./useAchievementNotifications.helpers";
 
 export type AchievementNotification = {
-  /** character_achievements.id — used to mark notified */
+  /** character_achievements.id or family_achievement_progress.id — used to mark notified */
   id: string;
-  /** achievements.id — used for deduplication */
+  /** achievements.id or family_achievements.id — used for deduplication */
   achievementId: string;
   name: string;
   description: string;
   icon: string | null;
   xpReward: number | null;
   goldReward: number | null;
+  /** True when this is a family achievement unlock */
+  isFamily?: boolean;
 };
-
-async function getAuthToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchAchievementById(achievementId: string): Promise<{
-  name: string;
-  description: string;
-  icon: string | null;
-  xp_reward: number | null;
-  gold_reward: number | null;
-} | null> {
-  const { data, error } = await supabase
-    .from("achievements")
-    .select("name, description, icon, xp_reward, gold_reward")
-    .eq("id", achievementId)
-    .single();
-
-  if (error || !data) return null;
-  return data;
-}
-
-async function markCharacterAchievementNotified(id: string): Promise<boolean> {
-  const token = await getAuthToken();
-  if (!token) return false;
-
-  try {
-    const response = await fetch(`/api/character-achievements/${id}/notified`, {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-type CatchUpRow = {
-  id: string;
-  achievement_id: string;
-  achievements: {
-    name: string;
-    description: string;
-    icon: string | null;
-    xp_reward: number | null;
-    gold_reward: number | null;
-  } | null;
-};
-
-async function fetchUnnotifiedAchievements(
-  characterId: string,
-): Promise<AchievementNotification[]> {
-  const { data, error } = await supabase
-    .from("character_achievements")
-    .select(
-      "id, achievement_id, achievements(name, description, icon, xp_reward, gold_reward)",
-    )
-    .eq("character_id", characterId)
-    .not("unlocked_at", "is", null)
-    .eq("notified", false);
-
-  if (error || !data) return [];
-
-  return (data as unknown as CatchUpRow[])
-    .filter((row) => row.achievements !== null)
-    .map((row) => ({
-      id: row.id,
-      achievementId: row.achievement_id,
-      name: row.achievements!.name,
-      description: row.achievements!.description,
-      icon: row.achievements!.icon,
-      xpReward: row.achievements!.xp_reward,
-      goldReward: row.achievements!.gold_reward,
-    }));
-}
 
 export interface UseAchievementNotificationsReturn {
   current: AchievementNotification | null;
@@ -107,17 +33,24 @@ export interface UseAchievementNotificationsReturn {
 
 export function useAchievementNotifications(
   characterId: string | null | undefined,
+  familyId?: string | null,
 ): UseAchievementNotificationsReturn {
-  const { onAchievementUnlockUpdate } = useRealtime();
+  const { onAchievementUnlockUpdate, onFamilyAchievementUnlockUpdate } =
+    useRealtime();
   const [queue, setQueue] = useState<AchievementNotification[]>([]);
   // Track achievement IDs already in the queue to deduplicate catch-up + realtime
   const queuedAchievementIds = useRef<Set<string>>(new Set());
   // Track the current characterId so in-flight async fetches can detect stale results
   const currentCharacterIdRef = useRef<string | null | undefined>(characterId);
   currentCharacterIdRef.current = characterId;
+  // Track the current familyId so in-flight family fetches can detect stale results
+  const currentFamilyIdRef = useRef<string | null | undefined>(familyId);
+  currentFamilyIdRef.current = familyId;
   // Guard to avoid re-firing the mark-notified effect for the same id;
   // reset when the queue is cleared so failed writes can be retried
   const prevCurrentIdRef = useRef<string | null>(null);
+  // Track previous familyId to distinguish family changes from character-only changes
+  const prevFamilyIdRef = useRef<string | null | undefined>(familyId);
 
   const enqueue = useCallback((notification: AchievementNotification) => {
     if (queuedAchievementIds.current.has(notification.achievementId)) return;
@@ -127,26 +60,49 @@ export function useAchievementNotifications(
 
   // Catch-up query: runs on mount and on character switch
   useEffect(() => {
-    // Clear queue and refs on character change or deselection
-    queuedAchievementIds.current = new Set();
+    const familyChanged = familyId !== prevFamilyIdRef.current;
+    prevFamilyIdRef.current = familyId;
     prevCurrentIdRef.current = null;
-    setQueue([]);
 
-    if (!characterId) {
+    if (familyChanged) {
+      // Family changed — full reset
+      queuedAchievementIds.current = new Set();
+      setQueue([]);
+    } else {
+      // Only characterId changed within the same family — preserve pending family notifications
+      setQueue((prev) => {
+        const kept = prev.filter((n) => n.isFamily);
+        queuedAchievementIds.current = new Set(
+          kept.map((n) => n.achievementId),
+        );
+        return kept;
+      });
+    }
+
+    if (!characterId && !familyId) {
       return;
     }
 
     let cancelled = false;
 
-    fetchUnnotifiedAchievements(characterId).then((notifications) => {
-      if (cancelled) return;
-      notifications.forEach(enqueue);
-    });
+    if (characterId) {
+      fetchUnnotifiedAchievements(characterId).then((notifications) => {
+        if (cancelled) return;
+        notifications.forEach(enqueue);
+      });
+    }
+
+    if (familyId) {
+      fetchUnnotifiedFamilyAchievements(familyId).then((notifications) => {
+        if (cancelled) return;
+        notifications.forEach(enqueue);
+      });
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [characterId, enqueue]);
+  }, [characterId, familyId, enqueue]);
 
   // Realtime subscription for new unlocks
   useEffect(() => {
@@ -194,6 +150,65 @@ export function useAchievementNotifications(
     return unsubscribe;
   }, [characterId, onAchievementUnlockUpdate, enqueue]);
 
+  // Realtime subscription for family achievement unlocks
+  useEffect(() => {
+    if (!familyId) return;
+
+    const unsubscribe = onFamilyAchievementUnlockUpdate(
+      (event: RealtimeEvent) => {
+        if (event.action !== "UPDATE") return;
+
+        const record = event.record;
+        const oldRecord = event.old_record;
+
+        // Handle non-null → null (re-lock): remove any stale queued toast
+        if (!record.unlocked_at && oldRecord?.unlocked_at != null) {
+          const reLockedKey = `family_${record.family_achievement_id as string}`;
+          if (queuedAchievementIds.current.has(reLockedKey)) {
+            queuedAchievementIds.current.delete(reLockedKey);
+            setQueue((prev) =>
+              prev.filter((n) => n.achievementId !== reLockedKey),
+            );
+          }
+          // Clear the notified guard so the next unlock of the same progress row
+          // triggers markFamilyAchievementNotified again (same id, different epoch).
+          const reLockedProgressId = record.id as string;
+          if (prevCurrentIdRef.current === reLockedProgressId) {
+            prevCurrentIdRef.current = null;
+          }
+          return;
+        }
+
+        // Only process null → non-null unlocked_at transitions
+        if (!record.unlocked_at) return;
+        if (oldRecord?.unlocked_at != null) return;
+
+        const familyAchievementId = record.family_achievement_id as string;
+        const progressId = record.id as string;
+        // Capture familyId at event-receive time so we can detect a switch
+        const capturedFamilyId = familyId;
+
+        fetchFamilyAchievementById(familyAchievementId).then((achievement) => {
+          if (!achievement) return;
+          // Discard if the active family changed while the fetch was in-flight
+          if (currentFamilyIdRef.current !== capturedFamilyId) return;
+          enqueue({
+            id: progressId,
+            achievementId: `family_${familyAchievementId}`,
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.icon,
+            xpReward: achievement.xp_reward,
+            goldReward: achievement.gold_reward,
+            isFamily: true,
+          });
+        });
+      },
+    );
+
+    return unsubscribe;
+  }, [familyId, onFamilyAchievementUnlockUpdate, enqueue]);
+
   // Mark notified when a new item becomes current; only set the guard on success
   // so transient failures (auth not ready, network, 5xx) can be retried on remount
   const current = queue[0] ?? null;
@@ -201,14 +216,20 @@ export function useAchievementNotifications(
   useEffect(() => {
     if (!current) return;
     if (current.id === prevCurrentIdRef.current) return;
-    markCharacterAchievementNotified(current.id).then((success) => {
+    const markNotified = current.isFamily
+      ? markFamilyAchievementNotified
+      : markCharacterAchievementNotified;
+    markNotified(current.id).then((success) => {
       if (success) prevCurrentIdRef.current = current.id;
     });
   }, [current]);
 
   const onDismiss = useCallback(() => {
     setQueue((prev) => {
-      const next = prev.slice(1);
+      const [dismissed, ...next] = prev;
+      if (dismissed) {
+        queuedAchievementIds.current.delete(dismissed.achievementId);
+      }
       return next;
     });
   }, []);
