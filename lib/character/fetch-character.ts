@@ -6,7 +6,10 @@ import type { MutableRefObject, Dispatch, SetStateAction } from "react";
 
 type CharacterFetcherDeps = {
   user: { id: string } | null;
-  session: { user?: { id?: string } | null; access_token?: string | null } | null;
+  session: {
+    user?: { id?: string } | null;
+    access_token?: string | null;
+  } | null;
   waitForReady: () => Promise<void>;
   setCharacter: Dispatch<SetStateAction<CharacterState>>;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -56,14 +59,18 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
     }
 
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] CharacterContext: Waiting for network ready...`);
+    console.log(
+      `[${timestamp}] CharacterContext: Waiting for network ready...`,
+    );
     await waitForReady();
-    console.log(`[${new Date().toISOString()}] CharacterContext: Network ready, proceeding with fetch`);
+    console.log(
+      `[${new Date().toISOString()}] CharacterContext: Network ready, proceeding with fetch`,
+    );
 
     if (!session || !session.user) {
       const errorTimestamp = new Date().toISOString();
       console.error(
-        `[${errorTimestamp}] CharacterContext: No active session from AuthContext, cannot fetch character`
+        `[${errorTimestamp}] CharacterContext: No active session from AuthContext, cannot fetch character`,
       );
       setError("Session expired. Please log in again.");
       setIsLoading(false);
@@ -72,14 +79,19 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
       fetchStartTimeRef.current = 0;
       return;
     }
-    console.log(`[${new Date().toISOString()}] CharacterContext: Session validated for user:`, session.user.id);
+    console.log(
+      `[${new Date().toISOString()}] CharacterContext: Session validated for user:`,
+      session.user.id,
+    );
 
     const now = Date.now();
     if (isFetchingRef.current && fetchStartTimeRef.current > 0) {
       const elapsed = now - fetchStartTimeRef.current;
       if (elapsed > 5000) {
         const stuckTimestamp = new Date().toISOString();
-        console.error(`[${stuckTimestamp}] CharacterContext: Fetch guard stuck for ${elapsed}ms, force clearing`);
+        console.error(
+          `[${stuckTimestamp}] CharacterContext: Fetch guard stuck for ${elapsed}ms, force clearing`,
+        );
         isFetchingRef.current = false;
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
@@ -91,7 +103,9 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
     if (isFetchingRef.current) {
       const elapsed = now - fetchStartTimeRef.current;
       const logTimestamp = new Date().toISOString();
-      console.log(`[${logTimestamp}] CharacterContext: Fetch already in progress (${elapsed}ms elapsed), skipping`);
+      console.log(
+        `[${logTimestamp}] CharacterContext: Fetch already in progress (${elapsed}ms elapsed), skipping`,
+      );
       return;
     }
 
@@ -99,9 +113,14 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
     fetchStartTimeRef.current = now;
 
     const startTimestamp = new Date().toISOString();
-    console.log(`[${startTimestamp}] CharacterContext: Fetching character for user:`, user.id);
+    console.log(
+      `[${startTimestamp}] CharacterContext: Fetching character for user:`,
+      user.id,
+    );
 
-    setIsLoading(true);
+    if (isInitialLoadRef.current) {
+      setIsLoading(true);
+    }
     setError(null);
 
     abortControllerRef.current = new AbortController();
@@ -138,12 +157,14 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
         };
 
         const logLabel = `${restUrl.pathname}${restUrl.search}`;
-        console.log(`[${new Date().toISOString()}] CharacterContext: REST fetch start ${logLabel}`);
+        console.log(
+          `[${new Date().toISOString()}] CharacterContext: REST fetch start ${logLabel}`,
+        );
 
         const response = await fetch(restUrl.toString(), requestInit);
 
         console.log(
-          `[${new Date().toISOString()}] CharacterContext: REST fetch status ${response.status} for ${logLabel}`
+          `[${new Date().toISOString()}] CharacterContext: REST fetch status ${response.status} for ${logLabel}`,
         );
 
         if (timeoutId && !didTimeout) {
@@ -156,11 +177,13 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => "");
-          throw new Error(`Supabase REST error ${response.status}: ${errorText}`);
+          throw new Error(
+            `Supabase REST error ${response.status}: ${errorText}`,
+          );
         }
 
         const rows = await response.json();
-        const record = Array.isArray(rows) ? rows[0] ?? null : rows;
+        const record = Array.isArray(rows) ? (rows[0] ?? null) : rows;
         return { data: record as Character | null };
       })();
 
@@ -178,12 +201,21 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
             ? (data as { level: number }).level
             : Number((data as { level?: number | string | null }).level ?? 0);
         const derivedLevel = RewardCalculator.calculateLevelFromTotalXP(
-          Number((data as { xp?: number | null }).xp ?? 0)
+          Number((data as { xp?: number | null }).xp ?? 0),
         );
-        const currentLevel = Math.max(1, Number.isFinite(rawLevel) ? Math.floor(rawLevel) : 1, derivedLevel);
+        const currentLevel = Math.max(
+          1,
+          Number.isFinite(rawLevel) ? Math.floor(rawLevel) : 1,
+          derivedLevel,
+        );
 
-        if (previousLevelRef.current !== null && currentLevel > previousLevelRef.current) {
-          console.log(`CharacterContext: Level up detected! ${previousLevelRef.current} -> ${currentLevel}`);
+        if (
+          previousLevelRef.current !== null &&
+          currentLevel > previousLevelRef.current
+        ) {
+          console.log(
+            `CharacterContext: Level up detected! ${previousLevelRef.current} -> ${currentLevel}`,
+          );
           setLevelUpEvent({
             oldLevel: previousLevelRef.current,
             newLevel: currentLevel,
@@ -203,18 +235,24 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
         retryCountRef.current = 0;
       }
     } catch (err) {
-      const fetchDuration = fetchStartTimeRef.current > 0 ? Date.now() - fetchStartTimeRef.current : 0;
+      const fetchDuration =
+        fetchStartTimeRef.current > 0
+          ? Date.now() - fetchStartTimeRef.current
+          : 0;
       const errorTimestamp = new Date().toISOString();
-      const message = err instanceof Error ? err.message : "Failed to fetch character";
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch character";
 
       if (err instanceof Error && err.name === "AbortError") {
-        console.log(`[${errorTimestamp}] CharacterContext: Fetch aborted (expected during cleanup)`);
+        console.log(
+          `[${errorTimestamp}] CharacterContext: Fetch aborted (expected during cleanup)`,
+        );
         return;
       }
 
       console.error(
         `[${errorTimestamp}] CharacterContext: Character fetch error after ${fetchDuration}ms for user ${user.id}:`,
-        err
+        err,
       );
 
       const MAX_RETRIES = 3;
@@ -222,7 +260,7 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
         const retryDelay = Math.pow(2, retryCountRef.current) * 1000;
         retryCountRef.current++;
         console.log(
-          `[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current}/${MAX_RETRIES}) after ${retryDelay}ms...`
+          `[${errorTimestamp}] CharacterContext: Retrying fetch (attempt ${retryCountRef.current}/${MAX_RETRIES}) after ${retryDelay}ms...`,
         );
 
         isFetchingRef.current = false;
@@ -234,7 +272,9 @@ export const createCharacterFetcher = (deps: CharacterFetcherDeps) => {
       }
 
       setError(message);
-      console.error(`[${errorTimestamp}] CharacterContext: All retry attempts exhausted`);
+      console.error(
+        `[${errorTimestamp}] CharacterContext: All retry attempts exhausted`,
+      );
     } finally {
       updateHasLoaded(true);
       setIsLoading(false);

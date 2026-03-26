@@ -144,12 +144,16 @@ export const approveQuest = async (
   const { client, streakService } = deps;
 
   const quest = await fetchQuest(client, questId);
-  const character = await resolveAssignedCharacter(client, quest);
   const completionDate = quest.completed_at
     ? new Date(quest.completed_at)
     : new Date();
   const completionTimestamp = completionDate.toISOString();
-  const template = await fetchTemplate(client, quest);
+
+  const [character, template, familyTimezone] = await Promise.all([
+    resolveAssignedCharacter(client, quest),
+    fetchTemplate(client, quest),
+    fetchFamilyTimezone(client, quest.family_id ?? null),
+  ]);
 
   const baseXp = quest.xp_reward ?? template?.xp_reward ?? 0;
   const baseGold = quest.gold_reward ?? template?.gold_reward ?? 0;
@@ -170,11 +174,6 @@ export const approveQuest = async (
   const recurrencePattern = (quest.recurrence_pattern ??
     template?.recurrence_pattern ??
     null) as "DAILY" | "WEEKLY" | "CUSTOM" | null;
-
-  const familyTimezone = await fetchFamilyTimezone(
-    client,
-    quest.family_id ?? null,
-  );
 
   const streakResult = await applyStreaks(
     streakService,
@@ -231,19 +230,17 @@ export const approveQuest = async (
     );
   }
 
-  try {
-    const progressService = new AchievementProgressService(
-      createServiceSupabaseClient(),
-    );
-    await progressService.updateProgress(character.id, {
-      type: "QUEST_APPROVED",
+  const progressService = new AchievementProgressService(
+    createServiceSupabaseClient(),
+  );
+  void progressService
+    .updateProgress(character.id, { type: "QUEST_APPROVED" })
+    .catch((progressError) => {
+      console.error(
+        "Achievement progress update failed after quest approval:",
+        progressError,
+      );
     });
-  } catch (progressError) {
-    console.error(
-      "Achievement progress update failed after quest approval (non-blocking):",
-      progressError,
-    );
-  }
 
   return approvedQuest as QuestInstance;
 };

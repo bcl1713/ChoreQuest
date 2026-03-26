@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Crown } from "lucide-react";
 import { Button } from "@/components/ui";
 import type { QuestInstance } from "@/lib/types/database";
@@ -8,13 +9,15 @@ type FamilyMember = { id: string; name: string };
 
 type GmQuestActionsProps = {
   quest: QuestInstance;
-  buttonVis: ReturnType<typeof import("./quest-card-helpers").getButtonVisibility>;
+  buttonVis: ReturnType<
+    typeof import("./quest-card-helpers").getButtonVisibility
+  >;
   familyMembers: FamilyMember[];
   hideAssignment?: boolean;
   selectedAssignee?: string;
   onAssigneeChange?: (questId: string, assigneeId: string) => void;
   onAssign?: (questId: string, assigneeId: string) => void;
-  onApprove?: (questId: string) => void;
+  onApprove?: (questId: string) => Promise<void> | void;
   onDeny?: (questId: string) => void;
   onCancel?: (questId: string) => void;
   onRelease?: (questId: string) => void;
@@ -33,7 +36,19 @@ export function GmQuestActions({
   onCancel,
   onRelease,
 }: GmQuestActionsProps) {
-  const showAssignment = buttonVis.showAssignment && !hideAssignment && familyMembers.length > 0;
+  const [isApproving, setIsApproving] = useState(false);
+  const showAssignment =
+    buttonVis.showAssignment && !hideAssignment && familyMembers.length > 0;
+
+  const handleApprove = async () => {
+    if (!onApprove) return;
+    setIsApproving(true);
+    try {
+      await onApprove(quest.id);
+    } finally {
+      setIsApproving(false);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -76,7 +91,8 @@ export function GmQuestActions({
             type="button"
             variant="success"
             size="sm"
-            onClick={() => onApprove(quest.id)}
+            isLoading={isApproving}
+            onClick={() => void handleApprove()}
             data-testid="gm-approve-quest"
           >
             Approve Quest
