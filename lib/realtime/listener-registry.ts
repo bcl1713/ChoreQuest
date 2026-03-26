@@ -8,16 +8,13 @@ export const createListenerRegistry = (): ListenerRegistry => {
   const add = (callback: Listener) => {
     listeners.add(callback);
 
-    // Replay buffered events to the newly added listener
+    // Replay buffered events to the newly added listener synchronously
+    // This ensures events are delivered in the correct order without timing issues
     if (bufferedEvents.length > 0) {
-      // Clone the buffer to avoid issues if the listener modifies it
       const eventsToReplay = [...bufferedEvents];
-      // Clear the buffer once we've queued replays
       bufferedEvents.length = 0;
-      // Replay events asynchronously to avoid blocking
       eventsToReplay.forEach((event) => {
-        // Use setTimeout to avoid synchronous recursion
-        setTimeout(() => callback(event), 0);
+        callback(event);
       });
     }
 
