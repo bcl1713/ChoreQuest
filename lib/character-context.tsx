@@ -124,8 +124,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 
       if (event.action === "UPDATE" || event.action === "INSERT") {
         setCharacter((prev) => {
-          if (!prev) return prev;
-          const merged = { ...prev, ...event.record } as Character;
+          const baseCharacter = prev ?? ({} as Partial<Character>);
+          const merged = { ...baseCharacter, ...event.record } as Character;
           const newLevel = Math.max(
             1,
             RewardCalculator.calculateLevelFromTotalXP(merged.xp ?? 0),

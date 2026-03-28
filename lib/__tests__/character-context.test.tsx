@@ -208,6 +208,18 @@ describe("CharacterContext realtime handler", () => {
     expect(screen.getByTestId("is-null").textContent).toBe("null");
   });
 
+  it("3.6: INSERT event sets character when state is initially null", () => {
+    renderProvider();
+    // Do NOT seed a character — state stays null
+
+    expect(screen.getByTestId("is-null").textContent).toBe("null");
+
+    emitCharacterEvent("INSERT", { ...baseCharacter, user_id: "user-1" });
+
+    expect(screen.getByTestId("is-null").textContent).toBe("set");
+    expect(screen.getByTestId("xp").textContent).toBe("100");
+  });
+
   it("3.5: Rapid successive UPDATE events each apply via functional updater", () => {
     renderProvider();
     seedCharacter({ ...baseCharacter, gold: 0 });
