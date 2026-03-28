@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       .select(
         "id, name, description, icon, category_id, xp_reward, gold_reward, is_hidden, criteria_type, criteria_config, family_id, achievement_categories(name)",
       )
+      .or(`family_id.eq.${requesterProfile.family_id},family_id.is.null`)
       .order("name", { ascending: true });
 
     if (achError) {

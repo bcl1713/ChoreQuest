@@ -62,10 +62,10 @@ export async function PATCH(
 
     const serviceSupabase = createServiceSupabaseClient();
 
-    // Verify achievement exists
+    // Verify achievement exists and belongs to requester's family
     const { data: existing, error: fetchError } = await serviceSupabase
       .from("achievements")
-      .select("id")
+      .select("id, family_id")
       .eq("id", id)
       .maybeSingle();
 
@@ -75,6 +75,13 @@ export async function PATCH(
 
     if (!existing) {
       throw new NotFoundError("Achievement not found", "ACHIEVEMENT_NOT_FOUND");
+    }
+
+    if (existing.family_id !== requesterProfile.family_id) {
+      throw new ForbiddenError(
+        "You can only update achievements belonging to your family",
+        "ACHIEVEMENT_ADMIN_FORBIDDEN",
+      );
     }
 
     const updateData: Record<string, unknown> = {};
@@ -98,6 +105,20 @@ export async function PATCH(
 
     if (updateError) {
       throw new Error(`Failed to update achievement: ${updateError.message}`);
+    }
+
+    // Invalidate stale progress rows so they are recomputed on the next event
+    if (criteria_type !== undefined || criteria_config !== undefined) {
+      const { error: deleteError } = await serviceSupabase
+        .from("character_achievements")
+        .delete()
+        .eq("achievement_id", id);
+
+      if (deleteError) {
+        console.error(
+          `Failed to invalidate progress for achievement ${id}: ${deleteError.message}`,
+        );
+      }
     }
 
     return NextResponse.json({ success: true, achievement });

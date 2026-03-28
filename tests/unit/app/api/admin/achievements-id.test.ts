@@ -33,7 +33,7 @@ function makeRequest(
   });
 }
 
-function setupAuth(role: string = "GUILD_MASTER") {
+function setupAuth(role: string = "GUILD_MASTER", familyId: string = "fam-1") {
   mockServerSupabase.auth.getUser.mockResolvedValue({
     data: { user: { id: "user-1" } },
     error: null,
@@ -44,7 +44,7 @@ function setupAuth(role: string = "GUILD_MASTER") {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { role, family_id: "fam-1" },
+          data: { role, family_id: familyId },
           error: null,
         }),
       };
@@ -57,14 +57,23 @@ function setupAuth(role: string = "GUILD_MASTER") {
   });
 }
 
-function setupServiceForPatch() {
+function setupServiceForPatch(
+  achievementFamilyId: string = "fam-1",
+  mockDeleteCharAchievements?: jest.Mock,
+) {
+  const deleteMock =
+    mockDeleteCharAchievements ?? jest.fn().mockResolvedValue({ error: null });
   mockServiceSupabase.from.mockImplementation((table: string) => {
     if (table === "achievements") {
       return {
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             maybeSingle: jest.fn().mockResolvedValue({
-              data: { id: "ach-1", name: "First Quest" },
+              data: {
+                id: "ach-1",
+                name: "First Quest",
+                family_id: achievementFamilyId,
+              },
               error: null,
             }),
           }),
@@ -78,6 +87,13 @@ function setupServiceForPatch() {
               }),
             }),
           }),
+        }),
+      };
+    }
+    if (table === "character_achievements") {
+      return {
+        delete: jest.fn().mockReturnValue({
+          eq: deleteMock,
         }),
       };
     }
@@ -106,6 +122,17 @@ describe("PATCH /api/admin/achievements/[id]", () => {
 
   it("returns 403 when user is not Guild Master", async () => {
     setupAuth("HERO");
+
+    const req = makeRequest("PATCH", "Bearer token", { name: "Updated" });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ id: "ach-1" }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 when achievement belongs to a different family", async () => {
+    setupAuth("GUILD_MASTER", "fam-1");
+    setupServiceForPatch("other-fam");
 
     const req = makeRequest("PATCH", "Bearer token", { name: "Updated" });
     const res = await PATCH(req, {
@@ -147,5 +174,51 @@ describe("PATCH /api/admin/achievements/[id]", () => {
       params: Promise.resolve({ id: "ach-1" }),
     });
     expect(res.status).toBe(200);
+  });
+
+  it("deletes character_achievements rows when criteria_type changes", async () => {
+    setupAuth();
+    const deleteEq = jest.fn().mockResolvedValue({ error: null });
+    setupServiceForPatch("fam-1", deleteEq);
+
+    const req = makeRequest("PATCH", "Bearer token", {
+      criteria_type: "chore_complete",
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ id: "ach-1" }),
+    });
+    expect(res.status).toBe(200);
+    expect(deleteEq).toHaveBeenCalledWith("achievement_id", "ach-1");
+  });
+
+  it("deletes character_achievements rows when criteria_config changes", async () => {
+    setupAuth();
+    const deleteEq = jest.fn().mockResolvedValue({ error: null });
+    setupServiceForPatch("fam-1", deleteEq);
+
+    const req = makeRequest("PATCH", "Bearer token", {
+      criteria_config: { count: 5 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ id: "ach-1" }),
+    });
+    expect(res.status).toBe(200);
+    expect(deleteEq).toHaveBeenCalledWith("achievement_id", "ach-1");
+  });
+
+  it("does not delete character_achievements rows when only non-criteria fields change", async () => {
+    setupAuth();
+    const deleteEq = jest.fn().mockResolvedValue({ error: null });
+    setupServiceForPatch("fam-1", deleteEq);
+
+    const req = makeRequest("PATCH", "Bearer token", {
+      name: "New Name",
+      is_hidden: true,
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ id: "ach-1" }),
+    });
+    expect(res.status).toBe(200);
+    expect(deleteEq).not.toHaveBeenCalled();
   });
 });

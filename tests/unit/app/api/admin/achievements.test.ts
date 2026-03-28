@@ -84,9 +84,11 @@ function setupServiceAchievements() {
     if (table === "achievements") {
       return {
         select: jest.fn().mockReturnValue({
-          order: jest.fn().mockResolvedValue({
-            data: MOCK_ACHIEVEMENTS,
-            error: null,
+          or: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: MOCK_ACHIEVEMENTS,
+              error: null,
+            }),
           }),
           eq: jest.fn().mockReturnValue({
             maybeSingle: jest.fn().mockResolvedValue({
@@ -156,6 +158,43 @@ describe("GET /api/admin/achievements", () => {
 
     const res = await GET(makeRequest("GET"));
     expect(res.status).toBe(403);
+  });
+
+  it("filters achievements to the requester's family and global achievements", async () => {
+    setupAuth();
+    let capturedOrArg: string | undefined;
+    mockServiceSupabase.from.mockImplementation((table: string) => {
+      if (table === "achievements") {
+        return {
+          select: jest.fn().mockReturnValue({
+            or: jest.fn().mockImplementation((arg: string) => {
+              capturedOrArg = arg;
+              return {
+                order: jest.fn().mockResolvedValue({
+                  data: MOCK_ACHIEVEMENTS,
+                  error: null,
+                }),
+              };
+            }),
+          }),
+        };
+      }
+      if (table === "achievement_categories") {
+        return {
+          select: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({
+              data: MOCK_CATEGORIES,
+              error: null,
+            }),
+          }),
+        };
+      }
+      return { select: jest.fn().mockReturnThis() };
+    });
+
+    const res = await GET(makeRequest("GET"));
+    expect(res.status).toBe(200);
+    expect(capturedOrArg).toBe("family_id.eq.fam-1,family_id.is.null");
   });
 });
 
