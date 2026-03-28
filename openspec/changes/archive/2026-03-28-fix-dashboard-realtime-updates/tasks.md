@@ -54,6 +54,6 @@
   CharacterContext realtime handler (keep error logs only)
 - [x] 5.2 Run quality gates: `npm run build`,
   `npm run lint`, `npm run test`
-- [ ] 5.3 Manual verification: approve a quest and confirm
+- [x] 5.3 Manual verification: approve a quest and confirm
   character stats (gold, XP, gems, honor) update on the
   dashboard without page refresh
