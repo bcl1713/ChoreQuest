@@ -7,7 +7,7 @@ import { LoadingSpinner, Button } from "@/components/ui";
 import FamilyQuestClaiming from "@/components/family/family-quest-claiming";
 import { BossQuestPanel } from "@/components/boss/boss-quest-panel";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
-import { useCharacter } from "@/hooks/useCharacter";
+import { useCharacter } from "@/lib/character-context";
 import { useQuests } from "@/hooks/useQuests";
 import { useBossQuests } from "@/hooks/useBossQuests";
 import QuestList from "./quest-list";
@@ -39,9 +39,9 @@ export default function QuestDashboard({
   } = useFamilyMembers();
   const {
     character,
-    loading: characterLoading,
+    isLoading: characterLoading,
     error: characterError,
-    reload: reloadCharacter,
+    refreshCharacter: reloadCharacter,
   } = useCharacter();
   const {
     quests: questInstances,

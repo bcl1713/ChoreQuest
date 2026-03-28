@@ -14,7 +14,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useRealtime } from "../../lib/realtime-context";
 import { supabase } from "../../lib/supabase";
 import { useFamilyMembers } from "../../hooks/useFamilyMembers";
-import { useCharacter } from "../../hooks/useCharacter";
+import { useCharacter } from "../../lib/character-context";
 import { useQuests } from "../../hooks/useQuests";
 
 jest.mock("../../lib/streak-service", () => ({
@@ -40,7 +40,7 @@ jest.mock("../../lib/quest-instance-api-service", () => ({
 
 // Mock custom hooks
 jest.mock("../../hooks/useFamilyMembers");
-jest.mock("../../hooks/useCharacter");
+jest.mock("../../lib/character-context");
 jest.mock("../../hooks/useQuests");
 
 describe("Quest Interaction Buttons - Core MVP Feature", () => {
@@ -101,9 +101,12 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
 
     (useCharacter as jest.Mock).mockReturnValue({
       character: { id: "char-123", user_id: "hero-123" },
-      loading: false,
+      isLoading: false,
       error: null,
-      reload: jest.fn(),
+      hasLoaded: true,
+      refreshCharacter: jest.fn().mockResolvedValue(undefined),
+      levelUpEvent: null,
+      clearLevelUpEvent: jest.fn(),
     });
 
     (useQuests as jest.Mock).mockReturnValue({
@@ -185,9 +188,12 @@ describe("Quest Interaction Buttons - Core MVP Feature", () => {
 
     (useCharacter as jest.Mock).mockReturnValue({
       character: null,
-      loading: false,
+      isLoading: false,
       error: null,
-      reload: jest.fn(),
+      hasLoaded: true,
+      refreshCharacter: jest.fn().mockResolvedValue(undefined),
+      levelUpEvent: null,
+      clearLevelUpEvent: jest.fn(),
     });
 
     (useQuests as jest.Mock).mockReturnValue({
