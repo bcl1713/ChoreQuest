@@ -147,10 +147,19 @@ describe("QuestInstanceService approveQuest", () => {
       );
     }
 
-    // Initialize quest service with admin client to bypass RLS
+    // Initialize quest service with admin client to bypass RLS.
+    // Inject a no-op progress service so the fire-and-forget side
+    // effect does not outlive the test boundary.
     const { QuestInstanceService } =
       await import("@/lib/quest-instance-service");
-    questService = new QuestInstanceService(adminSupabase);
+    const mockProgressService = {
+      updateProgress: jest.fn().mockResolvedValue(undefined),
+    };
+    questService = new QuestInstanceService(
+      adminSupabase,
+      undefined,
+      mockProgressService,
+    );
   }, 30000);
 
   afterAll(async () => {

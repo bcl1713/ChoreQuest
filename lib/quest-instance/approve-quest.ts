@@ -18,6 +18,7 @@ import {
 type ApproveQuestDeps = {
   client: SupabaseClient<Database>;
   streakService: StreakService;
+  progressService?: Pick<AchievementProgressService, "updateProgress">;
 };
 
 const fetchQuest = async (
@@ -230,9 +231,9 @@ export const approveQuest = async (
     );
   }
 
-  const progressService = new AchievementProgressService(
-    createServiceSupabaseClient(),
-  );
+  const progressService =
+    deps.progressService ??
+    new AchievementProgressService(createServiceSupabaseClient());
   void progressService
     .updateProgress(character.id, { type: "QUEST_APPROVED" })
     .catch((progressError) => {
