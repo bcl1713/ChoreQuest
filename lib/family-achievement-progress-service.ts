@@ -218,6 +218,7 @@ export class FamilyAchievementProgressService {
     const upsertRows: {
       family_id: string;
       family_achievement_id: string;
+      season_id: string | null;
       progress: { current: number; threshold: number } & Record<string, number>;
     }[] = [];
 
@@ -248,6 +249,7 @@ export class FamilyAchievementProgressService {
       upsertRows.push({
         family_id: familyId,
         family_achievement_id: achievement.id,
+        season_id: null,
         progress: {
           current,
           threshold,
@@ -262,7 +264,7 @@ export class FamilyAchievementProgressService {
     const { error } = await this.writeClient
       .from("family_achievement_progress")
       .upsert(upsertRows, {
-        onConflict: "family_id,family_achievement_id",
+        onConflict: "family_id,family_achievement_id,season_id",
         ignoreDuplicates: false,
       });
 
@@ -292,9 +294,7 @@ export class FamilyAchievementProgressService {
     );
   }
 
-  async getProgress(
-    familyId: string,
-  ): Promise<FamilyAchievementProgressRecord[]> {
+  async getProgress(familyId: string): Promise<FamilyAchievementProgressRecord[]> {
     return getProgressImpl(this.readClient, familyId);
   }
 }

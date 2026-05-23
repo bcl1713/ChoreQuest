@@ -87,6 +87,7 @@ export async function recomputeAchievementImpl(
       {
         family_id: familyId,
         family_achievement_id: achievementId,
+        season_id: null,
         progress: {
           current,
           threshold,

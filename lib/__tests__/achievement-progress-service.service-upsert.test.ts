@@ -28,7 +28,7 @@ describe("AchievementProgressService - service level", () => {
   });
 
   // 8.5 upsert behavior
-  it("upserts with onConflict character_id,achievement_id", async () => {
+  it("upserts with season-aware onConflict character_id,achievement_id,season_id", async () => {
     const questChain = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -66,9 +66,13 @@ describe("AchievementProgressService - service level", () => {
     await service.updateProgress(CHARACTER_ID, { type: "QUEST_APPROVED" });
 
     expect(writeUpsert.upsert).toHaveBeenCalledWith(
-      expect.any(Array),
+      expect.arrayContaining([
+        expect.objectContaining({
+          season_id: null,
+        }),
+      ]),
       expect.objectContaining({
-        onConflict: "character_id,achievement_id",
+        onConflict: "character_id,achievement_id,season_id",
         ignoreDuplicates: false,
       }),
     );

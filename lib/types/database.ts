@@ -135,6 +135,7 @@ export type Database = {
           id: string;
           notified: boolean | null;
           progress: Json | null;
+          season_id: string | null;
           unlocked_at: string | null;
           updated_at: string | null;
         };
@@ -145,6 +146,7 @@ export type Database = {
           id?: string;
           notified?: boolean | null;
           progress?: Json | null;
+          season_id?: string | null;
           unlocked_at?: string | null;
           updated_at?: string | null;
         };
@@ -155,6 +157,7 @@ export type Database = {
           id?: string;
           notified?: boolean | null;
           progress?: Json | null;
+          season_id?: string | null;
           unlocked_at?: string | null;
           updated_at?: string | null;
         };
@@ -171,6 +174,13 @@ export type Database = {
             columns: ["character_id"];
             isOneToOne: false;
             referencedRelation: "characters";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "character_achievements_season_id_fkey";
+            columns: ["season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
             referencedColumns: ["id"];
           },
         ];
@@ -367,6 +377,7 @@ export type Database = {
       };
       families: {
         Row: {
+          active_season_id: string | null;
           code: string;
           created_at: string | null;
           id: string;
@@ -375,6 +386,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          active_season_id?: string | null;
           code: string;
           created_at?: string | null;
           id?: string;
@@ -383,6 +395,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          active_season_id?: string | null;
           code?: string;
           created_at?: string | null;
           id?: string;
@@ -390,7 +403,62 @@ export type Database = {
           timezone?: string;
           updated_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "families_active_season_id_fkey";
+            columns: ["active_season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      seasons: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          ends_at: string | null;
+          family_id: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          starts_at: string;
+          theme: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          ends_at?: string | null;
+          family_id: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          starts_at: string;
+          theme?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          ends_at?: string | null;
+          family_id?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          starts_at?: string;
+          theme?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "seasons_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       quest_instances: {
         Row: {
