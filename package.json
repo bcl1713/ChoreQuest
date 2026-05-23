@@ -14,7 +14,8 @@
     "test:coverage": "jest --coverage",
     "test:unit": "jest",
     "test:integration": "NODE_NO_WARNINGS=1 jest --config jest.integration.config.js",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "version": "npm install --package-lock-only --ignore-scripts && git add package-lock.json"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
