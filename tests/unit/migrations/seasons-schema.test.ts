@@ -16,7 +16,7 @@ describe("seasons schema migration", () => {
     expect(migration).toMatch(/family_id\s+UUID\s+NOT NULL REFERENCES families\(id\) ON DELETE CASCADE/i);
     expect(migration).toMatch(/starts_at\s+TIMESTAMPTZ NOT NULL/i);
     expect(migration).toMatch(/CONSTRAINT seasons_date_order CHECK \(ends_at IS NULL OR ends_at > starts_at\)/i);
-    expect(migration).toMatch(/ALTER TABLE families\s+ADD COLUMN IF NOT EXISTS active_season_id UUID REFERENCES seasons\(id\)/i);
+    expect(migration).toMatch(/ALTER TABLE families\s+ADD COLUMN IF NOT EXISTS active_season_id UUID REFERENCES seasons\(id\) ON DELETE SET NULL/i);
   });
 
   it("enforces one active season per family", () => {

@@ -48,6 +48,7 @@ export async function getActiveSeasonForFamily(
       .from("seasons")
       .select("id, family_id, name, theme, starts_at, ends_at")
       .eq("id", family.active_season_id)
+      .eq("family_id", familyId)
       .maybeSingle<SeasonRow>();
 
     if (seasonError) {

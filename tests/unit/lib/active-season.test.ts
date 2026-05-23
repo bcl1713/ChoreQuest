@@ -52,6 +52,7 @@ describe("getActiveSeasonForFamily", () => {
     expect(familyQuery.select).toHaveBeenCalledWith("active_season_id");
     expect(familyQuery.eq).toHaveBeenCalledWith("id", "family-1");
     expect(seasonQuery.eq).toHaveBeenCalledWith("id", "season-1");
+    expect(seasonQuery.eq).toHaveBeenCalledWith("family_id", "family-1");
   });
 
   it("falls back to the family's is_active season when active_season_id is absent", async () => {

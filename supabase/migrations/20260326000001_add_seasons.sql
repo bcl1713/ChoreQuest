@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS seasons (
 );
 
 ALTER TABLE families
-ADD COLUMN IF NOT EXISTS active_season_id UUID REFERENCES seasons(id);
+ADD COLUMN IF NOT EXISTS active_season_id UUID REFERENCES seasons(id) ON DELETE SET NULL;
 
 CREATE TRIGGER set_timestamp_seasons
   BEFORE UPDATE ON seasons
