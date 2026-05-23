@@ -146,6 +146,7 @@ export class AchievementProgressService {
     const upsertRows: {
       character_id: string;
       achievement_id: string;
+      season_id: string | null;
       progress: AchievementProgressValue;
     }[] = [];
 
@@ -169,6 +170,7 @@ export class AchievementProgressService {
       upsertRows.push({
         character_id: characterId,
         achievement_id: achievement.id,
+        season_id: null,
         progress: buildProgressValue(achievement.criteria_type, result, config),
       });
     }
@@ -178,7 +180,7 @@ export class AchievementProgressService {
     const { error } = await this.writeClient
       .from("character_achievements")
       .upsert(upsertRows, {
-        onConflict: "character_id,achievement_id",
+        onConflict: "character_id,achievement_id,season_id",
         ignoreDuplicates: false,
       });
 
