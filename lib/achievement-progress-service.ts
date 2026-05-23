@@ -16,6 +16,7 @@ import type {
 } from "./achievement-progress/types";
 import type { FetchedAchievement } from "./achievement-progress/unlock-engine";
 import { FamilyAchievementProgressService } from "./family-achievement-progress-service";
+import { getActiveSeasonForFamily } from "./seasons/active-season";
 
 export type {
   AchievementEventType,
@@ -40,9 +41,12 @@ export class AchievementProgressService {
     this.readClient = readClient ?? this.writeClient;
   }
 
-  private async resolveCharacterContext(
-    characterId: string,
-  ): Promise<{ userId: string; familyId: string | null }> {
+  private async resolveCharacterContext(characterId: string): Promise<{
+    userId: string;
+    familyId: string | null;
+    seasonId: string | null;
+    seasonStartedAt: string | null;
+  }> {
     const { data, error } = await this.readClient
       .from("characters")
       .select("user_id, user_profiles!characters_user_id_fkey(family_id)")
@@ -62,9 +66,16 @@ export class AchievementProgressService {
     const userProfile = data.user_profiles as {
       family_id?: string | null;
     } | null;
+    const familyId = userProfile?.family_id ?? null;
+    const activeSeason = familyId
+      ? await getActiveSeasonForFamily(this.readClient, familyId)
+      : null;
+
     return {
       userId: data.user_id,
-      familyId: userProfile?.family_id ?? null,
+      familyId,
+      seasonId: activeSeason?.id ?? null,
+      seasonStartedAt: activeSeason?.starts_at ?? null,
     };
   }
 
@@ -94,11 +105,14 @@ export class AchievementProgressService {
 
   private async fetchExistingAchievementIds(
     characterId: string,
+    seasonId: string | null,
   ): Promise<Set<string>> {
-    const { data, error } = await this.readClient
+    const query = this.readClient
       .from("character_achievements")
       .select("achievement_id")
       .eq("character_id", characterId);
+
+    const { data, error } = seasonId ? await query.eq("season_id", seasonId) : await query;
 
     if (error) {
       throw new Error(`Failed to check progress: ${error.message}`);
@@ -111,11 +125,13 @@ export class AchievementProgressService {
     characterId: string,
     event: AchievementEvent,
   ): Promise<void> {
-    const { userId, familyId } =
+    const { userId, familyId, seasonId, seasonStartedAt } =
       await this.resolveCharacterContext(characterId);
     const achievements = await this.fetchAchievements(familyId);
-    const existingAchievementIds =
-      await this.fetchExistingAchievementIds(characterId);
+    const existingAchievementIds = await this.fetchExistingAchievementIds(
+      characterId,
+      seasonId,
+    );
     // Backfill when any achievement row is missing, not just on zero rows.
     // This handles both first-call and post-deployment cases where new
     // achievements are added after a character's initial backfill.
@@ -165,12 +181,13 @@ export class AchievementProgressService {
         characterId,
         userId,
         config,
+        { seasonId, seasonStartedAt },
       );
 
       upsertRows.push({
         character_id: characterId,
         achievement_id: achievement.id,
-        season_id: null,
+        season_id: seasonId,
         progress: buildProgressValue(achievement.criteria_type, result, config),
       });
     }

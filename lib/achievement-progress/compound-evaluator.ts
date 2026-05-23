@@ -18,6 +18,7 @@ export function createCompoundEvaluator(
     characterId,
     userId,
     criteriaConfig,
+    context,
   ): Promise<EvaluatorResult> => {
     const registry = getRegistry();
     const conditions =
@@ -41,7 +42,13 @@ export function createCompoundEvaluator(
         continue;
       }
 
-      const result = await subEvaluator(client, characterId, userId, condition);
+      const result = await subEvaluator(
+        client,
+        characterId,
+        userId,
+        condition,
+        context,
+      );
       const met = condition.boolean
         ? result.current > 0
         : result.current >= (condition.threshold ?? 0);

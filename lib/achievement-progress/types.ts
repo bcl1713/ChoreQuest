@@ -52,11 +52,17 @@ export type EvaluatorResult = {
   compoundMet?: boolean;
 };
 
+export type AchievementEvaluationContext = {
+  seasonId: string | null;
+  seasonStartedAt: string | null;
+};
+
 export type EvaluatorFn = (
   client: SupabaseClient<Database>,
   characterId: string,
   userId: string,
   criteriaConfig?: CriteriaConfig,
+  context?: AchievementEvaluationContext,
 ) => Promise<EvaluatorResult>;
 
 export type AchievementProgressRecord = {
