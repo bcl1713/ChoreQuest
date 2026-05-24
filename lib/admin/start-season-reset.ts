@@ -62,7 +62,7 @@ export type SeasonResetStore = {
     is_active: boolean;
   }): Promise<CreatedSeason>;
   activateSeason(seasonId: string): Promise<void>;
-  setFamilyActiveSeason(familyId: string, seasonId: string): Promise<void>;
+  setFamilyActiveSeason(familyId: string, seasonId: string): Promise<boolean>;
   resetCharacter(characterId: string, patch: CharacterResetPatch): Promise<void>;
   deleteCharacterQuestStreaks(characterId: string): Promise<number>;
   countCharacterAchievementsForSeason(seasonId: string): Promise<number>;
@@ -180,7 +180,7 @@ export async function runStartSeasonReset(
   });
   await store.deactivateActiveSeasons(familyId, startsAt);
   await store.activateSeason(season.id);
-  await store.setFamilyActiveSeason(familyId, season.id);
+  result.mutations.familyActiveSeasonUpdated = (await store.setFamilyActiveSeason(familyId, season.id)) ? 1 : 0;
   result.season.id = season.id;
 
   for (const character of characters) {

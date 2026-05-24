@@ -123,7 +123,11 @@ export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonRe
         .from("families")
         .update({ active_season_id: seasonId })
         .eq("id", familyId);
+      if (isMissingFamilyActiveSeasonColumnError(error)) {
+        return false;
+      }
       requireNoError("Failed to update family active season", null, error);
+      return true;
     },
     async resetCharacter(characterId, patch) {
       const { error } = await client.from("characters").update(patch).eq("id", characterId);
@@ -154,4 +158,9 @@ export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonRe
       return count ?? 0;
     },
   };
+}
+
+function isMissingFamilyActiveSeasonColumnError(error: { message: string } | null): boolean {
+  if (!error) return false;
+  return error.message.includes("active_season_id") && error.message.toLowerCase().includes("does not exist");
 }

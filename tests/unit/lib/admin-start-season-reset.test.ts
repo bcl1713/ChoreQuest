@@ -135,6 +135,27 @@ describe("admin start-season reset", () => {
       expect.objectContaining({ userId: "user-1", goldBefore: 50, goldAfter: 50 }),
     ]);
   });
+
+  it("continues apply mode when the family active-season pointer column is unavailable", async () => {
+    const store = createFakeStore({ familyActiveSeasonUpdated: false });
+
+    const result = await runStartSeasonReset(store, {
+      familyId: "family-1",
+      name: "Summer 2026",
+      theme: null,
+      description: null,
+      startsAt: "2026-06-01T05:00:00.000Z",
+      userIds: ["user-1"],
+      dryRun: false,
+      apply: true,
+      confirm: true,
+    });
+
+    expect(result.mutations.familyActiveSeasonUpdated).toBe(0);
+    expect(store.calls).toContain("setFamilyActiveSeason");
+    expect(store.calls).toContain("resetCharacter:character-1");
+  });
+
   it("fails apply mode if a reset changes preserved gold", async () => {
     const store = createFakeStore({ goldAfterByUserId: new Map([["user-1", 49]]) });
 
@@ -154,7 +175,9 @@ describe("admin start-season reset", () => {
   });
 });
 
-function createFakeStore(options: { goldAfterByUserId?: Map<string, number> } = {}): SeasonResetStore & { calls: string[] } {
+function createFakeStore(
+  options: { familyActiveSeasonUpdated?: boolean; goldAfterByUserId?: Map<string, number> } = {},
+): SeasonResetStore & { calls: string[] } {
   const calls: string[] = [];
   const store: SeasonResetStore & { calls: string[] } = {
     calls,
@@ -229,6 +252,7 @@ function createFakeStore(options: { goldAfterByUserId?: Map<string, number> } = 
     },
     async setFamilyActiveSeason() {
       calls.push("setFamilyActiveSeason");
+      return options.familyActiveSeasonUpdated ?? true;
     },
     async resetCharacter(characterId) {
       calls.push(`resetCharacter:${characterId}`);

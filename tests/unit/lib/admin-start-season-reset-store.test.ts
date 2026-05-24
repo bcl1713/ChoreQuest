@@ -34,6 +34,18 @@ describe("Supabase start-season reset store", () => {
     expect(familiesQuery.select).toHaveBeenCalledWith("id, name");
     expect(familiesQuery.eq).toHaveBeenCalledWith("id", "family-1");
   });
+
+  it("treats a missing active_season_id column as an optional pointer during apply", async () => {
+    const familiesQuery = createQuery(null, {
+      updateError: { message: "column families.active_season_id does not exist" },
+    });
+    const client = createClient({ families: familiesQuery });
+
+    const store = createSupabaseSeasonResetStore(client);
+
+    await expect(store.setFamilyActiveSeason("family-1", "season-new")).resolves.toBe(false);
+    expect(familiesQuery.update).toHaveBeenCalledWith({ active_season_id: "season-new" });
+  });
 });
 
 function createClient(queries: Record<string, ReturnType<typeof createQuery>>) {
@@ -42,12 +54,15 @@ function createClient(queries: Record<string, ReturnType<typeof createQuery>>) {
   } as never;
 }
 
-function createQuery(data: unknown, options: { resolveOnEq?: boolean } = {}) {
+function createQuery(data: unknown, options: { resolveOnEq?: boolean; updateError?: { message: string } | null } = {}) {
   const query = {
     select: jest.fn(() => query),
     order: jest.fn(() => Promise.resolve({ data, error: null })),
     eq: jest.fn(() => (options.resolveOnEq ? Promise.resolve({ data, error: null }) : query)),
     maybeSingle: jest.fn(() => Promise.resolve({ data, error: null })),
+    update: jest.fn(() => ({
+      eq: jest.fn(() => Promise.resolve({ error: options.updateError ?? null })),
+    })),
   };
   return query;
 }
