@@ -53,15 +53,16 @@ All environment templates (`.env`, `.env.example`, `.env.dev.example`, `.env.pro
    cp .env.example .env
    ```
    The default values point at the placeholder domain `supabase.example.com`. Swap in your actual Supabase URLs/keys for development.
-3. **Run Prisma migrations + generate client (optional for read-only work)**
+3. **Apply local Supabase migrations when schema files change**
    ```bash
-   npm run db:generate
-   npm run db:migrate
+   npm run db:migrate:local
    ```
+   This runs `supabase db push` against the local Supabase CLI stack. Use `npm run db:reset:local` only when you intentionally want to reset local data.
 4. **Start the dev server**
    ```bash
    npm run dev
    ```
+   `npm run dev` runs a local-only Supabase migration preflight first. If your local database is missing the seasons schema from `supabase/migrations/20260326000001_add_seasons.sql`, it stops with the exact migration command instead of letting admin tooling fail later with a PostgREST schema-cache error. Remote/staging/production Supabase URLs are not probed by this dev-startup check; set `CHOREQUEST_SKIP_SUPABASE_PREFLIGHT=1` only if you deliberately need to bypass it.
 5. Visit [http://localhost:3000](http://localhost:3000). Authentication and data flows will proxy against the configured Supabase instance.
 
 ## Self-Hosted Supabase (supabase-docker/)
