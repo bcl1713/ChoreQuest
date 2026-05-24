@@ -67,8 +67,34 @@ export const USER_ID = "user-001";
 export const ACHIEVEMENT_ID = "ach-001";
 
 export function makeReadClient(overrides?: Record<string, MockChain>) {
+  const noActiveSeasonFamily = {
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        maybeSingle: jest.fn().mockResolvedValue({
+          data: { active_season_id: null },
+          error: null,
+        }),
+      }),
+    }),
+  };
+  const noActiveSeason = {
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }),
+  };
+  const defaults = {
+    families: noActiveSeasonFamily as unknown as MockChain,
+    seasons: noActiveSeason as unknown as MockChain,
+  };
   const from = jest.fn((table: string) => {
     if (overrides?.[table]) return overrides[table];
+    if (defaults[table as keyof typeof defaults]) {
+      return defaults[table as keyof typeof defaults];
+    }
     throw new Error(`Unexpected table: ${table}`);
   });
   return { from };

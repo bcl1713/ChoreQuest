@@ -1,75 +1,54 @@
 import type {
-  AchievementEventType,
+  AchievementEvaluationContext,
   CriteriaConfig,
   EvaluatorFn,
 } from "./types";
 import { createCompoundEvaluator } from "./compound-evaluator";
-
-// ─── Event → criteria-type mapping ──────────────────────────────────────────
-
-export const EVENT_CRITERIA_MAP: Record<AchievementEventType, string[]> = {
-  QUEST_APPROVED: [
-    "quest_complete",
-    "quest_volunteer",
-    "quest_difficulty",
-    "gold_earned",
-    "xp_earned",
-    "level_reached",
-    "streak_reached",
-    "compound",
-  ],
-  REWARD_APPROVED: ["gold_spent", "reward_redeemed", "compound"],
-  BOSS_COMPLETED: [
-    "boss_defeated",
-    "boss_participated",
-    "gold_earned",
-    "xp_earned",
-    "level_reached",
-    "compound",
-  ],
-  CLASS_CHANGED: ["class_change", "compound"],
-};
-
-export const ALL_CRITERIA_TYPES = [
-  "quest_complete",
-  "quest_volunteer",
-  "quest_difficulty",
-  "boss_defeated",
-  "boss_participated",
-  "gold_earned",
-  "gold_spent",
-  "reward_redeemed",
-  "xp_earned",
-  "level_reached",
-  "streak_reached",
-  "class_change",
-  "honor_earned",
-  "compound",
-] as const;
+export { ALL_CRITERIA_TYPES, EVENT_CRITERIA_MAP } from "./criteria-map";
 
 // ─── Evaluators ──────────────────────────────────────────────────────────────
+
+function applySeasonCutoff<T extends { gte: (column: string, value: string) => T }>(
+  query: T,
+  context: AchievementEvaluationContext | undefined,
+  column: "approved_at" | "created_at" = "approved_at",
+): T {
+  return context?.seasonStartedAt
+    ? query.gte(column, context.seasonStartedAt)
+    : query;
+}
 
 const evaluateQuestComplete: EvaluatorFn = async (
   client,
   characterId,
   userId,
+  _criteriaConfig,
+  context,
 ) => {
-  const { count, error } = await client
+  const query = client
     .from("quest_instances")
     .select("*", { count: "exact", head: true })
     .eq("status", "APPROVED")
     .or(`assigned_to_id.eq.${userId},volunteered_by.eq.${characterId}`);
+  const { count, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
   return { current: count ?? 0 };
 };
 
-const evaluateQuestVolunteer: EvaluatorFn = async (client, characterId) => {
-  const { count, error } = await client
+const evaluateQuestVolunteer: EvaluatorFn = async (
+  client,
+  characterId,
+  _userId,
+  _criteriaConfig,
+  context,
+) => {
+  const query = client
     .from("quest_instances")
     .select("*", { count: "exact", head: true })
     .eq("volunteered_by", characterId)
     .eq("status", "APPROVED");
+  const { count, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
   return { current: count ?? 0 };
@@ -80,16 +59,18 @@ const evaluateQuestDifficulty: EvaluatorFn = async (
   characterId,
   userId,
   criteriaConfig,
+  context,
 ) => {
   const difficulty = criteriaConfig?.difficulty;
   if (!difficulty) return { current: 0 };
 
-  const { count, error } = await client
+  const query = client
     .from("quest_instances")
     .select("*", { count: "exact", head: true })
     .eq("status", "APPROVED")
     .eq("difficulty", difficulty as "EASY" | "MEDIUM" | "HARD")
     .or(`assigned_to_id.eq.${userId},volunteered_by.eq.${characterId}`);
+  const { count, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
   return { current: count ?? 0 };
@@ -99,12 +80,15 @@ const evaluateBossDefeated: EvaluatorFn = async (
   client,
   _characterId,
   userId,
+  _criteriaConfig,
+  context,
 ) => {
-  const { count, error } = await client
+  const query = client
     .from("boss_battle_participants")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("participation_status", "APPROVED");
+  const { count, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
   return { current: count ?? 0 };
@@ -114,23 +98,36 @@ const evaluateBossParticipated: EvaluatorFn = async (
   client,
   _characterId,
   userId,
+  _criteriaConfig,
+  context,
 ) => {
-  const { count, error } = await client
+  const query = client
     .from("boss_battle_participants")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .in("participation_status", ["APPROVED", "PARTIAL"]);
+  const { count, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
   return { current: count ?? 0 };
 };
 
-const evaluateGoldEarned: EvaluatorFn = async (client, characterId, userId) => {
-  const { data: questRows, error: questError } = await client
+const evaluateGoldEarned: EvaluatorFn = async (
+  client,
+  characterId,
+  userId,
+  _criteriaConfig,
+  context,
+) => {
+  const questQuery = client
     .from("quest_instances")
     .select("gold_reward, volunteer_bonus, streak_bonus")
     .eq("status", "APPROVED")
     .or(`assigned_to_id.eq.${userId},volunteered_by.eq.${characterId}`);
+  const { data: questRows, error: questError } = await applySeasonCutoff(
+    questQuery,
+    context,
+  );
 
   if (questError) throw questError;
 
@@ -140,11 +137,15 @@ const evaluateGoldEarned: EvaluatorFn = async (client, characterId, userId) => {
     return sum + Math.round(base * (1 + bonusFraction));
   }, 0);
 
-  const { data: bossRows, error: bossError } = await client
+  const bossQuery = client
     .from("boss_battle_participants")
     .select("awarded_gold")
     .eq("user_id", userId)
     .in("participation_status", ["APPROVED", "PARTIAL"]);
+  const { data: bossRows, error: bossError } = await applySeasonCutoff(
+    bossQuery,
+    context,
+  );
 
   if (bossError) throw bossError;
 
@@ -156,12 +157,19 @@ const evaluateGoldEarned: EvaluatorFn = async (client, characterId, userId) => {
   return { current: questGold + bossGold };
 };
 
-const evaluateGoldSpent: EvaluatorFn = async (client, _characterId, userId) => {
-  const { data, error } = await client
+const evaluateGoldSpent: EvaluatorFn = async (
+  client,
+  _characterId,
+  userId,
+  _criteriaConfig,
+  context,
+) => {
+  const query = client
     .from("reward_redemptions")
     .select("cost")
     .eq("user_id", userId)
     .in("status", ["APPROVED", "FULFILLED"]);
+  const { data, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
 
@@ -173,12 +181,15 @@ const evaluateRewardRedeemed: EvaluatorFn = async (
   client,
   _characterId,
   userId,
+  _criteriaConfig,
+  context,
 ) => {
-  const { count, error } = await client
+  const query = client
     .from("reward_redemptions")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .in("status", ["APPROVED", "FULFILLED"]);
+  const { count, error } = await applySeasonCutoff(query, context);
 
   if (error) throw error;
   return { current: count ?? 0 };
@@ -219,12 +230,19 @@ const evaluateStreakReached: EvaluatorFn = async (client, characterId) => {
   return { current: maxStreak };
 };
 
-const evaluateClassChange: EvaluatorFn = async (client, characterId) => {
-  const { count, error } = await client
+const evaluateClassChange: EvaluatorFn = async (
+  client,
+  characterId,
+  _userId,
+  _criteriaConfig,
+  context,
+) => {
+  const query = client
     .from("character_change_history")
     .select("*", { count: "exact", head: true })
     .eq("character_id", characterId)
     .eq("change_type", "class");
+  const { count, error } = await applySeasonCutoff(query, context, "created_at");
 
   if (error) throw error;
   return { current: count ?? 0 };

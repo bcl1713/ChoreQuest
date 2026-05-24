@@ -22,6 +22,7 @@ export type FetchedAchievement = {
 export type UpsertRow = {
   character_id: string;
   achievement_id: string;
+  season_id: string | null;
   progress: AchievementProgressValue;
 };
 
@@ -39,11 +40,15 @@ export async function runUnlockEvaluation(
   if (depth > MAX_CASCADE_DEPTH || progressRows.length === 0) return;
 
   const achievementIds = progressRows.map((r) => r.achievement_id);
-  const { data: existingRows, error: fetchError } = await readClient
+  const seasonId = progressRows[0]?.season_id ?? null;
+  const unlockStateQuery = readClient
     .from("character_achievements")
     .select("achievement_id, unlocked_at")
     .eq("character_id", characterId)
     .in("achievement_id", achievementIds);
+  const { data: existingRows, error: fetchError } = seasonId
+    ? await unlockStateQuery.eq("season_id", seasonId)
+    : await unlockStateQuery;
 
   if (fetchError) {
     throw new Error(`Failed to fetch unlock state: ${fetchError.message}`);
@@ -63,7 +68,7 @@ export async function runUnlockEvaluation(
 
   if (newlyEligible.length === 0) return;
 
-  const { data: actuallyUnlocked, error: unlockError } = await writeClient
+  const unlockUpdateQuery = writeClient
     .from("character_achievements")
     .update({ unlocked_at: new Date().toISOString() })
     .eq("character_id", characterId)
@@ -71,8 +76,10 @@ export async function runUnlockEvaluation(
       "achievement_id",
       newlyEligible.map((r) => r.achievement_id),
     )
-    .is("unlocked_at", null)
-    .select("achievement_id");
+    .is("unlocked_at", null);
+  const { data: actuallyUnlocked, error: unlockError } = seasonId
+    ? await unlockUpdateQuery.eq("season_id", seasonId).select("achievement_id")
+    : await unlockUpdateQuery.select("achievement_id");
 
   if (unlockError) {
     throw new Error(`Failed to set unlocked_at: ${unlockError.message}`);
@@ -180,6 +187,7 @@ export async function runUnlockEvaluation(
           cascadeRows.push({
             character_id: characterId,
             achievement_id: a.id,
+            season_id: seasonId,
             progress: {
               current: trigger.newValue,
               threshold: config?.threshold ?? 0,
@@ -208,10 +216,12 @@ export async function runUnlockEvaluation(
             characterId,
             userId,
             config,
+            { seasonId, seasonStartedAt: null },
           );
           cascadeRows.push({
             character_id: characterId,
             achievement_id: a.id,
+            season_id: seasonId,
             progress: buildProgressValue("compound", result, config),
           });
           cascadeAchievementIds.add(a.id);
@@ -221,7 +231,7 @@ export async function runUnlockEvaluation(
       if (cascadeRows.length > 0) {
         // Fix P2: snapshot existing progress before upserting so rollback can
         // restore prior values rather than blindly writing null.
-        const { data: existingCascade, error: snapshotErr } = await readClient
+        const snapshotQuery = readClient
           .from("character_achievements")
           .select("achievement_id, progress")
           .eq("character_id", characterId)
@@ -229,6 +239,9 @@ export async function runUnlockEvaluation(
             "achievement_id",
             cascadeRows.map((r) => r.achievement_id),
           );
+        const { data: existingCascade, error: snapshotErr } = seasonId
+          ? await snapshotQuery.eq("season_id", seasonId)
+          : await snapshotQuery;
         if (snapshotErr) {
           throw new Error(
             `Failed to snapshot cascade progress: ${snapshotErr.message}`,
@@ -241,7 +254,7 @@ export async function runUnlockEvaluation(
         const { error: cascadeUpsertError } = await writeClient
           .from("character_achievements")
           .upsert(cascadeRows, {
-            onConflict: "character_id,achievement_id",
+            onConflict: "character_id,achievement_id,season_id",
             ignoreDuplicates: false,
           });
 

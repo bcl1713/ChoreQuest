@@ -19,6 +19,27 @@ const familyUpdateProgressSpy = jest
   .spyOn(FamilyAchievementProgressService.prototype, "updateProgress")
   .mockResolvedValue(undefined);
 
+const noActiveSeasonFamilyChain = {
+  select: jest.fn().mockReturnValue({
+    eq: jest.fn().mockReturnValue({
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { active_season_id: null },
+        error: null,
+      }),
+    }),
+  }),
+};
+
+const noActiveSeasonChain = {
+  select: jest.fn().mockReturnValue({
+    eq: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    }),
+  }),
+};
+
 describe("Integration: Individual → Family progress trigger", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -93,6 +114,8 @@ describe("Integration: Individual → Family progress trigger", () => {
         achievements: achievementsChain,
         character_achievements: charAchChain,
         quest_instances: questChain,
+        families: noActiveSeasonFamilyChain,
+        seasons: noActiveSeasonChain,
       };
       if (mocks[table]) return mocks[table];
       throw new Error(`Unexpected read table: ${table}`);
@@ -227,6 +250,8 @@ describe("Integration: Individual → Family progress trigger", () => {
         achievements: achievementsChain,
         character_achievements: charAchChain,
         quest_instances: questChain,
+        families: noActiveSeasonFamilyChain,
+        seasons: noActiveSeasonChain,
       };
       if (mocks[table]) return mocks[table];
       throw new Error(`Unexpected read table: ${table}`);
