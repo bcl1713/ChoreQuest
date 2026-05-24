@@ -17,11 +17,30 @@ export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonRe
 
   return {
     async listFamilies() {
-      const { data, error } = await client
+      const { data: familiesData, error: familiesError } = await client
         .from("families")
-        .select("id, name, active_season_id")
+        .select("id, name")
         .order("name", { ascending: true });
-      return (requireNoError("Failed to list families", data, error) ?? []) as SeasonResetFamily[];
+      const families = (requireNoError("Failed to list families", familiesData, familiesError) ?? []) as Array<{
+        id: string;
+        name: string | null;
+      }>;
+
+      const { data: seasonsData, error: seasonsError } = await client
+        .from("seasons")
+        .select("id, family_id")
+        .eq("is_active", true);
+      const activeSeasonByFamilyId = new Map(
+        ((requireNoError("Failed to list active seasons", seasonsData, seasonsError) ?? []) as Array<{
+          id: string;
+          family_id: string;
+        }>).map((season) => [season.family_id, season.id]),
+      );
+
+      return families.map((family): SeasonResetFamily => ({
+        ...family,
+        active_season_id: activeSeasonByFamilyId.get(family.id) ?? null,
+      }));
     },
     async listFamilyUsers(familyId) {
       const { data, error } = await client
@@ -49,10 +68,14 @@ export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonRe
     async loadFamily(familyId) {
       const { data, error } = await client
         .from("families")
-        .select("id, name, active_season_id")
+        .select("id, name")
         .eq("id", familyId)
         .maybeSingle();
-      return requireNoError("Failed to load family", data, error) as SeasonResetFamily | null;
+      const family = requireNoError("Failed to load family", data, error) as {
+        id: string;
+        name: string | null;
+      } | null;
+      return family ? { ...family, active_season_id: null } : null;
     },
     async loadActiveSeasons(familyId) {
       const { data, error } = await client
