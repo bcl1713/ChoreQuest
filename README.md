@@ -57,7 +57,7 @@ All environment templates (`.env`, `.env.example`, `.env.dev.example`, `.env.pro
    ```bash
    npm run db:migrate:local
    ```
-   This runs `npx supabase db push --local` against the local Supabase CLI stack, so it does not require `supabase link` or a globally installed Supabase CLI. Use `npm run db:reset:local` only when you intentionally want to reset local data.
+   This runs `npx supabase db push --local` against the local Supabase CLI stack, so it does not require `supabase link` or a globally installed Supabase CLI. Use `npm run db:reset:local` only when you intentionally want to reset local data; it runs `npx supabase db reset --local`.
 4. **Start the dev server**
    ```bash
    npm run dev
