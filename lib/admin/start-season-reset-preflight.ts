@@ -1,11 +1,22 @@
 type PreflightEnv = Record<string, string | undefined>;
 
 export type LocalSupabasePreflightPlan =
-  | { action: "check"; url: string; key: string }
+  | { action: "check"; url: string; key: string; migrationCommand: LocalSupabaseMigrationCommand }
   | { action: "skip"; reason: string };
+
+export type LocalSupabaseMigrationCommand = {
+  command: string;
+  args: string[];
+  display: string;
+};
 
 const MIGRATION_PATH = "supabase/migrations/20260326000001_add_seasons.sql";
 const MIGRATION_COMMAND = "npm run db:migrate:local";
+const LOCAL_SUPABASE_MIGRATION_COMMAND: LocalSupabaseMigrationCommand = {
+  command: "npx",
+  args: ["supabase", "db", "push", "--local"],
+  display: MIGRATION_COMMAND,
+};
 
 export function createLocalSupabasePreflightPlan(env: PreflightEnv): LocalSupabasePreflightPlan {
   if (env.CHOREQUEST_SKIP_SUPABASE_PREFLIGHT) {
@@ -26,7 +37,7 @@ export function createLocalSupabasePreflightPlan(env: PreflightEnv): LocalSupaba
     return { action: "skip", reason: "No Supabase service-role key is configured for the local admin preflight." };
   }
 
-  return { action: "check", url, key };
+  return { action: "check", url, key, migrationCommand: LOCAL_SUPABASE_MIGRATION_COMMAND };
 }
 
 export function isMissingSeasonsMigrationError(error: { message?: string } | null | undefined): boolean {

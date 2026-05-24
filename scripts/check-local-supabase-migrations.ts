@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import { execFileSync } from "child_process";
 import { resolve } from "path";
 
 import { createClient } from "@supabase/supabase-js";
@@ -20,6 +21,9 @@ async function main() {
     return;
   }
 
+  console.log(`Applying pending local Supabase migrations with ${plan.migrationCommand.display}...`);
+  execFileSync(plan.migrationCommand.command, plan.migrationCommand.args, { stdio: "inherit" });
+
   const client = createClient(plan.url, plan.key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -32,7 +36,7 @@ async function main() {
     throw new Error(`Local Supabase migration preflight failed: ${error.message}`);
   }
 
-  console.log("Local Supabase migration preflight passed: seasons schema is present.");
+  console.log("Local Supabase migration preflight passed: local migrations are applied and seasons schema is present.");
 }
 
 main().catch((error) => {

@@ -15,6 +15,11 @@ describe("local Supabase migration preflight", () => {
       action: "check",
       url: "http://127.0.0.1:54321",
       key: "service-role-key",
+      migrationCommand: {
+        command: "npx",
+        args: ["supabase", "db", "push", "--local"],
+        display: "npm run db:migrate:local",
+      },
     });
   });
 
@@ -31,6 +36,11 @@ describe("local Supabase migration preflight", () => {
       action: "check",
       url: "http://127.0.0.1:54323",
       key: "service-role-key",
+      migrationCommand: {
+        command: "npx",
+        args: ["supabase", "db", "push", "--local"],
+        display: "npm run db:migrate:local",
+      },
     });
   });
 
