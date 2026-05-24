@@ -5,6 +5,7 @@ import type {
   SeasonResetActiveSeason,
   SeasonResetCharacter,
   SeasonResetFamily,
+  SeasonResetFamilyUser,
   SeasonResetStore,
 } from "./start-season-reset";
 
@@ -15,6 +16,36 @@ export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonRe
   };
 
   return {
+    async listFamilies() {
+      const { data, error } = await client
+        .from("families")
+        .select("id, name, active_season_id")
+        .order("name", { ascending: true });
+      return (requireNoError("Failed to list families", data, error) ?? []) as SeasonResetFamily[];
+    },
+    async listFamilyUsers(familyId) {
+      const { data, error } = await client
+        .from("user_profiles")
+        .select("id, name, email, characters(id, name)")
+        .eq("family_id", familyId)
+        .order("name", { ascending: true });
+      const rows = (requireNoError("Failed to list family users", data, error) ?? []) as Array<{
+        id: string;
+        name: string | null;
+        email: string | null;
+        characters?: Array<{ id: string; name: string | null }> | { id: string; name: string | null } | null;
+      }>;
+      return rows.map((row): SeasonResetFamilyUser => {
+        const character = Array.isArray(row.characters) ? row.characters[0] : row.characters;
+        return {
+          user_id: row.id,
+          user_name: row.name,
+          user_email: row.email,
+          character_id: character?.id ?? null,
+          character_name: character?.name ?? null,
+        };
+      });
+    },
     async loadFamily(familyId) {
       const { data, error } = await client
         .from("families")

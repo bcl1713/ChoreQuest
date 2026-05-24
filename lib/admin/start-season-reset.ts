@@ -18,24 +18,37 @@ export type SeasonResetFamily = {
 
 export type SeasonResetActiveSeason = { id: string; name: string | null };
 
+export type SeasonResetFamilyUser = {
+  user_id: string;
+  user_name: string | null;
+  user_email: string | null;
+  character_id: string | null;
+  character_name: string | null;
+};
+
 export type CreatedSeason = { id: string };
 
+export type StartSeasonDiscoveryMode = "families" | "family-users";
+
 export type StartSeasonResetOptions = {
-  familyId: string;
-  name: string;
+  familyId: string | null;
+  name: string | null;
   theme: string | null;
   description: string | null;
-  startsAt: string;
+  startsAt: string | null;
   userIds: string[];
   allUsers?: boolean;
   dryRun: boolean;
   apply: boolean;
   confirm: boolean;
+  discovery?: StartSeasonDiscoveryMode | null;
 };
 
 export type CharacterResetPatch = { xp: number; level: number; gems: number; honor_points: number; active_family_quest_id: null };
 
 export type SeasonResetStore = {
+  listFamilies(): Promise<SeasonResetFamily[]>;
+  listFamilyUsers(familyId: string): Promise<SeasonResetFamilyUser[]>;
   loadFamily(familyId: string): Promise<SeasonResetFamily | null>;
   loadActiveSeasons(familyId: string): Promise<SeasonResetActiveSeason[]>;
   loadCharacters(familyId: string, userIds: string[], allUsers?: boolean): Promise<SeasonResetCharacter[]>;
@@ -90,91 +103,25 @@ export function buildCharacterResetPatch(): CharacterResetPatch {
   return { xp: 0, level: 1, gems: 0, honor_points: 0, active_family_quest_id: null };
 }
 
-export function parseStartSeasonResetArgs(args: string[]): StartSeasonResetOptions {
-  const values = new Map<string, string[]>();
-  const aliases = new Map([["--reset-user", "--user-id"]]);
-  const flags = new Set<string>();
-
-  for (let i = 0; i < args.length; i += 1) {
-    const rawArg = args[i];
-    const arg = aliases.get(rawArg) ?? rawArg;
-    if (!arg.startsWith("--")) {
-      throw new Error(`Unexpected positional argument: ${arg}`);
-    }
-
-    if (["--dry-run", "--apply", "--confirm-start-season-reset", "--all-users"].includes(arg)) {
-      flags.add(arg);
-      continue;
-    }
-
-    const next = args[i + 1];
-    if (!next || next.startsWith("--")) {
-      throw new Error(`Missing value for ${arg}`);
-    }
-
-    const current = values.get(arg) ?? [];
-    current.push(next);
-    values.set(arg, current);
-    i += 1;
-  }
-
-  const required = (name: string): string => {
-    const value = values.get(name)?.[0];
-    if (!value) throw new Error(`Missing required argument ${name}`);
-    return value;
-  };
-
-  const familyId = required("--family-id");
-  const name = required("--name");
-  const startsAtRaw = required("--starts-at");
-  const userIds = values.get("--user-id") ?? [];
-  const allUsers = flags.has("--all-users");
-  const apply = flags.has("--apply");
-  const dryRun = !apply || flags.has("--dry-run");
-  const confirm = flags.has("--confirm-start-season-reset");
-  const startsAt = startsAtRaw === "now" ? new Date().toISOString() : startsAtRaw;
-
-  if (Number.isNaN(Date.parse(startsAt))) {
-    throw new Error("--starts-at must be an ISO date/time or 'now'");
-  }
-
-  if (userIds.length === 0 && !allUsers) {
-    throw new Error("Provide at least one --user-id or pass --all-users explicitly");
-  }
-
-  if (userIds.length > 0 && allUsers) {
-    throw new Error("Use either --user-id targets or --all-users, not both");
-  }
-
-  if (apply && !confirm) {
-    throw new Error("Apply mode requires --confirm-start-season-reset");
-  }
-
-  return {
-    familyId,
-    name,
-    startsAt: new Date(startsAt).toISOString(),
-    theme: values.get("--theme")?.[0] ?? null,
-    description: values.get("--description")?.[0] ?? null,
-    userIds,
-    allUsers,
-    dryRun,
-    apply,
-    confirm,
-  };
-}
-
 export async function runStartSeasonReset(
   store: SeasonResetStore,
   options: StartSeasonResetOptions,
 ): Promise<SeasonResetResult> {
-  const family = await store.loadFamily(options.familyId);
-  if (!family) {
-    throw new Error(`No family found for ${options.familyId}`);
+  if (options.discovery || !options.familyId || !options.name || !options.startsAt) {
+    throw new Error("Start-season reset requires --family-id, --name, --starts-at, and reset targets");
   }
 
-  const activeSeasons = await store.loadActiveSeasons(options.familyId);
-  const characters = await store.loadCharacters(options.familyId, options.userIds, options.allUsers);
+  const familyId = options.familyId;
+  const seasonName = options.name;
+  const startsAt = options.startsAt;
+
+  const family = await store.loadFamily(familyId);
+  if (!family) {
+    throw new Error(`No family found for ${familyId}`);
+  }
+
+  const activeSeasons = await store.loadActiveSeasons(familyId);
+  const characters = await store.loadCharacters(familyId, options.userIds, options.allUsers);
 
   if (characters.length === 0) {
     throw new Error("No matching characters found for requested target users");
@@ -202,8 +149,8 @@ export async function runStartSeasonReset(
     previousActiveSeasonIds: activeSeasons.map((season) => season.id),
     season: {
       id: options.dryRun ? "dry-run-season" : "",
-      name: options.name,
-      startsAt: options.startsAt,
+      name: seasonName,
+      startsAt,
     },
     characters: auditCharacters,
     mutations: {
@@ -224,16 +171,16 @@ export async function runStartSeasonReset(
   }
 
   const season = await store.createSeason({
-    family_id: options.familyId,
-    name: options.name,
+    family_id: familyId,
+    name: seasonName,
     theme: options.theme,
     description: options.description,
-    starts_at: options.startsAt,
+    starts_at: startsAt,
     is_active: false,
   });
-  await store.deactivateActiveSeasons(options.familyId, options.startsAt);
+  await store.deactivateActiveSeasons(familyId, startsAt);
   await store.activateSeason(season.id);
-  await store.setFamilyActiveSeason(options.familyId, season.id);
+  await store.setFamilyActiveSeason(familyId, season.id);
   result.season.id = season.id;
 
   for (const character of characters) {
@@ -241,7 +188,7 @@ export async function runStartSeasonReset(
     result.mutations.characterQuestStreaksDeleted += await store.deleteCharacterQuestStreaks(character.id);
   }
 
-  const afterCharacters = await store.loadCharacters(options.familyId, options.userIds, options.allUsers);
+  const afterCharacters = await store.loadCharacters(familyId, options.userIds, options.allUsers);
   const afterByUserId = new Map(afterCharacters.map((character) => [character.user_id, character]));
 
   for (const audit of result.characters) {

@@ -1,9 +1,5 @@
-import {
-  buildCharacterResetPatch,
-  parseStartSeasonResetArgs,
-  runStartSeasonReset,
-  type SeasonResetStore,
-} from "@/lib/admin/start-season-reset";
+import { buildCharacterResetPatch, runStartSeasonReset, type SeasonResetStore } from "@/lib/admin/start-season-reset";
+import { parseStartSeasonResetArgs } from "@/lib/admin/start-season-reset-cli";
 
 describe("admin start-season reset", () => {
   it("resets season-derived character state while preserving spendable gold", () => {
@@ -162,6 +158,22 @@ function createFakeStore(options: { goldAfterByUserId?: Map<string, number> } = 
   const calls: string[] = [];
   const store: SeasonResetStore & { calls: string[] } = {
     calls,
+    async listFamilies() {
+      calls.push("listFamilies");
+      return [{ id: "family-1", name: "Lucas", active_season_id: "season-old" }];
+    },
+    async listFamilyUsers(familyId) {
+      calls.push(`listFamilyUsers:${familyId}`);
+      return [
+        {
+          user_id: "user-1",
+          user_name: "Hero One",
+          user_email: "hero1@example.test",
+          character_id: "character-1",
+          character_name: "Hero One",
+        },
+      ];
+    },
     async loadFamily(familyId) {
       calls.push("loadFamily");
       return { id: familyId, name: "Lucas", active_season_id: "season-old" };
