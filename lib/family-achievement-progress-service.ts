@@ -12,18 +12,22 @@ import type {
   FetchedFamilyAchievement,
   FamilyCriteriaConfig,
   FamilyAchievementProgressRecord,
+  FamilyAchievementEvaluationContext,
 } from "./family-achievement-progress/types";
 import {
   recomputeAchievementImpl,
-  getProgressImpl,
   evaluateUnlocksImpl,
 } from "./family-achievement-progress/service-helpers";
+import { resolveFamilyCharacters } from "./family-achievement-progress/family-context";
+import { getProgressImpl } from "./family-achievement-progress/progress-reader";
+import { getActiveSeasonForFamily } from "./seasons/active-season";
 
 export type {
   AchievementEvent,
   FetchedFamilyAchievement,
   FamilyCriteriaConfig,
   FamilyAchievementProgressRecord,
+  FamilyAchievementEvaluationContext,
 } from "./family-achievement-progress/types";
 
 // ─── Service class ───────────────────────────────────────────────────────────
@@ -37,61 +41,6 @@ export class FamilyAchievementProgressService {
     this.readClient = readClient ?? this.writeClient;
   }
 
-  private async resolveFamilyCharacters(familyId: string): Promise<{
-    userIds: string[];
-    characterIds: string[];
-    allUserIds: string[];
-    totalMemberCount: number;
-    membersWithCharCount: number;
-    memberPairs: import("./family-achievement-progress/types").FamilyMemberPair[];
-  }> {
-    const { data, error } = await this.readClient
-      .from("user_profiles")
-      .select("id, characters(id)")
-      .eq("family_id", familyId);
-
-    if (error) {
-      throw new Error(`Failed to resolve family characters: ${error.message}`);
-    }
-
-    if (!data || data.length === 0) {
-      throw new Error(`No members found for family: ${familyId}`);
-    }
-
-    const userIds: string[] = [];
-    const characterIds: string[] = [];
-    const allUserIds: string[] = [];
-    const usersWithChars = new Set<string>();
-    const memberPairs: import("./family-achievement-progress/types").FamilyMemberPair[] =
-      [];
-
-    for (const profile of data) {
-      allUserIds.push(profile.id);
-      const chars = Array.isArray(profile.characters)
-        ? profile.characters
-        : profile.characters
-          ? [profile.characters]
-          : [];
-      const charIds: string[] = [];
-      for (const char of chars) {
-        const charId = (char as { id: string }).id;
-        userIds.push(profile.id);
-        characterIds.push(charId);
-        usersWithChars.add(profile.id);
-        charIds.push(charId);
-      }
-      memberPairs.push({ userId: profile.id, characterIds: charIds });
-    }
-
-    return {
-      userIds,
-      characterIds,
-      allUserIds,
-      totalMemberCount: data.length,
-      membersWithCharCount: usersWithChars.size,
-      memberPairs,
-    };
-  }
 
   private async fetchFamilyAchievements(
     familyId: string,
@@ -112,11 +61,16 @@ export class FamilyAchievementProgressService {
 
   private async fetchExistingProgressIds(
     familyId: string,
+    seasonId: string | null,
   ): Promise<Set<string>> {
-    const { data, error } = await this.readClient
+    const query = this.readClient
       .from("family_achievement_progress")
       .select("family_achievement_id")
       .eq("family_id", familyId);
+
+    const { data, error } = seasonId
+      ? await query.eq("season_id", seasonId)
+      : await query;
 
     if (error) {
       throw new Error(`Failed to check family progress: ${error.message}`);
@@ -186,9 +140,17 @@ export class FamilyAchievementProgressService {
       totalMemberCount,
       membersWithCharCount,
       memberPairs,
-    } = await this.resolveFamilyCharacters(familyId);
+    } = await resolveFamilyCharacters(this.readClient, familyId);
     const achievements = await this.fetchFamilyAchievements(familyId);
-    const existingProgressIds = await this.fetchExistingProgressIds(familyId);
+    const activeSeason = await getActiveSeasonForFamily(this.readClient, familyId);
+    const evaluationContext: FamilyAchievementEvaluationContext = {
+      seasonId: activeSeason?.id ?? null,
+      seasonStartedAt: activeSeason?.starts_at ?? null,
+    };
+    const existingProgressIds = await this.fetchExistingProgressIds(
+      familyId,
+      evaluationContext.seasonId,
+    );
 
     if (achievements.length === 0) return;
 
@@ -239,6 +201,7 @@ export class FamilyAchievementProgressService {
         mode,
         memberPairs,
         config,
+        evaluationContext,
       );
       const guardFails =
         mode === "all" &&
@@ -249,7 +212,7 @@ export class FamilyAchievementProgressService {
       upsertRows.push({
         family_id: familyId,
         family_achievement_id: achievement.id,
-        season_id: null,
+        season_id: evaluationContext.seasonId,
         progress: {
           current,
           threshold,
@@ -284,13 +247,18 @@ export class FamilyAchievementProgressService {
     familyId: string,
     achievementId: string,
   ): Promise<void> {
-    const familyContext = await this.resolveFamilyCharacters(familyId);
+    const familyContext = await resolveFamilyCharacters(this.readClient, familyId);
+    const activeSeason = await getActiveSeasonForFamily(this.readClient, familyId);
     await recomputeAchievementImpl(
       this.readClient,
       this.writeClient,
       familyId,
       achievementId,
       familyContext,
+      {
+        seasonId: activeSeason?.id ?? null,
+        seasonStartedAt: activeSeason?.starts_at ?? null,
+      },
     );
   }
 

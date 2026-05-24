@@ -21,7 +21,13 @@ export type FamilyEvaluatorFn = (
   mode: "sum" | "all",
   memberPairs: FamilyMemberPair[],
   criteriaConfig: FamilyCriteriaConfig,
+  context?: FamilyAchievementEvaluationContext,
 ) => Promise<{ current: number }>;
+
+export type FamilyAchievementEvaluationContext = {
+  seasonId: string | null;
+  seasonStartedAt: string | null;
+};
 
 export type FamilyCriteriaConfig = {
   threshold?: number;

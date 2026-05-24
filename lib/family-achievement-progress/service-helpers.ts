@@ -4,7 +4,7 @@ import { FAMILY_EVALUATOR_REGISTRY, isCharBased } from "./family-evaluators";
 import type {
   FetchedFamilyAchievement,
   FamilyCriteriaConfig,
-  FamilyAchievementProgressRecord,
+  FamilyAchievementEvaluationContext,
   FamilyMemberPair,
 } from "./types";
 
@@ -25,6 +25,10 @@ export async function recomputeAchievementImpl(
     totalMemberCount: number;
     membersWithCharCount: number;
     memberPairs: FamilyMemberPair[];
+  },
+  evaluationContext: FamilyAchievementEvaluationContext = {
+    seasonId: null,
+    seasonStartedAt: null,
   },
 ): Promise<void> {
   const { data: achievementData, error: achievementError } = await readClient
@@ -73,6 +77,7 @@ export async function recomputeAchievementImpl(
     mode,
     memberPairs,
     config,
+    evaluationContext,
   );
 
   const guardFails =
@@ -87,7 +92,7 @@ export async function recomputeAchievementImpl(
       {
         family_id: familyId,
         family_achievement_id: achievementId,
-        season_id: null,
+        season_id: evaluationContext.seasonId,
         progress: {
           current,
           threshold,
@@ -96,7 +101,7 @@ export async function recomputeAchievementImpl(
         },
       },
       {
-        onConflict: "family_id,family_achievement_id",
+        onConflict: "family_id,family_achievement_id,season_id",
         ignoreDuplicates: false,
       },
     );
@@ -106,12 +111,15 @@ export async function recomputeAchievementImpl(
   }
 
   if (current >= threshold) {
-    const { error: unlockError } = await writeClient
+    let unlockQuery = writeClient
       .from("family_achievement_progress")
       .update({ unlocked_at: new Date().toISOString() })
       .eq("family_id", familyId)
-      .eq("family_achievement_id", achievementId)
-      .is("unlocked_at", null);
+      .eq("family_achievement_id", achievementId);
+    if (evaluationContext.seasonId) {
+      unlockQuery = unlockQuery.eq("season_id", evaluationContext.seasonId);
+    }
+    const { error: unlockError } = await unlockQuery.is("unlocked_at", null);
 
     if (unlockError) {
       console.error(
@@ -120,11 +128,15 @@ export async function recomputeAchievementImpl(
       );
     }
   } else {
-    const { data: progressRow, error: clearError } = await writeClient
+    let clearQuery = writeClient
       .from("family_achievement_progress")
       .update({ unlocked_at: null })
       .eq("family_id", familyId)
-      .eq("family_achievement_id", achievementId)
+      .eq("family_achievement_id", achievementId);
+    if (evaluationContext.seasonId) {
+      clearQuery = clearQuery.eq("season_id", evaluationContext.seasonId);
+    }
+    const { data: progressRow, error: clearError } = await clearQuery
       .select("id")
       .maybeSingle();
 
@@ -158,6 +170,7 @@ export async function recomputeAchievementImpl(
 type ProgressRow = {
   family_id: string;
   family_achievement_id: string;
+  season_id?: string | null;
   progress: { current: number; threshold: number };
 };
 
@@ -167,6 +180,8 @@ export async function evaluateUnlocksImpl(
   familyId: string,
   progressRows: ProgressRow[],
 ): Promise<void> {
+  const seasonId = progressRows[0]?.season_id ?? null;
+
   // ── Unlock path ────────────────────────────────────────────────────────────
   const eligibleRows = progressRows.filter(
     (row) => row.progress.current >= row.progress.threshold,
@@ -175,11 +190,18 @@ export async function evaluateUnlocksImpl(
   if (eligibleRows.length > 0) {
     const achievementIds = eligibleRows.map((row) => row.family_achievement_id);
 
-    const { data: existingProgress, error: fetchError } = await readClient
+    let existingProgressQuery = readClient
       .from("family_achievement_progress")
       .select("family_achievement_id, unlocked_at")
       .eq("family_id", familyId)
       .in("family_achievement_id", achievementIds);
+
+    if (seasonId) {
+      existingProgressQuery = existingProgressQuery.eq("season_id", seasonId);
+    }
+
+    const { data: existingProgress, error: fetchError } =
+      await existingProgressQuery;
 
     if (fetchError) {
       throw new Error(`Failed to check unlock state: ${fetchError.message}`);
@@ -194,12 +216,17 @@ export async function evaluateUnlocksImpl(
     for (const achievementId of achievementIds.filter(
       (id) => !alreadyUnlocked.has(id),
     )) {
-      const { error: unlockError } = await writeClient
+      let unlockQuery = writeClient
         .from("family_achievement_progress")
         .update({ unlocked_at: new Date().toISOString() })
         .eq("family_id", familyId)
-        .eq("family_achievement_id", achievementId)
-        .is("unlocked_at", null);
+        .eq("family_achievement_id", achievementId);
+
+      if (seasonId) {
+        unlockQuery = unlockQuery.eq("season_id", seasonId);
+      }
+
+      const { error: unlockError } = await unlockQuery.is("unlocked_at", null);
 
       if (unlockError) {
         console.error(
@@ -219,11 +246,17 @@ export async function evaluateUnlocksImpl(
   );
 
   for (const row of belowThresholdRows) {
-    const { data: progressRow, error: clearError } = await writeClient
+    let clearQuery = writeClient
       .from("family_achievement_progress")
       .update({ unlocked_at: null })
       .eq("family_id", familyId)
-      .eq("family_achievement_id", row.family_achievement_id)
+      .eq("family_achievement_id", row.family_achievement_id);
+
+    if (seasonId) {
+      clearQuery = clearQuery.eq("season_id", seasonId);
+    }
+
+    const { data: progressRow, error: clearError } = await clearQuery
       .select("id")
       .maybeSingle();
 
@@ -249,52 +282,4 @@ export async function evaluateUnlocksImpl(
       }
     }
   }
-}
-
-// ─── getProgress ─────────────────────────────────────────────────────────────
-
-export async function getProgressImpl(
-  readClient: ReadClient,
-  familyId: string,
-): Promise<FamilyAchievementProgressRecord[]> {
-  const { data, error } = await readClient
-    .from("family_achievement_progress")
-    .select(
-      `
-      family_id,
-      family_achievement_id,
-      unlocked_at,
-      progress,
-      notified,
-      family_achievements (
-        id,
-        name,
-        description,
-        criteria_type,
-        criteria_config
-      )
-    `,
-    )
-    .eq("family_id", familyId);
-
-  if (error) {
-    throw new Error(`Failed to fetch family progress: ${error.message}`);
-  }
-
-  if (!data) return [];
-
-  return data.map((row) => {
-    const achievement = Array.isArray(row.family_achievements)
-      ? row.family_achievements[0]
-      : row.family_achievements;
-    return {
-      family_id: row.family_id,
-      family_achievement_id: row.family_achievement_id,
-      unlocked_at: row.unlocked_at,
-      progress: row.progress as { current: number; threshold: number } | null,
-      notified: row.notified,
-      family_achievement:
-        achievement as FamilyAchievementProgressRecord["family_achievement"],
-    };
-  });
 }
