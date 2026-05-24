@@ -12,18 +12,18 @@ export function createLocalSupabasePreflightPlan(env: PreflightEnv): LocalSupaba
     return { action: "skip", reason: "CHOREQUEST_SKIP_SUPABASE_PREFLIGHT is set." };
   }
 
-  const url = env.NEXT_PUBLIC_SUPABASE_URL ?? env.SUPABASE_URL;
+  const url = env.SUPABASE_INTERNAL_URL ?? env.SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL;
   if (!url) {
     return { action: "skip", reason: "No Supabase URL is configured." };
   }
 
   if (!isLocalSupabaseUrl(url)) {
-    return { action: "skip", reason: "Supabase URL is not local; migration preflight is local-dev only." };
+    return { action: "skip", reason: "Resolved admin Supabase URL is not local; migration preflight is local-dev only." };
   }
 
-  const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? env.SUPABASE_ANON_KEY;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) {
-    return { action: "skip", reason: "No Supabase anon key is configured for the local preflight." };
+    return { action: "skip", reason: "No Supabase service-role key is configured for the local admin preflight." };
   }
 
   return { action: "check", url, key };

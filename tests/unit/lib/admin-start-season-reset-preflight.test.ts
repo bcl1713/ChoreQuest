@@ -8,13 +8,29 @@ describe("local Supabase migration preflight", () => {
   it("requires a seasons-table check for local Supabase URLs", () => {
     const plan = createLocalSupabasePreflightPlan({
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+      SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
     });
 
     expect(plan).toEqual({
       action: "check",
       url: "http://127.0.0.1:54321",
-      key: "anon-key",
+      key: "service-role-key",
+    });
+  });
+
+  it("checks the same local Supabase target precedence used by admin service-role tooling", () => {
+    const plan = createLocalSupabasePreflightPlan({
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+      SUPABASE_URL: "http://127.0.0.1:54322",
+      SUPABASE_INTERNAL_URL: "http://127.0.0.1:54323",
+      SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+    });
+
+    expect(plan).toEqual({
+      action: "check",
+      url: "http://127.0.0.1:54323",
+      key: "service-role-key",
     });
   });
 
@@ -26,7 +42,7 @@ describe("local Supabase migration preflight", () => {
 
     expect(plan).toEqual({
       action: "skip",
-      reason: "Supabase URL is not local; migration preflight is local-dev only.",
+      reason: "Resolved admin Supabase URL is not local; migration preflight is local-dev only.",
     });
   });
 
