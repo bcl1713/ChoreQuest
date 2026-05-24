@@ -53,15 +53,16 @@ All environment templates (`.env`, `.env.example`, `.env.dev.example`, `.env.pro
    cp .env.example .env
    ```
    The default values point at the placeholder domain `supabase.example.com`. Swap in your actual Supabase URLs/keys for development.
-3. **Run Prisma migrations + generate client (optional for read-only work)**
+3. **Apply local Supabase migrations when schema files change**
    ```bash
-   npm run db:generate
-   npm run db:migrate
+   npm run db:migrate:local
    ```
+   This runs `npx supabase db push --local` against the local Supabase CLI stack, so it does not require `supabase link` or a globally installed Supabase CLI. Use `npm run db:reset:local` only when you intentionally want to reset local data; it runs `npx supabase db reset --local`.
 4. **Start the dev server**
    ```bash
    npm run dev
    ```
+   `npm run dev` runs a local-only Supabase migration preflight first. The preflight resolves the same admin target used by `scripts/admin-start-season.ts` (`SUPABASE_INTERNAL_URL`, then `SUPABASE_URL`, then `NEXT_PUBLIC_SUPABASE_URL`), applies pending local migrations with `npm run db:migrate:local`, and then checks the admin target with `SUPABASE_SERVICE_ROLE_KEY`. This keeps dev startup from claiming the seasons schema is ready while `supabase/migrations/20260326000001_add_seasons.sql` is still pending. If the local migration apply or schema check fails, fix that before relying on admin tooling. Remote/staging/production Supabase URLs are not probed or migrated by this dev-startup check; set `CHOREQUEST_SKIP_SUPABASE_PREFLIGHT=1` only if you deliberately need to bypass it.
 5. Visit [http://localhost:3000](http://localhost:3000). Authentication and data flows will proxy against the configured Supabase instance.
 
 ## Self-Hosted Supabase (supabase-docker/)
