@@ -11,6 +11,12 @@ import type {
 
 export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonResetStore {
   const requireNoError = <T>(label: string, data: T, error: { message: string } | null): T => {
+    if (isMissingSeasonsTableError(error)) {
+      throw new Error(
+        "Seasons table is missing; apply Supabase migration " +
+          "supabase/migrations/20260326000001_add_seasons.sql before running admin start-season discovery/reset.",
+      );
+    }
     if (error) throw new Error(`${label}: ${error.message}`);
     return data;
   };
@@ -163,4 +169,10 @@ export function createSupabaseSeasonResetStore(client: SupabaseClient): SeasonRe
 function isMissingFamilyActiveSeasonColumnError(error: { message: string } | null): boolean {
   if (!error) return false;
   return error.message.includes("active_season_id") && error.message.toLowerCase().includes("does not exist");
+}
+
+function isMissingSeasonsTableError(error: { message: string } | null): boolean {
+  if (!error) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("public.seasons") && (message.includes("schema cache") || message.includes("does not exist"));
 }
