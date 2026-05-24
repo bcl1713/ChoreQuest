@@ -1,4 +1,7 @@
-import type { FamilyEvaluatorFn } from "./types";
+import type {
+  FamilyAchievementEvaluationContext,
+  FamilyEvaluatorFn,
+} from "./types";
 import type { AchievementEventType } from "../achievement-progress/types";
 import { aggregate } from "./family-evaluator-utils";
 import {
@@ -73,6 +76,16 @@ export const ALL_FAMILY_CRITERIA_TYPES = [
 
 // ─── Family evaluators ──────────────────────────────────────────────────────
 
+function applySeasonCutoff<T extends { gte: (column: string, value: string) => T }>(
+  query: T,
+  context: FamilyAchievementEvaluationContext | undefined,
+  column: "approved_at" | "created_at" = "approved_at",
+): T {
+  return context?.seasonStartedAt
+    ? query.gte(column, context.seasonStartedAt)
+    : query;
+}
+
 const evaluateQuestComplete: FamilyEvaluatorFn = async (
   client,
   _familyId,
@@ -81,6 +94,8 @@ const evaluateQuestComplete: FamilyEvaluatorFn = async (
   _allUserIds,
   mode,
   memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const { userId, characterIds } of memberPairs) {
@@ -88,12 +103,13 @@ const evaluateQuestComplete: FamilyEvaluatorFn = async (
       .from("quest_instances")
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED");
-    const { count, error } =
+    const query =
       characterIds.length > 0
-        ? await base.or(
+        ? base.or(
             `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
           )
-        : await base.eq("assigned_to_id", userId);
+        : base.eq("assigned_to_id", userId);
+    const { count, error } = await applySeasonCutoff(query, context);
     if (error) throw error;
     values.push(count ?? 0);
   }
@@ -108,6 +124,8 @@ const evaluateQuestVolunteer: FamilyEvaluatorFn = async (
   _allUserIds,
   mode,
   memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const { characterIds } of memberPairs) {
@@ -115,11 +133,12 @@ const evaluateQuestVolunteer: FamilyEvaluatorFn = async (
       // One value per member: max of their characters' volunteer counts
       let maxForMember = 0;
       for (const characterId of characterIds) {
-        const { count, error } = await client
+        const query = client
           .from("quest_instances")
           .select("*", { count: "exact", head: true })
           .eq("volunteered_by", characterId)
           .eq("status", "APPROVED");
+        const { count, error } = await applySeasonCutoff(query, context);
         if (error) throw error;
         maxForMember = Math.max(maxForMember, count ?? 0);
       }
@@ -127,11 +146,12 @@ const evaluateQuestVolunteer: FamilyEvaluatorFn = async (
     } else {
       // One value per character: sum across all characters
       for (const characterId of characterIds) {
-        const { count, error } = await client
+        const query = client
           .from("quest_instances")
           .select("*", { count: "exact", head: true })
           .eq("volunteered_by", characterId)
           .eq("status", "APPROVED");
+        const { count, error } = await applySeasonCutoff(query, context);
         if (error) throw error;
         values.push(count ?? 0);
       }
@@ -149,6 +169,7 @@ const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
   mode,
   memberPairs,
   criteriaConfig,
+  context,
 ) => {
   const difficulty = (criteriaConfig.difficulty ?? "HARD") as
     | "EASY"
@@ -161,12 +182,13 @@ const evaluateQuestDifficulty: FamilyEvaluatorFn = async (
       .select("*", { count: "exact", head: true })
       .eq("status", "APPROVED")
       .eq("difficulty", difficulty);
-    const { count, error } =
+    const query =
       characterIds.length > 0
-        ? await base.or(
+        ? base.or(
             `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
           )
-        : await base.eq("assigned_to_id", userId);
+        : base.eq("assigned_to_id", userId);
+    const { count, error } = await applySeasonCutoff(query, context);
     if (error) throw error;
     values.push(count ?? 0);
   }
@@ -180,14 +202,18 @@ const evaluateBossDefeated: FamilyEvaluatorFn = async (
   _characterIds,
   allUserIds,
   mode,
+  _memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const userId of allUserIds) {
-    const { count, error } = await client
+    const query = client
       .from("boss_battle_participants")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("participation_status", "APPROVED");
+    const { count, error } = await applySeasonCutoff(query, context);
     if (error) throw error;
     values.push(count ?? 0);
   }
@@ -201,14 +227,18 @@ const evaluateBossParticipated: FamilyEvaluatorFn = async (
   _characterIds,
   allUserIds,
   mode,
+  _memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const userId of allUserIds) {
-    const { count, error } = await client
+    const query = client
       .from("boss_battle_participants")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
       .in("participation_status", ["APPROVED", "PARTIAL"]);
+    const { count, error } = await applySeasonCutoff(query, context);
     if (error) throw error;
     values.push(count ?? 0);
   }

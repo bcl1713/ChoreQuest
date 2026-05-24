@@ -1,5 +1,18 @@
-import type { FamilyEvaluatorFn } from "./types";
+import type {
+  FamilyAchievementEvaluationContext,
+  FamilyEvaluatorFn,
+} from "./types";
 import { aggregate } from "./family-evaluator-utils";
+
+function applySeasonCutoff<T extends { gte: (column: string, value: string) => T }>(
+  query: T,
+  context: FamilyAchievementEvaluationContext | undefined,
+  column: "approved_at" | "created_at" = "approved_at",
+): T {
+  return context?.seasonStartedAt
+    ? query.gte(column, context.seasonStartedAt)
+    : query;
+}
 
 export const evaluateGoldEarned: FamilyEvaluatorFn = async (
   client,
@@ -9,6 +22,8 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
   _allUserIds,
   mode,
   memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const { userId, characterIds } of memberPairs) {
@@ -16,12 +31,16 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
       .from("quest_instances")
       .select("gold_reward, volunteer_bonus, streak_bonus")
       .eq("status", "APPROVED");
-    const { data: questRows, error: questError } =
+    const questQuery =
       characterIds.length > 0
-        ? await base.or(
+        ? base.or(
             `assigned_to_id.eq.${userId},volunteered_by.in.(${characterIds.join(",")})`,
           )
-        : await base.eq("assigned_to_id", userId);
+        : base.eq("assigned_to_id", userId);
+    const { data: questRows, error: questError } = await applySeasonCutoff(
+      questQuery,
+      context,
+    );
     if (questError) throw questError;
 
     const questGold = (questRows ?? []).reduce((sum, row) => {
@@ -31,11 +50,15 @@ export const evaluateGoldEarned: FamilyEvaluatorFn = async (
       return sum + Math.round(base * (1 + bonusFraction));
     }, 0);
 
-    const { data: bossRows, error: bossError } = await client
+    const bossQuery = client
       .from("boss_battle_participants")
       .select("awarded_gold")
       .eq("user_id", userId)
       .in("participation_status", ["APPROVED", "PARTIAL"]);
+    const { data: bossRows, error: bossError } = await applySeasonCutoff(
+      bossQuery,
+      context,
+    );
     if (bossError) throw bossError;
 
     const bossGold = (bossRows ?? []).reduce(
@@ -55,14 +78,18 @@ export const evaluateGoldSpent: FamilyEvaluatorFn = async (
   _characterIds,
   allUserIds,
   mode,
+  _memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const userId of allUserIds) {
-    const { data, error } = await client
+    const query = client
       .from("reward_redemptions")
       .select("cost")
       .eq("user_id", userId)
       .in("status", ["APPROVED", "FULFILLED"]);
+    const { data, error } = await applySeasonCutoff(query, context);
     if (error) throw error;
     const total = (data ?? []).reduce((sum, row) => sum + (row.cost ?? 0), 0);
     values.push(total);
@@ -77,14 +104,18 @@ export const evaluateRewardRedeemed: FamilyEvaluatorFn = async (
   _characterIds,
   allUserIds,
   mode,
+  _memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const userId of allUserIds) {
-    const { count, error } = await client
+    const query = client
       .from("reward_redemptions")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
       .in("status", ["APPROVED", "FULFILLED"]);
+    const { count, error } = await applySeasonCutoff(query, context);
     if (error) throw error;
     values.push(count ?? 0);
   }
@@ -194,16 +225,23 @@ export const evaluateClassChange: FamilyEvaluatorFn = async (
   _allUserIds,
   mode,
   memberPairs,
+  _criteriaConfig,
+  context,
 ) => {
   const values: number[] = [];
   for (const { characterIds } of memberPairs) {
     const charValues: number[] = [];
     for (const characterId of characterIds) {
-      const { count, error } = await client
+      const query = client
         .from("character_change_history")
         .select("*", { count: "exact", head: true })
         .eq("character_id", characterId)
         .eq("change_type", "class");
+      const { count, error } = await applySeasonCutoff(
+        query,
+        context,
+        "created_at",
+      );
       if (error) throw error;
       charValues.push(count ?? 0);
     }
