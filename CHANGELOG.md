@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.8.0] - 2026-05-24
+
+### Added
+- Achievement system milestone:
+  - Achievement schema, progress tracking, unlock evaluation, notifications, badge display, categories, hidden achievements, and family achievements.
+  - Family-achievement realtime updates and RLS fixes for multi-user households.
+- Seasons foundation for achievement progression:
+  - Seasons data model with active family season support.
+  - Season-aware individual and family achievement evaluation so historical completions do not leak into a new season.
+  - Admin start-season/reset tooling that backfills or starts seasons while preserving existing gold balances.
+- Operator safety documentation for season upgrades and new-season starts, including family/user discovery, migration checks, dry-run usage, and all-users versus selected-user reset guidance.
+- Regression coverage for season backfill, duplicate reward prevention, and season reset behavior.
+
+### Changed
+- Rebalanced seeded achievement progression and rewards around the current family economy: typical daily chores at roughly 10 gold, 100 gold at roughly $10, and harder chores up to roughly 100 gold.
+- Release/version reporting now reads package metadata so the app reports the shipped version consistently.
+- Local development startup now runs a Supabase migration preflight before `next dev`, with explicit local migration/reset scripts for season schema changes.
+- Hardened the v0.8.0 dependency set and reduced npm audit exposure to remaining moderate advisories.
+
+### Verification
+- Unit, lint, build, npm install/lockfile, audit, and GitHub Playwright smoke checks were run across the v0.8.0 preparation PRs.
+- Brian reported local integration tests pass before the v0.8.0 release/version PR.
+
+### Notes
+- This release includes database migrations for achievements and seasons. Follow the safe season upgrade workflow before starting a new family season.
+- Gold balances are intentionally preserved during season resets; achievement progress/rewards are the seasonal reset target.
+
 ## [0.5.0] - 2026-03-07
 
 ### Added
