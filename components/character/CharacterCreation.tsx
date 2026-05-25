@@ -42,10 +42,7 @@ export default function CharacterCreation({
     setError("");
 
     try {
-      console.log("Attempting to create character for user:", user.id);
-
       // First, verify the user profile exists with retry logic for timing issues
-      console.log("Checking for user profile...");
       let profileData = profile ?? null;
       let profileError = null;
       let retryCount = 0;
@@ -62,15 +59,7 @@ export default function CharacterCreation({
         profileData = data;
         profileError = error;
 
-        console.log(`Profile query attempt ${retryCount + 1}:`, {
-          profileData,
-          profileError,
-        });
-
         if (!profileData && retryCount < maxRetries - 1) {
-          console.log(
-            `Retrying profile lookup in 2 seconds (attempt ${retryCount + 1}/${maxRetries})...`,
-          );
           await new Promise((resolve) => setTimeout(resolve, 2000));
           retryCount++;
         } else {
@@ -87,20 +76,8 @@ export default function CharacterCreation({
           code: profileError?.code,
         });
 
-        // Let's also check what profiles exist
-        const { data: allProfiles, error: allProfilesError } = await supabase
-          .from("user_profiles")
-          .select("id, name, role")
-          .limit(5);
-
-        console.log("All user profiles (first 5):", allProfiles);
-        console.log("All profiles query error:", allProfilesError);
-
         // If the profile is missing but we know the family, attempt to self-heal by creating it
         if (family) {
-          console.warn(
-            "Profile missing; attempting to create profile using current session and family context.",
-          );
           const fallbackName =
             user.user_metadata?.full_name ||
             user.user_metadata?.name ||
@@ -139,8 +116,6 @@ export default function CharacterCreation({
         }
       }
 
-      console.log("User profile verified, creating character...");
-
       const { data, error: dbError } = await supabase
         .from("characters")
         .insert({
@@ -156,7 +131,6 @@ export default function CharacterCreation({
         throw new Error(dbError.message || "Failed to create character");
       }
 
-      console.log("Character created successfully:", data);
       onCharacterCreated(data);
     } catch (err) {
       console.error("Character creation error:", err);

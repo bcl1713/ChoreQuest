@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { getAuthToken } from "@/lib/utils/get-auth-token";
 import {
   RewardService,
   type RewardRedemptionWithUser,
@@ -96,17 +97,43 @@ export function useRewardStoreActions({
 
       setUpdatingId(redemption.id);
       try {
-        const updated = await rewardService.updateRedemptionStatus(
-          redemption.id,
-          status,
-          userId ?? undefined,
-        );
-        mergeRedemption(updated);
+        if (status === "APPROVED") {
+          const token = await getAuthToken();
+          const response = await fetch(
+            `/api/reward-redemptions/${redemption.id}/approve`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            },
+          );
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              (errorData as { error?: string; message?: string }).error ??
+                (errorData as { message?: string }).message ??
+                "Failed to approve redemption",
+            );
+          }
+          const data = (await response.json()) as {
+            redemption: RewardRedemption;
+          };
+          mergeRedemption(data.redemption);
+        } else {
+          const updated = await rewardService.updateRedemptionStatus(
+            redemption.id,
+            status,
+            userId ?? undefined,
+          );
+          mergeRedemption(updated);
 
-        if (status === "DENIED") {
-          const refundAmount = redemption.cost ?? 0;
-          await rewardService.refundGold(redemption.user_id, refundAmount);
-          await refreshCharacter();
+          if (status === "DENIED") {
+            const refundAmount = redemption.cost ?? 0;
+            await rewardService.refundGold(redemption.user_id, refundAmount);
+            await refreshCharacter();
+          }
         }
       } catch (error) {
         console.error("Failed to update redemption:", error);

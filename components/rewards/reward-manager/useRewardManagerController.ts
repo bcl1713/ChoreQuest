@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { RewardService } from "@/lib/reward-service";
-import { Reward } from "@/lib/types/database";
+import { getAuthToken } from "@/lib/utils/get-auth-token";
+import { Reward, RewardRedemption } from "@/lib/types/database";
 import { useRewards } from "@/hooks/useRewards";
 import type { UserProfile } from "@/lib/types/database";
 import type { User } from "@supabase/supabase-js";
@@ -157,12 +158,29 @@ export function useRewardManagerController(
       if (!user) return;
 
       try {
-        const updated = await rewardService.updateRedemptionStatus(
-          redemptionId,
-          "APPROVED",
-          user.id,
+        const token = await getAuthToken();
+        const response = await fetch(
+          `/api/reward-redemptions/${redemptionId}/approve`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
         );
-        mergeRedemption(updated);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            (errorData as { error?: string; message?: string }).error ??
+              (errorData as { message?: string }).message ??
+              "Failed to approve redemption",
+          );
+        }
+        const data = (await response.json()) as {
+          redemption: RewardRedemption;
+        };
+        mergeRedemption(data.redemption);
       } catch (err) {
         console.error("Failed to approve redemption:", err);
       }

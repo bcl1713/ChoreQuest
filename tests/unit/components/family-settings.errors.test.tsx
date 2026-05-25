@@ -1,9 +1,14 @@
 import { screen, waitFor } from "@testing-library/react";
-import { mockGetFamilyInfo, renderFamilySettings, resetFamilySettingsMocks } from "./family-settings.fixtures";
+import {
+  mockGetFamilyInfo,
+  renderFamilySettings,
+  resetFamilySettingsMocks,
+} from "./family-settings.fixtures";
 
 describe("FamilySettings - errors", () => {
   beforeEach(() => {
     resetFamilySettingsMocks();
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   it("displays error state when loading fails", async () => {
@@ -12,7 +17,9 @@ describe("FamilySettings - errors", () => {
     renderFamilySettings();
 
     await waitFor(() => {
-      expect(screen.getByText("Failed to load family information")).toBeInTheDocument();
+      expect(
+        screen.getByText("Failed to load family information"),
+      ).toBeInTheDocument();
     });
   });
 
@@ -22,7 +29,9 @@ describe("FamilySettings - errors", () => {
     renderFamilySettings();
 
     await waitFor(() => {
-      expect(screen.getByText("Failed to load family settings")).toBeInTheDocument();
+      expect(
+        screen.getByText("Failed to load family settings"),
+      ).toBeInTheDocument();
     });
   });
 });

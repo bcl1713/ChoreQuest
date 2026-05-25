@@ -2,6 +2,7 @@
 // Used by Docker health checks and load balancers
 
 import { NextResponse } from 'next/server';
+import { APP_VERSION } from '@/lib/app-version';
 import { supabase } from '@/lib/supabase';
 
 // Health check endpoint - no authentication required
@@ -21,7 +22,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV,
-      version: process.env.npm_package_version || '0.2.0',
+      version: APP_VERSION,
     };
 
     // Test database connection

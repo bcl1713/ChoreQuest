@@ -4,778 +4,960 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
   graphql_public: {
     Tables: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
+      achievement_categories: {
+        Row: {
+          created_at: string | null;
+          description: string | null;
+          display_order: number | null;
+          icon: string | null;
+          id: string;
+          name: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          description?: string | null;
+          display_order?: number | null;
+          icon?: string | null;
+          id?: string;
+          name: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          description?: string | null;
+          display_order?: number | null;
+          icon?: string | null;
+          id?: string;
+          name?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       achievements: {
         Row: {
-          badge_url: string | null
-          condition: Json
-          created_at: string | null
-          description: string
-          gem_reward: number | null
-          gold_reward: number | null
-          id: string
-          name: string
-          updated_at: string | null
-          xp_reward: number | null
-        }
+          category_id: string;
+          created_at: string | null;
+          criteria_config: Json;
+          criteria_type: string;
+          description: string;
+          family_id: string | null;
+          gold_reward: number | null;
+          icon: string | null;
+          id: string;
+          is_hidden: boolean | null;
+          name: string;
+          updated_at: string | null;
+          xp_reward: number | null;
+        };
         Insert: {
-          badge_url?: string | null
-          condition: Json
-          created_at?: string | null
-          description: string
-          gem_reward?: number | null
-          gold_reward?: number | null
-          id?: string
-          name: string
-          updated_at?: string | null
-          xp_reward?: number | null
-        }
+          category_id: string;
+          created_at?: string | null;
+          criteria_config: Json;
+          criteria_type: string;
+          description: string;
+          family_id?: string | null;
+          gold_reward?: number | null;
+          icon?: string | null;
+          id?: string;
+          is_hidden?: boolean | null;
+          name: string;
+          updated_at?: string | null;
+          xp_reward?: number | null;
+        };
         Update: {
-          badge_url?: string | null
-          condition?: Json
-          created_at?: string | null
-          description?: string
-          gem_reward?: number | null
-          gold_reward?: number | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-          xp_reward?: number | null
-        }
-        Relationships: []
-      }
+          category_id?: string;
+          created_at?: string | null;
+          criteria_config?: Json;
+          criteria_type?: string;
+          description?: string;
+          family_id?: string | null;
+          gold_reward?: number | null;
+          icon?: string | null;
+          id?: string;
+          is_hidden?: boolean | null;
+          name?: string;
+          updated_at?: string | null;
+          xp_reward?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "achievements_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "achievement_categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "achievements_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      character_achievements: {
+        Row: {
+          achievement_id: string;
+          character_id: string;
+          created_at: string | null;
+          id: string;
+          notified: boolean | null;
+          progress: Json | null;
+          season_id: string | null;
+          unlocked_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          achievement_id: string;
+          character_id: string;
+          created_at?: string | null;
+          id?: string;
+          notified?: boolean | null;
+          progress?: Json | null;
+          season_id?: string | null;
+          unlocked_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          achievement_id?: string;
+          character_id?: string;
+          created_at?: string | null;
+          id?: string;
+          notified?: boolean | null;
+          progress?: Json | null;
+          season_id?: string | null;
+          unlocked_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "character_achievements_achievement_id_fkey";
+            columns: ["achievement_id"];
+            isOneToOne: false;
+            referencedRelation: "achievements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "character_achievements_character_id_fkey";
+            columns: ["character_id"];
+            isOneToOne: false;
+            referencedRelation: "characters";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "character_achievements_season_id_fkey";
+            columns: ["season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       boss_battle_participants: {
         Row: {
-          approved_at: string | null
-          approved_by: string | null
-          awarded_gold: number
-          awarded_xp: number
-          boss_battle_id: string | null
-          created_at: string | null
-          damage_dealt: number | null
-          honor_awarded: number
-          id: string
-          participation_status: string
-          updated_at: string | null
-          user_id: string | null
-        }
+          approved_at: string | null;
+          approved_by: string | null;
+          awarded_gold: number;
+          awarded_xp: number;
+          boss_battle_id: string | null;
+          created_at: string | null;
+          damage_dealt: number | null;
+          honor_awarded: number;
+          id: string;
+          participation_status: string;
+          updated_at: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          approved_at?: string | null
-          approved_by?: string | null
-          awarded_gold?: number
-          awarded_xp?: number
-          boss_battle_id?: string | null
-          created_at?: string | null
-          damage_dealt?: number | null
-          honor_awarded?: number
-          id?: string
-          participation_status?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
+          approved_at?: string | null;
+          approved_by?: string | null;
+          awarded_gold?: number;
+          awarded_xp?: number;
+          boss_battle_id?: string | null;
+          created_at?: string | null;
+          damage_dealt?: number | null;
+          honor_awarded?: number;
+          id?: string;
+          participation_status?: string;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          approved_at?: string | null
-          approved_by?: string | null
-          awarded_gold?: number
-          awarded_xp?: number
-          boss_battle_id?: string | null
-          created_at?: string | null
-          damage_dealt?: number | null
-          honor_awarded?: number
-          id?: string
-          participation_status?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
+          approved_at?: string | null;
+          approved_by?: string | null;
+          awarded_gold?: number;
+          awarded_xp?: number;
+          boss_battle_id?: string | null;
+          created_at?: string | null;
+          damage_dealt?: number | null;
+          honor_awarded?: number;
+          id?: string;
+          participation_status?: string;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "boss_battle_participants_boss_battle_id_fkey"
-            columns: ["boss_battle_id"]
-            isOneToOne: false
-            referencedRelation: "boss_battles"
-            referencedColumns: ["id"]
+            foreignKeyName: "boss_battle_participants_boss_battle_id_fkey";
+            columns: ["boss_battle_id"];
+            isOneToOne: false;
+            referencedRelation: "boss_battles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "boss_battle_participants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "boss_battle_participants_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       boss_battles: {
         Row: {
-          defeated_at: string | null
-          created_at: string | null
-          current_hp: number
-          description: string
-          end_date: string
-          family_id: string | null
-          gem_reward: number | null
-          honor_reward: number | null
-          id: string
-          join_window_expires_at: string
-          join_window_minutes: number
-          name: string
-          reward_gold: number
-          reward_xp: number
-          start_date: string | null
-          rewards_distributed: boolean
-          status: Database["public"]["Enums"]["boss_battle_status"] | null
-          total_hp: number
-          updated_at: string | null
-        }
+          defeated_at: string | null;
+          created_at: string | null;
+          current_hp: number;
+          description: string;
+          end_date: string;
+          family_id: string | null;
+          gem_reward: number | null;
+          honor_reward: number | null;
+          id: string;
+          join_window_expires_at: string;
+          join_window_minutes: number;
+          name: string;
+          reward_gold: number;
+          reward_xp: number;
+          start_date: string | null;
+          rewards_distributed: boolean;
+          status: Database["public"]["Enums"]["boss_battle_status"] | null;
+          total_hp: number;
+          updated_at: string | null;
+        };
         Insert: {
-          defeated_at?: string | null
-          created_at?: string | null
-          current_hp: number
-          description: string
-          end_date: string
-          family_id?: string | null
-          gem_reward?: number | null
-          honor_reward?: number | null
-          id?: string
-          join_window_expires_at?: string
-          join_window_minutes?: number
-          name: string
-          reward_gold?: number
-          reward_xp?: number
-          start_date?: string | null
-          rewards_distributed?: boolean
-          status?: Database["public"]["Enums"]["boss_battle_status"] | null
-          total_hp: number
-          updated_at?: string | null
-        }
+          defeated_at?: string | null;
+          created_at?: string | null;
+          current_hp: number;
+          description: string;
+          end_date: string;
+          family_id?: string | null;
+          gem_reward?: number | null;
+          honor_reward?: number | null;
+          id?: string;
+          join_window_expires_at?: string;
+          join_window_minutes?: number;
+          name: string;
+          reward_gold?: number;
+          reward_xp?: number;
+          start_date?: string | null;
+          rewards_distributed?: boolean;
+          status?: Database["public"]["Enums"]["boss_battle_status"] | null;
+          total_hp: number;
+          updated_at?: string | null;
+        };
         Update: {
-          defeated_at?: string | null
-          created_at?: string | null
-          current_hp?: number
-          description?: string
-          end_date?: string
-          family_id?: string | null
-          gem_reward?: number | null
-          honor_reward?: number | null
-          id?: string
-          join_window_expires_at?: string
-          join_window_minutes?: number
-          name?: string
-          reward_gold?: number
-          reward_xp?: number
-          start_date?: string | null
-          rewards_distributed?: boolean
-          status?: Database["public"]["Enums"]["boss_battle_status"] | null
-          total_hp?: number
-          updated_at?: string | null
-        }
+          defeated_at?: string | null;
+          created_at?: string | null;
+          current_hp?: number;
+          description?: string;
+          end_date?: string;
+          family_id?: string | null;
+          gem_reward?: number | null;
+          honor_reward?: number | null;
+          id?: string;
+          join_window_expires_at?: string;
+          join_window_minutes?: number;
+          name?: string;
+          reward_gold?: number;
+          reward_xp?: number;
+          start_date?: string | null;
+          rewards_distributed?: boolean;
+          status?: Database["public"]["Enums"]["boss_battle_status"] | null;
+          total_hp?: number;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "boss_battles_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
+            foreignKeyName: "boss_battles_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       characters: {
         Row: {
-          avatar_url: string | null
-          class: Database["public"]["Enums"]["character_class"] | null
-          created_at: string | null
-          gems: number | null
-          gold: number | null
-          honor_points: number | null
-          id: string
-          level: number | null
-          name: string
-          active_family_quest_id: string | null
-          updated_at: string | null
-          user_id: string | null
-          xp: number | null
-        }
+          avatar_url: string | null;
+          class: Database["public"]["Enums"]["character_class"] | null;
+          created_at: string | null;
+          gems: number | null;
+          gold: number | null;
+          honor_points: number | null;
+          id: string;
+          level: number | null;
+          name: string;
+          active_family_quest_id: string | null;
+          updated_at: string | null;
+          user_id: string | null;
+          xp: number | null;
+        };
         Insert: {
-          avatar_url?: string | null
-          class?: Database["public"]["Enums"]["character_class"] | null
-          created_at?: string | null
-          gems?: number | null
-          gold?: number | null
-          honor_points?: number | null
-          id?: string
-          level?: number | null
-          name: string
-          active_family_quest_id?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          xp?: number | null
-        }
+          avatar_url?: string | null;
+          class?: Database["public"]["Enums"]["character_class"] | null;
+          created_at?: string | null;
+          gems?: number | null;
+          gold?: number | null;
+          honor_points?: number | null;
+          id?: string;
+          level?: number | null;
+          name: string;
+          active_family_quest_id?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+          xp?: number | null;
+        };
         Update: {
-          avatar_url?: string | null
-          class?: Database["public"]["Enums"]["character_class"] | null
-          created_at?: string | null
-          gems?: number | null
-          gold?: number | null
-          honor_points?: number | null
-          id?: string
-          level?: number | null
-          name?: string
-          active_family_quest_id?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          xp?: number | null
-        }
+          avatar_url?: string | null;
+          class?: Database["public"]["Enums"]["character_class"] | null;
+          created_at?: string | null;
+          gems?: number | null;
+          gold?: number | null;
+          honor_points?: number | null;
+          id?: string;
+          level?: number | null;
+          name?: string;
+          active_family_quest_id?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+          xp?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "characters_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "characters_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       families: {
         Row: {
-          code: string
-          created_at: string | null
-          id: string
-          name: string
-          timezone: string
-          updated_at: string | null
-        }
+          active_season_id: string | null;
+          code: string;
+          created_at: string | null;
+          id: string;
+          name: string;
+          timezone: string;
+          updated_at: string | null;
+        };
         Insert: {
-          code: string
-          created_at?: string | null
-          id?: string
-          name: string
-          timezone?: string
-          updated_at?: string | null
-        }
+          active_season_id?: string | null;
+          code: string;
+          created_at?: string | null;
+          id?: string;
+          name: string;
+          timezone?: string;
+          updated_at?: string | null;
+        };
         Update: {
-          code?: string
-          created_at?: string | null
-          id?: string
-          name?: string
-          timezone?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          active_season_id?: string | null;
+          code?: string;
+          created_at?: string | null;
+          id?: string;
+          name?: string;
+          timezone?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "families_active_season_id_fkey";
+            columns: ["active_season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      seasons: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          ends_at: string | null;
+          family_id: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          starts_at: string;
+          theme: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          ends_at?: string | null;
+          family_id: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          starts_at: string;
+          theme?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          ends_at?: string | null;
+          family_id?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          starts_at?: string;
+          theme?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "seasons_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       quest_instances: {
         Row: {
-          approved_at: string | null
-          assigned_to_id: string | null
-          category: Database["public"]["Enums"]["quest_category"]
-          completed_at: string | null
-          created_at: string | null
-          created_by_id: string
-          cycle_end_date: string | null
-          cycle_start_date: string | null
-          description: string
-          difficulty: Database["public"]["Enums"]["quest_difficulty"]
-          due_date: string | null
-          family_id: string | null
-          gold_reward: number
-          id: string
-          recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern"] | null
-          quest_type: Database["public"]["Enums"]["quest_type"] | null
-          status: Database["public"]["Enums"]["quest_status"] | null
-          streak_bonus: number | null
-          streak_count: number | null
-          template_id: string | null
-          title: string
-          updated_at: string | null
-          volunteer_bonus: number | null
-          volunteered_by: string | null
-          xp_reward: number
-        }
+          approved_at: string | null;
+          assigned_to_id: string | null;
+          category: Database["public"]["Enums"]["quest_category"];
+          completed_at: string | null;
+          created_at: string | null;
+          created_by_id: string;
+          cycle_end_date: string | null;
+          cycle_start_date: string | null;
+          description: string;
+          difficulty: Database["public"]["Enums"]["quest_difficulty"];
+          due_date: string | null;
+          family_id: string | null;
+          gold_reward: number;
+          id: string;
+          recurrence_pattern:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null;
+          quest_type: Database["public"]["Enums"]["quest_type"] | null;
+          status: Database["public"]["Enums"]["quest_status"] | null;
+          streak_bonus: number | null;
+          streak_count: number | null;
+          template_id: string | null;
+          title: string;
+          updated_at: string | null;
+          volunteer_bonus: number | null;
+          volunteered_by: string | null;
+          xp_reward: number;
+        };
         Insert: {
-          approved_at?: string | null
-          assigned_to_id?: string | null
-          category: Database["public"]["Enums"]["quest_category"]
-          completed_at?: string | null
-          created_at?: string | null
-          created_by_id: string
-          cycle_end_date?: string | null
-          cycle_start_date?: string | null
-          description: string
-          difficulty: Database["public"]["Enums"]["quest_difficulty"]
-          due_date?: string | null
-          family_id?: string | null
-          gold_reward: number
-          id?: string
-          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
-          quest_type?: Database["public"]["Enums"]["quest_type"] | null
-          status?: Database["public"]["Enums"]["quest_status"] | null
-          streak_bonus?: number | null
-          streak_count?: number | null
-          template_id?: string | null
-          title: string
-          updated_at?: string | null
-          volunteer_bonus?: number | null
-          volunteered_by?: string | null
-          xp_reward: number
-        }
+          approved_at?: string | null;
+          assigned_to_id?: string | null;
+          category: Database["public"]["Enums"]["quest_category"];
+          completed_at?: string | null;
+          created_at?: string | null;
+          created_by_id: string;
+          cycle_end_date?: string | null;
+          cycle_start_date?: string | null;
+          description: string;
+          difficulty: Database["public"]["Enums"]["quest_difficulty"];
+          due_date?: string | null;
+          family_id?: string | null;
+          gold_reward: number;
+          id?: string;
+          recurrence_pattern?:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null;
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null;
+          status?: Database["public"]["Enums"]["quest_status"] | null;
+          streak_bonus?: number | null;
+          streak_count?: number | null;
+          template_id?: string | null;
+          title: string;
+          updated_at?: string | null;
+          volunteer_bonus?: number | null;
+          volunteered_by?: string | null;
+          xp_reward: number;
+        };
         Update: {
-          approved_at?: string | null
-          assigned_to_id?: string | null
-          category?: Database["public"]["Enums"]["quest_category"]
-          completed_at?: string | null
-          created_at?: string | null
-          created_by_id?: string
-          cycle_end_date?: string | null
-          cycle_start_date?: string | null
-          description?: string
-          difficulty?: Database["public"]["Enums"]["quest_difficulty"]
-          due_date?: string | null
-          family_id?: string | null
-          gold_reward?: number
-          id?: string
-          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
-          quest_type?: Database["public"]["Enums"]["quest_type"] | null
-          status?: Database["public"]["Enums"]["quest_status"] | null
-          streak_bonus?: number | null
-          streak_count?: number | null
-          template_id?: string | null
-          title?: string
-          updated_at?: string | null
-          volunteer_bonus?: number | null
-          volunteered_by?: string | null
-          xp_reward?: number
-        }
+          approved_at?: string | null;
+          assigned_to_id?: string | null;
+          category?: Database["public"]["Enums"]["quest_category"];
+          completed_at?: string | null;
+          created_at?: string | null;
+          created_by_id?: string;
+          cycle_end_date?: string | null;
+          cycle_start_date?: string | null;
+          description?: string;
+          difficulty?: Database["public"]["Enums"]["quest_difficulty"];
+          due_date?: string | null;
+          family_id?: string | null;
+          gold_reward?: number;
+          id?: string;
+          recurrence_pattern?:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null;
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null;
+          status?: Database["public"]["Enums"]["quest_status"] | null;
+          streak_bonus?: number | null;
+          streak_count?: number | null;
+          template_id?: string | null;
+          title?: string;
+          updated_at?: string | null;
+          volunteer_bonus?: number | null;
+          volunteered_by?: string | null;
+          xp_reward?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "quest_instances_assigned_to_id_fkey"
-            columns: ["assigned_to_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "quest_instances_assigned_to_id_fkey";
+            columns: ["assigned_to_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "quest_instances_created_by_id_fkey"
-            columns: ["created_by_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "quest_instances_created_by_id_fkey";
+            columns: ["created_by_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "quest_instances_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
+            foreignKeyName: "quest_instances_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "quest_instances_volunteered_by_fkey"
-            columns: ["volunteered_by"]
-            isOneToOne: false
-            referencedRelation: "characters"
-            referencedColumns: ["id"]
+            foreignKeyName: "quest_instances_volunteered_by_fkey";
+            columns: ["volunteered_by"];
+            isOneToOne: false;
+            referencedRelation: "characters";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       quest_templates: {
         Row: {
-          assigned_character_ids: string[] | null
-          category: Database["public"]["Enums"]["quest_category"]
-          class_bonuses: Json | null
-          created_at: string | null
-          description: string
-          difficulty: Database["public"]["Enums"]["quest_difficulty"]
-          family_id: string | null
-          gold_reward: number
-          id: string
-          is_active: boolean | null
-          is_paused: boolean | null
-          quest_type: Database["public"]["Enums"]["quest_type"] | null
-          recurrence_pattern: Database["public"]["Enums"]["recurrence_pattern"] | null
-          title: string
-          updated_at: string | null
-          xp_reward: number
-        }
+          assigned_character_ids: string[] | null;
+          category: Database["public"]["Enums"]["quest_category"];
+          class_bonuses: Json | null;
+          created_at: string | null;
+          description: string;
+          difficulty: Database["public"]["Enums"]["quest_difficulty"];
+          family_id: string | null;
+          gold_reward: number;
+          id: string;
+          is_active: boolean | null;
+          is_paused: boolean | null;
+          quest_type: Database["public"]["Enums"]["quest_type"] | null;
+          recurrence_pattern:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null;
+          title: string;
+          updated_at: string | null;
+          xp_reward: number;
+        };
         Insert: {
-          assigned_character_ids?: string[] | null
-          category: Database["public"]["Enums"]["quest_category"]
-          class_bonuses?: Json | null
-          created_at?: string | null
-          description: string
-          difficulty: Database["public"]["Enums"]["quest_difficulty"]
-          family_id?: string | null
-          gold_reward: number
-          id?: string
-          is_active?: boolean | null
-          is_paused?: boolean | null
-          quest_type?: Database["public"]["Enums"]["quest_type"] | null
-          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
-          title: string
-          updated_at?: string | null
-          xp_reward: number
-        }
+          assigned_character_ids?: string[] | null;
+          category: Database["public"]["Enums"]["quest_category"];
+          class_bonuses?: Json | null;
+          created_at?: string | null;
+          description: string;
+          difficulty: Database["public"]["Enums"]["quest_difficulty"];
+          family_id?: string | null;
+          gold_reward: number;
+          id?: string;
+          is_active?: boolean | null;
+          is_paused?: boolean | null;
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null;
+          recurrence_pattern?:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null;
+          title: string;
+          updated_at?: string | null;
+          xp_reward: number;
+        };
         Update: {
-          assigned_character_ids?: string[] | null
-          category?: Database["public"]["Enums"]["quest_category"]
-          class_bonuses?: Json | null
-          created_at?: string | null
-          description?: string
-          difficulty?: Database["public"]["Enums"]["quest_difficulty"]
-          family_id?: string | null
-          gold_reward?: number
-          id?: string
-          is_active?: boolean | null
-          is_paused?: boolean | null
-          quest_type?: Database["public"]["Enums"]["quest_type"] | null
-          recurrence_pattern?: Database["public"]["Enums"]["recurrence_pattern"] | null
-          title?: string
-          updated_at?: string | null
-          xp_reward?: number
-        }
+          assigned_character_ids?: string[] | null;
+          category?: Database["public"]["Enums"]["quest_category"];
+          class_bonuses?: Json | null;
+          created_at?: string | null;
+          description?: string;
+          difficulty?: Database["public"]["Enums"]["quest_difficulty"];
+          family_id?: string | null;
+          gold_reward?: number;
+          id?: string;
+          is_active?: boolean | null;
+          is_paused?: boolean | null;
+          quest_type?: Database["public"]["Enums"]["quest_type"] | null;
+          recurrence_pattern?:
+            | Database["public"]["Enums"]["recurrence_pattern"]
+            | null;
+          title?: string;
+          updated_at?: string | null;
+          xp_reward?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "quest_templates_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
+            foreignKeyName: "quest_templates_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       reward_redemptions: {
         Row: {
-          approved_at: string | null
-          approved_by: string | null
-          cost: number
-          fulfilled_at: string | null
-          id: string
-          notes: string | null
-          requested_at: string | null
-          reward_id: string | null
-          status: string | null
-          user_id: string | null
-        }
+          approved_at: string | null;
+          approved_by: string | null;
+          cost: number;
+          fulfilled_at: string | null;
+          id: string;
+          notes: string | null;
+          requested_at: string | null;
+          reward_id: string | null;
+          status: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          approved_at?: string | null
-          approved_by?: string | null
-          cost: number
-          fulfilled_at?: string | null
-          id?: string
-          notes?: string | null
-          requested_at?: string | null
-          reward_id?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
+          approved_at?: string | null;
+          approved_by?: string | null;
+          cost: number;
+          fulfilled_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          requested_at?: string | null;
+          reward_id?: string | null;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          approved_at?: string | null
-          approved_by?: string | null
-          cost?: number
-          fulfilled_at?: string | null
-          id?: string
-          notes?: string | null
-          requested_at?: string | null
-          reward_id?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
+          approved_at?: string | null;
+          approved_by?: string | null;
+          cost?: number;
+          fulfilled_at?: string | null;
+          id?: string;
+          notes?: string | null;
+          requested_at?: string | null;
+          reward_id?: string | null;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "reward_redemptions_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "reward_redemptions_approved_by_fkey";
+            columns: ["approved_by"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "reward_redemptions_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "rewards"
-            referencedColumns: ["id"]
+            foreignKeyName: "reward_redemptions_reward_id_fkey";
+            columns: ["reward_id"];
+            isOneToOne: false;
+            referencedRelation: "rewards";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "reward_redemptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "reward_redemptions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       rewards: {
         Row: {
-          cost: number
-          created_at: string | null
-          description: string
-          family_id: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          type: Database["public"]["Enums"]["reward_type"]
-          updated_at: string | null
-        }
+          cost: number;
+          created_at: string | null;
+          description: string;
+          family_id: string | null;
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          type: Database["public"]["Enums"]["reward_type"];
+          updated_at: string | null;
+        };
         Insert: {
-          cost: number
-          created_at?: string | null
-          description: string
-          family_id?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          type: Database["public"]["Enums"]["reward_type"]
-          updated_at?: string | null
-        }
+          cost: number;
+          created_at?: string | null;
+          description: string;
+          family_id?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          type: Database["public"]["Enums"]["reward_type"];
+          updated_at?: string | null;
+        };
         Update: {
-          cost?: number
-          created_at?: string | null
-          description?: string
-          family_id?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          type?: Database["public"]["Enums"]["reward_type"]
-          updated_at?: string | null
-        }
+          cost?: number;
+          created_at?: string | null;
+          description?: string;
+          family_id?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name?: string;
+          type?: Database["public"]["Enums"]["reward_type"];
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "rewards_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
+            foreignKeyName: "rewards_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       sos_requests: {
         Row: {
-          created_at: string | null
-          description: string
-          helper_id: string | null
-          honor_reward: number | null
-          id: string
-          is_resolved: boolean | null
-          requester_id: string | null
-          resolved_at: string | null
-          title: string
-          updated_at: string | null
-        }
+          created_at: string | null;
+          description: string;
+          helper_id: string | null;
+          honor_reward: number | null;
+          id: string;
+          is_resolved: boolean | null;
+          requester_id: string | null;
+          resolved_at: string | null;
+          title: string;
+          updated_at: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          description: string
-          helper_id?: string | null
-          honor_reward?: number | null
-          id?: string
-          is_resolved?: boolean | null
-          requester_id?: string | null
-          resolved_at?: string | null
-          title: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          description: string;
+          helper_id?: string | null;
+          honor_reward?: number | null;
+          id?: string;
+          is_resolved?: boolean | null;
+          requester_id?: string | null;
+          resolved_at?: string | null;
+          title: string;
+          updated_at?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          description?: string
-          helper_id?: string | null
-          honor_reward?: number | null
-          id?: string
-          is_resolved?: boolean | null
-          requester_id?: string | null
-          resolved_at?: string | null
-          title?: string
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          description?: string;
+          helper_id?: string | null;
+          honor_reward?: number | null;
+          id?: string;
+          is_resolved?: boolean | null;
+          requester_id?: string | null;
+          resolved_at?: string | null;
+          title?: string;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "sos_requests_helper_id_fkey"
-            columns: ["helper_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "sos_requests_helper_id_fkey";
+            columns: ["helper_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "sos_requests_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "sos_requests_requester_id_fkey";
+            columns: ["requester_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       transactions: {
         Row: {
-          created_at: string | null
-          description: string
-          gems_change: number | null
-          gold_change: number | null
-          honor_change: number | null
-          id: string
-          related_id: string | null
-          type: Database["public"]["Enums"]["transaction_type"]
-          user_id: string | null
-          xp_change: number | null
-        }
+          created_at: string | null;
+          description: string;
+          gems_change: number | null;
+          gold_change: number | null;
+          honor_change: number | null;
+          id: string;
+          related_id: string | null;
+          type: Database["public"]["Enums"]["transaction_type"];
+          user_id: string | null;
+          xp_change: number | null;
+        };
         Insert: {
-          created_at?: string | null
-          description: string
-          gems_change?: number | null
-          gold_change?: number | null
-          honor_change?: number | null
-          id?: string
-          related_id?: string | null
-          type: Database["public"]["Enums"]["transaction_type"]
-          user_id?: string | null
-          xp_change?: number | null
-        }
+          created_at?: string | null;
+          description: string;
+          gems_change?: number | null;
+          gold_change?: number | null;
+          honor_change?: number | null;
+          id?: string;
+          related_id?: string | null;
+          type: Database["public"]["Enums"]["transaction_type"];
+          user_id?: string | null;
+          xp_change?: number | null;
+        };
         Update: {
-          created_at?: string | null
-          description?: string
-          gems_change?: number | null
-          gold_change?: number | null
-          honor_change?: number | null
-          id?: string
-          related_id?: string | null
-          type?: Database["public"]["Enums"]["transaction_type"]
-          user_id?: string | null
-          xp_change?: number | null
-        }
+          created_at?: string | null;
+          description?: string;
+          gems_change?: number | null;
+          gold_change?: number | null;
+          honor_change?: number | null;
+          id?: string;
+          related_id?: string | null;
+          type?: Database["public"]["Enums"]["transaction_type"];
+          user_id?: string | null;
+          xp_change?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "transactions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_achievements: {
         Row: {
-          achievement_id: string | null
-          id: string
-          unlocked_at: string | null
-          user_id: string | null
-        }
+          achievement_id: string | null;
+          id: string;
+          unlocked_at: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          achievement_id?: string | null
-          id?: string
-          unlocked_at?: string | null
-          user_id?: string | null
-        }
+          achievement_id?: string | null;
+          id?: string;
+          unlocked_at?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          achievement_id?: string | null
-          id?: string
-          unlocked_at?: string | null
-          user_id?: string | null
-        }
+          achievement_id?: string | null;
+          id?: string;
+          unlocked_at?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_achievements_achievement_id_fkey"
-            columns: ["achievement_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_achievements_achievement_id_fkey";
+            columns: ["achievement_id"];
+            isOneToOne: false;
+            referencedRelation: "achievements";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_achievements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_achievements_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_profiles";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_profiles: {
         Row: {
-          created_at: string | null
-          email: string
-          family_id: string | null
-          id: string
-          name: string
-          role: Database["public"]["Enums"]["user_role"] | null
-          updated_at: string | null
-        }
+          created_at: string | null;
+          email: string;
+          family_id: string | null;
+          id: string;
+          name: string;
+          role: Database["public"]["Enums"]["user_role"] | null;
+          updated_at: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          email: string
-          family_id?: string | null
-          id: string
-          name: string
-          role?: Database["public"]["Enums"]["user_role"] | null
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          email: string;
+          family_id?: string | null;
+          id: string;
+          name: string;
+          role?: Database["public"]["Enums"]["user_role"] | null;
+          updated_at?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          email?: string
-          family_id?: string | null
-          id?: string
-          name?: string
-          role?: Database["public"]["Enums"]["user_role"] | null
-          updated_at?: string | null
-        }
+          created_at?: string | null;
+          email?: string;
+          family_id?: string | null;
+          id?: string;
+          name?: string;
+          role?: Database["public"]["Enums"]["user_role"] | null;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_profiles_family_id_fkey"
-            columns: ["family_id"]
-            isOneToOne: false
-            referencedRelation: "families"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_profiles_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       check_user_profile_policies: {
-        Args: { test_user_id: string }
-        Returns: Json
-      }
+        Args: { test_user_id: string };
+        Returns: Json;
+      };
       get_user_family_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
       test_user_profile_insert: {
         Args: {
-          test_email: string
-          test_family_id: string
-          test_name: string
-          test_user_id: string
-        }
-        Returns: Json
-      }
-    }
+          test_email: string;
+          test_family_id: string;
+          test_name: string;
+          test_user_id: string;
+        };
+        Returns: Json;
+      };
+    };
     Enums: {
-      boss_battle_status: "ACTIVE" | "DEFEATED" | "EXPIRED"
-      character_class: "KNIGHT" | "MAGE" | "RANGER" | "ROGUE" | "HEALER"
-      quest_category: "DAILY" | "WEEKLY" | "BOSS_BATTLE"
-      quest_difficulty: "EASY" | "MEDIUM" | "HARD"
+      boss_battle_status: "ACTIVE" | "DEFEATED" | "EXPIRED";
+      character_class: "KNIGHT" | "MAGE" | "RANGER" | "ROGUE" | "HEALER";
+      quest_category: "DAILY" | "WEEKLY" | "BOSS_BATTLE";
+      quest_difficulty: "EASY" | "MEDIUM" | "HARD";
       quest_status:
         | "PENDING"
         | "IN_PROGRESS"
@@ -784,45 +966,48 @@ export type Database = {
         | "EXPIRED"
         | "AVAILABLE"
         | "CLAIMED"
-        | "MISSED"
-      quest_type: "INDIVIDUAL" | "FAMILY"
-      recurrence_pattern: "DAILY" | "WEEKLY" | "CUSTOM"
-      reward_type: "SCREEN_TIME" | "PRIVILEGE" | "PURCHASE" | "EXPERIENCE"
+        | "MISSED";
+      quest_type: "INDIVIDUAL" | "FAMILY";
+      recurrence_pattern: "DAILY" | "WEEKLY" | "CUSTOM";
+      reward_type: "SCREEN_TIME" | "PRIVILEGE" | "PURCHASE" | "EXPERIENCE";
       transaction_type:
         | "QUEST_REWARD"
         | "BOSS_VICTORY"
         | "STORE_PURCHASE"
         | "REWARD_REFUND"
         | "BONUS_AWARD"
-        | "SOS_HELP"
-      user_role: "GUILD_MASTER" | "HERO" | "YOUNG_HERO"
-    }
+        | "SOS_HELP";
+      user_role: "GUILD_MASTER" | "HERO" | "YOUNG_HERO";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
@@ -830,112 +1015,114 @@ export type Tables<
         DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 // Convenience type aliases
-export type QuestInstance = Tables<'quest_instances'>
-export type QuestTemplate = Tables<'quest_templates'>
-export type Character = Tables<'characters'>
-export type UserProfile = Tables<'user_profiles'>
-export type Family = Tables<'families'>
-export type Reward = Tables<'rewards'>
-export type RewardRedemption = Tables<'reward_redemptions'>
+export type QuestInstance = Tables<"quest_instances">;
+export type QuestTemplate = Tables<"quest_templates">;
+export type Character = Tables<"characters">;
+export type UserProfile = Tables<"user_profiles">;
+export type Family = Tables<"families">;
+export type Reward = Tables<"rewards">;
+export type RewardRedemption = Tables<"reward_redemptions">;
+export type Achievement = Tables<"achievements">;
+export type CharacterAchievement = Tables<"character_achievements">;
 
 // Enum types
-export type QuestDifficulty = Enums<'quest_difficulty'>
-export type QuestStatus = Enums<'quest_status'>
-export type QuestCategory = Enums<'quest_category'>
-export type CharacterClass = Enums<'character_class'>
-export type UserRole = Enums<'user_role'>
-export type RewardType = Enums<'reward_type'>
+export type QuestDifficulty = Enums<"quest_difficulty">;
+export type QuestStatus = Enums<"quest_status">;
+export type QuestCategory = Enums<"quest_category">;
+export type CharacterClass = Enums<"character_class">;
+export type UserRole = Enums<"user_role">;
+export type RewardType = Enums<"reward_type">;
 
 // Class bonus structure for quest templates
 export interface ClassBonuses {
@@ -951,17 +1138,17 @@ export type QuestTemplateWithBonuses = QuestTemplate & {
   class_bonuses: ClassBonuses | null;
 };
 
-export type CreateQuestTemplateInput = TablesInsert<'quest_templates'> & {
+export type CreateQuestTemplateInput = TablesInsert<"quest_templates"> & {
   class_bonuses?: ClassBonuses;
 };
 
-export type UpdateQuestTemplateInput = TablesUpdate<'quest_templates'> & {
+export type UpdateQuestTemplateInput = TablesUpdate<"quest_templates"> & {
   class_bonuses?: ClassBonuses;
 };
 
 // Reward-specific types for operations
-export type CreateRewardInput = TablesInsert<'rewards'>;
-export type UpdateRewardInput = TablesUpdate<'rewards'>;
+export type CreateRewardInput = TablesInsert<"rewards">;
+export type UpdateRewardInput = TablesUpdate<"rewards">;
 
 // Recurring quest system types (using generated types from database-generated.ts)
 export type QuestType = "INDIVIDUAL" | "FAMILY";
@@ -998,18 +1185,20 @@ export type RecurringQuestInstance = QuestInstance & {
 };
 
 // Create inputs for recurring quests
-export type CreateRecurringQuestTemplateInput = TablesInsert<'quest_templates'> & {
-  quest_type: QuestType;
-  recurrence_pattern: RecurrencePattern;
-  assigned_character_ids?: string[];
-};
+export type CreateRecurringQuestTemplateInput =
+  TablesInsert<"quest_templates"> & {
+    quest_type: QuestType;
+    recurrence_pattern: RecurrencePattern;
+    assigned_character_ids?: string[];
+  };
 
-export type UpdateRecurringQuestTemplateInput = TablesUpdate<'quest_templates'> & {
-  quest_type?: QuestType;
-  recurrence_pattern?: RecurrencePattern;
-  is_paused?: boolean;
-  assigned_character_ids?: string[];
-};
+export type UpdateRecurringQuestTemplateInput =
+  TablesUpdate<"quest_templates"> & {
+    quest_type?: QuestType;
+    recurrence_pattern?: RecurrencePattern;
+    is_paused?: boolean;
+    assigned_character_ids?: string[];
+  };
 
 // Streak tracking types
 export type CreateCharacterQuestStreakInput = {

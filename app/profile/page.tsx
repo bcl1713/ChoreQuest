@@ -5,9 +5,30 @@ import { useCharacter } from "@/lib/character-context";
 import { LoadingSpinner, Button } from "@/components/ui";
 import ProfileSettings from "@/components/profile/ProfileSettings";
 import ProfileErrorBoundary from "@/components/profile/ProfileErrorBoundary";
+import { AchievementsSection } from "@/components/achievements/AchievementsSection";
+import { FamilyAchievementsSection } from "@/components/achievements/FamilyAchievementsSection";
 import { AuthenticatedPageShell } from "@/components/layout/authenticated-page-shell";
+import { TabBar, type TabItem } from "@/components/ui/tab-bar";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Settings, Trophy } from "lucide-react";
+
+type ProfileTab = "settings" | "achievements";
+
+const PROFILE_TABS: TabItem<ProfileTab>[] = [
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    testId: "profile-tab-settings",
+  },
+  {
+    id: "achievements",
+    label: "Achievements",
+    icon: Trophy,
+    testId: "profile-tab-achievements",
+  },
+];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -18,6 +39,8 @@ export default function ProfilePage() {
     error: characterError,
     refreshCharacter,
   } = useCharacter();
+  const [activeTab, setActiveTab] = useState<ProfileTab>("settings");
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -61,8 +84,42 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user || !character) {
+  if (!user) {
     return null;
+  }
+
+  if (!character) {
+    return (
+      <ProfileErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900">
+          <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-12">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  variant="primary"
+                  size="sm"
+                  className="touch-target"
+                  data-testid="back-to-dashboard-button"
+                >
+                  <span className="hidden sm:inline">Back to Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </Button>
+                <Button
+                  onClick={logout}
+                  variant="destructive"
+                  size="sm"
+                  className="touch-target"
+                >
+                  Logout
+                </Button>
+              </div>
+              <FamilyAchievementsSection familyId={profile?.family_id} />
+            </div>
+          </main>
+        </div>
+      </ProfileErrorBoundary>
+    );
   }
 
   return (
@@ -94,20 +151,29 @@ export default function ProfilePage() {
           </>
         }
       >
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-fantasy text-gray-100 mb-4">
-            Profile Settings
-          </h2>
-          <p className="text-base sm:text-lg text-gray-400">
-            Manage your character and account settings
-          </p>
-        </div>
-
         <div className="max-w-4xl mx-auto">
-          <ProfileSettings
-            character={character}
-            onRefreshNeeded={refreshCharacter}
+          <TabBar
+            tabs={PROFILE_TABS}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className="mb-6 rounded-t-lg"
           />
+
+          {activeTab === "settings" && (
+            <ProfileSettings
+              character={character}
+              onRefreshNeeded={refreshCharacter}
+            />
+          )}
+
+          {activeTab === "achievements" && (
+            <>
+              <AchievementsSection characterId={character.id} />
+              <div className="mt-8">
+                <FamilyAchievementsSection familyId={profile?.family_id} />
+              </div>
+            </>
+          )}
         </div>
       </AuthenticatedPageShell>
     </ProfileErrorBoundary>

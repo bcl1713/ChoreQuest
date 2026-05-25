@@ -53,15 +53,16 @@ All environment templates (`.env`, `.env.example`, `.env.dev.example`, `.env.pro
    cp .env.example .env
    ```
    The default values point at the placeholder domain `supabase.example.com`. Swap in your actual Supabase URLs/keys for development.
-3. **Run Prisma migrations + generate client (optional for read-only work)**
+3. **Apply local Supabase migrations when schema files change**
    ```bash
-   npm run db:generate
-   npm run db:migrate
+   npm run db:migrate:local
    ```
+   This runs `npx supabase db push --local` against the local Supabase CLI stack, so it does not require `supabase link` or a globally installed Supabase CLI. Use `npm run db:reset:local` only when you intentionally want to reset local data; it runs `npx supabase db reset --local`.
 4. **Start the dev server**
    ```bash
    npm run dev
    ```
+   `npm run dev` runs a local-only Supabase migration preflight first. The preflight resolves the same admin target used by `scripts/admin-start-season.ts` (`SUPABASE_INTERNAL_URL`, then `SUPABASE_URL`, then `NEXT_PUBLIC_SUPABASE_URL`), applies pending local migrations with `npm run db:migrate:local`, and then checks the admin target with `SUPABASE_SERVICE_ROLE_KEY`. This keeps dev startup from claiming the seasons schema is ready while `supabase/migrations/20260326000001_add_seasons.sql` is still pending. If the local migration apply or schema check fails, fix that before relying on admin tooling. Remote/staging/production Supabase URLs are not probed or migrated by this dev-startup check; set `CHOREQUEST_SKIP_SUPABASE_PREFLIGHT=1` only if you deliberately need to bypass it.
 5. Visit [http://localhost:3000](http://localhost:3000). Authentication and data flows will proxy against the configured Supabase instance.
 
 ## Self-Hosted Supabase (supabase-docker/)
@@ -130,6 +131,73 @@ docker compose up -d
 - **Backups** – Run `pg_dump` against the Supabase Postgres service (`supabase-db:5553`) or configure Supabase WAL backups.
 - **Monitoring** – Supabase Logflare is exposed on `5552`. Pin dashboards or forward logs to your observability stack.
 - **Image updates** – Pull the latest tags listed in `supabase-docker/docker-compose.yml` and rebuild the ChoreQuest app container when Next.js dependencies change.
+
+### Safe season upgrade and start-new-season checklist
+
+> **Do not deploy season-aware achievement evaluation until the seasons migration has been applied and the target family has been started/reset for the new season.** If the app evaluates old quest history before migration + start-season/reset are complete, users may unlock a large batch of historical achievements at once.
+
+Use this checklist when promoting the season-aware achievement changes or starting a fresh achievement season:
+
+1. **Apply the database migration before deployment or admin reset work.**
+   - Local/dev Supabase CLI stack:
+     ```bash
+     npm run db:migrate:local
+     ```
+     This runs `npx supabase db push --local` and applies pending files such as `supabase/migrations/20260326000001_add_seasons.sql` without requiring a linked remote project.
+   - Production/staging: apply the same checked-in migration through your normal Supabase migration process before rebuilding or restarting the app. Do not run ad-hoc production SQL from this README, and do not paste service-role credentials into shell history.
+
+2. **Verify the admin script points at the intended Supabase target.**
+   - `scripts/admin-start-season.ts` loads `.env.local` and `.env`, then uses the service-role Supabase client. Confirm `SUPABASE_INTERNAL_URL`/`SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are for the intended environment before running any apply command.
+   - For local development, `npm run dev` runs `npm run db:preflight:local` first; that preflight applies pending local migrations and verifies the seasons schema against the same admin target.
+
+3. **Discover the family id.**
+   ```bash
+   npx tsx scripts/admin-start-season.ts --list-families
+   ```
+   Copy the desired family UUID from the dry-run discovery output.
+
+4. **Optionally discover users in that family.** Use this only when you want a targeted reset instead of the family-wide path:
+   ```bash
+   npx tsx scripts/admin-start-season.ts --family-id <family-uuid> --list-family-users
+   ```
+
+5. **Dry-run the start-season reset.** Choose exactly one reset-target mode:
+   - Family-wide reset for every character in the family; explicit user ids are not required:
+     ```bash
+     npx tsx scripts/admin-start-season.ts \
+       --family-id <family-uuid> \
+       --name "Season 2" \
+       --starts-at now \
+       --all-users \
+       --dry-run
+     ```
+   - Targeted reset for selected users only:
+     ```bash
+     npx tsx scripts/admin-start-season.ts \
+       --family-id <family-uuid> \
+       --name "Season 2" \
+       --starts-at now \
+       --reset-user <user-uuid> \
+       --reset-user <another-user-uuid> \
+       --dry-run
+     ```
+   The script rejects combining `--all-users` with `--reset-user`/`--user-id`; use either the family-wide path or the targeted path, not both.
+
+6. **Review the audit output before applying.** Confirm the family, new season name, previous active seasons, target characters, and the `gold preserved <before>-><after>` lines are what you expect. The reset clears season-derived state such as XP, level, gems, honor, active family quest, and quest streaks while preserving spendable gold.
+
+7. **Apply only after the dry run is correct.**
+   ```bash
+   npx tsx scripts/admin-start-season.ts \
+     --family-id <family-uuid> \
+     --name "Season 2" \
+     --starts-at now \
+     --all-users \
+     --apply \
+     --confirm-start-season-reset
+   ```
+   Use the targeted `--reset-user ...` form instead of `--all-users` if step 5 used selected users. `--apply` requires `--confirm-start-season-reset`; discovery helpers are dry-run only.
+
+8. **Only then deploy/restart the season-aware app.** After migration + reset are complete, rebuild or restart the app through the normal production deployment process and monitor achievement activity for unexpected unlock bursts.
 
 ## Testing & QA
 - `npm run lint` – ESLint + TypeScript checks.

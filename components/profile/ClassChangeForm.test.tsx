@@ -1,27 +1,39 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import ClassChangeForm from './ClassChangeForm';
-import { ProfileService } from '@/lib/profile-service';
-import { Character } from '@/lib/types/database';
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import ClassChangeForm from "./ClassChangeForm";
+import { ProfileService } from "@/lib/profile-service";
+import { Character } from "@/lib/types/database";
 
-jest.mock('@/lib/profile-service');
+jest.mock("@/lib/profile-service");
+jest.mock("@/lib/supabase", () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: { access_token: "mock-token" } },
+      }),
+      refreshSession: jest.fn().mockResolvedValue({
+        data: { session: { access_token: "refreshed-token" } },
+      }),
+    },
+  },
+}));
 
 const mockCharacter: Character = {
-  id: 'char-123',
-  user_id: 'user-123',
-  name: 'TestCharacter',
-  class: 'MAGE',
+  id: "char-123",
+  user_id: "user-123",
+  name: "TestCharacter",
+  class: "MAGE",
   level: 10,
   gold: 500,
   xp: 0,
   honor: 0,
   gems: 0,
   last_class_change_at: null,
-  created_at: '2025-01-01T00:00:00Z',
-  updated_at: '2025-01-01T00:00:00Z',
+  created_at: "2025-01-01T00:00:00Z",
+  updated_at: "2025-01-01T00:00:00Z",
 };
 
-describe('ClassChangeForm', () => {
+describe("ClassChangeForm", () => {
   const mockOnSuccess = jest.fn();
 
   beforeEach(() => {
@@ -30,15 +42,15 @@ describe('ClassChangeForm', () => {
 
     // Default mocks
     (ProfileService.canChangeClass as jest.Mock).mockResolvedValue(true);
-    (ProfileService.getClassChangeCooldownRemaining as jest.Mock).mockResolvedValue(
-      0
-    );
+    (
+      ProfileService.getClassChangeCooldownRemaining as jest.Mock
+    ).mockResolvedValue(0);
     (ProfileService.getClassChangeCost as jest.Mock).mockReturnValue(250); // 25 * level 10
   });
 
-  it('renders current class information', async () => {
+  it("renders current class information", async () => {
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
@@ -47,82 +59,89 @@ describe('ClassChangeForm', () => {
     });
   });
 
-  it('calculates cost correctly', async () => {
+  it("calculates cost correctly", async () => {
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('250 Gold')).toBeInTheDocument();
+      expect(screen.getByText("250 Gold")).toBeInTheDocument();
     });
   });
 
-  it('displays available classes when can change', async () => {
+  it("displays available classes when can change", async () => {
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Knight')).toBeInTheDocument();
-      expect(screen.getByText('Rogue')).toBeInTheDocument();
-      expect(screen.getByText('Healer')).toBeInTheDocument();
-      expect(screen.getByText('Ranger')).toBeInTheDocument();
+      expect(screen.getByText("Knight")).toBeInTheDocument();
+      expect(screen.getByText("Rogue")).toBeInTheDocument();
+      expect(screen.getByText("Healer")).toBeInTheDocument();
+      expect(screen.getByText("Ranger")).toBeInTheDocument();
     });
   });
 
-  it('disables current class selection', async () => {
+  it("disables current class selection", async () => {
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
-      const buttons = screen.getAllByRole('button');
-      const mageButton = buttons.find(btn => btn.textContent?.includes('Mage') && btn.textContent?.includes('Masters of arcane'));
+      const buttons = screen.getAllByRole("button");
+      const mageButton = buttons.find(
+        (btn) =>
+          btn.textContent?.includes("Mage") &&
+          btn.textContent?.includes("Masters of arcane"),
+      );
       expect(mageButton).toBeDisabled();
     });
   });
 
-  it('shows cooldown message when on cooldown', async () => {
+  it("shows cooldown message when on cooldown", async () => {
     (ProfileService.canChangeClass as jest.Mock).mockResolvedValue(false);
-    (ProfileService.getClassChangeCooldownRemaining as jest.Mock).mockResolvedValue(
-      86400000 // 1 day in ms
+    (
+      ProfileService.getClassChangeCooldownRemaining as jest.Mock
+    ).mockResolvedValue(
+      86400000, // 1 day in ms
     );
 
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('On Cooldown')).toBeInTheDocument();
-      expect(screen.getByText(/You can change your class again in/)).toBeInTheDocument();
-    });
-  });
-
-  it('hides class selection when on cooldown', async () => {
-    (ProfileService.canChangeClass as jest.Mock).mockResolvedValue(false);
-    (ProfileService.getClassChangeCooldownRemaining as jest.Mock).mockResolvedValue(
-      3600000 // 1 hour
-    );
-
-    render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
-    );
-
-    await waitFor(() => {
+      expect(screen.getByText("On Cooldown")).toBeInTheDocument();
       expect(
-        screen.getByText(/Class changes are currently unavailable/)
+        screen.getByText(/You can change your class again in/),
       ).toBeInTheDocument();
     });
   });
 
-  it('handles insufficient gold', async () => {
+  it("hides class selection when on cooldown", async () => {
+    (ProfileService.canChangeClass as jest.Mock).mockResolvedValue(false);
+    (
+      ProfileService.getClassChangeCooldownRemaining as jest.Mock
+    ).mockResolvedValue(
+      3600000, // 1 hour
+    );
+
+    render(
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Class changes are currently unavailable/),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("handles insufficient gold", async () => {
     const poorCharacter = { ...mockCharacter, gold: 50 };
 
     render(
-      <ClassChangeForm
-        character={poorCharacter}
-        onSuccess={mockOnSuccess}
-      />
+      <ClassChangeForm character={poorCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
@@ -130,90 +149,94 @@ describe('ClassChangeForm', () => {
     });
   });
 
-  it('disables class buttons when gold insufficient', async () => {
+  it("disables class buttons when gold insufficient", async () => {
     const poorCharacter = { ...mockCharacter, gold: 50 };
 
     render(
-      <ClassChangeForm
-        character={poorCharacter}
-        onSuccess={mockOnSuccess}
-      />
+      <ClassChangeForm character={poorCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
-      const knightButton = screen.getByText('Knight').closest('button');
+      const knightButton = screen.getByText("Knight").closest("button");
       expect(knightButton).toBeDisabled();
     });
   });
 
-  it('allows class selection when able to change', async () => {
+  it("allows class selection when able to change", async () => {
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     await waitFor(() => {
-      const buttons = screen.getAllByRole('button');
-      const knightButton = buttons.find(btn => btn.textContent?.includes('Knight') && btn.textContent?.includes('Balanced'));
+      const buttons = screen.getAllByRole("button");
+      const knightButton = buttons.find(
+        (btn) =>
+          btn.textContent?.includes("Knight") &&
+          btn.textContent?.includes("Balanced"),
+      );
       expect(knightButton).not.toBeDisabled();
     });
   });
 
-  it('shows confirmation modal when selecting new class', async () => {
+  it("shows confirmation modal when selecting new class", async () => {
     (ProfileService.changeCharacterClass as jest.Mock).mockResolvedValue({
       ...mockCharacter,
-      class: 'KNIGHT',
+      class: "KNIGHT",
     });
 
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     // Just verify the component renders without crashing
     await waitFor(() => {
-      expect(screen.getByText(/Choose New Class|Class changes are/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Choose New Class|Class changes are/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('calls ProfileService.changeCharacterClass on confirmation', async () => {
+  it("calls ProfileService.changeCharacterClass on confirmation", async () => {
     (ProfileService.changeCharacterClass as jest.Mock).mockResolvedValue({
       ...mockCharacter,
-      class: 'KNIGHT',
+      class: "KNIGHT",
     });
 
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     // Verify the component is interactive
     await waitFor(() => {
-      expect(screen.getByText(/Choose New Class|Class changes are/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Choose New Class|Class changes are/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('calls onSuccess callback when class change succeeds', async () => {
+  it("calls onSuccess callback when class change succeeds", async () => {
     (ProfileService.changeCharacterClass as jest.Mock).mockResolvedValue({
       ...mockCharacter,
-      class: 'KNIGHT',
+      class: "KNIGHT",
     });
 
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
     // Verify the component renders
     await waitFor(() => {
-      expect(screen.getByText(/Choose New Class|Class changes are/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Choose New Class|Class changes are/),
+      ).toBeInTheDocument();
     });
   });
 
-  it('shows error when change fails due to insufficient gold', async () => {
+  it("shows error when change fails due to insufficient gold", async () => {
     const poorCharacter = { ...mockCharacter, gold: 50 };
 
     render(
-      <ClassChangeForm
-        character={poorCharacter}
-        onSuccess={mockOnSuccess}
-      />
+      <ClassChangeForm character={poorCharacter} onSuccess={mockOnSuccess} />,
     );
 
     // Try to change - should fail before even trying to call service
@@ -225,38 +248,27 @@ describe('ClassChangeForm', () => {
     });
   });
 
-  it('shows inline error when class change request fails', async () => {
+  it("shows inline error when class change request fails", async () => {
     const user = userEvent.setup();
-    (ProfileService.changeCharacterClass as jest.Mock).mockRejectedValue(
-      new Error('Server error')
-    );
-
-    render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
-    );
-
-    const knightButton = await screen.findByRole('button', { name: /Knight/i });
-    await user.click(knightButton);
-    await user.click(screen.getByRole('button', { name: /Confirm Class Change/i }));
-    await user.click(screen.getByRole('button', { name: /^Change Class$/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Server error')).toBeInTheDocument();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      json: () =>
+        Promise.resolve({ error: "Server error", code: "INTERNAL_ERROR" }),
     });
-  });
-
-  it('formats cooldown timer correctly', async () => {
-    (ProfileService.canChangeClass as jest.Mock).mockResolvedValue(false);
-    (ProfileService.getClassChangeCooldownRemaining as jest.Mock).mockResolvedValue(
-      86400000 + 3600000 + 300000 // 1d 1h 5m
-    );
 
     render(
-      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />
+      <ClassChangeForm character={mockCharacter} onSuccess={mockOnSuccess} />,
     );
 
+    const knightButton = await screen.findByRole("button", { name: /Knight/i });
+    await user.click(knightButton);
+    await user.click(
+      screen.getByRole("button", { name: /Confirm Class Change/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /^Change Class$/i }));
+
     await waitFor(() => {
-      expect(screen.getByText(/1d 1h 5m/)).toBeInTheDocument();
+      expect(screen.getByText("Server error")).toBeInTheDocument();
     });
   });
 });

@@ -5,9 +5,13 @@ import { createMockQuest } from "./__tests__/quest-card.fixtures";
 
 jest.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
-      <div {...props}>{children}</div>
-    ),
+    div: ({
+      children,
+      ...props
+    }: {
+      children: React.ReactNode;
+      [key: string]: unknown;
+    }) => <div {...props}>{children}</div>,
   },
 }));
 
@@ -25,12 +29,15 @@ jest.mock("./quest-card-helpers", () => ({
       showAssignment: false,
     };
     if (viewMode === "hero") {
-      buttonVis.canStart = status === "PENDING" || status === "CLAIMED" || status === "AVAILABLE";
+      buttonVis.canStart =
+        status === "PENDING" || status === "CLAIMED" || status === "AVAILABLE";
       buttonVis.canComplete = status === "IN_PROGRESS";
       buttonVis.canPickup = status === "AVAILABLE";
       buttonVis.canAbandon =
         questType === "FAMILY" &&
-        (status === "PENDING" || status === "CLAIMED" || status === "IN_PROGRESS");
+        (status === "PENDING" ||
+          status === "CLAIMED" ||
+          status === "IN_PROGRESS");
     } else if (viewMode === "gm") {
       buttonVis.canApprove = status === "COMPLETED";
       buttonVis.canDeny = status === "COMPLETED";
@@ -70,11 +77,23 @@ jest.mock("@/components/ui", () => ({
     children,
     onClick,
     "data-testid": testid,
+    isLoading: _isLoading,
+    variant: _variant,
+    size: _size,
+    fullWidth: _fullWidth,
+    startIcon: _startIcon,
+    endIcon: _endIcon,
     ...props
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     "data-testid"?: string;
+    isLoading?: boolean;
+    variant?: string;
+    size?: string;
+    fullWidth?: boolean;
+    startIcon?: React.ReactNode;
+    endIcon?: React.ReactNode;
     [key: string]: unknown;
   }) => (
     <button onClick={onClick} data-testid={testid} {...props}>
@@ -86,7 +105,13 @@ jest.mock("@/components/ui", () => ({
 describe("QuestCard - existing hero/GM buttons", () => {
   it("should display start button for PENDING quest in hero view", () => {
     const onStart = jest.fn();
-    render(<QuestCard quest={createMockQuest({ status: "PENDING" })} viewMode="hero" onStart={onStart} />);
+    render(
+      <QuestCard
+        quest={createMockQuest({ status: "PENDING" })}
+        viewMode="hero"
+        onStart={onStart}
+      />,
+    );
     expect(screen.getByTestId("hero-start-quest")).toBeInTheDocument();
     expect(screen.getByText("Start Quest")).toBeInTheDocument();
   });
@@ -94,7 +119,11 @@ describe("QuestCard - existing hero/GM buttons", () => {
   it("should display complete button for IN_PROGRESS quest in hero view", () => {
     const onComplete = jest.fn();
     render(
-      <QuestCard quest={createMockQuest({ status: "IN_PROGRESS" })} viewMode="hero" onComplete={onComplete} />
+      <QuestCard
+        quest={createMockQuest({ status: "IN_PROGRESS" })}
+        viewMode="hero"
+        onComplete={onComplete}
+      />,
     );
     expect(screen.getByTestId("hero-complete-quest")).toBeInTheDocument();
     expect(screen.getByText("Complete Quest")).toBeInTheDocument();
@@ -102,7 +131,13 @@ describe("QuestCard - existing hero/GM buttons", () => {
 
   it("should display pickup button for AVAILABLE quest in hero view", () => {
     const onPickup = jest.fn();
-    render(<QuestCard quest={createMockQuest({ status: "AVAILABLE" })} viewMode="hero" onPickup={onPickup} />);
+    render(
+      <QuestCard
+        quest={createMockQuest({ status: "AVAILABLE" })}
+        viewMode="hero"
+        onPickup={onPickup}
+      />,
+    );
     expect(screen.getByTestId("hero-pickup-quest")).toBeInTheDocument();
     expect(screen.getByText("Pick Up Quest")).toBeInTheDocument();
   });
@@ -117,7 +152,7 @@ describe("QuestCard - existing hero/GM buttons", () => {
         onApprove={onApprove}
         onDeny={onDeny}
         familyMembers={[]}
-      />
+      />,
     );
     expect(screen.getByTestId("gm-approve-quest")).toBeInTheDocument();
     expect(screen.getByTestId("gm-deny-quest")).toBeInTheDocument();
@@ -131,7 +166,7 @@ describe("QuestCard - existing hero/GM buttons", () => {
         viewMode="gm"
         onCancel={onCancel}
         familyMembers={[]}
-      />
+      />,
     );
     expect(screen.getByTestId("gm-cancel-quest")).toBeInTheDocument();
   });

@@ -9,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database-generated";
 import { QuestInstance } from "@/lib/types/database";
 import { StreakService } from "@/lib/streak-service";
+import type { AchievementProgressService } from "@/lib/achievement-progress-service";
 import { approveQuest } from "./quest-instance/approve-quest";
 import { assignQuest } from "./quest-instance/assign-quest";
 import { claimQuest } from "./quest-instance/claim-quest";
@@ -16,12 +17,22 @@ import { releaseQuest } from "./quest-instance/release-quest";
 
 export class QuestInstanceService {
   private readonly streakService: StreakService;
+  private readonly progressService?: Pick<
+    AchievementProgressService,
+    "updateProgress"
+  >;
 
   constructor(
     private readonly client: SupabaseClient<Database> = supabase,
-    streakServiceInstance?: StreakService
+    streakServiceInstance?: StreakService,
+    progressServiceInstance?: Pick<
+      AchievementProgressService,
+      "updateProgress"
+    >,
   ) {
-    this.streakService = streakServiceInstance ?? new StreakService(this.client);
+    this.streakService =
+      streakServiceInstance ?? new StreakService(this.client);
+    this.progressService = progressServiceInstance;
   }
 
   /**
@@ -35,7 +46,10 @@ export class QuestInstanceService {
    * @param characterId - The character claiming the quest
    * @returns The claimed quest instance with CLAIMED status and volunteer bonus
    */
-  async claimQuest(questId: string, characterId: string): Promise<QuestInstance> {
+  async claimQuest(
+    questId: string,
+    characterId: string,
+  ): Promise<QuestInstance> {
     return claimQuest({ client: this.client }, questId, characterId);
   }
 
@@ -48,7 +62,10 @@ export class QuestInstanceService {
    * @param characterId - The character releasing the quest (for validation)
    * @returns The released quest instance
    */
-  async releaseQuest(questId: string, characterId: string): Promise<QuestInstance> {
+  async releaseQuest(
+    questId: string,
+    characterId: string,
+  ): Promise<QuestInstance> {
     return releaseQuest({ client: this.client }, questId, characterId);
   }
 
@@ -60,10 +77,14 @@ export class QuestInstanceService {
    * - Updates character.active_family_quest_id
    * @param questId - The quest instance ID to assign
    * @param characterId - The character to assign the quest to
-  * @param _gmId - The GM user ID performing the assignment (unused, kept for API compatibility)
-  * @returns The assigned quest instance with PENDING status and no volunteer bonus
-  */
-  async assignQuest(questId: string, characterId: string, _gmId: string): Promise<QuestInstance> {
+   * @param _gmId - The GM user ID performing the assignment (unused, kept for API compatibility)
+   * @returns The assigned quest instance with PENDING status and no volunteer bonus
+   */
+  async assignQuest(
+    questId: string,
+    characterId: string,
+    _gmId: string,
+  ): Promise<QuestInstance> {
     void _gmId;
     return assignQuest({ client: this.client }, questId, characterId);
   }
@@ -82,9 +103,16 @@ export class QuestInstanceService {
    *
    * @param questId - The quest instance ID to approve
    * @returns The approved quest instance
-  */
+   */
   async approveQuest(questId: string): Promise<QuestInstance> {
-    return approveQuest({ client: this.client, streakService: this.streakService }, questId);
+    return approveQuest(
+      {
+        client: this.client,
+        streakService: this.streakService,
+        progressService: this.progressService,
+      },
+      questId,
+    );
   }
 }
 

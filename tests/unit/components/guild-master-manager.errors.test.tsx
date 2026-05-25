@@ -20,6 +20,7 @@ describe("GuildMasterManager - errors", () => {
   });
 
   it("displays error state when loading fails", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
     const mockOrder2 = jest.fn().mockResolvedValue({
       data: null,
       error: { message: "Database error" },

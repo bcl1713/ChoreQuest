@@ -1,12 +1,21 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { useAuth } from './auth-context';
-import { useRealtime } from './realtime-context';
-import { useNetworkReady } from './network-ready-context';
-import { Character } from '@/lib/types/database';
-import { createCharacterFetcher } from './character/fetch-character';
-import type { LevelUpEvent } from './character/types';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
+import { useAuth } from "./auth-context";
+import { useRealtime } from "./realtime-context";
+import { useNetworkReady } from "./network-ready-context";
+import { Character } from "@/lib/types/database";
+import { createCharacterFetcher } from "./character/fetch-character";
+import { RewardCalculator } from "./reward-calculator";
+import type { LevelUpEvent } from "./character/types";
 
 interface CharacterContextType {
   character: Character | null;
@@ -18,7 +27,9 @@ interface CharacterContextType {
   clearLevelUpEvent: () => void;
 }
 
-const CharacterContext = createContext<CharacterContextType | undefined>(undefined);
+const CharacterContext = createContext<CharacterContextType | undefined>(
+  undefined,
+);
 
 export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const { user, session } = useAuth();
@@ -61,7 +72,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         retryCountRef,
         abortControllerRef,
       }),
-    [user, session, waitForReady, updateHasLoaded]
+    [user, session, waitForReady, updateHasLoaded],
   );
 
   useEffect(() => {
@@ -71,7 +82,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   // Add visibility change listener to clear stuck fetch guard
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         const timestamp = new Date().toISOString();
         console.log(`[${timestamp}] CharacterContext: Tab became visible`);
 
@@ -80,7 +91,9 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         if (isFetchingRef.current && fetchStartTimeRef.current > 0) {
           const elapsed = now - fetchStartTimeRef.current;
           if (elapsed > 2000) {
-            console.log(`[${timestamp}] CharacterContext: Clearing stuck fetch guard (${elapsed}ms) on visibility change`);
+            console.log(
+              `[${timestamp}] CharacterContext: Clearing stuck fetch guard (${elapsed}ms) on visibility change`,
+            );
             isFetchingRef.current = false;
             fetchStartTimeRef.current = 0;
           }
@@ -88,37 +101,57 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
-  // Set up realtime character update listener to automatically refresh
-  // when character stats change (e.g., after quest approval by Guild Master)
+  // Set up realtime character update listener — merges event payload in-place
+  // instead of refetching, matching the pattern used by useQuests/useRewards.
   useEffect(() => {
     if (!user || !onCharacterUpdate) return;
 
-    console.log('CharacterContext: Setting up realtime subscription for user:', user.id);
-
     const unsubscribe = onCharacterUpdate((event) => {
-      console.log('CharacterContext: Received realtime event:', event);
-      console.log('CharacterContext: Current user ID:', user.id);
-      console.log('CharacterContext: Event user ID:', event.record?.user_id);
+      if (event.record?.user_id !== user.id) return;
 
-      // Only refresh if this is our character being updated
-      if (event.record?.user_id === user.id) {
-        console.log('CharacterContext: Event matches current user, refreshing character data');
-        // Automatically refresh character data when realtime event detected
-        fetchCharacter().catch(console.error);
-      } else {
-        console.log('CharacterContext: Event does not match current user, ignoring');
+      if (event.action === "DELETE") {
+        setCharacter(null);
+        previousLevelRef.current = null;
+        return;
+      }
+
+      if (event.action === "UPDATE" || event.action === "INSERT") {
+        setCharacter((prev) => {
+          const baseCharacter = prev ?? ({} as Partial<Character>);
+          const merged = { ...baseCharacter, ...event.record } as Character;
+          const newLevel = Math.max(
+            1,
+            RewardCalculator.calculateLevelFromTotalXP(merged.xp ?? 0),
+          );
+          merged.level = newLevel;
+
+          if (
+            previousLevelRef.current !== null &&
+            newLevel > previousLevelRef.current
+          ) {
+            setLevelUpEvent({
+              oldLevel: previousLevelRef.current,
+              newLevel,
+              characterName: merged.name ?? "Adventurer",
+              characterClass: (merged.class as string) || "Adventurer",
+            });
+          }
+          previousLevelRef.current = newLevel;
+
+          return merged;
+        });
       }
     });
 
     return unsubscribe;
-  }, [user, onCharacterUpdate, fetchCharacter]);
+  }, [user, onCharacterUpdate]);
 
   const refreshCharacter = async () => {
     await fetchCharacter();
@@ -129,15 +162,17 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <CharacterContext.Provider value={{
-      character,
-      isLoading,
-      error,
-      hasLoaded,
-      refreshCharacter,
-      levelUpEvent,
-      clearLevelUpEvent
-    }}>
+    <CharacterContext.Provider
+      value={{
+        character,
+        isLoading,
+        error,
+        hasLoaded,
+        refreshCharacter,
+        levelUpEvent,
+        clearLevelUpEvent,
+      }}
+    >
       {children}
     </CharacterContext.Provider>
   );
@@ -146,7 +181,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
 export function useCharacter() {
   const context = useContext(CharacterContext);
   if (context === undefined) {
-    throw new Error('useCharacter must be used within a CharacterProvider');
+    throw new Error("useCharacter must be used within a CharacterProvider");
   }
   return context;
 }

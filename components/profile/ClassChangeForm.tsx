@@ -7,6 +7,7 @@ import { getCharacterClassInfo } from "@/lib/constants/character-classes";
 import { ProfileService } from "@/lib/profile-service";
 import { ErrorAlert } from "@/components/profile/shared/ErrorAlert";
 import { Character, CharacterClass } from "@/lib/types/database";
+import { getAuthToken } from "@/lib/utils/get-auth-token";
 import { ClassSelectionGrid } from "./class-change/ClassSelectionGrid";
 import { CooldownNotice } from "./class-change/CooldownNotice";
 import { CostInfo } from "./class-change/CostInfo";
@@ -99,7 +100,33 @@ export default function ClassChangeForm({
       }
 
       setError(null);
-      await ProfileService.changeCharacterClass(character.id, selectedClass);
+
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(
+        `/api/characters/${character.id}/change-class`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ newClass: selectedClass }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { error?: string; message?: string }).error ??
+            (errorData as { message?: string }).message ??
+            "Failed to change class",
+        );
+      }
+
       onSuccess(`Successfully changed class to ${selectedClassInfo?.name}!`);
       setSelectedClass(null);
 

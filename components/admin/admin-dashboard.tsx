@@ -9,6 +9,9 @@ import {
   Trophy,
   Crown,
   Settings,
+  FolderOpen,
+  Medal,
+  Users,
 } from "lucide-react";
 import StatisticsPanel from "./statistics-panel";
 import ActivityFeed from "./activity-feed";
@@ -17,6 +20,9 @@ import FamilySettings from "@/components/family/family-settings";
 import { QuestTemplateManager } from "@/components/quests/quest-template-manager";
 import RewardManager from "@/components/rewards/reward-manager";
 import { QuestManagementTab } from "./quest-management-tab";
+import AchievementCategoryAdmin from "./achievement-category-admin";
+import AchievementAdmin from "./achievement-admin";
+import FamilyAchievementAdmin from "./family-achievement-admin";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 
 type TabName =
@@ -24,6 +30,9 @@ type TabName =
   | "quests"
   | "quest-templates"
   | "rewards"
+  | "achievement-categories"
+  | "achievements"
+  | "family-achievements"
   | "guild-masters"
   | "family-settings";
 
@@ -34,6 +43,9 @@ const TAB_ICONS = {
   Trophy,
   Crown,
   Settings,
+  FolderOpen,
+  Medal,
+  Users,
 };
 
 export function AdminDashboard() {
@@ -49,6 +61,17 @@ export function AdminDashboard() {
           icon: "ScrollText",
         },
         { name: "rewards", label: "Rewards", icon: "Trophy" },
+        {
+          name: "achievement-categories",
+          label: "Achievement Categories",
+          icon: "FolderOpen",
+        },
+        { name: "achievements", label: "Achievements", icon: "Medal" },
+        {
+          name: "family-achievements",
+          label: "Family Achievements",
+          icon: "Users",
+        },
         { name: "guild-masters", label: "Guild Masters", icon: "Crown" },
         { name: "family-settings", label: "Family Settings", icon: "Settings" },
       ],
@@ -107,6 +130,21 @@ export function AdminDashboard() {
           {/* Rewards Tab */}
           <TabPanel unmount={false}>
             <RewardManager />
+          </TabPanel>
+
+          {/* Achievement Categories Tab */}
+          <TabPanel unmount={false}>
+            <AchievementCategoryAdmin />
+          </TabPanel>
+
+          {/* Achievements Tab */}
+          <TabPanel unmount={false}>
+            <AchievementAdmin />
+          </TabPanel>
+
+          {/* Family Achievements Tab */}
+          <TabPanel unmount={false}>
+            <FamilyAchievementAdmin />
           </TabPanel>
 
           {/* Guild Masters Tab */}

@@ -93,15 +93,20 @@ transforms household tasks into epic adventures.
 - [ ] Boss categories (mini-boss, major boss, raid boss)
 - [ ] Loot system with exclusive rewards
 
-### Achievement System
+### Achievement System - COMPLETED for v0.8.0 2026-05-24
 
-- [ ] Achievement definition system
-- [ ] Progress tracking
-- [ ] Achievement notifications
-- [ ] Badge display system
-- [ ] Achievement categories
-- [ ] Hidden achievements
-- [ ] Family achievements
+- [x] Achievement definition system
+- [x] Progress tracking
+- [x] Achievement notifications
+- [x] Badge display system
+- [x] Achievement categories
+- [x] Hidden achievements
+- [x] Family achievements
+- [x] Seasons baseline and active family season support
+- [x] Season-aware individual and family achievement evaluation
+- [x] Admin start-season/reset tooling that preserves existing gold balances
+- [x] Safe season upgrade and start-season operator documentation
+- [x] Season reset regression coverage and seeded achievement economy rebalance
 
 ## Phase 3: Social Features
 

@@ -11,31 +11,67 @@ boss battles that were lost in the recent refactor.
 
 ### Requirement: Character Realtime Updates
 
-The system SHALL display character-related data (XP, gold, level, class, honor,
-gems) in real-time via `useRealtime()` context subscription only when changes
-are confirmed in the database (no optimistic updates).
+The system SHALL display character-related data (XP, gold,
+level, class, honor, gems) in real-time via `useRealtime()`
+context subscription only when changes are confirmed in the
+database (no optimistic updates). Character realtime events
+SHALL be processed by merging the event payload in-place into
+the existing character state, without triggering a network
+refetch. The `CharacterContext` SHALL be the single canonical
+subscription point for character realtime events.
 
-#### Scenario: Character XP gain updates dashboard after database confirmation
+#### Scenario: Character XP gain merges in-place on dashboard
 
-Given a user is viewing the dashboard with their character stats displayed
-When the user completes a quest and receives XP rewards confirmed in database
-Then the character's XP value updates on screen within 100ms with visual
-feedback (glow/flash effect) indicating realtime sync
+- **WHEN** a user completes a quest and receives XP rewards
+  confirmed in database, triggering a character UPDATE event
+- **THEN** the `CharacterContext` SHALL merge the event
+  record into the current character state using
+  `setCharacter(prev => ({ ...prev, ...event.record }))`
+  and the dashboard XP value and progress bar SHALL update
+  within 100ms with visual feedback (glow/flash effect)
 
-#### Scenario: Character gold changes appear in real-time after confirmation
+#### Scenario: Character gold changes merge in-place
 
-Given a user is viewing the character panel with current gold balance displayed
-When the user redeems a reward or receives gold confirmed in the database
-Then the gold balance updates on screen within 100ms with visual feedback across
-all open pages
+- **WHEN** a user redeems a reward or receives gold confirmed
+  in the database, triggering a character UPDATE event
+- **THEN** the `CharacterContext` SHALL merge the event
+  record in-place and the gold balance SHALL update within
+  100ms with visual feedback across all open pages
 
-#### Scenario: Level-up notifications trigger when XP threshold crossed in database
+#### Scenario: Level-up detected during in-place merge
 
-Given a user's character is about to level up
-When the user's total XP crosses the level threshold (via database-confirmed
-quest completion or other means)
-Then a level-up notification/modal appears within 100ms on the user's dashboard
-with visual effect indicating realtime update
+- **WHEN** a character UPDATE event is merged in-place and
+  the new XP value crosses a level threshold
+- **THEN** the `CharacterContext` SHALL detect the level
+  change by comparing the previous character level against
+  the recalculated level from the merged XP, and SHALL
+  trigger a level-up notification/modal within 100ms
+
+#### Scenario: Rapid successive updates both applied
+
+- **WHEN** two character UPDATE events arrive in rapid
+  succession (e.g., quest approval followed by reward
+  redemption)
+- **THEN** both events SHALL be merged sequentially using
+  functional state updates (`setState(prev => ...)`) so
+  that neither update is lost or overwritten
+
+#### Scenario: No duplicate character subscriptions
+
+- **WHEN** the application has both `CharacterContext` and
+  any other character-consuming components mounted
+- **THEN** exactly one realtime listener SHALL be registered
+  for the characters table via `CharacterContext`, and no
+  separate `useCharacter` hook SHALL maintain its own
+  independent subscription
+
+#### Scenario: Fetch reserved for initial load only
+
+- **WHEN** the `CharacterContext` mounts for the first time
+- **THEN** it SHALL perform an initial fetch via
+  `fetchCharacter()` to load the current character state
+- **AND** subsequent realtime events SHALL NOT trigger
+  additional fetches
 
 ### Requirement: Quest Instance Realtime Updates
 
@@ -241,11 +277,11 @@ MUST NOT include `session` in its dependency array.
 ### Requirement: Realtime Context Subscription API
 
 The `useRealtime()` hook SHALL provide subscription callbacks for
-character, quest, reward, and boss quest updates. The realtime
-channel SHALL remain connected across auth token refreshes and
-SHALL only be destroyed and recreated when the user's `family_id`
-changes. The channel lifecycle MUST NOT depend on the `session` or
-`user` objects from the auth context.
+character, quest, reward, boss quest, and **achievement unlock**
+updates. The realtime channel SHALL remain connected across auth
+token refreshes and SHALL only be destroyed and recreated when the
+user's `family_id` changes. The channel lifecycle MUST NOT depend
+on the `session` or `user` objects from the auth context.
 
 #### Scenario: Channel survives auth token refresh
 
@@ -282,3 +318,63 @@ changes. The channel lifecycle MUST NOT depend on the `session` or
   `onQuestUpdate()`
 - **THEN** both components receive the realtime event and can
   update independently
+
+#### Scenario: Components subscribe to achievement unlock events
+
+- **WHEN** a component calls
+  `const { onAchievementUnlockUpdate } = useRealtime()`
+- **THEN** the callback fires with the realtime event
+  data when the `character_achievements` table receives
+  an INSERT or UPDATE event
+
+### Requirement: Achievement unlock realtime channel
+
+The realtime system SHALL subscribe to the
+`character_achievements` table and emit events through
+an `achievementUnlock` listener registry, following the
+existing one-channel-per-table pattern.
+
+#### Scenario: Channel created for character_achievements
+
+- **WHEN** the `RealtimeProvider` sets up channels for
+  a family
+- **THEN** a channel named
+  `family_{familyId}_character_achievements` SHALL be
+  created subscribing to all events on the
+  `character_achievements` table
+
+#### Scenario: No family_id filter on subscription
+
+- **WHEN** the `character_achievements` channel is
+  created
+- **THEN** the subscription SHALL NOT include a
+  `family_id` filter (the table has no `family_id`
+  column), matching the pattern used by
+  `reward_redemptions`
+
+#### Scenario: Events emitted to achievement listener registry
+
+- **WHEN** a postgres change event arrives on the
+  `character_achievements` channel
+- **THEN** the event SHALL be mapped to a
+  `RealtimeEvent` with type
+  `"achievement_unlock_updated"` and emitted to the
+  `achievementUnlock` listener registry
+
+### Requirement: Achievement unlock event type
+
+The realtime type system SHALL include an event type
+for achievement unlock table changes.
+
+#### Scenario: RealtimeEventType includes achievement type
+
+- **WHEN** the `RealtimeEventType` union is defined
+- **THEN** it SHALL include
+  `"achievement_unlock_updated"` as a valid member
+
+#### Scenario: RealtimeContextType exposes callback
+
+- **WHEN** the `RealtimeContextType` interface is
+  defined
+- **THEN** it SHALL include
+  `onAchievementUnlockUpdate: (callback: Listener) => () => void`

@@ -14,6 +14,7 @@ import { UserProfile, Family } from "@/lib/types/database";
 import { useNetworkReady } from "./network-ready-context";
 import { loadUserData } from "./auth/load-user-data";
 import { createFamilyFlow } from "./auth/create-family";
+import { useProfileSubscription } from "./auth/use-profile-subscription";
 import {
   loginUser,
   registerUser,
@@ -151,39 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isCreatingFamily, waitForReady, loadUserDataHandler]);
 
   // Subscribe to profile updates so role changes propagate in real time
-  useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
-
-    const channel = supabase
-      .channel(`user-profile-updates-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "user_profiles",
-          filter: `id=eq.${user.id}`,
-        },
-        async (payload) => {
-          console.log(
-            "AuthContext: Detected profile update via realtime",
-            payload,
-          );
-          await loadUserDataHandler(user.id);
-        },
-      )
-      .subscribe((status) => {
-        console.log("AuthContext: Profile subscription status", status);
-        return status;
-      });
-
-    return () => {
-      console.log("AuthContext: Unsubscribing from profile updates");
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, loadUserDataHandler]);
+  useProfileSubscription(user?.id, (userId) => loadUserDataHandler(userId));
 
   const clearError = () => setError(null);
 

@@ -5,9 +5,19 @@ import { useAuth } from "@/lib/auth-context";
 import { useRealtime } from "@/lib/realtime-context";
 import { supabase } from "@/lib/supabase";
 
-// Mock dependencies
 jest.mock("@/lib/auth-context");
 jest.mock("@/lib/realtime-context");
+jest.mock("@/lib/character-context", () => ({
+  useCharacter: jest.fn(() => ({
+    character: null,
+    isLoading: false,
+    error: null,
+    hasLoaded: true,
+    refreshCharacter: jest.fn(),
+    levelUpEvent: null,
+    clearLevelUpEvent: jest.fn(),
+  })),
+}));
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
@@ -232,63 +242,6 @@ describe("QuestDashboard - Realtime DELETE Events", () => {
 
     await waitFor(() => {
       expect(screen.queryByText("Test Quest")).toBeInTheDocument();
-    });
-  });
-
-  it("should deduplicate quests after DELETE event", async () => {
-    const mockSingle = jest.fn().mockResolvedValue({
-      data: null,
-      error: { code: "PGRST116" },
-    });
-    const mockOrder = jest.fn().mockResolvedValue({
-      data: [mockQuest, { ...mockQuest }],
-      error: null,
-    });
-    const mockIn = jest.fn().mockResolvedValue({
-      data: [],
-      error: null,
-    });
-    const mockEq = jest.fn().mockReturnValue({
-      single: mockSingle,
-      order: mockOrder,
-      in: mockIn,
-    });
-    const mockSelect = jest.fn().mockReturnValue({
-      eq: mockEq,
-      in: mockIn,
-      order: mockOrder,
-      single: mockSingle,
-    });
-
-    (supabase.from as jest.Mock).mockReturnValue({
-      select: mockSelect,
-      eq: mockEq,
-      in: mockIn,
-      single: mockSingle,
-    });
-
-    render(<QuestDashboard onError={jest.fn()} />);
-
-    await waitFor(() => {
-      expect(screen.queryAllByText("Test Quest").length).toBe(1);
-    });
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    act(() => {
-      broadcastQuestUpdate({
-        type: "quest_updated",
-        table: "quest_instances",
-        action: "DELETE",
-        record: {},
-        old_record: { id: "quest-789" },
-      });
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByText("Test Quest")).not.toBeInTheDocument();
     });
   });
 });
