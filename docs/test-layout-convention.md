@@ -126,16 +126,21 @@ Recommended scope for the next implementation PR:
   - `quest-card.hero.test.tsx`
   - `quest-meta.test.tsx`
   - `quest-card.fixtures.tsx`
-- Leave already co-located files in place:
+- Leave these already co-located files in place:
   - `index.test.tsx`
   - `index-actions.test.tsx`
   - `quest-card-helpers.test.ts`
+- Explicitly defer `components/quests/quest-card/__tests__/quest-card-helpers.test.ts` to a second batch unless the implementer is prepared to merge or rename coverage in the same PR.
+  - That file collides by name with the existing co-located `components/quests/quest-card/quest-card-helpers.test.ts`.
+  - The two helper-test files cover different behavior today, so a blind move would either overwrite coverage or force an unplanned rename decision.
+  - The canary should document that the first batch reduces the split, but does not fully eliminate the `quest-card/__tests__/` directory.
 
 Estimated migration size:
 
 - 5 moved files
 - 2 existing co-located tests likely need import updates to stop referencing `./__tests__/quest-card.fixtures`
-- Expected follow-up PR touch count: roughly 7-8 files, still small enough for a low-risk canary
+- 1 deferred duplicate-helper decision (`quest-card-helpers.test.ts`) called out explicitly for the follow-up card
+- Expected follow-up PR touch count: roughly 7-8 files for the canary, with a separate small follow-up needed to merge/rename the duplicate helper coverage
 
 ### Why this is the best first slice
 
@@ -150,11 +155,12 @@ Estimated migration size:
    - Nearby import rewrites
    - Jest discovery verification
 
-4. It removes a visibly inconsistent mixed pattern.
-   - One directory would stop splitting tests between root files and a nested `__tests__/` folder.
+4. It exposes a real edge case early, without widening the blast radius.
+   - The duplicate `quest-card-helpers.test.ts` name is exactly the sort of collision the broader migration needs documented before larger batches proceed.
+   - Handling that collision explicitly makes the canary honest about what it fixes now versus what still needs a deliberate merge/rename pass.
 
 5. It gives a template for later batches.
-   - If the quest-card cluster moves cleanly, the same pattern can be repeated for `quest-dashboard`, `reward-manager`, and `reward-store`.
+   - If the quest-card cluster moves cleanly, the same pattern can be repeated for `quest-dashboard`, `reward-manager`, and `reward-store`, while reserving duplicate-name cleanup for batches that actually need it.
 
 ## Follow-up batch candidates after the canary
 
