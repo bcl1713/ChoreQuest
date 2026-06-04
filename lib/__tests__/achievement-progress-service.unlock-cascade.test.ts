@@ -90,7 +90,14 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
     // prevXp=40, award xp=60 → new xp=100 → level 2; cascade unlocks LEVEL_ACH
     const write = makeWriteMocks({
       unlockedIds: [QUEST_ACH.id],
-      rpcReturn: { xp: 100, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [QUEST_ACH.id],
+        awarded_xp: 60,
+        awarded_gold: 0,
+        xp: 100,
+        gold: 0,
+        level: 1,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -149,15 +156,22 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    // Unlock called twice: quest_complete then level cascade
-    expect(write.charAchUpdate).toHaveBeenCalledTimes(2);
+    // Only the zero-reward cascade unlock uses the direct unlocked_at update.
+    expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
   });
 
   it("7.3 no cascade when XP reward does not trigger level-up", async () => {
     const noLevelUpAch = { ...QUEST_ACH, xp_reward: 10 };
     const write = makeWriteMocks({
       unlockedIds: [noLevelUpAch.id],
-      rpcReturn: { xp: 10, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [noLevelUpAch.id],
+        awarded_xp: 10,
+        awarded_gold: 0,
+        xp: 10,
+        gold: 0,
+        level: 1,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -179,7 +193,7 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
+    expect(write.charAchUpdate).toHaveBeenCalledTimes(0);
   });
 
   it("7.3b cascades to unlock compound achievement with level_reached sub-condition after level-up", async () => {
@@ -188,7 +202,14 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
     // Compound achievement (quest_complete >= 5 AND level_reached >= 3) should also unlock in cascade.
     const write = makeWriteMocks({
       unlockedIds: [QUEST_ACH.id, COMPOUND_ACH.id],
-      rpcReturn: { xp: 260, gold: 0, level: 2 },
+      rpcReturn: {
+        unlocked_achievement_ids: [QUEST_ACH.id],
+        awarded_xp: 60,
+        awarded_gold: 0,
+        xp: 260,
+        gold: 0,
+        level: 2,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -247,7 +268,7 @@ describe("AchievementProgressService - level-up cascade (7.3)", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    // Unlock called twice: quest_complete then compound in cascade
-    expect(write.charAchUpdate).toHaveBeenCalledTimes(2);
+    // Only the zero-reward cascade unlock uses the direct unlocked_at update.
+    expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
   });
 });

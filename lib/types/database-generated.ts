@@ -1235,6 +1235,21 @@ export type Database = {
         Args: { p_character_id: string; p_xp: number; p_gold: number };
         Returns: { xp: number; gold: number; level: number }[];
       };
+      fn_unlock_achievements_and_grant_rewards: {
+        Args: {
+          p_character_id: string;
+          p_achievement_ids: string[];
+          p_season_id?: string | null;
+        };
+        Returns: {
+          unlocked_achievement_ids: string[];
+          awarded_xp: number;
+          awarded_gold: number;
+          xp: number | null;
+          gold: number | null;
+          level: number | null;
+        }[];
+      };
       fn_change_character_class: {
         Args: { p_character_id: string; p_new_class: string };
         Returns: {
