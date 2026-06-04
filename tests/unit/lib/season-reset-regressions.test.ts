@@ -129,7 +129,14 @@ function makeIndividualWriteClient() {
     })),
   }));
   const rpcSingle = jest.fn().mockResolvedValue({
-    data: { xp: 10, gold: 5, level: 1 },
+    data: {
+      unlocked_achievement_ids: [ACHIEVEMENT_ID],
+      awarded_xp: 10,
+      awarded_gold: 5,
+      xp: 10,
+      gold: 5,
+      level: 1,
+    },
     error: null,
   });
   const rpc = jest.fn(() => ({ single: rpcSingle }));
@@ -198,13 +205,16 @@ describe("season reset regression coverage", () => {
     await service.updateProgress(CHARACTER_ID, { type: "QUEST_APPROVED" });
     await service.updateProgress(CHARACTER_ID, { type: "QUEST_APPROVED" });
 
-    expect(writeClient.unlockUpdate).toHaveBeenCalledTimes(1);
+    expect(writeClient.unlockUpdate).not.toHaveBeenCalled();
     expect(writeClient.rpc).toHaveBeenCalledTimes(1);
-    expect(writeClient.rpc).toHaveBeenCalledWith("fn_increment_character_stats", {
-      p_character_id: CHARACTER_ID,
-      p_xp: 10,
-      p_gold: 5,
-    });
+    expect(writeClient.rpc).toHaveBeenCalledWith(
+      "fn_unlock_achievements_and_grant_rewards",
+      {
+        p_achievement_ids: [ACHIEVEMENT_ID],
+        p_character_id: CHARACTER_ID,
+        p_season_id: SEASON_ID,
+      },
+    );
   });
 
   it.each([

@@ -92,12 +92,17 @@ describe("AchievementProgressService - P1/P2 cascade fixes", () => {
   afterEach(() => jest.clearAllMocks());
 
   it("[P2] cascades to unlock compound achievement with xp_earned sub-condition after XP reward (no level-up)", async () => {
-    // xp_reward: 10 — no level-up. Compound with xp_earned >= 10 is NOT met at
-    // initial eval (xp=0) but IS met after XP reward (xp=10).
     const XP_QUEST = { ...QUEST_ACH, id: "ach-xp-quest", xp_reward: 10 };
     const write = makeWriteMocks({
       unlockedIds: [XP_QUEST.id],
-      rpcReturn: { xp: 10, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [XP_QUEST.id],
+        awarded_xp: 10,
+        awarded_gold: 0,
+        xp: 10,
+        gold: 0,
+        level: 1,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -111,8 +116,6 @@ describe("AchievementProgressService - P1/P2 cascade fixes", () => {
         error: null,
       });
 
-    // n=1 → context, n=2 → initial xp_earned eval (xp=0, not met),
-    // n=3 → cascade xp_earned eval (xp=10, met).
     let charN = 0;
     const charChain = {
       select: jest.fn().mockImplementation(() => {
@@ -173,14 +176,20 @@ describe("AchievementProgressService - P1/P2 cascade fixes", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    expect(write.charAchUpdate).toHaveBeenCalledTimes(2);
+    expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
   });
 
   it("[P1] does not cascade level_reached achievement when concurrent write loses level race", async () => {
-    // levelSelectRows: [] → no rows updated → levelApplied=false → no cascade.
     const write = makeWriteMocks({
       unlockedIds: [QUEST_ACH.id],
-      rpcReturn: { xp: 100, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [QUEST_ACH.id],
+        awarded_xp: 60,
+        awarded_gold: 0,
+        xp: 100,
+        gold: 0,
+        level: 1,
+      },
       levelSelectRows: [],
     });
     mockWriteClient.from.mockImplementation(write.from);
@@ -207,23 +216,22 @@ describe("AchievementProgressService - P1/P2 cascade fixes", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    // Only one unlock: QUEST_ACH. No cascade for LEVEL_ACH since race was lost.
-    expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
-    // Verify the .lt().select() chain was invoked (level update attempted)
+    expect(write.charAchUpdate).toHaveBeenCalledTimes(0);
     expect(write.statsSelect).toHaveBeenCalledTimes(1);
-    // statsSelect resolved with empty data → levelApplied=false
-    await expect(
-      write.statsSelect.mock.results[0].value,
-    ).resolves.toMatchObject({ data: [] });
+    await expect(write.statsSelect.mock.results[0].value).resolves.toMatchObject({ data: [] });
   });
 
   it("[P2] evaluates compound achievement with both xp_earned and level_reached exactly once on XP+level-up", async () => {
-    // DEDUP_COMPOUND_ACH has both sub-condition types. The Set-based dedup
-    // must ensure the compound evaluator runs exactly once even though both
-    // xp and level-up triggers fire.
     const write = makeWriteMocks({
       unlockedIds: [QUEST_ACH.id],
-      rpcReturn: { xp: 100, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [QUEST_ACH.id],
+        awarded_xp: 60,
+        awarded_gold: 0,
+        xp: 100,
+        gold: 0,
+        level: 1,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -281,11 +289,8 @@ describe("AchievementProgressService - P1/P2 cascade fixes", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    // Cascade upsert (write.upsert call 2) must contain exactly one row.
     expect(write.upsert).toHaveBeenCalledTimes(2);
-    const cascadeRows = write.upsert.mock.calls[1][0] as Array<{
-      achievement_id: string;
-    }>;
+    const cascadeRows = write.upsert.mock.calls[1][0] as Array<{ achievement_id: string }>;
     expect(cascadeRows).toHaveLength(1);
     expect(cascadeRows[0].achievement_id).toBe(DEDUP_COMPOUND_ACH.id);
   });
