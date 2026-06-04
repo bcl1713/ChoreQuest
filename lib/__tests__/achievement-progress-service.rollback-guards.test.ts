@@ -29,7 +29,14 @@ const LEVEL_UP_ACHIEVEMENT = {
   gold_reward: 0,
 };
 // RPC returns xp=100, gold=0, level=1 after the +60 xp increment
-const LEVEL_UP_RPC_RETURN = { xp: 100, gold: 0, level: 1 };
+const LEVEL_UP_RPC_RETURN = {
+  unlocked_achievement_ids: [LEVEL_UP_ACHIEVEMENT.id],
+  awarded_xp: 60,
+  awarded_gold: 0,
+  xp: 100,
+  gold: 0,
+  level: 1,
+};
 
 function makeQuestLevelAchievements() {
   return {
@@ -179,7 +186,14 @@ describe("AchievementProgressService - rollback guard fixes (P1/P2)", () => {
     const priorProgress = { current: 90, threshold: 100 };
     const write = makeWriteMocks({
       unlockedIds: [questAch.id],
-      rpcReturn: { xp: 50, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [questAch.id],
+        awarded_xp: 50,
+        awarded_gold: 0,
+        xp: 50,
+        gold: 0,
+        level: 1,
+      },
       levelSelectRows: [],
       cascadeUpsertError: "cascade-fail",
     });

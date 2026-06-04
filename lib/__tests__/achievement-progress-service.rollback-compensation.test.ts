@@ -23,7 +23,14 @@ const LEVEL_UP_ACHIEVEMENT = {
   xp_reward: 60,
   gold_reward: 0,
 };
-const LEVEL_UP_RPC_RETURN = { xp: 100, gold: 0, level: 1 };
+const LEVEL_UP_RPC_RETURN = {
+  unlocked_achievement_ids: [LEVEL_UP_ACHIEVEMENT.id],
+  awarded_xp: 60,
+  awarded_gold: 0,
+  xp: 100,
+  gold: 0,
+  level: 1,
+};
 
 describe("AchievementProgressService - rollback compensation", () => {
   let consoleSpy: jest.SpyInstance;
@@ -53,7 +60,6 @@ describe("AchievementProgressService - rollback compensation", () => {
     // Fix P1: stats rollback uses direct UPDATE (xp: 100-60=40, gold: 0-0=0)
     expect(write.statsUpdate).toHaveBeenCalledWith({ xp: 40, gold: 0 });
   });
-
   it("reverts stats and level when cascade upsert fails", async () => {
     const questAch = {
       id: "ach-quest",
@@ -179,7 +185,14 @@ describe("AchievementProgressService - rollback compensation", () => {
     };
     const write = makeWriteMocks({
       unlockedIds: [questAch.id],
-      rpcReturn: { xp: 50, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [questAch.id],
+        awarded_xp: 50,
+        awarded_gold: 0,
+        xp: 50,
+        gold: 0,
+        level: 1,
+      },
       levelSelectRows: [], // no level-up
     });
     mockWriteClient.from.mockImplementation(write.from);
