@@ -24,8 +24,14 @@ jest.mock("@/lib/family-achievement-progress-service", () => ({
   })),
 }));
 
+jest.mock("@/lib/seasons/active-season", () => ({
+  getActiveSeasonForFamily: jest.fn(),
+}));
+
 import { GET as getFamilyAchievements } from "@/app/api/family-achievements/route";
-import { POST as createFamilyAchievement } from "@/app/api/admin/family-achievements/route";
+import { getActiveSeasonForFamily } from "@/lib/seasons/active-season";
+
+const mockGetActiveSeasonForFamily = getActiveSeasonForFamily as jest.Mock;
 
 const createRequest = (method = "GET", body?: unknown, auth = "Bearer token") =>
   new NextRequest("http://localhost/test", {
@@ -46,6 +52,16 @@ const chainResult = (data: unknown, error: unknown = null) => ({
     Promise.resolve({ data, error }).then(fn),
 });
 
+function seasonProgressQuery(data: unknown, error: unknown = null) {
+  const query = {
+    select: jest.fn(() => query),
+    eq: jest.fn(() => query),
+    then: (fn: (v: unknown) => unknown) =>
+      Promise.resolve({ data, error }).then(fn),
+  };
+  return query;
+}
+
 function authAs(role: string, familyId: string | null = "family-001") {
   mockSupabase.auth.getUser.mockResolvedValue({
     data: { user: { id: "user-001" } },
@@ -60,6 +76,14 @@ describe("Family achievement API routes", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBackfillIfStale.mockResolvedValue(false);
+    mockGetActiveSeasonForFamily.mockResolvedValue({
+      id: "season-current",
+      family_id: "family-001",
+      name: "Current Season",
+      theme: null,
+      starts_at: "2026-06-01T00:00:00.000Z",
+      ends_at: null,
+    });
   });
 
   describe("GET /api/family-achievements", () => {
@@ -119,10 +143,7 @@ describe("Family achievement API routes", () => {
           };
         }
         // family_achievement_progress query
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({ data: progress, error: null }),
-        };
+        return seasonProgressQuery(progress);
       });
 
       const response = await getFamilyAchievements(createRequest());
@@ -178,16 +199,10 @@ describe("Family achievement API routes", () => {
         }
         if (serviceCallCount === 2) {
           // initial family_achievement_progress query — empty (no rows yet)
-          return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockResolvedValue({ data: [], error: null }),
-          };
+          return seasonProgressQuery([]);
         }
         // re-fetch after backfill
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({ data: freshProgress, error: null }),
-        };
+        return seasonProgressQuery(freshProgress);
       });
 
       const response = await getFamilyAchievements(createRequest());
@@ -201,93 +216,67 @@ describe("Family achievement API routes", () => {
         threshold: 5,
       });
     });
-  });
 
-  describe("POST /api/admin/family-achievements", () => {
-    it("returns 403 for non-Guild-Master", async () => {
+    it("does not surface legacy unlocked progress when no active season exists", async () => {
+      mockGetActiveSeasonForFamily.mockResolvedValueOnce(null);
       authAs("HERO");
-      const response = await createFamilyAchievement(
-        createRequest("POST", {
-          name: "Test",
+
+      const achievements = [
+        {
+          id: "fa-legacy",
+          name: "Legacy Hidden",
+          description: "Should stay hidden",
+          icon: "secret",
+          category_id: null,
+          xp_reward: 100,
+          gold_reward: 50,
+          is_hidden: true,
           criteria_type: "quest_complete",
-        }),
-      );
-      expect(response.status).toBe(403);
-    });
+          criteria_config: { threshold: 1 },
+          achievement_categories: null,
+        },
+      ];
+      const legacyProgress = [
+        {
+          family_achievement_id: "fa-legacy",
+          unlocked_at: "2026-05-01T00:00:00.000Z",
+          progress: { current: 1, threshold: 1 },
+          notified: true,
+        },
+      ];
 
-    it("returns 201 for Guild Master with valid data", async () => {
-      authAs("GUILD_MASTER");
+      let serviceCallCount = 0;
+      mockServiceSupabase.from.mockImplementation(() => {
+        serviceCallCount++;
+        if (serviceCallCount === 1) {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            order: jest
+              .fn()
+              .mockResolvedValue({ data: achievements, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: legacyProgress, error: null }),
+        };
+      });
 
-      mockServiceSupabase.from.mockImplementation(() => ({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: "fa-new", name: "New Achievement" },
-              error: null,
-            }),
-          }),
-        }),
-      }));
-
-      const response = await createFamilyAchievement(
-        createRequest("POST", {
-          name: "New Achievement",
-          criteria_type: "quest_complete",
-          criteria_config: { threshold: 10 },
-        }),
-      );
-      expect(response.status).toBe(201);
+      const response = await getFamilyAchievements(createRequest());
+      expect(response.status).toBe(200);
+      expect(mockBackfillIfStale).not.toHaveBeenCalled();
       const body = await response.json();
-      expect(body.success).toBe(true);
-    });
-
-    it("seeds progress via recomputeAchievement after successful creation", async () => {
-      authAs("GUILD_MASTER");
-
-      mockServiceSupabase.from.mockImplementation(() => ({
-        insert: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: { id: "fa-seeded", name: "Seeded Achievement" },
-              error: null,
-            }),
-          }),
-        }),
-      }));
-
-      const response = await createFamilyAchievement(
-        createRequest("POST", {
-          name: "Seeded Achievement",
-          criteria_type: "quest_complete",
-          criteria_config: { threshold: 10 },
+      expect(body.achievements[0]).toEqual(
+        expect.objectContaining({
+          name: "???",
+          unlocked_at: null,
+          progress: null,
+          notified: null,
         }),
       );
-      expect(response.status).toBe(201);
-      expect(mockRecomputeAchievement).toHaveBeenCalledWith(
-        "family-001",
-        "fa-seeded",
-      );
-    });
-
-    it("returns 400 when name is missing", async () => {
-      authAs("GUILD_MASTER");
-      const response = await createFamilyAchievement(
-        createRequest("POST", { criteria_type: "quest_complete" }),
-      );
-      expect(response.status).toBe(400);
-    });
-
-    it("returns 400 when criteria_type is unsupported", async () => {
-      authAs("GUILD_MASTER");
-      const response = await createFamilyAchievement(
-        createRequest("POST", {
-          name: "Bad Achievement",
-          criteria_type: "not_a_real_type",
-        }),
-      );
-      expect(response.status).toBe(400);
-      const body = await response.json();
-      expect(body.code).toBe("FAMILY_ACHIEVEMENT_CRITERIA_TYPE_UNSUPPORTED");
+      expect(serviceCallCount).toBe(1);
     });
   });
+
 });

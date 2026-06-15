@@ -68,10 +68,13 @@ export function makeUpdateResult(error: null | { message: string } = null) {
     .fn()
     .mockResolvedValue({ data: null, error: null });
   const selectFn = jest.fn().mockReturnValue({ maybeSingle: maybeSingleFn });
-  const eq2 = jest.fn().mockReturnValue({ is: isFn, select: selectFn });
-  const eq1 = jest.fn().mockReturnValue({ eq: eq2 });
+  const chain: MockChain = {
+    eq: jest.fn(() => chain),
+    is: isFn,
+    select: selectFn,
+  };
   return {
-    update: jest.fn().mockReturnValue({ eq: eq1 }),
+    update: jest.fn().mockReturnValue(chain),
   };
 }
 
@@ -79,6 +82,46 @@ export const FAMILY_ID = "family-001";
 export const USER_IDS = ["user-001", "user-002"];
 export const CHARACTER_IDS = ["char-001", "char-002"];
 export const FAMILY_ACHIEVEMENT_ID = "fach-001";
+export const ACTIVE_SEASON_ID = "season-current";
+export const ACTIVE_SEASON = {
+  id: ACTIVE_SEASON_ID,
+  family_id: FAMILY_ID,
+  name: "Current Season",
+  theme: null,
+  starts_at: "2026-01-01T00:00:00.000Z",
+  ends_at: null,
+};
+
+export function makeActiveSeasonOverrides(): Record<string, MockChain> {
+  const activeSeasonFamilies = {
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        maybeSingle: jest.fn().mockResolvedValue({
+          data: { active_season_id: ACTIVE_SEASON_ID },
+          error: null,
+        }),
+      }),
+    }),
+  };
+
+  const activeSeasonSeasons = {
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: ACTIVE_SEASON,
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  };
+
+  return {
+    families: activeSeasonFamilies,
+    seasons: activeSeasonSeasons,
+  };
+}
 
 export function makeReadClient(overrides?: Record<string, MockChain>) {
   const noActiveSeasonFamilies = {

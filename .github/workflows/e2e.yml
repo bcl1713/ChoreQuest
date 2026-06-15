@@ -30,6 +30,9 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Apply local Supabase migrations
+        run: supabase db push --local
+
       - name: Export Supabase keys to env
         run: |
           STATUS=$(supabase status --output env)
@@ -48,6 +51,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E smoke suite
+        env:
+          # `supabase start` above already applies local migrations in CI; skip
+          # the dev-server preflight's redundant `db push` so Playwright does
+          # not fail before the smoke suite on transient local API readiness.
+          CHOREQUEST_SKIP_SUPABASE_PREFLIGHT: "1"
         run: npm run test:e2e
 
       - name: Upload Playwright report
