@@ -1,4 +1,14 @@
 import { approveQuest } from "@/lib/quest-instance/approve-quest";
+import { createServiceSupabaseClient } from "@/lib/supabase-server";
+
+jest.mock("@/lib/supabase-server", () => ({
+  createServiceSupabaseClient: jest.fn(),
+}));
+
+const mockCreateServiceSupabaseClient =
+  createServiceSupabaseClient as jest.MockedFunction<
+    typeof createServiceSupabaseClient
+  >;
 
 const QUEST_ID = "11111111-1111-4111-8111-111111111111";
 const CHARACTER_ID = "22222222-2222-4222-8222-222222222222";
@@ -45,12 +55,14 @@ describe("approveQuest atomic gold mutation", () => {
     const characterUpdate = jest.fn().mockReturnValue({
       eq: jest.fn().mockResolvedValue({ error: null }),
     });
-    const rpc = jest
+    const userScopedRpc = jest.fn();
+    const serviceScopedRpc = jest
       .fn()
       .mockResolvedValue({ data: [{ xp: 12, gold: 135, level: 1 }], error: null });
+    mockCreateServiceSupabaseClient.mockReturnValue({ rpc: serviceScopedRpc });
 
     const client = {
-      rpc,
+      rpc: userScopedRpc,
       from: jest.fn((table: string) => {
         if (table === "quest_instances") {
           return {
@@ -98,7 +110,8 @@ describe("approveQuest atomic gold mutation", () => {
       QUEST_ID,
     );
 
-    expect(rpc).toHaveBeenCalledWith("fn_apply_quest_reward", {
+    expect(userScopedRpc).not.toHaveBeenCalled();
+    expect(serviceScopedRpc).toHaveBeenCalledWith("fn_apply_quest_reward", {
       p_character_id: CHARACTER_ID,
       p_quest_id: QUEST_ID,
       p_user_id: USER_ID,

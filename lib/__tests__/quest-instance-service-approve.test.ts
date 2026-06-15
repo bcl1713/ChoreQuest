@@ -1,10 +1,16 @@
 import { QuestInstanceService } from "../quest-instance-service";
 import { StreakService } from "../streak-service";
 import { supabase } from "../supabase";
+import { createServiceSupabaseClient } from "@/lib/supabase-server";
 
 jest.mock("@/lib/supabase-server", () => ({
-  createServiceSupabaseClient: jest.fn(() => ({ from: jest.fn() })),
+  createServiceSupabaseClient: jest.fn(),
 }));
+
+const mockCreateServiceSupabaseClient =
+  createServiceSupabaseClient as jest.MockedFunction<
+    typeof createServiceSupabaseClient
+  >;
 
 describe("QuestInstanceService - approveQuest", () => {
   it("throws app error when quest fetch fails", async () => {
@@ -205,8 +211,15 @@ describe("QuestInstanceService - approveQuest", () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    const rpcMock = jest.fn().mockResolvedValue({ data: null, error: null });
-    const supabaseStub = { from: fromMock, rpc: rpcMock };
+    const userScopedRpcMock = jest.fn();
+    const serviceScopedRpcMock = jest
+      .fn()
+      .mockResolvedValue({ data: null, error: null });
+    mockCreateServiceSupabaseClient.mockReturnValue({
+      from: jest.fn(),
+      rpc: serviceScopedRpcMock,
+    } as never);
+    const supabaseStub = { from: fromMock, rpc: userScopedRpcMock };
 
     const streakServiceMock = {
       getStreak: jest.fn().mockResolvedValue({
@@ -244,7 +257,8 @@ describe("QuestInstanceService - approveQuest", () => {
     expect(streakServiceMock.incrementStreak).toHaveBeenCalled();
     expect(streakServiceMock.resetStreak).not.toHaveBeenCalled();
 
-    expect(rpcMock).toHaveBeenCalledWith("fn_apply_quest_reward", {
+    expect(userScopedRpcMock).not.toHaveBeenCalled();
+    expect(serviceScopedRpcMock).toHaveBeenCalledWith("fn_apply_quest_reward", {
       p_character_id: characterId,
       p_quest_id: questId,
       p_user_id: userId,

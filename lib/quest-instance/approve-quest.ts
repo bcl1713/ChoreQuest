@@ -196,7 +196,8 @@ export const approveQuest = async (
     throw new ConflictError("Quest has no assigned user", "QUEST_NOT_ASSIGNED");
   }
 
-  const { error: characterUpdateError } = await client.rpc(
+  const rewardMutationClient = createServiceSupabaseClient();
+  const { error: characterUpdateError } = await rewardMutationClient.rpc(
     "fn_apply_quest_reward",
     {
       p_character_id: character.id,

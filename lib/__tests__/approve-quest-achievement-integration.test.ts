@@ -9,9 +9,12 @@ jest.mock("@/lib/achievement-progress-service", () => ({
   })),
 }));
 
-// Mock the service-role client used internally by AchievementProgressService
+// Mock the service-role client used internally by reward mutations and AchievementProgressService
 jest.mock("@/lib/supabase-server", () => ({
-  createServiceSupabaseClient: jest.fn(() => ({ from: jest.fn() })),
+  createServiceSupabaseClient: jest.fn(() => ({
+    from: jest.fn(),
+    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+  })),
 }));
 
 const CHARACTER_ID = "char-approve-001";
