@@ -1,9 +1,11 @@
 name: Back-merge main into develop
 
 on:
-  release:
+  workflow_run:
+    workflows:
+      - Release
     types:
-      - published
+      - completed
 
 permissions:
   contents: write
@@ -14,7 +16,7 @@ concurrency:
 
 jobs:
   backmerge:
-    if: github.event.release.target_commitish == 'main'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
 
     steps:
@@ -35,5 +37,5 @@ jobs:
       - name: Back-merge main into develop
         run: |
           git checkout develop
-          git merge --no-ff origin/main -m "chore: back-merge main into develop after release ${GITHUB_REF_NAME} [skip ci]"
+          git merge --no-ff origin/main -m "chore: back-merge main into develop after release workflow [skip ci]"
           git push origin develop
