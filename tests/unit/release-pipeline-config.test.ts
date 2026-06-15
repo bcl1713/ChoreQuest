@@ -42,6 +42,7 @@ describe("semantic release pipeline configuration", () => {
     expect(workflow).toContain("push:");
     expect(workflow).toContain("- main");
     expect(workflow).toContain("workflow_dispatch:");
+    expect(workflow).toContain("node-version: 24");
     expect(workflow).toContain("semantic-release");
   });
 
