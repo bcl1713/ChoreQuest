@@ -5,12 +5,14 @@ import { RewardRedemption, UserProfile } from "@/lib/types/database";
 jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
 describe("RewardService - redemptions", () => {
   let service: RewardService;
   let mockFrom: jest.Mock;
+  let mockRpc: jest.Mock;
   let mockSelect: jest.Mock;
   let mockInsert: jest.Mock;
   let mockUpdate: jest.Mock;
@@ -28,12 +30,14 @@ describe("RewardService - redemptions", () => {
     mockEq = jest.fn();
     mockSingle = jest.fn();
     mockFrom = jest.fn();
+    mockRpc = jest.fn();
     mockFrom.mockReturnValue({
       select: mockSelect,
       insert: mockInsert,
       update: mockUpdate,
     });
     (supabase.from as jest.Mock) = mockFrom;
+    (supabase.rpc as jest.Mock) = mockRpc;
   });
 
   afterEach(() => {
@@ -211,38 +215,37 @@ describe("RewardService - redemptions", () => {
   describe("refundGold", () => {
     const mockUserId = "user-123";
     const mockGoldAmount = 50;
+    const mockRedemptionId = "redemption-123";
 
-    it("refunds gold to character", async () => {
-      mockSelect.mockReturnValueOnce({ eq: mockEq });
-      mockEq.mockReturnValueOnce({ single: mockSingle });
-      mockSingle.mockResolvedValueOnce({ data: { gold: 100 }, error: null });
-      mockUpdate.mockReturnValueOnce({ eq: mockEq });
-      mockEq.mockResolvedValueOnce({ data: null, error: null });
+    it("refunds gold through an atomic database RPC", async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: null });
+
+      await service.refundGold(mockUserId, mockGoldAmount, mockRedemptionId);
+
+      expect(mockRpc).toHaveBeenCalledWith("fn_refund_reward_gold", {
+        p_user_id: mockUserId,
+        p_amount: mockGoldAmount,
+        p_redemption_id: mockRedemptionId,
+      });
+      expect(mockFrom).not.toHaveBeenCalledWith("characters");
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it("passes a null redemption id when one is not provided", async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: null });
 
       await service.refundGold(mockUserId, mockGoldAmount);
 
-      expect(mockFrom).toHaveBeenCalledWith("characters");
-      expect(mockUpdate).toHaveBeenCalledWith({ gold: 150 });
+      expect(mockRpc).toHaveBeenCalledWith("fn_refund_reward_gold", {
+        p_user_id: mockUserId,
+        p_amount: mockGoldAmount,
+        p_redemption_id: null,
+      });
     });
 
-    it("throws when character fetch fails", async () => {
-      const mockError = { message: "Character not found" };
-      mockSelect.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValue({ single: mockSingle });
-      mockSingle.mockResolvedValue({ data: null, error: mockError });
-
-      await expect(service.refundGold(mockUserId, mockGoldAmount)).rejects.toThrow(
-        "Failed to fetch character: Character not found",
-      );
-    });
-
-    it("throws when refund update fails", async () => {
+    it("throws when the atomic refund fails", async () => {
       const mockError = { message: "Update failed" };
-      mockSelect.mockReturnValue({ eq: mockEq });
-      mockEq.mockReturnValueOnce({ single: mockSingle });
-      mockSingle.mockResolvedValueOnce({ data: { gold: 100 }, error: null });
-      mockUpdate.mockReturnValue({ eq: mockEq });
-      mockEq.mockResolvedValueOnce({ data: null, error: mockError });
+      mockRpc.mockResolvedValueOnce({ data: null, error: mockError });
 
       await expect(service.refundGold(mockUserId, mockGoldAmount)).rejects.toThrow(
         "Failed to refund gold: Update failed",

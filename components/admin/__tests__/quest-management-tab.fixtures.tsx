@@ -140,7 +140,19 @@ export const setupFamilyMembers = (familyMembers = [createMockFamilyMember()], f
 
 export const setupAuthProfile = (profileOverrides: Partial<UserProfile> = {}) =>
   mockUseAuth.mockReturnValue({
+    user: null,
     profile: createMockFamilyMember(profileOverrides),
+    family: null,
+    session: null,
+    login: jest.fn(),
+    register: jest.fn(),
+    createFamily: jest.fn(),
+    logout: jest.fn(),
+    updatePassword: jest.fn(),
+    isLoading: false,
+    error: null,
+    characterName: "",
+    setCharacterName: jest.fn(),
   });
 
 export const setupQuestData = (quests: QuestInstance[] = [], overrides: Partial<ReturnType<typeof mockUseQuests>> = {}) =>

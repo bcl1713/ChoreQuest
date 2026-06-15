@@ -122,8 +122,10 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
   });
 
   it("calls mergeRedemption with updated row after DENIED mutation", async () => {
-    mockUpdateRedemptionStatus.mockResolvedValue(deniedRow);
-    mockRefundGold.mockResolvedValue(undefined);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ redemption: deniedRow }),
+    });
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
 
@@ -132,6 +134,8 @@ describe("useRewardStoreActions - mergeRedemption integration", () => {
     });
 
     expect(args.mergeRedemption).toHaveBeenCalledWith(deniedRow);
+    expect(mockUpdateRedemptionStatus).not.toHaveBeenCalled();
+    expect(mockRefundGold).not.toHaveBeenCalled();
   });
 
   it("calls mergeRedemption with updated row after FULFILLED mutation", async () => {

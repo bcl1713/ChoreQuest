@@ -9,9 +9,12 @@ jest.mock("@/lib/achievement-progress-service", () => ({
   })),
 }));
 
-// Mock the service-role client used internally by AchievementProgressService
+// Mock the service-role client used internally by reward mutations and AchievementProgressService
 jest.mock("@/lib/supabase-server", () => ({
-  createServiceSupabaseClient: jest.fn(() => ({ from: jest.fn() })),
+  createServiceSupabaseClient: jest.fn(() => ({
+    from: jest.fn(),
+    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+  })),
 }));
 
 const CHARACTER_ID = "char-approve-001";
@@ -158,8 +161,9 @@ describe("approveQuest - achievement progress integration (task 9.1)", () => {
 
   it("calls updateProgress with QUEST_APPROVED after character stats update", async () => {
     const from = makeFromMock();
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: null });
     const deps = {
-      client: { from } as never,
+      client: { from, rpc } as never,
       streakService: makeStreakService(),
     };
 
@@ -175,8 +179,9 @@ describe("approveQuest - achievement progress integration (task 9.1)", () => {
     mockUpdateProgress.mockRejectedValueOnce(new Error("Progress DB error"));
 
     const from = makeFromMock();
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: null });
     const deps = {
-      client: { from } as never,
+      client: { from, rpc } as never,
       streakService: makeStreakService(),
     };
 
@@ -193,8 +198,9 @@ describe("approveQuest - achievement progress integration (task 9.1)", () => {
     mockUpdateProgress.mockRejectedValueOnce(new Error("Progress error"));
 
     const from = makeFromMock();
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: null });
     const deps = {
-      client: { from } as never,
+      client: { from, rpc } as never,
       streakService: makeStreakService(),
     };
 
