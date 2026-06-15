@@ -9,6 +9,8 @@ import {
   createServiceSupabaseClient,
 } from "@/lib/supabase-server";
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
+import { getActiveSeasonForFamily } from "@/lib/seasons/active-season";
+import { fetchFamilyAchievementProgressForSeason } from "@/lib/family-achievement-progress/season-progress-reader";
 
 /**
  * GET /api/family-achievements
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const serviceSupabase = createServiceSupabaseClient();
+    const activeSeason = await getActiveSeasonForFamily(serviceSupabase, familyId);
 
     // Fetch family achievements
     const { data: achievements, error: achError } = await serviceSupabase
@@ -46,17 +49,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch family achievement progress
-    const { data: progress, error: progressError } = await serviceSupabase
-      .from("family_achievement_progress")
-      .select("family_achievement_id, unlocked_at, progress, notified")
-      .eq("family_id", familyId);
-
-    if (progressError) {
-      throw new Error(
-        `Failed to fetch family achievement progress: ${progressError.message}`,
-      );
-    }
+    const progress = activeSeason
+      ? await (async () => {
+          return fetchFamilyAchievementProgressForSeason(
+            serviceSupabase,
+            familyId,
+            activeSeason.id,
+          );
+        })()
+      : [];
 
     // Build progress lookup
     let progressMap = new Map(
@@ -88,27 +89,34 @@ export async function GET(request: NextRequest) {
     const familyService = new FamilyAchievementProgressService(serviceSupabase);
     let backfilled = false;
     let backfillFailed = false;
-    try {
-      backfilled = await familyService.backfillIfStale(
-        familyId,
-        hasMissingProgress,
-        storedCounts,
-        storedWithChars,
-        hasLegacyRows,
-      );
-    } catch (backfillErr) {
-      console.error("Family achievement backfill failed:", backfillErr);
-      // Fail closed: we cannot verify cached unlock state is still valid after
-      // a potential roster change, so hidden achievements will be redacted below.
-      backfillFailed = true;
+    if (activeSeason) {
+      try {
+        backfilled = await familyService.backfillIfStale(
+          familyId,
+          hasMissingProgress,
+          storedCounts,
+          storedWithChars,
+          hasLegacyRows,
+        );
+      } catch (backfillErr) {
+        console.error("Family achievement backfill failed:", backfillErr);
+        // Fail closed: we cannot verify cached unlock state is still valid after
+        // a potential roster change, so hidden achievements will be redacted below.
+        backfillFailed = true;
+      }
     }
 
     if (backfilled) {
-      const { data: freshProgress, error: refreshError } = await serviceSupabase
-        .from("family_achievement_progress")
-        .select("family_achievement_id, unlocked_at, progress, notified")
-        .eq("family_id", familyId);
-      if (refreshError) {
+      try {
+        const freshProgress = await fetchFamilyAchievementProgressForSeason(
+          serviceSupabase,
+          familyId,
+          activeSeason!.id,
+        );
+        progressMap = new Map(
+          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
+        );
+      } catch (refreshError) {
         console.error(
           "Failed to reload progress after backfill:",
           refreshError,
@@ -118,10 +126,6 @@ export async function GET(request: NextRequest) {
         // fresh read.  Treat this as a failed backfill so hidden achievements
         // are redacted below rather than served with stale metadata.
         backfillFailed = true;
-      } else {
-        progressMap = new Map(
-          (freshProgress ?? []).map((p) => [p.family_achievement_id, p]),
-        );
       }
     }
 

@@ -20,6 +20,18 @@ jest.mock("@/lib/family-achievement-progress-service", () => ({
   })),
 }));
 
+
+jest.mock("@/lib/seasons/active-season", () => ({
+  getActiveSeasonForFamily: jest.fn().mockResolvedValue({
+    id: "season-current",
+    family_id: "family-001",
+    name: "Current Season",
+    theme: null,
+    starts_at: "2026-06-01T00:00:00.000Z",
+    ends_at: null,
+  }),
+}));
+
 import {
   PUT as updateFamilyAchievement,
   DELETE as deleteFamilyAchievement,

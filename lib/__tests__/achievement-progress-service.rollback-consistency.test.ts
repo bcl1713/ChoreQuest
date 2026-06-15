@@ -17,7 +17,14 @@ jest.mock("@/lib/supabase-server", () => ({
   createServiceSupabaseClient: jest.fn(() => mockWriteClient),
 }));
 
-const LEVEL_UP_RPC_RETURN = { xp: 100, gold: 0, level: 1 };
+const LEVEL_UP_RPC_RETURN = {
+  unlocked_achievement_ids: ["ach-quest"],
+  awarded_xp: 60,
+  awarded_gold: 0,
+  xp: 100,
+  gold: 0,
+  level: 1,
+};
 
 describe("AchievementProgressService - rollback consistency on stats failure", () => {
   let consoleSpy: jest.SpyInstance;
@@ -70,7 +77,14 @@ describe("AchievementProgressService - rollback consistency on stats failure", (
     };
     const write = makeWriteMocks({
       unlockedIds: [questAch.id],
-      rpcReturn: { xp: 50, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [questAch.id],
+        awarded_xp: 50,
+        awarded_gold: 0,
+        xp: 50,
+        gold: 0,
+        level: 1,
+      },
       levelSelectRows: [],
       cascadeUpsertError: "cascade-fail",
       statsRevertError: "concurrent-write",
@@ -169,7 +183,14 @@ describe("AchievementProgressService - rollback consistency on stats failure", (
     };
     const write = makeWriteMocks({
       unlockedIds: [questAch.id],
-      rpcReturn: { xp: 50, gold: 0, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [questAch.id],
+        awarded_xp: 50,
+        awarded_gold: 0,
+        xp: 50,
+        gold: 0,
+        level: 1,
+      },
       levelSelectRows: [],
     });
     mockWriteClient.from.mockImplementation(write.from);

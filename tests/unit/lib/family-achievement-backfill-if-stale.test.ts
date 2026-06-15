@@ -9,7 +9,14 @@ jest.mock("@/lib/family-achievement-progress/family-evaluators", () => ({
   isCharBased: jest.fn().mockReturnValue(false),
 }));
 
+jest.mock("@/lib/seasons/active-season", () => ({
+  getActiveSeasonForFamily: jest.fn(),
+}));
+
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
+import { getActiveSeasonForFamily } from "@/lib/seasons/active-season";
+
+const mockGetActiveSeasonForFamily = getActiveSeasonForFamily as jest.Mock;
 
 function makeChain(overrides: Record<string, jest.Mock> = {}) {
   const chain: Record<string, jest.Mock> = {
@@ -27,6 +34,14 @@ describe("FamilyAchievementProgressService.backfillIfStale", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetActiveSeasonForFamily.mockResolvedValue({
+      id: "season-current",
+      family_id: "fam-1",
+      name: "Current Season",
+      theme: null,
+      starts_at: "2026-06-01T00:00:00.000Z",
+      ends_at: null,
+    });
     const readClient = { from: jest.fn().mockReturnValue(makeChain()) };
     service = new FamilyAchievementProgressService(readClient as never);
     jest.spyOn(service, "backfillProgress").mockResolvedValue(undefined);
@@ -58,6 +73,15 @@ describe("FamilyAchievementProgressService.backfillIfStale", () => {
     const result = await service.backfillIfStale("fam-1", true, [], [], false);
     expect(result).toBe(true);
     expect(service.backfillProgress).toHaveBeenCalledWith("fam-1");
+  });
+
+  it("skips backfill when missing/legacy rows exist but no active season is valid", async () => {
+    mockGetActiveSeasonForFamily.mockResolvedValueOnce(null);
+
+    const result = await service.backfillIfStale("fam-1", true, [], [], true);
+
+    expect(result).toBe(false);
+    expect(service.backfillProgress).not.toHaveBeenCalled();
   });
 
   it("backfills and returns true when stored member_count differs from current", async () => {

@@ -11,7 +11,6 @@ import { AchievementProgressService } from "@/lib/achievement-progress-service";
 import { createServiceSupabaseClient } from "@/lib/supabase-server";
 import {
   applyStreaks,
-  buildCharacterUpdatePayload,
   fetchFamilyTimezone,
 } from "./approve-quest-helpers";
 
@@ -191,20 +190,27 @@ export const approveQuest = async (
 
   const updatedXp = Math.round(streakResult.xp);
   const updatedGold = Math.round(streakResult.gold);
-  const characterUpdatePayload = buildCharacterUpdatePayload(
-    character,
-    updatedXp,
-    updatedGold,
-  );
+  const assignedUserId = character.user_id ?? quest.assigned_to_id;
 
-  const { error: characterUpdateError } = await client
-    .from("characters")
-    .update(characterUpdatePayload)
-    .eq("id", character.id);
+  if (!assignedUserId) {
+    throw new ConflictError("Quest has no assigned user", "QUEST_NOT_ASSIGNED");
+  }
+
+  const rewardMutationClient = createServiceSupabaseClient();
+  const { error: characterUpdateError } = await rewardMutationClient.rpc(
+    "fn_apply_quest_reward",
+    {
+      p_character_id: character.id,
+      p_quest_id: questId,
+      p_user_id: assignedUserId,
+      p_xp: updatedXp,
+      p_gold: updatedGold,
+    },
+  );
 
   if (characterUpdateError) {
     throw new AppError(
-      `Failed to update character stats: ${characterUpdateError.message}`,
+      `Failed to apply quest reward: ${characterUpdateError.message}`,
       500,
       "CHARACTER_UPDATE_FAILED",
     );

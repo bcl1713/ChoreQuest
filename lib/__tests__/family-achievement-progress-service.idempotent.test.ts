@@ -5,6 +5,7 @@ import {
   makeUpsertResult,
   makeUpdateResult,
   makeReadClient,
+  makeActiveSeasonOverrides,
   FAMILY_ID,
   FAMILY_ACHIEVEMENT_ID,
 } from "./family-achievement-progress-service.fixtures";
@@ -42,15 +43,19 @@ describe("FamilyAchievementProgressService — idempotent progress", () => {
       { family_achievement_id: FAMILY_ACHIEVEMENT_ID },
     ]);
 
+    const questSeasonQuery = Object.assign(Promise.resolve({ count: 7, error: null }), {
+      gte: jest.fn().mockResolvedValue({ count: 7, error: null }),
+    });
     const questChain: MockChain = {
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
-          or: jest.fn().mockResolvedValue({ count: 7, error: null }),
+          or: jest.fn().mockReturnValue(questSeasonQuery),
         }),
       }),
     };
 
     const readClient = makeReadClient({
+      ...makeActiveSeasonOverrides(),
       user_profiles: profilesChain as unknown as MockChain,
       family_achievements: famAchChain as unknown as MockChain,
       family_achievement_progress: famProgressChain as unknown as MockChain,
@@ -104,6 +109,7 @@ describe("FamilyAchievementProgressService — idempotent progress", () => {
     ]);
 
     const readClient = makeReadClient({
+      ...makeActiveSeasonOverrides(),
       user_profiles: profilesChain as unknown as MockChain,
       family_achievements: famAchChain as unknown as MockChain,
       family_achievement_progress: famProgressChain as unknown as MockChain,
@@ -123,6 +129,36 @@ describe("FamilyAchievementProgressService — idempotent progress", () => {
     expect(writeUpsert.upsert).not.toHaveBeenCalled();
 
     warnSpy.mockRestore();
+  });
+
+  it("does not write progress when no active season exists", async () => {
+    const profilesChain = makeDataResult([
+      { id: "user-001", characters: [{ id: "char-001" }] },
+    ]);
+
+    const famAchChain = makeDataResult([
+      {
+        id: FAMILY_ACHIEVEMENT_ID,
+        name: "Test",
+        criteria_type: "quest_complete",
+        criteria_config: { threshold: 10, family_evaluation_mode: "sum" },
+        xp_reward: 0,
+        gold_reward: 0,
+      },
+    ]);
+
+    const readClient = makeReadClient({
+      user_profiles: profilesChain as unknown as MockChain,
+      family_achievements: famAchChain as unknown as MockChain,
+    });
+
+    const writeUpsert = makeUpsertResult();
+    mockWriteClient.from.mockReturnValue(writeUpsert);
+
+    const service = new FamilyAchievementProgressService(readClient as never);
+    await service.updateProgress(FAMILY_ID, { type: "QUEST_APPROVED" });
+
+    expect(writeUpsert.upsert).not.toHaveBeenCalled();
   });
 
   it("returns empty array for getProgress when no progress exists", async () => {

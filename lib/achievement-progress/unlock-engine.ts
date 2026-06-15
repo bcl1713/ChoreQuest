@@ -68,39 +68,28 @@ export async function runUnlockEvaluation(
 
   if (newlyEligible.length === 0) return;
 
-  const unlockUpdateQuery = writeClient
-    .from("character_achievements")
-    .update({ unlocked_at: new Date().toISOString() })
-    .eq("character_id", characterId)
-    .in(
-      "achievement_id",
-      newlyEligible.map((r) => r.achievement_id),
-    )
-    .is("unlocked_at", null);
-  const { data: actuallyUnlocked, error: unlockError } = seasonId
-    ? await unlockUpdateQuery.eq("season_id", seasonId).select("achievement_id")
-    : await unlockUpdateQuery.select("achievement_id");
+  const candidateAchievementIds = newlyEligible.map((row: UpsertRow) => row.achievement_id);
+  const candidateTotalXp = newlyEligible.reduce((sum: number, row: UpsertRow) => sum + (achievementMap.get(row.achievement_id)?.xp_reward ?? 0), 0);
+  const candidateTotalGold = newlyEligible.reduce((sum: number, row: UpsertRow) => sum + (achievementMap.get(row.achievement_id)?.gold_reward ?? 0), 0);
 
-  if (unlockError) {
-    throw new Error(`Failed to set unlocked_at: ${unlockError.message}`);
+  const lockAchievementsOnly = async () => {
+    const unlockUpdateQuery = writeClient.from("character_achievements").update({ unlocked_at: new Date().toISOString() }).eq("character_id", characterId).in("achievement_id", candidateAchievementIds).is("unlocked_at", null);
+    const { data: actuallyUnlocked, error: unlockError } = seasonId
+      ? await unlockUpdateQuery.eq("season_id", seasonId).select("achievement_id")
+      : await unlockUpdateQuery.select("achievement_id");
+    if (unlockError) throw new Error(`Failed to set unlocked_at: ${unlockError.message}`);
+    return (actuallyUnlocked ?? []).map((row: { achievement_id: string }) => row.achievement_id);
+  };
+
+  let lockedIds: string[] = [];
+  let totalXp = 0;
+  let totalGold = 0;
+
+  if (candidateTotalXp === 0 && candidateTotalGold === 0) {
+    lockedIds = await lockAchievementsOnly();
+    if (lockedIds.length === 0) return;
+    return;
   }
-
-  if (!actuallyUnlocked || actuallyUnlocked.length === 0) return;
-
-  const lockedIds = actuallyUnlocked.map((r) => r.achievement_id);
-
-  const totalXp = actuallyUnlocked.reduce(
-    (sum, row) =>
-      sum + (achievementMap.get(row.achievement_id)?.xp_reward ?? 0),
-    0,
-  );
-  const totalGold = actuallyUnlocked.reduce(
-    (sum, row) =>
-      sum + (achievementMap.get(row.achievement_id)?.gold_reward ?? 0),
-    0,
-  );
-
-  if (totalXp === 0 && totalGold === 0) return;
 
   let statsApplied = false,
     levelApplied = false;
@@ -113,19 +102,29 @@ export async function runUnlockEvaluation(
   }> = [];
   const cascadeRows: UpsertRow[] = [];
   try {
-    const { data: newStats, error: rpcError } = await writeClient
-      .rpc("fn_increment_character_stats", {
+    const { data: atomicUnlock, error: rpcError } = await writeClient
+      .rpc("fn_unlock_achievements_and_grant_rewards", {
         p_character_id: characterId,
-        p_xp: totalXp,
-        p_gold: totalGold,
+        p_achievement_ids: candidateAchievementIds,
+        p_season_id: seasonId,
       })
       .single();
 
-    if (rpcError) {
-      throw new Error(
-        `Failed to increment character stats: ${rpcError.message}`,
-      );
-    }
+    if (rpcError) throw new Error(`Failed to atomically unlock achievements and grant rewards: ${rpcError.message}`);
+
+    lockedIds = atomicUnlock?.unlocked_achievement_ids ?? [];
+    if (lockedIds.length === 0) return;
+
+    totalXp = atomicUnlock?.awarded_xp ?? 0;
+    totalGold = atomicUnlock?.awarded_gold ?? 0;
+    if (totalXp === 0 && totalGold === 0) return;
+
+    const newStats =
+      atomicUnlock?.xp === null || atomicUnlock?.gold === null || atomicUnlock?.level === null
+        ? null
+        : { xp: atomicUnlock.xp, gold: atomicUnlock.gold, level: atomicUnlock.level };
+
+    if (!newStats) throw new Error("Atomic unlock RPC returned unlocked achievements without updated character stats");
 
     statsApplied = true;
     prevLevel = newStats?.level ?? null;

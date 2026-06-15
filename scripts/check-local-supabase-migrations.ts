@@ -13,6 +13,11 @@ import {
 config({ path: resolve(process.cwd(), ".env.local") });
 config({ path: resolve(process.cwd(), ".env") });
 
+const PREFLIGHT_SCHEMA_ATTEMPTS = readPositiveInteger(process.env.CHOREQUEST_SUPABASE_PREFLIGHT_ATTEMPTS, 30);
+const PREFLIGHT_SCHEMA_RETRY_MS = readPositiveInteger(process.env.CHOREQUEST_SUPABASE_PREFLIGHT_RETRY_MS, 1_000);
+
+type SupabasePreflightError = { message?: string; code?: string; details?: string; hint?: string };
+
 async function main() {
   const plan = createLocalSupabasePreflightPlan(process.env);
 
@@ -28,15 +33,42 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { error } = await client.from("seasons").select("id", { head: true }).limit(1);
-  if (isMissingSeasonsMigrationError(error)) {
-    throw new Error(buildLocalSupabasePreflightMessage());
-  }
-  if (error) {
-    throw new Error(`Local Supabase migration preflight failed: ${error.message}`);
-  }
+  for (let attempt = 1; attempt <= PREFLIGHT_SCHEMA_ATTEMPTS; attempt += 1) {
+    const { error } = await client.from("seasons").select("id", { head: true }).limit(1);
 
-  console.log("Local Supabase migration preflight passed: local migrations are applied and seasons schema is present.");
+    if (!error) {
+      console.log("Local Supabase migration preflight passed: local migrations are applied and seasons schema is present.");
+      return;
+    }
+
+    if (isMissingSeasonsMigrationError(error)) {
+      throw new Error(buildLocalSupabasePreflightMessage());
+    }
+
+    if (attempt < PREFLIGHT_SCHEMA_ATTEMPTS) {
+      console.warn(
+        `Local Supabase migration preflight probe ${attempt}/${PREFLIGHT_SCHEMA_ATTEMPTS} failed; retrying in ${PREFLIGHT_SCHEMA_RETRY_MS}ms: ${formatSupabasePreflightError(error)}`,
+      );
+      await sleep(PREFLIGHT_SCHEMA_RETRY_MS);
+      continue;
+    }
+
+    throw new Error(`Local Supabase migration preflight failed: ${formatSupabasePreflightError(error)}`);
+  }
+}
+
+function sleep(milliseconds: number): Promise<void> {
+  return new Promise((resolveSleep) => setTimeout(resolveSleep, milliseconds));
+}
+
+function readPositiveInteger(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function formatSupabasePreflightError(error: SupabasePreflightError): string {
+  const parts = [error.message, error.code, error.details, error.hint].filter(Boolean);
+  return parts.length > 0 ? parts.join(" | ") : JSON.stringify(error);
 }
 
 main().catch((error) => {

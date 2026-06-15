@@ -55,7 +55,14 @@ describe("AchievementProgressService - integration & idempotency (8.4, 8.5, 9.1,
   it("8.4 upserts progress, sets unlocked_at, and grants rewards in one call", async () => {
     const write = makeWriteMocks({
       unlockedIds: [BASE_ACH.id],
-      rpcReturn: { xp: 50, gold: 25, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [BASE_ACH.id],
+        awarded_xp: 50,
+        awarded_gold: 25,
+        xp: 50,
+        gold: 25,
+        level: 1,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -71,10 +78,14 @@ describe("AchievementProgressService - integration & idempotency (8.4, 8.5, 9.1,
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
     expect(write.upsert).toHaveBeenCalled();
-    expect(write.charAchUpdate).toHaveBeenCalled();
+    expect(write.charAchUpdate).not.toHaveBeenCalled();
     expect(mockWriteClient.rpc).toHaveBeenCalledWith(
-      "fn_increment_character_stats",
-      { p_character_id: CHAR_ID, p_xp: 50, p_gold: 25 },
+      "fn_unlock_achievements_and_grant_rewards",
+      {
+        p_achievement_ids: [BASE_ACH.id],
+        p_character_id: CHAR_ID,
+        p_season_id: null,
+      },
     );
   });
 
@@ -82,21 +93,15 @@ describe("AchievementProgressService - integration & idempotency (8.4, 8.5, 9.1,
   it("8.5 unlock evaluation failure is logged and does not cause updateProgress to throw", async () => {
     const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     const upsert = jest.fn().mockResolvedValue({ error: null });
-    const failUpdate = jest.fn().mockReturnValue({
-      eq: jest.fn().mockReturnValue({
-        in: jest.fn().mockReturnValue({
-          is: jest.fn().mockReturnValue({
-            select: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: "DB failure" },
-            }),
-          }),
-        }),
-      }),
-    });
     mockWriteClient.from.mockImplementation((t: string) => {
-      if (t === "character_achievements") return { upsert, update: failUpdate };
+      if (t === "character_achievements") return { upsert };
       return { upsert };
+    });
+    mockWriteClient.rpc.mockReturnValue({
+      single: jest.fn().mockResolvedValue({
+        data: null,
+        error: { message: "DB failure" },
+      }),
     });
 
     const readClient = makeReadClient({
@@ -112,6 +117,14 @@ describe("AchievementProgressService - integration & idempotency (8.4, 8.5, 9.1,
     ).resolves.not.toThrow();
 
     expect(upsert).toHaveBeenCalled();
+    expect(mockWriteClient.rpc).toHaveBeenCalledWith(
+      "fn_unlock_achievements_and_grant_rewards",
+      {
+        p_achievement_ids: [BASE_ACH.id],
+        p_character_id: CHAR_ID,
+        p_season_id: null,
+      },
+    );
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining("Unlock evaluation failed"),
       expect.anything(),
@@ -124,7 +137,14 @@ describe("AchievementProgressService - integration & idempotency (8.4, 8.5, 9.1,
     // BASE_ACH: xp_reward=50; prevXp=0+50=50 >= 50*(2-1)^2=50 → level 2 on first call
     const write = makeWriteMocks({
       unlockedIds: [BASE_ACH.id],
-      rpcReturn: { xp: 50, gold: 25, level: 1 },
+      rpcReturn: {
+        unlocked_achievement_ids: [BASE_ACH.id],
+        awarded_xp: 50,
+        awarded_gold: 25,
+        xp: 50,
+        gold: 25,
+        level: 1,
+      },
     });
     mockWriteClient.from.mockImplementation(write.from);
     mockWriteClient.rpc.mockImplementation(write.rpc);
@@ -169,9 +189,10 @@ describe("AchievementProgressService - integration & idempotency (8.4, 8.5, 9.1,
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
 
-    // First call: unlocks achievement (charAchUpdate once) and updates level (statsUpdate once)
+    // First call: unlocks via atomic RPC and updates level once.
     // Second call: already locked → no update
-    expect(write.charAchUpdate).toHaveBeenCalledTimes(1);
+    expect(write.charAchUpdate).not.toHaveBeenCalled();
+    expect(mockWriteClient.rpc).toHaveBeenCalledTimes(1);
     expect(write.statsUpdate).toHaveBeenCalledTimes(1);
   });
 

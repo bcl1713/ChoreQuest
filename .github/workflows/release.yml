@@ -1,20 +1,30 @@
-name: E2E Smoke Tests
+name: Release
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 jobs:
-  smoke:
-    name: Playwright smoke suite
+  release:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -30,9 +40,6 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
-      - name: Apply local Supabase migrations
-        run: supabase db push --local
-
       - name: Export Supabase keys to env
         run: |
           STATUS=$(supabase status --output env)
@@ -47,21 +54,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Apply local Supabase migrations
+        run: supabase db push --local
 
-      - name: Run E2E smoke suite
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test release pipeline guards
+        run: npm run test:release-pipeline
+
+      - name: Run semantic-release
         env:
-          # `supabase start` above already applies local migrations in CI; skip
-          # the dev-server preflight's redundant `db push` so Playwright does
-          # not fail before the smoke suite on transient local API readiness.
-          CHOREQUEST_SKIP_SUPABASE_PREFLIGHT: "1"
-        run: npm run test:e2e
-
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

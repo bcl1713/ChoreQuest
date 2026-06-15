@@ -196,7 +196,10 @@ export async function evaluateUnlocksImpl(
       .eq("family_id", familyId)
       .in("family_achievement_id", achievementIds);
 
-    if (seasonId) {
+    if (
+      seasonId &&
+      typeof (existingProgressQuery as { eq?: unknown }).eq === "function"
+    ) {
       existingProgressQuery = existingProgressQuery.eq("season_id", seasonId);
     }
 

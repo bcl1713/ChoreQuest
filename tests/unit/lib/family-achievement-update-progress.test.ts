@@ -12,6 +12,17 @@ jest.mock("@/lib/family-achievement-progress/family-evaluators", () => ({
   ALL_FAMILY_CRITERIA_TYPES: ["quest_complete"],
 }));
 
+jest.mock("@/lib/seasons/active-season", () => ({
+  getActiveSeasonForFamily: jest.fn().mockResolvedValue({
+    id: "season-current",
+    family_id: "fam-1",
+    name: "Current Season",
+    theme: null,
+    starts_at: "2026-06-01T00:00:00.000Z",
+    ends_at: null,
+  }),
+}));
+
 import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
 import { FAMILY_EVALUATOR_REGISTRY } from "@/lib/family-achievement-progress/family-evaluators";
 

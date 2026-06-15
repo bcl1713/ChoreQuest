@@ -1,7 +1,3 @@
-/**
- * Shared test fixtures for unlock evaluation tests.
- * Provides compact mock builders to keep test files under the 300-line limit.
- */
 import type { MockChain } from "./achievement-progress-service.fixtures";
 import { makeDataResult } from "./achievement-progress-service.fixtures";
 
@@ -27,40 +23,36 @@ export const DEFAULT_ACHIEVEMENT: UnlockTestAchievement = {
 };
 
 export type WriteMocksOptions = {
-  /** Achievement IDs to return as actually-unlocked from the IS NULL update. */
   unlockedIds?: string[];
-  /** Stats the RPC mock should return after the atomic increment. */
-  rpcReturn?: { xp: number; gold: number; level: number };
-  /** If set, the characters level update resolves with this error message. */
+  rpcReturn?: {
+    unlocked_achievement_ids: string[];
+    awarded_xp: number;
+    awarded_gold: number;
+    xp: number | null;
+    gold: number | null;
+    level: number | null;
+  };
   levelUpdateError?: string;
-  /**
-   * Rows returned from the level UPDATE ... RETURNING select.
-   * Defaults to [{ level: 2 }] (update applied). Pass [] to simulate a
-   * concurrent race where this caller's write was a no-op (levelApplied=false).
-   */
   levelSelectRows?: Array<{ level: number }>;
-  /** If set, the second (cascade) upsert resolves with this error message. */
   cascadeUpsertError?: string;
-  /**
-   * If set, the stats rollback UPDATE resolves with this error message.
-   * (Replaces the old rpcCompensationError now that rollback uses a direct SET.)
-   */
   statsRevertError?: string;
-  /** If true, the stats rollback UPDATE matches zero rows (concurrent write). */
   statsRevertZeroRows?: boolean;
-  /** If set, the unlocked_at revert update resolves with this error message. */
   revertUnlockError?: string;
-  /** If set, the cascade progress revert upsert resolves with this error. */
   cascadeProgressRevertError?: string;
-  /** If set, the phantom-row delete resolves with this error message. */
   cascadeDeleteError?: string;
 };
 
-/** Build mock write client mocks for unlock evaluation tests */
 export function makeWriteMocks(options?: WriteMocksOptions) {
   const {
     unlockedIds = [DEFAULT_ACHIEVEMENT.id],
-    rpcReturn = { xp: 150, gold: 75, level: 1 },
+    rpcReturn = {
+      unlocked_achievement_ids: unlockedIds,
+      awarded_xp: 50,
+      awarded_gold: 25,
+      xp: 150,
+      gold: 75,
+      level: 1,
+    },
     levelUpdateError,
     levelSelectRows,
     cascadeUpsertError,
@@ -168,7 +160,7 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
     return { upsert };
   });
 
-  // RPC: only the forward increment; compensation is now a direct UPDATE (Fix P1)
+  // RPC: atomic unlock + reward grant; compensation is now a direct UPDATE (Fix P1)
   const rpcSingle = jest
     .fn()
     .mockResolvedValue({ data: rpcReturn, error: null });
@@ -199,7 +191,6 @@ export function makeWriteMocks(options?: WriteMocksOptions) {
   };
 }
 
-/** Build charAchChain that returns unlocked_at state on second call */
 export function makeCharAchChain(
   achievementId: string,
   unlockedAt: string | null,
@@ -228,7 +219,6 @@ export function makeCharAchChain(
   };
 }
 
-/** Build read client for simple single-achievement unlock tests */
 export function makeUnlockReadClient(options: {
   questCount?: number;
   unlockedAt?: string | null;
