@@ -1,3 +1,12 @@
+## [0.8.1](https://github.com/bcl1713/ChoreQuest/compare/v0.8.0...v0.8.1) (2026-06-15)
+
+
+### Bug Fixes
+
+* apply gold mutations atomically ([#181](https://github.com/bcl1713/ChoreQuest/issues/181)) ([c349e41](https://github.com/bcl1713/ChoreQuest/commit/c349e4127e6503c6f84bf54ba294ff40e5799b2c))
+* atomically grant achievement rewards ([#172](https://github.com/bcl1713/ChoreQuest/issues/172)) ([f8d1b04](https://github.com/bcl1713/ChoreQuest/commit/f8d1b04534b918f82df96a62427e3dfc491b1f14))
+* scope family achievements to active season ([#180](https://github.com/bcl1713/ChoreQuest/issues/180)) ([b4c563f](https://github.com/bcl1713/ChoreQuest/commit/b4c563f3534e1e406be04230c75bc51d06c09a79))
+
 # Changelog
 
 ## [0.8.0] - 2026-05-24

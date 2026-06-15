@@ -42,6 +42,7 @@ describe("semantic release pipeline configuration", () => {
     expect(workflow).toContain("push:");
     expect(workflow).toContain("- main");
     expect(workflow).toContain("workflow_dispatch:");
+    expect(workflow).toContain("node-version: 24");
     expect(workflow).toContain("semantic-release");
   });
 
@@ -49,9 +50,10 @@ describe("semantic release pipeline configuration", () => {
     const workflow = readText(".github/workflows/backmerge-main-to-develop.yml");
 
     expect(workflow).toContain("name: Back-merge main into develop");
-    expect(workflow).toContain("release:");
-    expect(workflow).toContain("published");
-    expect(workflow).toContain("github.event.release.target_commitish == 'main'");
+    expect(workflow).toContain("workflow_run:");
+    expect(workflow).toContain("- Release");
+    expect(workflow).toContain("completed");
+    expect(workflow).toContain("github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'");
     expect(workflow).toContain("git checkout develop");
     expect(workflow).toContain("git merge --no-ff origin/main");
     expect(workflow).toContain("git push origin develop");
