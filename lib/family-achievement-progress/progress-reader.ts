@@ -7,7 +7,10 @@ type ReadClient = SupabaseClient<Database>;
 export async function getProgressImpl(
   readClient: ReadClient,
   familyId: string,
+  seasonId: string | null,
 ): Promise<FamilyAchievementProgressRecord[]> {
+  if (!seasonId) return [];
+
   const { data, error } = await readClient
     .from("family_achievement_progress")
     .select(
@@ -26,7 +29,8 @@ export async function getProgressImpl(
       )
     `,
     )
-    .eq("family_id", familyId);
+    .eq("family_id", familyId)
+    .eq("season_id", seasonId);
 
   if (error) {
     throw new Error(`Failed to fetch family progress: ${error.message}`);

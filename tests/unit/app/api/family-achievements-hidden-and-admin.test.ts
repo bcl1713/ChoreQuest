@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { NextRequest } from "next/server";
 
 const mockSupabase = {
@@ -20,6 +21,18 @@ jest.mock("@/lib/family-achievement-progress-service", () => ({
   FamilyAchievementProgressService: jest.fn().mockImplementation(() => ({
     backfillIfStale: mockBackfillIfStale,
   })),
+}));
+
+
+jest.mock("@/lib/seasons/active-season", () => ({
+  getActiveSeasonForFamily: jest.fn().mockResolvedValue({
+    id: "season-current",
+    family_id: "family-001",
+    name: "Current Season",
+    theme: null,
+    starts_at: "2026-06-01T00:00:00.000Z",
+    ends_at: null,
+  }),
 }));
 
 import { GET as getFamilyAchievements } from "@/app/api/family-achievements/route";

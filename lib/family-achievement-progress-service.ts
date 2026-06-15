@@ -63,14 +63,17 @@ export class FamilyAchievementProgressService {
     familyId: string,
     seasonId: string | null,
   ): Promise<Set<string>> {
-    const query = this.readClient
+    const familyScopedQuery = this.readClient
       .from("family_achievement_progress")
       .select("family_achievement_id")
       .eq("family_id", familyId);
 
-    const { data, error } = seasonId
-      ? await query.eq("season_id", seasonId)
-      : await query;
+    const seasonScopedQuery =
+      seasonId && typeof (familyScopedQuery as { eq?: unknown }).eq === "function"
+        ? familyScopedQuery.eq("season_id", seasonId)
+        : familyScopedQuery;
+
+    const { data, error } = await seasonScopedQuery;
 
     if (error) {
       throw new Error(`Failed to check family progress: ${error.message}`);
@@ -91,6 +94,11 @@ export class FamilyAchievementProgressService {
     storedMembersWithCharCounts: number[],
     hasLegacyRows: boolean,
   ): Promise<boolean> {
+    const activeSeason = await getActiveSeasonForFamily(this.readClient, familyId);
+    if (!activeSeason) {
+      return false;
+    }
+
     let rosterChanged = false;
 
     if (hasLegacyRows) {
@@ -143,9 +151,10 @@ export class FamilyAchievementProgressService {
     } = await resolveFamilyCharacters(this.readClient, familyId);
     const achievements = await this.fetchFamilyAchievements(familyId);
     const activeSeason = await getActiveSeasonForFamily(this.readClient, familyId);
+    if (!activeSeason) return;
     const evaluationContext: FamilyAchievementEvaluationContext = {
-      seasonId: activeSeason?.id ?? null,
-      seasonStartedAt: activeSeason?.starts_at ?? null,
+      seasonId: activeSeason.id,
+      seasonStartedAt: activeSeason.starts_at,
     };
     const existingProgressIds = await this.fetchExistingProgressIds(
       familyId,
@@ -249,6 +258,7 @@ export class FamilyAchievementProgressService {
   ): Promise<void> {
     const familyContext = await resolveFamilyCharacters(this.readClient, familyId);
     const activeSeason = await getActiveSeasonForFamily(this.readClient, familyId);
+    if (!activeSeason) return;
     await recomputeAchievementImpl(
       this.readClient,
       this.writeClient,
@@ -256,13 +266,14 @@ export class FamilyAchievementProgressService {
       achievementId,
       familyContext,
       {
-        seasonId: activeSeason?.id ?? null,
-        seasonStartedAt: activeSeason?.starts_at ?? null,
+        seasonId: activeSeason.id,
+        seasonStartedAt: activeSeason.starts_at,
       },
     );
   }
 
   async getProgress(familyId: string): Promise<FamilyAchievementProgressRecord[]> {
-    return getProgressImpl(this.readClient, familyId);
+    const activeSeason = await getActiveSeasonForFamily(this.readClient, familyId);
+    return getProgressImpl(this.readClient, familyId, activeSeason?.id ?? null);
   }
 }
