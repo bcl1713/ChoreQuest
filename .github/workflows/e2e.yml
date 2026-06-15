@@ -30,6 +30,9 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Apply local Supabase migrations
+        run: supabase db push --local
+
       - name: Export Supabase keys to env
         run: |
           STATUS=$(supabase status --output env)
