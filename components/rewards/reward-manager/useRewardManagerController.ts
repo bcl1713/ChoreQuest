@@ -196,12 +196,29 @@ export function useRewardManagerController(
         const redemption = redemptions.find((r) => r.id === redemptionId);
         if (!redemption || !redemption.user_id) return;
 
-        const updated = await rewardService.updateRedemptionStatus(
-          redemptionId,
-          "DENIED",
+        const token = await getAuthToken();
+        const response = await fetch(
+          `/api/reward-redemptions/${redemptionId}/deny`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
         );
-        mergeRedemption(updated);
-        await rewardService.refundGold(redemption.user_id, redemption.cost);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            (errorData as { error?: string; message?: string }).error ??
+              (errorData as { message?: string }).message ??
+              "Failed to deny redemption",
+          );
+        }
+        const data = (await response.json()) as {
+          redemption: RewardRedemption;
+        };
+        mergeRedemption(data.redemption);
       } catch (err) {
         console.error("Failed to deny redemption:", err);
       }

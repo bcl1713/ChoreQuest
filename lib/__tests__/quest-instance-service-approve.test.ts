@@ -2,6 +2,10 @@ import { QuestInstanceService } from "../quest-instance-service";
 import { StreakService } from "../streak-service";
 import { supabase } from "../supabase";
 
+jest.mock("@/lib/supabase-server", () => ({
+  createServiceSupabaseClient: jest.fn(() => ({ from: jest.fn() })),
+}));
+
 describe("QuestInstanceService - approveQuest", () => {
   it("throws app error when quest fetch fails", async () => {
     const fromMock = jest.fn((table: string) => {
@@ -201,7 +205,8 @@ describe("QuestInstanceService - approveQuest", () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    const supabaseStub = { from: fromMock };
+    const rpcMock = jest.fn().mockResolvedValue({ data: null, error: null });
+    const supabaseStub = { from: fromMock, rpc: rpcMock };
 
     const streakServiceMock = {
       getStreak: jest.fn().mockResolvedValue({
@@ -239,14 +244,14 @@ describe("QuestInstanceService - approveQuest", () => {
     expect(streakServiceMock.incrementStreak).toHaveBeenCalled();
     expect(streakServiceMock.resetStreak).not.toHaveBeenCalled();
 
-    const [characterUpdatePayload] =
-      characterUpdateBuilder.update.mock.calls[0];
-    expect(characterUpdatePayload).toEqual({
-      gold: 72,
-      xp: 120,
-      active_family_quest_id: null,
-      level: 2,
+    expect(rpcMock).toHaveBeenCalledWith("fn_apply_quest_reward", {
+      p_character_id: characterId,
+      p_quest_id: questId,
+      p_user_id: userId,
+      p_xp: 120,
+      p_gold: 72,
     });
+    expect(characterUpdateBuilder.update).not.toHaveBeenCalled();
 
     const [questUpdatePayload] = questUpdateBuilder.update.mock.calls[0];
     expect(questUpdatePayload.status).toBe("APPROVED");
