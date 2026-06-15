@@ -1,0 +1,39 @@
+name: Back-merge main into develop
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backmerge-develop
+  cancel-in-progress: false
+
+jobs:
+  backmerge:
+    if: github.event.release.target_commitish == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch main and develop
+        run: git fetch origin main develop
+
+      - name: Back-merge main into develop
+        run: |
+          git checkout develop
+          git merge --no-ff origin/main -m "chore: back-merge main into develop after release ${GITHUB_REF_NAME} [skip ci]"
+          git push origin develop
