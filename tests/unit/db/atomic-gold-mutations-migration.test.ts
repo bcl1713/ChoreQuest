@@ -2,7 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 const migration = readFileSync(
-  join(process.cwd(), "supabase/migrations/20260615000001_atomic_gold_mutations.sql"),
+  join(process.cwd(), "supabase/migrations/20260615000002_atomic_gold_mutations.sql"),
   "utf8",
 );
 
