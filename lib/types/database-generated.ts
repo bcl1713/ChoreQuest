@@ -1235,6 +1235,37 @@ export type Database = {
         Args: { p_character_id: string; p_xp: number; p_gold: number };
         Returns: { xp: number; gold: number; level: number }[];
       };
+      fn_apply_quest_reward: {
+        Args: {
+          p_character_id: string;
+          p_quest_id: string;
+          p_user_id: string;
+          p_xp: number;
+          p_gold: number;
+        };
+        Returns: { xp: number; gold: number; level: number }[];
+      };
+      fn_redeem_reward: {
+        Args: { p_user_id: string; p_reward_id: string };
+        Returns: Database["public"]["Tables"]["reward_redemptions"]["Row"][];
+      };
+      fn_refund_reward_gold: {
+        Args: {
+          p_user_id: string;
+          p_amount: number;
+          p_redemption_id?: string | null;
+        };
+        Returns: undefined;
+      };
+      fn_deny_reward_redemption: {
+        Args: {
+          p_redemption_id: string;
+          p_user_id: string;
+          p_amount: number;
+          p_denied_by?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["reward_redemptions"]["Row"][];
+      };
       fn_unlock_achievements_and_grant_rewards: {
         Args: {
           p_character_id: string;

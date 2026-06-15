@@ -131,9 +131,11 @@ describe("useRewardStoreActions - APPROVED calls server-side approve route", () 
     );
   });
 
-  it("does NOT call the approve route when status is DENIED", async () => {
-    mockUpdateRedemptionStatus.mockResolvedValue(deniedRow);
-    mockRefundGold.mockResolvedValue(undefined);
+  it("calls the deny route when status is DENIED", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ redemption: deniedRow }),
+    });
     const args = makeArgs();
     const { result } = renderHook(() => useRewardStoreActions(args));
 
@@ -141,7 +143,12 @@ describe("useRewardStoreActions - APPROVED calls server-side approve route", () 
       await result.current.updateRedemptionStatus(pendingRedemption, "DENIED");
     });
 
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledWith(
+      `/api/reward-redemptions/${pendingRedemption.id}/deny`,
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(mockUpdateRedemptionStatus).not.toHaveBeenCalled();
+    expect(mockRefundGold).not.toHaveBeenCalled();
   });
 
   it("does NOT call the approve route when status is FULFILLED", async () => {

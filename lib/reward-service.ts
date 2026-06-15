@@ -182,25 +182,16 @@ export class RewardService {
    * @param userId - User ID whose character should receive refund
    * @param goldAmount - Amount of gold to refund
    */
-  async refundGold(userId: string, goldAmount: number): Promise<void> {
-    // Get current gold
-    const { data: characterData, error: characterError } = await supabase
-      .from("characters")
-      .select("gold")
-      .eq("user_id", userId)
-      .single();
-
-    if (characterError) {
-      throw new NotFoundError(`Failed to fetch character: ${characterError.message}`, "CHARACTER_NOT_FOUND");
-    }
-
-    // Update with refunded amount
-    const { error: refundError } = await supabase
-      .from("characters")
-      .update({
-        gold: (characterData.gold || 0) + goldAmount,
-      })
-      .eq("user_id", userId);
+  async refundGold(
+    userId: string,
+    goldAmount: number,
+    redemptionId?: string,
+  ): Promise<void> {
+    const { error: refundError } = await supabase.rpc("fn_refund_reward_gold", {
+      p_user_id: userId,
+      p_amount: goldAmount,
+      p_redemption_id: redemptionId ?? null,
+    });
 
     if (refundError) {
       throw new ConflictError(`Failed to refund gold: ${refundError.message}`, "REFUND_FAILED");

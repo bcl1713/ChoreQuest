@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { getAuthToken } from "@/lib/utils/get-auth-token";
 import {
   RewardService,
@@ -45,28 +44,24 @@ export function useRewardStoreActions({
       setRedeemingId(reward.id);
 
       try {
-        const { error: redemptionError } = await supabase
-          .from("reward_redemptions")
-          .insert({
-            user_id: userId,
-            reward_id: reward.id,
-            cost: reward.cost,
-            reward_name: reward.name,
-            reward_description: reward.description,
-            reward_type: reward.type,
-            status: "PENDING",
-            notes: null,
-          });
+        const token = await getAuthToken();
+        const response = await fetch("/api/reward-redemptions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ rewardId: reward.id }),
+        });
 
-        if (redemptionError) throw redemptionError;
-
-        const newGold = (character.gold || 0) - reward.cost;
-        const { error: characterError } = await supabase
-          .from("characters")
-          .update({ gold: newGold })
-          .eq("user_id", userId);
-
-        if (characterError) throw characterError;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            (errorData as { error?: string; message?: string }).error ??
+              (errorData as { message?: string }).message ??
+              "Failed to redeem reward",
+          );
+        }
 
         await refreshCharacter();
         setRedeemSuccess({ show: true, rewardName: reward.name });
@@ -121,6 +116,31 @@ export function useRewardStoreActions({
             redemption: RewardRedemption;
           };
           mergeRedemption(data.redemption);
+        } else if (status === "DENIED") {
+          const token = await getAuthToken();
+          const response = await fetch(
+            `/api/reward-redemptions/${redemption.id}/deny`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            },
+          );
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              (errorData as { error?: string; message?: string }).error ??
+                (errorData as { message?: string }).message ??
+                "Failed to deny redemption",
+            );
+          }
+          const data = (await response.json()) as {
+            redemption: RewardRedemption;
+          };
+          mergeRedemption(data.redemption);
+          await refreshCharacter();
         } else {
           const updated = await rewardService.updateRedemptionStatus(
             redemption.id,
@@ -128,12 +148,6 @@ export function useRewardStoreActions({
             userId ?? undefined,
           );
           mergeRedemption(updated);
-
-          if (status === "DENIED") {
-            const refundAmount = redemption.cost ?? 0;
-            await rewardService.refundGold(redemption.user_id, refundAmount);
-            await refreshCharacter();
-          }
         }
       } catch (error) {
         console.error("Failed to update redemption:", error);
