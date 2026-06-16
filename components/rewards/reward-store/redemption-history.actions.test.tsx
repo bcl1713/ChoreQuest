@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import RedemptionHistory from "../redemption-history";
+import RedemptionHistory from "./redemption-history";
 import {
   createMockRedemption,
   createRedemptionHandlers,

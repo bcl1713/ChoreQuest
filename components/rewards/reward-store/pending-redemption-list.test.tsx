@@ -2,7 +2,7 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { PendingRedemptionList } from "../PendingRedemptionList";
+import { PendingRedemptionList } from "./PendingRedemptionList";
 import type { RewardRedemptionWithUser } from "@/lib/reward-service";
 
 const buildRedemption = (overrides: Partial<RewardRedemptionWithUser> = {}): RewardRedemptionWithUser => ({
