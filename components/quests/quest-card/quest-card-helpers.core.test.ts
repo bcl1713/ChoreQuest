@@ -1,4 +1,4 @@
-import { getButtonVisibility, getRecurrenceLabel, getQuestOpacity } from '../quest-card-helpers';
+import { getButtonVisibility, getRecurrenceLabel, getQuestOpacity } from './quest-card-helpers';
 import { QuestStatus } from '@/lib/types/database';
 
 describe('quest-card-helpers', () => {
