@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import RewardCard from "../reward-card";
+import RewardCard from "./reward-card";
 import { mockReward, createHandlers } from "./reward-card.fixtures";
 describe("RewardCard", () => {
   const { onRedeem: mockOnRedeem } = createHandlers();

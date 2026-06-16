@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { useRewardStoreActions } from "../useRewardStoreActions";
+import { useRewardStoreActions } from "./useRewardStoreActions";
 import type { RewardRedemptionWithUser } from "@/lib/reward-service";
 import type { RewardRedemption } from "@/lib/types/database";
 

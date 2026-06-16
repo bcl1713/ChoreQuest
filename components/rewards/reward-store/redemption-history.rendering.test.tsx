@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import RedemptionHistory from "../redemption-history";
+import RedemptionHistory from "./redemption-history";
 import { createMockRedemption } from "./redemption-history.fixtures";
 
 jest.mock("framer-motion", () => ({

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import RewardCatalog from '../reward-catalog';
+import RewardCatalog from './reward-catalog';
 import { Reward } from '@/lib/types/database';
 
 describe('RewardCatalog', () => {
