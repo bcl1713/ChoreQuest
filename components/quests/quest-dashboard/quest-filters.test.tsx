@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import QuestFilters from '../quest-filters';
+import QuestFilters from './quest-filters';
 import { QuestStatus } from '@/lib/types/database';
 
 describe('QuestFilters', () => {

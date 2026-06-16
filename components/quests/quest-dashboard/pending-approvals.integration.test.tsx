@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import QuestDashboard from "..";
+import QuestDashboard from ".";
 import type { QuestInstance, QuestStatus } from "@/lib/types/database";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useCharacter } from "@/lib/character-context";
@@ -26,7 +26,7 @@ jest.mock("@/components/ui", () => {
   };
 });
 
-jest.mock("../quest-list", () => ({
+jest.mock("./quest-list", () => ({
   __esModule: true,
   default: ({ quests }: { quests: QuestInstance[] }) => (
     <div data-testid="quest-list">
@@ -42,7 +42,7 @@ jest.mock("@/components/family/family-quest-claiming", () => ({
 
 const mockPendingSection = jest.fn();
 
-jest.mock("../../pending-approvals-section", () => ({
+jest.mock("../pending-approvals-section", () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockPendingSection(props);

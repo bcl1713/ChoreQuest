@@ -10,7 +10,7 @@ import {
   filterQuestsAwaitingApproval,
   filterClaimableFamilyQuests,
   filterOtherQuests,
-} from "../quest-helpers";
+} from "./quest-helpers";
 import { QuestStatus } from "@/lib/types/database";
 import { createMockQuest } from "./quest-helpers.fixtures";
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import QuestList from '../quest-list';
+import QuestList from './quest-list';
 import { QuestInstance } from '@/lib/types/database';
 
 // Mock the QuestCard component
-jest.mock('../../quest-card', () => {
+jest.mock('../quest-card', () => {
   return function MockQuestCard({ quest }: { quest: QuestInstance }) {
     return <div data-testid={`quest-card-${quest.id}`}>{quest.title}</div>;
   };
