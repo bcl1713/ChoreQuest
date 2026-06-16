@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import QuestStats from '../quest-stats';
+import QuestStats from './quest-stats';
 import { QuestInstance } from '@/lib/types/database';
 
 describe('QuestStats', () => {

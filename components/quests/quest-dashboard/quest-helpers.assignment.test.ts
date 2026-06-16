@@ -1,4 +1,4 @@
-import { mapFamilyCharactersToAssignmentDisplay, getAssignedHeroName } from "../quest-helpers";
+import { mapFamilyCharactersToAssignmentDisplay, getAssignedHeroName } from "./quest-helpers";
 import { Character } from "@/lib/types/database";
 import { baseCharacter, createMockQuest } from "./quest-helpers.fixtures";
 
