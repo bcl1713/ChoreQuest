@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { QuestMeta } from "../QuestMeta";
+import { QuestMeta } from "./QuestMeta";
 import { createMockQuest } from "./quest-card.fixtures";
 
 jest.useFakeTimers();
