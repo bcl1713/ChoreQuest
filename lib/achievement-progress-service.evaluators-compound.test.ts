@@ -1,5 +1,5 @@
-import { createCompoundEvaluator } from "../achievement-progress/compound-evaluator";
-import type { EvaluatorFn } from "../achievement-progress/types";
+import { createCompoundEvaluator } from "./achievement-progress/compound-evaluator";
+import type { EvaluatorFn } from "./achievement-progress/types";
 
 const CHARACTER_ID = "char-001";
 const USER_ID = "user-001";
