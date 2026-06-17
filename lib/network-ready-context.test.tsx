@@ -3,7 +3,7 @@ import { render, act, cleanup } from "@testing-library/react";
 import {
   NetworkReadyProvider,
   useNetworkReady,
-} from "../network-ready-context";
+} from "./network-ready-context";
 
 describe("NetworkReadyProvider", () => {
   const originalUserAgent = navigator.userAgent;

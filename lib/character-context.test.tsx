@@ -1,14 +1,14 @@
 import React from "react";
 import { render, act, screen } from "@testing-library/react";
-import { CharacterProvider, useCharacter } from "../character-context";
-import type { Listener } from "../realtime/types";
-import type { Character } from "../types/database";
+import { CharacterProvider, useCharacter } from "./character-context";
+import type { Listener } from "./realtime/types";
+import type { Character } from "./types/database";
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock("../network-ready-context", () => ({
+jest.mock("./network-ready-context", () => ({
   useNetworkReady: () => ({
     waitForReady: jest.fn().mockResolvedValue(undefined),
   }),
@@ -22,7 +22,7 @@ const mockOnCharacterUpdate = jest.fn((cb: Listener) => {
   };
 });
 
-jest.mock("../realtime-context", () => ({
+jest.mock("./realtime-context", () => ({
   useRealtime: () => ({
     onCharacterUpdate: mockOnCharacterUpdate,
     isConnected: true,
@@ -43,7 +43,7 @@ jest.mock("../realtime-context", () => ({
   }),
 }));
 
-jest.mock("../auth-context", () => ({
+jest.mock("./auth-context", () => ({
   useAuth: () => ({
     user: { id: "user-1" },
     session: { user: { id: "user-1" }, access_token: "tok" },
@@ -55,7 +55,7 @@ type SetCharacter = (c: Character | null) => void;
 let capturedSetCharacter: SetCharacter | null = null;
 let capturedPreviousLevelRef: { current: number | null } | null = null;
 
-jest.mock("../character/fetch-character", () => ({
+jest.mock("./character/fetch-character", () => ({
   createCharacterFetcher: (deps: {
     setCharacter: SetCharacter;
     previousLevelRef: { current: number | null };
