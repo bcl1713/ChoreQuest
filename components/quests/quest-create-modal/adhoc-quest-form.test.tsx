@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import AdhocQuestForm from "../adhoc-quest-form";
+import AdhocQuestForm from "./adhoc-quest-form";
 import { QuestDifficulty, QuestCategory } from "@/lib/types/database";
 
 describe("AdhocQuestForm", () => {
