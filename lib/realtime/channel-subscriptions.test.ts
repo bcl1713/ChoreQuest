@@ -1,5 +1,5 @@
-import { createFamilyRealtimeChannels } from "../channel-subscriptions";
-import { createListenerRegistry } from "../listener-registry";
+import { createFamilyRealtimeChannels } from "./channel-subscriptions";
+import { createListenerRegistry } from "./listener-registry";
 
 const mockOn = jest.fn().mockReturnThis();
 const mockChannel = jest.fn(() => ({ on: mockOn }));
