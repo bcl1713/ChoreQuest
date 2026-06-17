@@ -44,8 +44,8 @@ test.describe("Auth smoke tests", () => {
     await expect(rewardsTab).toBeVisible({ timeout: 10_000 });
     await rewardsTab.click();
 
-    await expect(
-      page.getByText(/reward store/i).or(page.getByText(/store/i)),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("reward-store-title")).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
