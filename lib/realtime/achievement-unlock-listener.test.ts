@@ -1,5 +1,5 @@
-import { createListenerRegistry } from "../listener-registry";
-import type { RealtimeEvent } from "../types";
+import { createListenerRegistry } from "./listener-registry";
+import type { RealtimeEvent } from "./types";
 
 const makeUnlockEvent = (
   overrides: Partial<RealtimeEvent> = {},
