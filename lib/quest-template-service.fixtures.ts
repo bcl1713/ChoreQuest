@@ -1,5 +1,5 @@
-import { QuestTemplateService } from "../quest-template-service";
-import { supabase } from "../supabase";
+import { QuestTemplateService } from "./quest-template-service";
+import { supabase } from "./supabase";
 
 export const mockTemplateId = "template-123";
 export const mockFamilyId = "family-123";

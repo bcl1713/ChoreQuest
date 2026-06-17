@@ -1,5 +1,5 @@
-import { QuestTemplateService } from "../quest-template-service";
-jest.mock("../supabase", () => ({
+import { QuestTemplateService } from "./quest-template-service";
+jest.mock("./supabase", () => ({
   supabase: {
     from: jest.fn(),
   },
