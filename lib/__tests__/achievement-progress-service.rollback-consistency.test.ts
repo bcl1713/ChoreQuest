@@ -5,12 +5,12 @@
  * - Cascade snapshot read failure aborts before corrupting rollback state
  */
 import { AchievementProgressService } from "../achievement-progress-service";
-import { makeWriteMocks, CHAR_ID } from "./unlock-evaluation-fixtures";
+import { makeWriteMocks, CHAR_ID } from "../achievement-progress/unlock-evaluation-fixtures";
 import {
   makeQuestLevelAchievements,
   makeDualCharAchChain,
   makeMultiAchReadClient,
-} from "./unlock-multi-ach-fixtures";
+} from "../achievement-progress/unlock-multi-ach-fixtures";
 
 const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };
 jest.mock("@/lib/supabase-server", () => ({
