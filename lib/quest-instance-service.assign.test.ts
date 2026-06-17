@@ -1,5 +1,5 @@
-import { QuestInstanceService } from "../quest-instance-service";
-jest.mock("../supabase", () => ({
+import { QuestInstanceService } from "./quest-instance-service";
+jest.mock("./supabase", () => ({
   supabase: {
     from: jest.fn(),
   },
@@ -9,13 +9,13 @@ import {
   mockCharacter,
   mockCharacterId,
   mockCharacterWithQuest,
-  mockClaimedQuest,
   mockFamilyQuest,
+  mockGMId,
   mockQuestId,
   mockUserId,
 } from "./quest-instance-service.fixtures";
 
-describe("QuestInstanceService - claimQuest", () => {
+describe("QuestInstanceService - assignQuest", () => {
   let service: QuestInstanceService;
   let mockFrom: jest.Mock;
 
@@ -27,7 +27,15 @@ describe("QuestInstanceService - claimQuest", () => {
     jest.clearAllMocks();
   });
 
-  it("should successfully claim an available family quest", async () => {
+  it("should successfully assign an available family quest (GM only)", async () => {
+    const assignedQuest = {
+      ...mockFamilyQuest,
+      status: "PENDING",
+      assigned_to_id: mockUserId,
+      volunteered_by: mockCharacterId,
+      volunteer_bonus: null,
+    };
+
     mockFrom.mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -55,7 +63,7 @@ describe("QuestInstanceService - claimQuest", () => {
         eq: jest.fn().mockReturnValue({
           select: jest.fn().mockReturnValue({
             single: jest.fn().mockResolvedValue({
-              data: mockClaimedQuest,
+              data: assignedQuest,
               error: null,
             }),
           }),
@@ -71,13 +79,17 @@ describe("QuestInstanceService - claimQuest", () => {
       }),
     }));
 
-    const result = await service.claimQuest(mockQuestId, mockCharacterId);
+    const result = await service.assignQuest(
+      mockQuestId,
+      mockCharacterId,
+      mockGMId,
+    );
 
-    expect(result).toEqual(mockClaimedQuest);
+    expect(result).toEqual(assignedQuest);
     expect(result.assigned_to_id).toBe(mockUserId);
     expect(result.volunteered_by).toBe(mockCharacterId);
-    expect(result.volunteer_bonus).toBe(0.2);
-    expect(result.status).toBe("CLAIMED");
+    expect(result.volunteer_bonus).toBeNull();
+    expect(result.status).toBe("PENDING");
   });
 
   it("should throw error if quest is not found", async () => {
@@ -93,7 +105,7 @@ describe("QuestInstanceService - claimQuest", () => {
     }));
 
     await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
     ).rejects.toThrow("Quest not found");
   });
 
@@ -110,18 +122,18 @@ describe("QuestInstanceService - claimQuest", () => {
     }));
 
     await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
     ).rejects.toThrow("Failed to fetch quest: Database offline");
   });
 
   it("should throw error if quest is not AVAILABLE", async () => {
-    const completedQuest = { ...mockFamilyQuest, status: "COMPLETED" };
+    const claimedQuest = { ...mockFamilyQuest, status: "CLAIMED" };
 
     mockFrom.mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
-            data: completedQuest,
+            data: claimedQuest,
             error: null,
           }),
         }),
@@ -129,9 +141,9 @@ describe("QuestInstanceService - claimQuest", () => {
     }));
 
     await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
     ).rejects.toThrow(
-      "Quest is not available for claiming (status: COMPLETED)",
+      "Quest is not available for assignment (status: CLAIMED)",
     );
   });
 
@@ -150,39 +162,11 @@ describe("QuestInstanceService - claimQuest", () => {
     }));
 
     await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
-    ).rejects.toThrow("Only FAMILY quests can be claimed");
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
+    ).rejects.toThrow("Only FAMILY quests can be assigned");
   });
 
-  it("should throw error if character not found", async () => {
-    mockFrom.mockImplementationOnce(() => ({
-      select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: mockFamilyQuest,
-            error: null,
-          }),
-        }),
-      }),
-    }));
-
-    mockFrom.mockImplementationOnce(() => ({
-      select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({
-            data: null,
-            error: null,
-          }),
-        }),
-      }),
-    }));
-
-    await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
-    ).rejects.toThrow("Character not found");
-  });
-
-  it("should throw error if hero already has active family quest (anti-hoarding)", async () => {
+  it("should throw error if hero already has active family quest", async () => {
     mockFrom.mockImplementationOnce(() => ({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
@@ -206,18 +190,25 @@ describe("QuestInstanceService - claimQuest", () => {
     }));
 
     await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
     ).rejects.toThrow(
-      "Hero already has an active family quest. Release the current quest before claiming another.",
+      "Hero already has an active family quest. Release the current quest before assigning another.",
     );
   });
 
   it("should rollback quest update if character update fails", async () => {
+    const assignedQuest = {
+      ...mockFamilyQuest,
+      status: "PENDING",
+      assigned_to_id: mockUserId,
+      volunteered_by: mockCharacterId,
+    };
+
     const mockUpdate = jest.fn().mockReturnValue({
       eq: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           single: jest.fn().mockResolvedValue({
-            data: mockClaimedQuest,
+            data: assignedQuest,
             error: null,
           }),
         }),
@@ -267,7 +258,7 @@ describe("QuestInstanceService - claimQuest", () => {
     }));
 
     await expect(
-      service.claimQuest(mockQuestId, mockCharacterId),
+      service.assignQuest(mockQuestId, mockCharacterId, mockGMId),
     ).rejects.toThrow("Failed to update character: Character update failed");
   });
 });
