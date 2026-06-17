@@ -1,4 +1,4 @@
-import { AchievementProgressService } from "../achievement-progress-service";
+import { AchievementProgressService } from "./achievement-progress-service";
 import {
   makeReadClient,
   CHARACTER_ID,

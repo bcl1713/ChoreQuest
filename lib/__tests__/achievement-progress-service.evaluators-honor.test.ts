@@ -1,12 +1,12 @@
 import { AchievementProgressService } from "../achievement-progress-service";
-import type { MockChain } from "./achievement-progress-service.fixtures";
+import type { MockChain } from "../achievement-progress-service.fixtures";
 import {
   makeDataResult,
   makeUpsertResult,
   CHARACTER_ID,
   USER_ID,
   ACHIEVEMENT_ID,
-} from "./achievement-progress-service.fixtures";
+} from "../achievement-progress-service.fixtures";
 
 const mockWriteClient = {
   from: jest.fn(),
