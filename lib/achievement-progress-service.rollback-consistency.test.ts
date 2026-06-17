@@ -4,13 +4,13 @@
  * - Level, unlocked_at, and cascade progress are all skipped when stats fail
  * - Cascade snapshot read failure aborts before corrupting rollback state
  */
-import { AchievementProgressService } from "../achievement-progress-service";
-import { makeWriteMocks, CHAR_ID } from "../achievement-progress/unlock-evaluation-fixtures";
+import { AchievementProgressService } from "./achievement-progress-service";
+import { makeWriteMocks, CHAR_ID } from "./achievement-progress/unlock-evaluation-fixtures";
 import {
   makeQuestLevelAchievements,
   makeDualCharAchChain,
   makeMultiAchReadClient,
-} from "../achievement-progress/unlock-multi-ach-fixtures";
+} from "./achievement-progress/unlock-multi-ach-fixtures";
 
 const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };
 jest.mock("@/lib/supabase-server", () => ({

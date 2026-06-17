@@ -4,19 +4,19 @@
  *   P1b: stats rollback uses a conditional SET, not a negative RPC increment
  *   P2:  cascade rollback restores pre-existing progress, not null
  */
-import { AchievementProgressService } from "../achievement-progress-service";
+import { AchievementProgressService } from "./achievement-progress-service";
 import {
   makeReadClient,
   makeDataResult,
-} from "../achievement-progress-service.fixtures";
-import type { MockChain } from "../achievement-progress-service.fixtures";
+} from "./achievement-progress-service.fixtures";
+import type { MockChain } from "./achievement-progress-service.fixtures";
 import {
   makeWriteMocks,
   makeUnlockReadClient,
   DEFAULT_ACHIEVEMENT,
   CHAR_ID,
   USER_ID,
-} from "../achievement-progress/unlock-evaluation-fixtures";
+} from "./achievement-progress/unlock-evaluation-fixtures";
 
 const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };
 jest.mock("@/lib/supabase-server", () => ({
