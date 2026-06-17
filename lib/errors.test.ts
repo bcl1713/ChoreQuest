@@ -5,7 +5,7 @@ import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "@/lib/errors";
+} from "./errors";
 
 describe("errors", () => {
   it("creates AppError with statusCode and code", () => {
