@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { QuestStatus } from "@/lib/types/database";
-import { QuestManagementTab } from "../quest-management-tab";
+import { QuestManagementTab } from "./quest-management-tab";
 
 // jest.mock calls must be in the test file itself to be hoisted properly
 jest.mock("@/hooks/useQuests", () => ({
