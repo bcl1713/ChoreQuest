@@ -1,12 +1,12 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import type { QuestInstance, QuestStatus } from '@/lib/types/database';
-import PendingApprovalsSection from '../pending-approvals-section';
+import PendingApprovalsSection from './pending-approvals-section';
 
 // Capture QuestCard props for assertions
 const mockQuestCard = jest.fn();
 
-jest.mock('../quest-card', () => ({
+jest.mock('./quest-card', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockQuestCard(props);
