@@ -1,5 +1,5 @@
 import { RewardType } from "@/lib/types/database";
-import { RewardFormData } from "../reward-form";
+import { RewardFormData } from "./reward-form";
 
 export const createHandlers = () => ({
   onSubmit: jest.fn(),

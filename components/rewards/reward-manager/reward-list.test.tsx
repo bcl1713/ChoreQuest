@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RewardList } from '../reward-list';
+import { RewardList } from './reward-list';
 import { Reward, RewardType } from '@/lib/types/database';
 jest.mock('framer-motion', () => ({
   motion: {
