@@ -1,7 +1,7 @@
-import { QuestInstanceService } from "../quest-instance-service";
-import { supabase } from "../supabase";
+import { QuestInstanceService } from "./quest-instance-service";
+import { supabase } from "./supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database-generated";
+import type { Database } from "./types/database-generated";
 
 export const mockQuestId = "quest-123";
 export const mockCharacterId = "character-456";

@@ -1,6 +1,6 @@
-import { QuestInstanceService } from "../quest-instance-service";
-import { StreakService } from "../streak-service";
-import { supabase } from "../supabase";
+import { QuestInstanceService } from "./quest-instance-service";
+import { StreakService } from "./streak-service";
+import { supabase } from "./supabase";
 import { createServiceSupabaseClient } from "@/lib/supabase-server";
 
 jest.mock("@/lib/supabase-server", () => ({
