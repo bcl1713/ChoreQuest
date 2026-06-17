@@ -3,7 +3,7 @@ import {
   mockFamilyId,
   mockFamilyMembers,
   now,
-} from "./__fixtures__/statistics-service.fixtures";
+} from "./statistics-service.fixtures";
 
 describe("StatisticsService - getFamilyStatistics errors", () => {
   let service: any;
