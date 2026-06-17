@@ -2,7 +2,7 @@ import {
   FAMILY_EVENT_CRITERIA_MAP,
   ALL_FAMILY_CRITERIA_TYPES,
   FAMILY_EVALUATOR_REGISTRY,
-} from "../family-achievement-progress/family-evaluators";
+} from "./family-evaluators";
 
 describe("FAMILY_EVENT_CRITERIA_MAP", () => {
   it("includes honor_earned in BOSS_COMPLETED so boss rewards update honor achievements", () => {
