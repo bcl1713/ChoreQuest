@@ -3,7 +3,7 @@ import {
   evaluateBoolean,
   evaluateCompound,
   evaluateCriteriaMet,
-} from "../achievement-progress/unlock-evaluator";
+} from "./unlock-evaluator";
 
 // ─── 1.6 Threshold strategy ───────────────────────────────────────────────────
 

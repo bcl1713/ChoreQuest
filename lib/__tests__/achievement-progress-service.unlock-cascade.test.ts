@@ -9,7 +9,7 @@ import {
   makeCharAchChain,
   CHAR_ID,
   USER_ID,
-} from "./unlock-evaluation-fixtures";
+} from "../achievement-progress/unlock-evaluation-fixtures";
 
 const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };
 jest.mock("@/lib/supabase-server", () => ({

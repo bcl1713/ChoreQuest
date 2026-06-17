@@ -2,8 +2,10 @@
  * Shared fixtures for multi-achievement rollback tests.
  * Provides helpers for scenarios with two+ achievements (e.g. quest + level).
  */
-import type { MockChain } from "./achievement-progress-service.fixtures";
-import { makeDataResult } from "./achievement-progress-service.fixtures";
+import {
+  makeDataResult,
+  type MockChain,
+} from "./unlock-data-result-fixture";
 import { USER_ID } from "./unlock-evaluation-fixtures";
 
 /** Two achievements: quest_complete (with XP reward) + level_reached */

@@ -1,5 +1,4 @@
-import type { MockChain } from "./achievement-progress-service.fixtures";
-import { makeDataResult } from "./achievement-progress-service.fixtures";
+import { makeDataResult, type MockChain } from "./unlock-data-result-fixture";
 
 export const CHAR_ID = "char-001";
 export const USER_ID = "user-001";
