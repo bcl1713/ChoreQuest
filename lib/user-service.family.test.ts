@@ -1,6 +1,6 @@
 import { userService } from "@/lib/user-service";
 import { supabase } from "@/lib/supabase";
-import { mockFamilyId } from "./__fixtures__/user-service.fixtures";
+import { mockFamilyId } from "./user-service.fixtures";
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {

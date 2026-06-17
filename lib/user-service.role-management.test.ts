@@ -7,7 +7,7 @@ import {
   mockUserId,
   resetAuth,
   setupAuth,
-} from "./__fixtures__/user-service.fixtures";
+} from "./user-service.fixtures";
 
 jest.mock("@/lib/supabase", () => ({
   supabase: {
