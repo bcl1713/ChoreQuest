@@ -1,5 +1,5 @@
-import { expireQuests } from "../recurring-quest-generator";
-import { createMockSupabase } from "./recurring-quest-generator.fixtures";
+import { expireQuests } from "./expiration";
+import { createMockSupabase } from "../recurring-quest-generator.fixtures";
 
 describe("expireQuests", () => {
   beforeEach(() => {
