@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DeleteModal } from '../delete-modal';
+import { DeleteModal } from './delete-modal';
 import type { QuestTemplate } from '@/lib/types/database';
 
 const mockTemplate: QuestTemplate = {

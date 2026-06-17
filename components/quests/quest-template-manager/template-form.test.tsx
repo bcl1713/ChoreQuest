@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { TemplateForm } from '../template-form';
+import { TemplateForm } from './template-form';
 import { useAuth } from '@/lib/auth-context';
 import { userService } from '@/lib/user-service';
 import { supabase } from '@/lib/supabase';

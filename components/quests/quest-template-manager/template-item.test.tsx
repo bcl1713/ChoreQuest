@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TemplateItem } from '../template-item';
+import { TemplateItem } from './template-item';
 import type { QuestTemplate } from '@/lib/types/database';
 
 // Mock framer-motion to avoid animation issues in tests

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { TemplateList } from '../template-list';
+import { TemplateList } from './template-list';
 import type { QuestTemplate } from '@/lib/types/database';
 
 const mockIndividualTemplate: QuestTemplate = {
