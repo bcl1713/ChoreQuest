@@ -1,5 +1,5 @@
-import { AchievementProgressService } from "../achievement-progress-service";
-import { FamilyAchievementProgressService } from "../family-achievement-progress-service";
+import { AchievementProgressService } from "./achievement-progress-service";
+import { FamilyAchievementProgressService } from "./family-achievement-progress-service";
 
 const mockWriteClient = {
   from: jest.fn(),
