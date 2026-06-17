@@ -1,4 +1,4 @@
-import { generateRecurringQuests } from "../recurring-quest-generator";
+import { generateRecurringQuests } from "./recurring-quest-generator";
 import { createMockSupabase } from "./recurring-quest-generator.fixtures";
 
 describe("generateRecurringQuests - family and edge cases", () => {
