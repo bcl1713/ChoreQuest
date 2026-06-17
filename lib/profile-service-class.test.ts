@@ -1,5 +1,5 @@
-import { ProfileService } from "../profile-service";
-jest.mock("../supabase", () => ({
+import { ProfileService } from "./profile-service";
+jest.mock("./supabase", () => ({
   supabase: {
     from: jest.fn(),
     rpc: jest.fn(),
@@ -9,7 +9,7 @@ jest.mock("../supabase", () => ({
   },
 }));
 
-import { supabase } from "../supabase";
+import { supabase } from "./supabase";
 
 const mockFrom = supabase.from as jest.Mock;
 
