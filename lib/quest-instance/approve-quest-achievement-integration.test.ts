@@ -1,4 +1,4 @@
-import { approveQuest } from "../quest-instance/approve-quest";
+import { approveQuest } from "./approve-quest";
 import { StreakService } from "../streak-service";
 
 // Mock AchievementProgressService
