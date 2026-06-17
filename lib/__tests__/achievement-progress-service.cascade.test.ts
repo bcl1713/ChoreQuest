@@ -7,8 +7,8 @@ import { AchievementProgressService } from "../achievement-progress-service";
 import {
   makeReadClient,
   makeDataResult,
-} from "./achievement-progress-service.fixtures";
-import type { MockChain } from "./achievement-progress-service.fixtures";
+} from "../achievement-progress-service.fixtures";
+import type { MockChain } from "../achievement-progress-service.fixtures";
 import { makeWriteMocks, CHAR_ID, USER_ID } from "../achievement-progress/unlock-evaluation-fixtures";
 
 const mockWriteClient = { from: jest.fn(), rpc: jest.fn() };

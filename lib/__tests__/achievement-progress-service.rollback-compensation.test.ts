@@ -2,8 +2,8 @@ import { AchievementProgressService } from "../achievement-progress-service";
 import {
   makeReadClient,
   makeDataResult,
-} from "./achievement-progress-service.fixtures";
-import type { MockChain } from "./achievement-progress-service.fixtures";
+} from "../achievement-progress-service.fixtures";
+import type { MockChain } from "../achievement-progress-service.fixtures";
 import {
   makeWriteMocks,
   makeUnlockReadClient,
