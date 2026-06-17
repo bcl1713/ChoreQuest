@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { RewardForm, REWARD_TYPE_LABELS } from "../reward-form";
+import { RewardForm, REWARD_TYPE_LABELS } from "./reward-form";
 import { defaultFormData, filledFormData, createHandlers } from "./reward-form.fixtures";
 
 describe("RewardForm rendering", () => {
