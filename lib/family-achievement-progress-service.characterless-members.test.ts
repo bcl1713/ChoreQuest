@@ -1,4 +1,4 @@
-import { FamilyAchievementProgressService } from "../family-achievement-progress-service";
+import { FamilyAchievementProgressService } from "./family-achievement-progress-service";
 import type { MockChain } from "./family-achievement-progress-service.fixtures";
 import {
   makeDataResult,
