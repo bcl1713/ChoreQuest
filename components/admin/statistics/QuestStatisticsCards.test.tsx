@@ -1,7 +1,7 @@
 "use client";
 
 import { render, screen } from "@testing-library/react";
-import { QuestStatisticsCards } from "../QuestStatisticsCards";
+import { QuestStatisticsCards } from "./QuestStatisticsCards";
 import type { FamilyStatistics } from "@/lib/statistics-service";
 
 const baseStatistics: FamilyStatistics = {
