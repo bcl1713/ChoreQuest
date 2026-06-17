@@ -1,4 +1,4 @@
-import { createStatisticsService, mockFamilyId, now } from "./__fixtures__/statistics-service.fixtures";
+import { createStatisticsService, mockFamilyId, now } from "./statistics-service.fixtures";
 
 describe("StatisticsService - empty states", () => {
   let service: any;
