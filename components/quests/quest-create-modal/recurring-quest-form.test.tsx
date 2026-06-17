@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import RecurringQuestForm from "../recurring-quest-form";
+import RecurringQuestForm from "./recurring-quest-form";
 import type { TemplateFormData } from "@/lib/types/quest-templates";
 
 describe("RecurringQuestForm", () => {

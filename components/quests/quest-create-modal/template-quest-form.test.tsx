@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import TemplateQuestForm from "../template-quest-form";
+import TemplateQuestForm from "./template-quest-form";
 import { QuestTemplate } from "@/lib/types/database";
 
 describe("TemplateQuestForm", () => {
