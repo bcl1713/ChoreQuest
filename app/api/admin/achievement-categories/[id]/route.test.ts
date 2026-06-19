@@ -13,14 +13,17 @@ jest.mock("@/lib/supabase-server", () => ({
 }));
 
 import { NextRequest } from "next/server";
-import { PATCH } from "@/app/api/admin/achievements/[id]/route";
+import {
+  PATCH,
+  DELETE,
+} from "./route";
 
 function makeRequest(
   method: string,
   auth: string | null = "Bearer token",
   body?: Record<string, unknown>,
 ) {
-  const url = new URL("http://localhost/api/admin/achievements/id");
+  const url = new URL("http://localhost/api/admin/achievement-categories/id");
   const headers: Record<string, string> = {
     "content-type": "application/json",
   };
@@ -33,7 +36,7 @@ function makeRequest(
   });
 }
 
-function setupAuth(role: string = "GUILD_MASTER", familyId: string = "fam-1") {
+function setupAuth(role: string = "GUILD_MASTER") {
   mockServerSupabase.auth.getUser.mockResolvedValue({
     data: { user: { id: "user-1" } },
     error: null,
@@ -44,7 +47,7 @@ function setupAuth(role: string = "GUILD_MASTER", familyId: string = "fam-1") {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: { role, family_id: familyId },
+          data: { role, family_id: "fam-1" },
           error: null,
         }),
       };
@@ -57,23 +60,14 @@ function setupAuth(role: string = "GUILD_MASTER", familyId: string = "fam-1") {
   });
 }
 
-function setupServiceForPatch(
-  achievementFamilyId: string = "fam-1",
-  mockDeleteCharAchievements?: jest.Mock,
-) {
-  const deleteMock =
-    mockDeleteCharAchievements ?? jest.fn().mockResolvedValue({ error: null });
+function setupServiceForPatch() {
   mockServiceSupabase.from.mockImplementation((table: string) => {
-    if (table === "achievements") {
+    if (table === "achievement_categories") {
       return {
         select: jest.fn().mockReturnValue({
           eq: jest.fn().mockReturnValue({
             maybeSingle: jest.fn().mockResolvedValue({
-              data: {
-                id: "ach-1",
-                name: "First Quest",
-                family_id: achievementFamilyId,
-              },
+              data: { id: "cat-1", name: "Adventurer" },
               error: null,
             }),
           }),
@@ -82,7 +76,7 @@ function setupServiceForPatch(
           eq: jest.fn().mockReturnValue({
             select: jest.fn().mockReturnValue({
               single: jest.fn().mockResolvedValue({
-                data: { id: "ach-1", name: "Updated" },
+                data: { id: "cat-1", name: "Updated" },
                 error: null,
               }),
             }),
@@ -90,29 +84,22 @@ function setupServiceForPatch(
         }),
       };
     }
-    if (table === "character_achievements") {
-      return {
-        delete: jest.fn().mockReturnValue({
-          eq: deleteMock,
-        }),
-      };
-    }
     return { select: jest.fn().mockReturnThis() };
   });
 }
 
-describe("PATCH /api/admin/achievements/[id]", () => {
+describe("PATCH /api/admin/achievement-categories/[id]", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("updates an achievement and returns 200", async () => {
+  it("updates a category and returns 200", async () => {
     setupAuth();
     setupServiceForPatch();
 
     const req = makeRequest("PATCH", "Bearer token", { name: "Updated" });
     const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
+      params: Promise.resolve({ id: "cat-1" }),
     });
     expect(res.status).toBe(200);
 
@@ -125,26 +112,15 @@ describe("PATCH /api/admin/achievements/[id]", () => {
 
     const req = makeRequest("PATCH", "Bearer token", { name: "Updated" });
     const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
+      params: Promise.resolve({ id: "cat-1" }),
     });
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 when achievement belongs to a different family", async () => {
-    setupAuth("GUILD_MASTER", "fam-1");
-    setupServiceForPatch("other-fam");
-
-    const req = makeRequest("PATCH", "Bearer token", { name: "Updated" });
-    const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
-    });
-    expect(res.status).toBe(403);
-  });
-
-  it("returns 404 when achievement does not exist", async () => {
+  it("returns 404 when category does not exist", async () => {
     setupAuth();
     mockServiceSupabase.from.mockImplementation((table: string) => {
-      if (table === "achievements") {
+      if (table === "achievement_categories") {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
@@ -165,60 +141,97 @@ describe("PATCH /api/admin/achievements/[id]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("updates hidden flag successfully", async () => {
+  it("returns 400 when name is empty string", async () => {
     setupAuth();
     setupServiceForPatch();
 
-    const req = makeRequest("PATCH", "Bearer token", { is_hidden: true });
+    const req = makeRequest("PATCH", "Bearer token", { name: "" });
     const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
+      params: Promise.resolve({ id: "cat-1" }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("DELETE /api/admin/achievement-categories/[id]", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("deletes a category with no achievements", async () => {
+    setupAuth();
+    mockServiceSupabase.from.mockImplementation((table: string) => {
+      if (table === "achievement_categories") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: { id: "cat-1" },
+                error: null,
+              }),
+            }),
+          }),
+          delete: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      if (table === "achievements") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+          }),
+        };
+      }
+      return { select: jest.fn().mockReturnThis() };
+    });
+
+    const req = makeRequest("DELETE");
+    const res = await DELETE(req, {
+      params: Promise.resolve({ id: "cat-1" }),
     });
     expect(res.status).toBe(200);
   });
 
-  it("deletes character_achievements rows when criteria_type changes", async () => {
+  it("returns 409 when category has achievements", async () => {
     setupAuth();
-    const deleteEq = jest.fn().mockResolvedValue({ error: null });
-    setupServiceForPatch("fam-1", deleteEq);
+    mockServiceSupabase.from.mockImplementation((table: string) => {
+      if (table === "achievement_categories") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: { id: "cat-1" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "achievements") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ count: 3, error: null }),
+          }),
+        };
+      }
+      return { select: jest.fn().mockReturnThis() };
+    });
 
-    const req = makeRequest("PATCH", "Bearer token", {
-      criteria_type: "chore_complete",
+    const req = makeRequest("DELETE");
+    const res = await DELETE(req, {
+      params: Promise.resolve({ id: "cat-1" }),
     });
-    const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
-    });
-    expect(res.status).toBe(200);
-    expect(deleteEq).toHaveBeenCalledWith("achievement_id", "ach-1");
+    expect(res.status).toBe(409);
   });
 
-  it("deletes character_achievements rows when criteria_config changes", async () => {
-    setupAuth();
-    const deleteEq = jest.fn().mockResolvedValue({ error: null });
-    setupServiceForPatch("fam-1", deleteEq);
+  it("returns 403 when user is not Guild Master", async () => {
+    setupAuth("HERO");
 
-    const req = makeRequest("PATCH", "Bearer token", {
-      criteria_config: { count: 5 },
+    const req = makeRequest("DELETE");
+    const res = await DELETE(req, {
+      params: Promise.resolve({ id: "cat-1" }),
     });
-    const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
-    });
-    expect(res.status).toBe(200);
-    expect(deleteEq).toHaveBeenCalledWith("achievement_id", "ach-1");
-  });
-
-  it("does not delete character_achievements rows when only non-criteria fields change", async () => {
-    setupAuth();
-    const deleteEq = jest.fn().mockResolvedValue({ error: null });
-    setupServiceForPatch("fam-1", deleteEq);
-
-    const req = makeRequest("PATCH", "Bearer token", {
-      name: "New Name",
-      is_hidden: true,
-    });
-    const res = await PATCH(req, {
-      params: Promise.resolve({ id: "ach-1" }),
-    });
-    expect(res.status).toBe(200);
-    expect(deleteEq).not.toHaveBeenCalled();
+    expect(res.status).toBe(403);
   });
 });

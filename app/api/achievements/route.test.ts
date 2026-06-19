@@ -13,7 +13,7 @@ jest.mock("@/lib/supabase-server", () => ({
 }));
 
 import { NextRequest } from "next/server";
-import { GET } from "@/app/api/achievements/route";
+import { GET } from "./route";
 
 const CHARACTER_ID = "char-aaaa-bbbb-cccc-dddddddddddd";
 

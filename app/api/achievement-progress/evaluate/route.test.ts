@@ -20,7 +20,7 @@ jest.mock("@/lib/supabase-server", () => ({
 }));
 
 import { NextRequest } from "next/server";
-import { POST } from "@/app/api/achievement-progress/evaluate/route";
+import { POST } from "./route";
 
 const USER_ID = "user-001";
 const CHAR_ID = "char-001";
