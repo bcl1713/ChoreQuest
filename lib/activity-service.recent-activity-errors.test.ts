@@ -4,7 +4,7 @@ import {
   mockFamilyId,
   mockFamilyMembers,
   mockCompletedQuests,
-} from "./__fixtures__/activity-service.fixtures";
+} from "./activity-service.fixtures";
 
 describe("ActivityService - recent activity errors", () => {
   let service: any;
