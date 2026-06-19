@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { AdminDashboard } from "@/components/admin/admin-dashboard";
+import { AdminDashboard } from "./admin-dashboard";
 
 const mockPush = jest.fn();
 const mockGet = jest.fn();
