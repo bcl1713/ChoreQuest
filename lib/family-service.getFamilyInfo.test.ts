@@ -3,7 +3,7 @@ import {
   applyDefaultFamilyMocks,
   mockFamilyId,
   mockFamily,
-} from "./__fixtures__/family-service.fixtures";
+} from "./family-service.fixtures";
 
 describe("FamilyService - getFamilyInfo", () => {
   let service: any;

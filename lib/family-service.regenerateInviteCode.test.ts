@@ -2,7 +2,7 @@ import {
   createFamilyService,
   applyDefaultFamilyMocks,
   mockFamilyId,
-} from "./__fixtures__/family-service.fixtures";
+} from "./family-service.fixtures";
 
 describe("FamilyService - regenerateInviteCode", () => {
   let service: any;
