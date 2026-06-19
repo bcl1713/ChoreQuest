@@ -12,7 +12,7 @@ import * as path from "path";
 describe("Achievement System Schema Migration (20260318000001)", () => {
   const migrationPath = path.join(
     __dirname,
-    "../../../supabase/migrations/20260318000001_achievement_system_schema.sql",
+    "20260318000001_achievement_system_schema.sql",
   );
   let sql: string;
 
