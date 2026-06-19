@@ -2,7 +2,7 @@ import {
   buildLocalSupabasePreflightMessage,
   createLocalSupabasePreflightPlan,
   isMissingSeasonsMigrationError,
-} from "@/lib/admin/start-season-reset-preflight";
+} from "./start-season-reset-preflight";
 
 describe("local Supabase migration preflight", () => {
   it("requires a seasons-table check for local Supabase URLs", () => {

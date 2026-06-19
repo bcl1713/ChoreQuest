@@ -1,11 +1,11 @@
-jest.mock("@/lib/family-achievement-progress/family-evaluators", () => ({
+jest.mock("./family-evaluators", () => ({
   FAMILY_EVALUATOR_REGISTRY: {
     quest_complete: jest.fn(),
   },
 }));
 
-import { recomputeAchievementImpl } from "@/lib/family-achievement-progress/service-helpers";
-import { FAMILY_EVALUATOR_REGISTRY } from "@/lib/family-achievement-progress/family-evaluators";
+import { recomputeAchievementImpl } from "./service-helpers";
+import { FAMILY_EVALUATOR_REGISTRY } from "./family-evaluators";
 
 const mockEvaluator = FAMILY_EVALUATOR_REGISTRY.quest_complete as jest.Mock;
 

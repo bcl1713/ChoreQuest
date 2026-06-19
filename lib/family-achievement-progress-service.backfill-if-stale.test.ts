@@ -13,7 +13,7 @@ jest.mock("@/lib/seasons/active-season", () => ({
   getActiveSeasonForFamily: jest.fn(),
 }));
 
-import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
+import { FamilyAchievementProgressService } from "./family-achievement-progress-service";
 import { getActiveSeasonForFamily } from "@/lib/seasons/active-season";
 
 const mockGetActiveSeasonForFamily = getActiveSeasonForFamily as jest.Mock;

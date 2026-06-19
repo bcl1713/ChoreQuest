@@ -1,5 +1,5 @@
-import { buildCharacterResetPatch, runStartSeasonReset, type SeasonResetStore } from "@/lib/admin/start-season-reset";
-import { parseStartSeasonResetArgs } from "@/lib/admin/start-season-reset-cli";
+import { buildCharacterResetPatch, runStartSeasonReset, type SeasonResetStore } from "./start-season-reset";
+import { parseStartSeasonResetArgs } from "./start-season-reset-cli";
 
 describe("admin start-season reset", () => {
   it("resets season-derived character state while preserving spendable gold", () => {

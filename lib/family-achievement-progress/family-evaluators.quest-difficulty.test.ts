@@ -1,4 +1,4 @@
-import { FAMILY_EVALUATOR_REGISTRY } from "@/lib/family-achievement-progress/family-evaluators";
+import { FAMILY_EVALUATOR_REGISTRY } from "./family-evaluators";
 
 function makeQueryChain() {
   const eqCalls: [string, unknown][] = [];
