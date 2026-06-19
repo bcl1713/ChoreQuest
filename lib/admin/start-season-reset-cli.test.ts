@@ -1,9 +1,9 @@
-import { type SeasonResetStore } from "@/lib/admin/start-season-reset";
+import { type SeasonResetStore } from "./start-season-reset";
 import {
   formatStartSeasonDiscoveryAudit,
   parseStartSeasonResetArgs,
   runStartSeasonDiscovery,
-} from "@/lib/admin/start-season-reset-cli";
+} from "./start-season-reset-cli";
 
 describe("admin start-season reset CLI discovery", () => {
   it("parses list-families discovery without requiring reset arguments", () => {

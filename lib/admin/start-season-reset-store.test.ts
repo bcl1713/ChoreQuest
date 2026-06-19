@@ -1,4 +1,4 @@
-import { createSupabaseSeasonResetStore } from "@/lib/admin/start-season-reset-store";
+import { createSupabaseSeasonResetStore } from "./start-season-reset-store";
 
 describe("Supabase start-season reset store", () => {
   it("lists families without selecting schema-dependent active_season_id", async () => {

@@ -23,8 +23,8 @@ jest.mock("@/lib/seasons/active-season", () => ({
   }),
 }));
 
-import { FamilyAchievementProgressService } from "@/lib/family-achievement-progress-service";
-import { FAMILY_EVALUATOR_REGISTRY } from "@/lib/family-achievement-progress/family-evaluators";
+import { FamilyAchievementProgressService } from "./family-achievement-progress-service";
+import { FAMILY_EVALUATOR_REGISTRY } from "./family-achievement-progress/family-evaluators";
 
 const mockEvaluator = FAMILY_EVALUATOR_REGISTRY.quest_complete as jest.Mock;
 
