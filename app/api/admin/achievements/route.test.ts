@@ -13,7 +13,7 @@ jest.mock("@/lib/supabase-server", () => ({
 }));
 
 import { NextRequest } from "next/server";
-import { GET, POST } from "@/app/api/admin/achievements/route";
+import { GET, POST } from "./route";
 
 function makeRequest(
   method: string,

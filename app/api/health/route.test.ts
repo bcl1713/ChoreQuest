@@ -5,7 +5,7 @@ jest.mock('@/lib/supabase', () => ({
 }));
 
 import packageJson from '@/package.json';
-import { GET } from '@/app/api/health/route';
+import { GET } from './route';
 import { supabase } from '@/lib/supabase';
 
 const originalNpmPackageVersion = process.env.npm_package_version;
