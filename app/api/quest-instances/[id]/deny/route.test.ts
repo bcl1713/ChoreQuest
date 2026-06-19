@@ -7,7 +7,7 @@ import {
   params,
   singleResult,
   makeSetupAuth,
-} from "./quest-instance-helpers";
+} from "../quest-instance-helpers";
 
 const mockSupabase = {
   auth: { getUser: jest.fn() },
