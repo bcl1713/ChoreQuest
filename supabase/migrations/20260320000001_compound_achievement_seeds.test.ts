@@ -11,7 +11,7 @@ import * as path from "path";
 describe("Compound Achievement Seeds Migration (20260320000001)", () => {
   const migrationPath = path.join(
     __dirname,
-    "../../../supabase/migrations/20260320000001_compound_achievement_seeds.sql",
+    "20260320000001_compound_achievement_seeds.sql",
   );
   let sql: string;
 

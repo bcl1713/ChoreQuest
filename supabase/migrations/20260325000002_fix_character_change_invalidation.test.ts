@@ -11,7 +11,7 @@ import * as path from "path";
 describe("Character-change invalidation fix (20260325000002)", () => {
   const migrationPath = path.join(
     __dirname,
-    "../../../supabase/migrations/20260325000002_fix_character_change_invalidation.sql",
+    "20260325000002_fix_character_change_invalidation.sql",
   );
   let sql: string;
 

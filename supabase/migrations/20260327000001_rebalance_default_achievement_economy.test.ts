@@ -16,7 +16,7 @@ import * as path from "path";
 
 const migrationPath = path.join(
   __dirname,
-  "../../../supabase/migrations/20260327000001_rebalance_default_achievement_economy.sql",
+  "20260327000001_rebalance_default_achievement_economy.sql",
 );
 
 let sql: string;

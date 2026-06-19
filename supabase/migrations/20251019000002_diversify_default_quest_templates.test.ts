@@ -12,7 +12,7 @@ import * as path from "path";
 describe("Default Quest Templates Migration (20251019000002)", () => {
   const migrationPath = path.join(
     __dirname,
-    "../../../supabase/migrations/20251019000002_diversify_default_quest_templates.sql"
+    "20251019000002_diversify_default_quest_templates.sql"
   );
   const migrationContent = fs.readFileSync(migrationPath, "utf-8");
 
