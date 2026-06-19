@@ -8,29 +8,29 @@
  */
 
 import { render, screen, waitFor } from "@testing-library/react";
-import QuestDashboard from "../../components/quests/quest-dashboard";
+import QuestDashboard from "@/components/quests/quest-dashboard";
 import React from "react";
-import { useAuth } from "../../lib/auth-context";
-import { useRealtime } from "../../lib/realtime-context";
-import { supabase } from "../../lib/supabase";
-import { useFamilyMembers } from "../../hooks/useFamilyMembers";
-import { useCharacter } from "../../lib/character-context";
-import { useQuests } from "../../hooks/useQuests";
+import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/lib/realtime-context";
+import { supabase } from "@/lib/supabase";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useCharacter } from "@/lib/character-context";
+import { useQuests } from "@/hooks/useQuests";
 
-jest.mock("../../lib/streak-service", () => ({
+jest.mock("@/lib/streak-service", () => ({
   streakService: {
     getStreaksForCharacter: jest.fn().mockResolvedValue([]),
   },
 }));
 
-jest.mock("../../lib/auth-context");
-jest.mock("../../lib/realtime-context");
-jest.mock("../../lib/supabase", () => ({
+jest.mock("@/lib/auth-context");
+jest.mock("@/lib/realtime-context");
+jest.mock("@/lib/supabase", () => ({
   supabase: {
     from: jest.fn(),
   },
 }));
-jest.mock("../../lib/quest-instance-api-service", () => ({
+jest.mock("@/lib/quest-instance-api-service", () => ({
   questInstanceApiService: {
     claimQuest: jest.fn().mockResolvedValue(undefined),
     releaseQuest: jest.fn().mockResolvedValue(undefined),
@@ -39,9 +39,9 @@ jest.mock("../../lib/quest-instance-api-service", () => ({
 }));
 
 // Mock custom hooks
-jest.mock("../../hooks/useFamilyMembers");
-jest.mock("../../lib/character-context");
-jest.mock("../../hooks/useQuests");
+jest.mock("@/hooks/useFamilyMembers");
+jest.mock("@/lib/character-context");
+jest.mock("@/hooks/useQuests");
 
 describe("Quest Interaction Buttons - Core MVP Feature", () => {
   const mockHeroUser = {
