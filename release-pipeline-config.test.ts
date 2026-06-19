@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const repoRoot = path.resolve(__dirname, "../..");
+const repoRoot = path.resolve(__dirname);
 
 function readText(relativePath: string) {
   return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
