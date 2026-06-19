@@ -3,7 +3,7 @@ import {
   createActivityService,
   mockFamilyId,
   mockFamilyMembers,
-} from "./__fixtures__/activity-service.fixtures";
+} from "./activity-service.fixtures";
 
 describe("ActivityService - recent activity", () => {
   let mockFrom: jest.Mock;
