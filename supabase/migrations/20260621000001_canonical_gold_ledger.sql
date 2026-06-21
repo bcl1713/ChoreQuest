@@ -252,7 +252,7 @@ BEGIN
 
   PERFORM fn_insert_gold_ledger_entry(
     v_character_id, p_user_id, COALESCE(p_amount, 0), 'REWARD_REFUND',
-    'reward_redemptions', p_redemption_id, NULL, 'Reward redemption refunded', '{}'::jsonb
+    'reward_redemptions_refund', p_redemption_id, NULL, 'Reward redemption refunded', '{}'::jsonb
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

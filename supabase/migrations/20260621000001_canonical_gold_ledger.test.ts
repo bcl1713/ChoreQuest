@@ -66,6 +66,7 @@ describe("canonical gold ledger migration", () => {
     expect(migration).toMatch(/SELECT COALESCE\(gold, 0\)[\s\S]*FOR UPDATE/);
     expect(migration).toContain("CHECK (balance_after = balance_before + gold_delta)");
     expect(migration).toContain("UNIQUE (source_type, source_id)");
+    expect(migration).toContain("'reward_redemptions_refund', p_redemption_id");
     expect(migration).toContain("ALTER TABLE gold_ledger_entries ENABLE ROW LEVEL SECURITY");
   });
 
