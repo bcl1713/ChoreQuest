@@ -46,7 +46,7 @@ describe("gold ledger remediation migration", () => {
     }
     expect(migration).toContain("quest_instances");
     expect(migration).toContain("reward_redemptions");
-    expect(migration).not.toContain("reward_redemptions_refund");
+    expect(migration).toContain("reward_redemptions_refund");
     expect(migration).toContain("transactions.related_id IS NOT NULL");
     expect(migration).toContain("qi.assigned_to_id = cs.user_id");
     expect(migration).toContain("qi.status = 'APPROVED'");

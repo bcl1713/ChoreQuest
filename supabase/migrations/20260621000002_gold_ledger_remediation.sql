@@ -46,7 +46,7 @@ BEGIN
     CASE p_transaction_type
       WHEN 'QUEST_REWARD'::transaction_type THEN 'quest_instances'
       WHEN 'STORE_PURCHASE'::transaction_type THEN 'reward_redemptions'
-      WHEN 'REWARD_REFUND'::transaction_type THEN 'reward_redemptions'
+      WHEN 'REWARD_REFUND'::transaction_type THEN 'reward_redemptions_refund'
       WHEN 'BOSS_VICTORY'::transaction_type THEN 'boss_battles'
       WHEN 'BONUS_AWARD'::transaction_type THEN 'transactions'
       ELSE 'transactions'
@@ -127,7 +127,7 @@ BEGIN
               AND COALESCE(t.gold_change, 0) < 0
               AND COALESCE(rr.cost, 0) = ABS(COALESCE(t.gold_change, 0))
           )
-          WHEN p.source_type = 'reward_redemptions' AND t.type = 'REWARD_REFUND'::transaction_type THEN EXISTS (
+          WHEN p.source_type = 'reward_redemptions_refund' AND t.type = 'REWARD_REFUND'::transaction_type THEN EXISTS (
             SELECT 1
             FROM reward_redemptions rr
             WHERE rr.id = t.related_id
@@ -140,7 +140,7 @@ BEGIN
         END AS source_provenance_verified,
         CASE
           WHEN p.source_type = 'quest_instances' THEN 'quest transaction related_id does not match an approved quest for the same assigned user and gold amount'
-          WHEN p.source_type = 'reward_redemptions' THEN 'reward transaction related_id does not match a redemption for the same user, transaction direction, status, and gold amount'
+          WHEN p.source_type IN ('reward_redemptions', 'reward_redemptions_refund') THEN 'reward transaction related_id does not match a redemption for the same user, transaction direction, status, and gold amount'
           ELSE 'transaction type requires manual operator review before historical reconstruction'
         END AS source_review_reason
     ) v
@@ -276,7 +276,7 @@ BEGIN
               AND COALESCE(t.gold_change, 0) < 0
               AND COALESCE(rr.cost, 0) = ABS(COALESCE(t.gold_change, 0))
           )
-          WHEN p.source_type = 'reward_redemptions' AND t.type = 'REWARD_REFUND'::transaction_type THEN EXISTS (
+          WHEN p.source_type = 'reward_redemptions_refund' AND t.type = 'REWARD_REFUND'::transaction_type THEN EXISTS (
             SELECT 1
             FROM reward_redemptions rr
             WHERE rr.id = t.related_id
@@ -289,7 +289,7 @@ BEGIN
         END AS source_provenance_verified,
         CASE
           WHEN p.source_type = 'quest_instances' THEN 'quest transaction related_id does not match an approved quest for the same assigned user and gold amount'
-          WHEN p.source_type = 'reward_redemptions' THEN 'reward transaction related_id does not match a redemption for the same user, transaction direction, status, and gold amount'
+          WHEN p.source_type IN ('reward_redemptions', 'reward_redemptions_refund') THEN 'reward transaction related_id does not match a redemption for the same user, transaction direction, status, and gold amount'
           ELSE 'transaction type requires manual operator review before historical reconstruction'
         END AS source_review_reason
     ) v
