@@ -1352,7 +1352,7 @@ export type Database = {
         Args: {
           p_character_id: string;
           p_new_gold: number;
-          p_actor_user_id: string;
+          p_actor_user_id?: string | null;
           p_reason: string;
         };
         Returns: Database["public"]["Tables"]["gold_ledger_entries"]["Row"];

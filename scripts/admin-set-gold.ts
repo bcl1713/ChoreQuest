@@ -68,7 +68,7 @@ async function setGold(userName: string, newAmount: number, reason: string) {
     {
       p_character_id: character.id,
       p_new_gold: newAmount,
-      p_actor_user_id: user.id,
+      p_actor_user_id: null,
       p_reason: reason,
     },
   );
