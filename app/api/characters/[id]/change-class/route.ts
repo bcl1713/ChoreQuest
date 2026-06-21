@@ -11,7 +11,6 @@ import {
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
 import { assertValidUuidParam } from "@/lib/api-route-params";
 import { AchievementProgressService } from "@/lib/achievement-progress-service";
-import type { CharacterClass } from "@/lib/types/database";
 
 export async function POST(
   request: NextRequest,
@@ -74,49 +73,35 @@ export async function POST(
       );
     }
 
-    const { data: updated, error: updateError } = await serviceSupabase
-      .from("characters")
-      .update({
-        class: newClass as CharacterClass,
-        gold: (character.gold ?? 0) - cost,
-      })
-      .eq("id", characterId)
-      .select()
-      .single();
+    const { data: rpcData, error: updateError } = await serviceSupabase.rpc(
+      "fn_change_character_class",
+      {
+        p_character_id: characterId,
+        p_new_class: newClass,
+      },
+    );
 
-    if (updateError || !updated) {
+    if (updateError) {
+      throw new Error(updateError.message ?? "Failed to update character class");
+    }
+
+    const updated = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+
+    if (!updated) {
       throw new Error("Failed to update character class");
     }
 
-    const { error: historyError } = await serviceSupabase
-      .from("character_change_history")
-      .insert({
-        character_id: characterId,
-        change_type: "class",
-        old_value: character.class,
-        new_value: newClass,
-        gold_cost: cost,
+    try {
+      const progressService = new AchievementProgressService(serviceSupabase);
+      await progressService.updateProgress(characterId, {
+        type: "CLASS_CHANGED",
       });
-
-    if (historyError) {
+    } catch (progressError) {
       console.warn(
-        "Failed to record class change history (non-blocking):",
+        "Achievement progress update failed after class change (non-blocking):",
         characterId,
-        historyError,
+        progressError,
       );
-    } else {
-      try {
-        const progressService = new AchievementProgressService(serviceSupabase);
-        await progressService.updateProgress(characterId, {
-          type: "CLASS_CHANGED",
-        });
-      } catch (progressError) {
-        console.warn(
-          "Achievement progress update failed after class change (non-blocking):",
-          characterId,
-          progressError,
-        );
-      }
     }
 
     return NextResponse.json(

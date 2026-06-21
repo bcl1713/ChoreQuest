@@ -19,6 +19,7 @@ const mockServerSupabase = {
 
 const mockServiceSupabase = {
   from: jest.fn(),
+  rpc: jest.fn(),
 };
 
 jest.mock("@/lib/supabase-server", () => ({
@@ -111,6 +112,19 @@ function setupMocks({ historyError = null as object | null } = {}) {
     }
     throw new Error(`Unexpected table in service mock: ${table}`);
   });
+
+  mockServiceSupabase.rpc.mockResolvedValue({
+    data: [
+      {
+        id: VALID_CHARACTER_ID,
+        user_id: USER_ID,
+        class: "KNIGHT",
+        level: 3,
+        gold: 400,
+      },
+    ],
+    error: null,
+  });
 }
 
 describe("class change - achievement progress integration (task 13.1)", () => {
@@ -127,6 +141,25 @@ describe("class change - achievement progress integration (task 13.1)", () => {
     expect(mockUpdateProgress).toHaveBeenCalledWith(VALID_CHARACTER_ID, {
       type: "CLASS_CHANGED",
     });
+  });
+
+  it("uses the canonical class-change RPC instead of mutating character gold directly", async () => {
+    setupMocks();
+
+    const res = await POST(makeRequest(), params());
+
+    expect(res.status).toBe(200);
+    expect(mockServiceSupabase.rpc).toHaveBeenCalledWith(
+      "fn_change_character_class",
+      {
+        p_character_id: VALID_CHARACTER_ID,
+        p_new_class: "KNIGHT",
+      },
+    );
+    expect(mockServiceSupabase.from).not.toHaveBeenCalledWith("characters");
+    expect(mockServiceSupabase.from).not.toHaveBeenCalledWith(
+      "character_change_history",
+    );
   });
 
   it("does not fail class change when updateProgress throws", async () => {
@@ -158,13 +191,14 @@ describe("class change - achievement progress integration (task 13.1)", () => {
     warnSpy.mockRestore();
   });
 
-  it("does not call updateProgress when the history insert fails", async () => {
-    jest.spyOn(console, "warn").mockImplementation(() => {});
-    setupMocks({ historyError: { message: "insert failed" } });
+  it("continues class-change achievement progress after the RPC-owned history write", async () => {
+    setupMocks({ historyError: { message: "unused legacy mock" } });
 
     const res = await POST(makeRequest(), params());
 
     expect(res.status).toBe(200);
-    expect(mockUpdateProgress).not.toHaveBeenCalled();
+    expect(mockUpdateProgress).toHaveBeenCalledWith(VALID_CHARACTER_ID, {
+      type: "CLASS_CHANGED",
+    });
   });
 });
