@@ -62,6 +62,33 @@ describe("GET /api/admin/users/[userId]", () => {
     );
   });
 
+  it("treats the all-event ledger filter as no event filter", async () => {
+    const detail = {
+      user: { id: "hero-1", name: "Hero", role: "HERO" },
+      character: null,
+      questSummary: { active: 0, pendingApproval: 0, approved: 0, missed: 0, total: 0 },
+      recentQuests: [],
+      goldLedger: {
+        entries: [],
+        reconciliation: { currentGold: null, ledgerBalance: 0, difference: null, diverged: false },
+      },
+    };
+    (adminUserDetailService.getUserDetail as jest.Mock).mockResolvedValue(detail);
+
+    const response = await GET(
+      new NextRequest("http://app.test/api/admin/users/hero-1?ledgerEventType=ALL"),
+      { params: Promise.resolve({ userId: "hero-1" }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(adminUserDetailService.getUserDetail).toHaveBeenCalledWith(
+      { client: true },
+      { id: "gm-1", role: "GUILD_MASTER", family_id: "family-1" },
+      "hero-1",
+      { ledgerEndDate: null, ledgerEventType: null, ledgerStartDate: null },
+    );
+  });
+
   it("rejects invalid ledger event type filters", async () => {
     const response = await GET(
       new NextRequest("http://app.test/api/admin/users/hero-1?ledgerEventType=NOPE"),

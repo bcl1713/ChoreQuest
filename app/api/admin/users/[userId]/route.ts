@@ -27,7 +27,7 @@ export async function GET(
 
     const rawLedgerEventType = request.nextUrl.searchParams.get("ledgerEventType");
     let ledgerEventType: GoldLedgerEntryType | null = null;
-    if (rawLedgerEventType) {
+    if (rawLedgerEventType && rawLedgerEventType !== "ALL") {
       if (!isGoldLedgerEntryType(rawLedgerEventType)) {
         throw new ValidationError(
           "Invalid ledger event type",
