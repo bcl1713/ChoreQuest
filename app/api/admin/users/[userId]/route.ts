@@ -5,6 +5,11 @@ import {
   extractBearerToken,
 } from "@/lib/api-auth-helpers";
 import { adminUserDetailService } from "@/lib/admin-user-detail-service";
+import {
+  isGoldLedgerEntryType,
+  type GoldLedgerEntryType,
+} from "@/lib/admin-user-gold-ledger";
+import { ValidationError } from "@/lib/errors";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function GET(
@@ -20,10 +25,27 @@ export async function GET(
       token,
     );
 
+    const rawLedgerEventType = request.nextUrl.searchParams.get("ledgerEventType");
+    let ledgerEventType: GoldLedgerEntryType | null = null;
+    if (rawLedgerEventType && rawLedgerEventType !== "ALL") {
+      if (!isGoldLedgerEntryType(rawLedgerEventType)) {
+        throw new ValidationError(
+          "Invalid ledger event type",
+          "ADMIN_GOLD_LEDGER_INVALID_EVENT_TYPE",
+        );
+      }
+      ledgerEventType = rawLedgerEventType;
+    }
+
     const detail = await adminUserDetailService.getUserDetail(
       supabase,
       requesterProfile,
       userId,
+      {
+        ledgerStartDate: request.nextUrl.searchParams.get("ledgerStartDate"),
+        ledgerEndDate: request.nextUrl.searchParams.get("ledgerEndDate"),
+        ledgerEventType: ledgerEventType as GoldLedgerEntryType | null,
+      },
     );
 
     return NextResponse.json({ success: true, detail });

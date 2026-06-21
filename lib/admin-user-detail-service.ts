@@ -1,12 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  AuthenticatedUser,
-} from "@/lib/api-auth-helpers";
-import type {
-  CharacterClass,
-  QuestStatus,
-  UserRole,
-} from "@/lib/types/database";
+import type { AuthenticatedUser } from "@/lib/api-auth-helpers";
+import type { CharacterClass, QuestStatus, UserRole } from "@/lib/types/database";
+import {
+  fetchAdminUserGoldLedger,
+  type AdminUserGoldLedger,
+  type AdminUserGoldLedgerFilterOptions,
+} from "@/lib/admin-user-gold-ledger";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
 
 export type AdminUserDetailUser = {
@@ -51,12 +50,14 @@ export type AdminUserRecentQuest = {
   xpReward: number;
 };
 
+export type { AdminUserGoldLedgerFilterOptions } from "@/lib/admin-user-gold-ledger";
+
 export type AdminUserDetail = {
   user: AdminUserDetailUser;
   character: AdminUserDetailCharacter | null;
   questSummary: AdminUserQuestSummary;
   recentQuests: AdminUserRecentQuest[];
-  goldLedgerNotice: string;
+  goldLedger: AdminUserGoldLedger;
 };
 
 type RawCharacter = {
@@ -93,9 +94,6 @@ type RawQuest = {
   gold_reward: number | null;
   xp_reward: number | null;
 };
-
-const GOLD_LEDGER_NOTICE =
-  "Current gold is shown from the character record. Full ledger and audit history will land in a separate audit slice.";
 
 function firstCharacter(
   characters: RawCharacter | RawCharacter[] | null,
@@ -180,6 +178,7 @@ export class AdminUserDetailService {
     supabase: SupabaseClient,
     requesterProfile: AuthenticatedUser,
     targetUserId: string,
+    options: AdminUserGoldLedgerFilterOptions = {},
   ): Promise<AdminUserDetail> {
     if (requesterProfile.role !== "GUILD_MASTER") {
       throw new ForbiddenError(
@@ -269,6 +268,14 @@ export class AdminUserDetailService {
 
     const summaryQuests = (questSummaryRows ?? []) as RawQuest[];
     const recentQuests = ((recentQuestRows ?? []) as RawQuest[]).filter(isApprovedQuest);
+    const mappedCharacter = mapCharacter(character);
+
+    const goldLedger = await fetchAdminUserGoldLedger(
+      supabase,
+      mappedCharacter?.id ?? null,
+      mappedCharacter?.gold ?? null,
+      options,
+    );
 
     return {
       user: {
@@ -280,10 +287,10 @@ export class AdminUserDetailService {
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
       },
-      character: mapCharacter(character),
+      character: mappedCharacter,
       questSummary: summarizeQuests(summaryQuests),
       recentQuests: recentQuests.map(mapRecentQuest),
-      goldLedgerNotice: GOLD_LEDGER_NOTICE,
+      goldLedger,
     };
   }
 }

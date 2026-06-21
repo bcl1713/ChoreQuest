@@ -9,7 +9,7 @@ import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth-context";
 import { useCharacter } from "@/lib/character-context";
 import { supabase } from "@/lib/supabase";
-import type { AdminUserDetail } from "@/lib/admin-user-detail-service";
+import type { AdminUserDetail, AdminUserGoldLedgerFilterOptions } from "@/lib/admin-user-detail-service";
 
 function resolveUserId(param: string | string[] | undefined): string | null {
   if (Array.isArray(param)) return param[0] ?? null;
@@ -25,6 +25,11 @@ export default function AdminUserPage() {
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
+  const [ledgerFilters, setLedgerFilters] = useState<AdminUserGoldLedgerFilterOptions>({
+    ledgerStartDate: "",
+    ledgerEndDate: "",
+    ledgerEventType: "ALL",
+  });
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -53,12 +58,27 @@ export default function AdminUserPage() {
           throw new Error("Authentication required");
         }
 
-        const response = await fetch(`/api/admin/users/${targetUserId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+        const query = new URLSearchParams();
+        if (ledgerFilters.ledgerStartDate) {
+          query.set("ledgerStartDate", ledgerFilters.ledgerStartDate);
+        }
+        if (ledgerFilters.ledgerEndDate) {
+          query.set("ledgerEndDate", ledgerFilters.ledgerEndDate);
+        }
+        if (ledgerFilters.ledgerEventType && ledgerFilters.ledgerEventType !== "ALL") {
+          query.set("ledgerEventType", ledgerFilters.ledgerEventType);
+        }
+
+        const queryString = query.toString();
+        const response = await fetch(
+          `/api/admin/users/${targetUserId}${queryString ? `?${queryString}` : ""}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           },
-        });
+        );
 
         const payload = await response.json();
         if (!response.ok) {
@@ -84,7 +104,7 @@ export default function AdminUserPage() {
     return () => {
       isMounted = false;
     };
-  }, [isLoading, profile?.role, targetUserId, user]);
+  }, [isLoading, ledgerFilters, profile?.role, targetUserId, user]);
 
   if (isLoading || characterLoading || loadingDetail) {
     return (
@@ -119,7 +139,11 @@ export default function AdminUserPage() {
           {error}
         </div>
       ) : detail ? (
-        <AdminUserDetailView detail={detail} />
+        <AdminUserDetailView
+          detail={detail}
+          filters={ledgerFilters}
+          onFiltersChange={setLedgerFilters}
+        />
       ) : null}
     </AuthenticatedPageShell>
   );
