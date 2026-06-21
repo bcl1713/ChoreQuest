@@ -54,7 +54,9 @@ services:
       - RECURRING_TEST_INTERVAL_MINUTES=${RECURRING_TEST_INTERVAL_MINUTES:-}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      # Probe IPv4 loopback explicitly. Alpine wget may resolve localhost to ::1
+      # first, while the Next.js standalone server is bound on IPv4 0.0.0.0.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 5

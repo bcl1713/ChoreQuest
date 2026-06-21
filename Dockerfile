@@ -86,9 +86,10 @@ USER nextjs
 # Expose port 3000
 EXPOSE 3000
 
-# Health check endpoint
+# Health check endpoint. Use IPv4 loopback so Docker health matches the
+# 0.0.0.0 listener even when localhost resolves to ::1 first.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
 
 # Set entrypoint to initialization script
 ENTRYPOINT ["./docker-entrypoint.sh"]
