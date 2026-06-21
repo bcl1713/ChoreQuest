@@ -552,7 +552,9 @@ GRANT EXECUTE ON FUNCTION fn_refund_reward_gold(UUID, INTEGER, UUID) TO service_
 GRANT EXECUTE ON FUNCTION fn_deny_reward_redemption(UUID, UUID, INTEGER, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION fn_apply_boss_reward(UUID, UUID, UUID, UUID, INTEGER, INTEGER, INTEGER, TEXT, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION fn_unlock_achievements_and_grant_rewards(UUID, UUID[], UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION fn_change_character_class(UUID, TEXT) TO authenticated;
+REVOKE ALL ON FUNCTION fn_change_character_class(UUID, TEXT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION fn_change_character_class(UUID, TEXT) FROM authenticated;
+GRANT EXECUTE ON FUNCTION fn_change_character_class(UUID, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION fn_record_admin_gold_adjustment(UUID, INTEGER, UUID, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION fn_record_opening_gold_balance(UUID, UUID, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION fn_record_gold_migration_entry(UUID, INTEGER, UUID, TEXT, JSONB) TO service_role;

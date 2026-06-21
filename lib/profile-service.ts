@@ -23,6 +23,17 @@ export interface ClassChangeCost {
 }
 
 export class ProfileService {
+  private static async getAuthToken(): Promise<string | null> {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Calculate cost to change class based on character level
    * Tiered pricing: 100 (≤5), 250 (≤10), 500 (≤15), 1000 (≤20), 2000 (>20)
@@ -163,16 +174,27 @@ export class ProfileService {
     characterId: string,
     newClass: string,
   ): Promise<Character> {
-    const { data, error } = await supabase.rpc("fn_change_character_class", {
-      p_character_id: characterId,
-      p_new_class: newClass,
-    });
-
-    if (error) {
-      throw new Error(error.message);
+    const token = await this.getAuthToken();
+    if (!token) {
+      throw new Error("Authentication required");
     }
 
-    const updatedCharacter = Array.isArray(data) ? data[0] : data;
+    const response = await fetch(`/api/characters/${encodeURIComponent(characterId)}/change-class`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ newClass }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to update character class");
+    }
+
+    const updatedCharacter = data.character;
 
     if (!updatedCharacter) {
       throw new Error("Failed to retrieve updated character");

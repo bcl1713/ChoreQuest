@@ -68,4 +68,19 @@ describe("canonical gold ledger migration", () => {
     expect(migration).toContain("UNIQUE (source_type, source_id)");
     expect(migration).toContain("ALTER TABLE gold_ledger_entries ENABLE ROW LEVEL SECURITY");
   });
+
+  it("does not expose the class-change SECURITY DEFINER RPC directly to browser-authenticated callers", () => {
+    expect(migration).toContain(
+      "REVOKE ALL ON FUNCTION fn_change_character_class(UUID, TEXT) FROM PUBLIC",
+    );
+    expect(migration).toContain(
+      "REVOKE EXECUTE ON FUNCTION fn_change_character_class(UUID, TEXT) FROM authenticated",
+    );
+    expect(migration).toContain(
+      "GRANT EXECUTE ON FUNCTION fn_change_character_class(UUID, TEXT) TO service_role",
+    );
+    expect(migration).not.toContain(
+      "GRANT EXECUTE ON FUNCTION fn_change_character_class(UUID, TEXT) TO authenticated",
+    );
+  });
 });
