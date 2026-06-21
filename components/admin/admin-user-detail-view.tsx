@@ -1,4 +1,7 @@
-import type { AdminUserDetail } from "@/lib/admin-user-detail-service";
+import type {
+  AdminUserDetail,
+  AdminUserGoldLedgerFilterOptions,
+} from "@/lib/admin-user-detail-service";
 
 function titleCase(value: string | null | undefined): string {
   if (!value) return "Unknown";
@@ -18,6 +21,19 @@ function formatDate(value: string | null): string {
   }).format(new Date(value));
 }
 
+const GOLD_LEDGER_EVENT_TYPES = [
+  "QUEST_REWARD",
+  "STORE_PURCHASE",
+  "REWARD_REFUND",
+  "BOSS_REWARD",
+  "ACHIEVEMENT_BONUS",
+  "ADMIN_ADJUSTMENT",
+  "CLASS_CHANGE_COST",
+  "OPENING_BALANCE",
+  "MIGRATION",
+  "CORRECTION",
+] as const;
+
 function StatPill({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900/50 p-4">
@@ -26,8 +42,32 @@ function StatPill({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
-  const { user, character, questSummary, recentQuests } = detail;
+function formatGold(delta: number): string {
+  const prefix = delta > 0 ? "+" : "";
+  return `${prefix}${delta} Gold`;
+}
+
+function formatActor(actor: { name: string } | null): string {
+  return actor?.name ?? "System / automatic";
+}
+
+export function AdminUserDetailView({
+  detail,
+  filters = { ledgerStartDate: "", ledgerEndDate: "", ledgerEventType: "ALL" },
+  onFiltersChange,
+}: {
+  detail: AdminUserDetail;
+  filters?: AdminUserGoldLedgerFilterOptions;
+  onFiltersChange?: (filters: AdminUserGoldLedgerFilterOptions) => void;
+}) {
+  const { user, character, questSummary, recentQuests, goldLedger } = detail;
+
+  const updateFilter = (key: keyof AdminUserGoldLedgerFilterOptions, value: string) => {
+    onFiltersChange?.({
+      ...filters,
+      [key]: value,
+    });
+  };
 
   return (
     <div className="space-y-6" data-testid="admin-user-detail-view">
@@ -122,8 +162,98 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
         )}
       </section>
 
-      <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100">
-        {detail.goldLedgerNotice}
+      <section className="rounded-lg border border-gray-700 bg-gray-800/50 p-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Gold Ledger</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              Chronological gold movements for this character. Opening, migration, and correction rows are explicit ledger controls, not claims of perfect historical provenance. Filters change which rows are displayed; each running balance remains the true ledger balance at that row.
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-700 bg-gray-900/60 p-3 text-sm text-gray-200">
+            <p>Ledger balance: {goldLedger.reconciliation.ledgerBalance} Gold</p>
+            <p>Current character gold: {goldLedger.reconciliation.currentGold ?? "—"} Gold</p>
+          </div>
+        </div>
+
+        {goldLedger.reconciliation.diverged ? (
+          <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
+            Ledger balance differs from current character gold by {goldLedger.reconciliation.difference} Gold. Review reconciliation or correction entries before treating the ledger as settled truth.
+          </div>
+        ) : null}
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <label className="text-sm text-gray-300">
+            Start date
+            <input
+              type="date"
+              className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100"
+              value={filters.ledgerStartDate ?? ""}
+              onChange={(event) => updateFilter("ledgerStartDate", event.target.value)}
+            />
+          </label>
+          <label className="text-sm text-gray-300">
+            End date
+            <input
+              type="date"
+              className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100"
+              value={filters.ledgerEndDate ?? ""}
+              onChange={(event) => updateFilter("ledgerEndDate", event.target.value)}
+            />
+          </label>
+          <label className="text-sm text-gray-300">
+            Event type
+            <select
+              className="mt-1 w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100"
+              value={filters.ledgerEventType ?? "ALL"}
+              onChange={(event) => updateFilter("ledgerEventType", event.target.value)}
+            >
+              <option value="ALL">All event types</option>
+              {GOLD_LEDGER_EVENT_TYPES.map((eventType) => (
+                <option key={eventType} value={eventType}>
+                  {titleCase(eventType)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-5 overflow-x-auto">
+          {goldLedger.entries.length > 0 ? (
+            <table className="min-w-full divide-y divide-gray-700 text-sm">
+              <thead className="text-left text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th className="py-2 pr-4">Timestamp</th>
+                  <th className="py-2 pr-4">Event</th>
+                  <th className="py-2 pr-4">Description</th>
+                  <th className="py-2 pr-4">Credit / Debit</th>
+                  <th className="py-2 pr-4">Running balance</th>
+                  <th className="py-2 pr-4">Actor / source</th>
+                  <th className="py-2 pr-4">Reference</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800 text-gray-200">
+                {goldLedger.entries.map((entry) => (
+                  <tr key={entry.id}>
+                    <td className="py-3 pr-4 text-gray-400">{formatDate(entry.createdAt)}</td>
+                    <td className="py-3 pr-4 font-medium text-white">{titleCase(entry.eventType)}</td>
+                    <td className="py-3 pr-4">{entry.description}</td>
+                    <td className={entry.direction === "debit" ? "py-3 pr-4 text-red-300" : "py-3 pr-4 text-emerald-300"}>
+                      {formatGold(entry.goldDelta)}
+                    </td>
+                    <td className="py-3 pr-4">{entry.runningBalance} Gold</td>
+                    <td className="py-3 pr-4">{formatActor(entry.actor)}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-gray-400">{entry.referenceLabel}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="rounded-lg border border-dashed border-gray-600 bg-gray-900/40 p-4 text-gray-300">
+              No ledger entries match the selected filters.
+            </p>
+          )}
+        </div>
       </section>
     </div>
   );

@@ -35,6 +35,18 @@ function createSupabaseStub(results: Record<string, QueryResult | QueryResult[]>
         operations.push(["eq", args]);
         return query;
       },
+      gte: (...args: unknown[]) => {
+        operations.push(["gte", args]);
+        return query;
+      },
+      lte: (...args: unknown[]) => {
+        operations.push(["lte", args]);
+        return query;
+      },
+      in: (...args: unknown[]) => {
+        operations.push(["in", args]);
+        return query;
+      },
       or: (...args: unknown[]) => {
         operations.push(["or", args]);
         return query;
@@ -94,6 +106,7 @@ describe("AdminUserDetailService", () => {
         },
         error: null,
       },
+      gold_ledger_entries: { data: [], error: null },
       quest_instances: [
         {
           data: [
@@ -165,7 +178,7 @@ describe("AdminUserDetailService", () => {
     expect(detail.recentQuests[0]).toEqual(
       expect.objectContaining({ title: "Unload dishwasher", status: "APPROVED" }),
     );
-    expect(detail.goldLedgerNotice).toMatch(/separate audit slice/i);
+    expect(detail.goldLedger.entries).toEqual([]);
 
     const recentQuestCall = calls[2];
     expect(recentQuestCall.table).toBe("quest_instances");

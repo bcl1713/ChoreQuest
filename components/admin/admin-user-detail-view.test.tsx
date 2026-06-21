@@ -43,8 +43,61 @@ const baseDetail: AdminUserDetail = {
       xpReward: 10,
     },
   ],
-  goldLedgerNotice:
-    "Current gold is shown from the character record. Full ledger and audit history will land in a separate audit slice.",
+  goldLedger: {
+    entries: [
+      {
+        id: "ledger-1",
+        createdAt: "2026-01-01T10:00:00Z",
+        eventType: "OPENING_BALANCE",
+        description: "Opening balance from pre-ledger gold",
+        goldDelta: 100,
+        direction: "credit",
+        balanceBefore: 0,
+        runningBalance: 100,
+        actor: { id: "gm-1", name: "GM", email: "gm@example.test" },
+        sourceType: "gold_ledger_remediation",
+        sourceId: null,
+        referenceLabel: "gold_ledger_remediation",
+        metadata: { historical_strategy: "opening balance" },
+      },
+      {
+        id: "ledger-2",
+        createdAt: "2026-01-02T13:00:00Z",
+        eventType: "QUEST_REWARD",
+        description: "Quest reward approved",
+        goldDelta: 5,
+        direction: "credit",
+        balanceBefore: 100,
+        runningBalance: 105,
+        actor: null,
+        sourceType: "quest_instances",
+        sourceId: "quest-1",
+        referenceLabel: "quest_instances: quest-1",
+        metadata: { xp_delta: 10 },
+      },
+      {
+        id: "ledger-3",
+        createdAt: "2026-01-03T13:00:00Z",
+        eventType: "ADMIN_ADJUSTMENT",
+        description: "Manual correction after duplicate award",
+        goldDelta: -20,
+        direction: "debit",
+        balanceBefore: 105,
+        runningBalance: 85,
+        actor: { id: "gm-1", name: "GM", email: "gm@example.test" },
+        sourceType: "admin_gold_adjustment",
+        sourceId: "adjustment-1",
+        referenceLabel: "admin_gold_adjustment: adjustment-1",
+        metadata: {},
+      },
+    ],
+    reconciliation: {
+      currentGold: 125,
+      ledgerBalance: 85,
+      difference: 40,
+      diverged: true,
+    },
+  },
 };
 
 describe("AdminUserDetailView", () => {
@@ -69,7 +122,18 @@ describe("AdminUserDetailView", () => {
 
     expect(screen.getByRole("heading", { name: "Recent Approved Quests" })).toBeInTheDocument();
     expect(screen.getByText("Unload dishwasher")).toBeInTheDocument();
-    expect(screen.getByText(/Full ledger and audit history/)).toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: "Gold Ledger" })).toBeInTheDocument();
+    expect(screen.getByText(/Ledger balance differs from current character gold/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Opening Balance").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Quest Reward").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Admin Adjustment").length).toBeGreaterThan(0);
+    expect(screen.getByText("+100 Gold")).toBeInTheDocument();
+    expect(screen.getByText("-20 Gold")).toBeInTheDocument();
+    expect(screen.getByText("85 Gold")).toBeInTheDocument();
+    expect(screen.getAllByText("GM").length).toBeGreaterThan(0);
+    expect(screen.getByText("quest_instances: quest-1")).toBeInTheDocument();
+    expect(screen.getByText(/Opening, migration, and correction rows are explicit ledger controls/i)).toBeInTheDocument();
   });
 
   it("handles users with no character or quest data gracefully", () => {
@@ -80,11 +144,21 @@ describe("AdminUserDetailView", () => {
           character: null,
           questSummary: { active: 0, pendingApproval: 0, approved: 0, missed: 0, total: 0 },
           recentQuests: [],
+          goldLedger: {
+            entries: [],
+            reconciliation: {
+              currentGold: null,
+              ledgerBalance: 0,
+              difference: null,
+              diverged: false,
+            },
+          },
         }}
       />,
     );
 
     expect(screen.getByText(/No character has been created/i)).toBeInTheDocument();
     expect(screen.getByText(/No recent quests found/i)).toBeInTheDocument();
+    expect(screen.getByText(/No ledger entries match the selected filters/i)).toBeInTheDocument();
   });
 });

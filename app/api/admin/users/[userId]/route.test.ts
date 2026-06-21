@@ -41,7 +41,10 @@ describe("GET /api/admin/users/[userId]", () => {
       character: null,
       questSummary: { active: 0, pendingApproval: 0, approved: 0, missed: 0, total: 0 },
       recentQuests: [],
-      goldLedgerNotice: "Ledger comes later",
+      goldLedger: {
+        entries: [],
+        reconciliation: { currentGold: null, ledgerBalance: 0, difference: null, diverged: false },
+      },
     };
     (adminUserDetailService.getUserDetail as jest.Mock).mockResolvedValue(detail);
 
@@ -55,7 +58,22 @@ describe("GET /api/admin/users/[userId]", () => {
       { client: true },
       { id: "gm-1", role: "GUILD_MASTER", family_id: "family-1" },
       "hero-1",
+      { ledgerEndDate: null, ledgerEventType: null, ledgerStartDate: null },
     );
+  });
+
+  it("rejects invalid ledger event type filters", async () => {
+    const response = await GET(
+      new NextRequest("http://app.test/api/admin/users/hero-1?ledgerEventType=NOPE"),
+      { params: Promise.resolve({ userId: "hero-1" }) },
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      error: "Invalid ledger event type",
+      code: "ADMIN_GOLD_LEDGER_INVALID_EVENT_TYPE",
+    });
+    expect(response.status).toBe(400);
+    expect(adminUserDetailService.getUserDetail).not.toHaveBeenCalled();
   });
 
   it("returns a generic not-found response for missing or cross-family users", async () => {
