@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Crown, Sword } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -89,7 +90,13 @@ export function GuildMemberRow({
         </div>
       </div>
 
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 flex items-center gap-2">
+        <Link
+          href={`/admin/users/${member.id}`}
+          className="text-sm text-blue-300 hover:text-blue-200 px-3 py-2 rounded-lg border border-blue-500/30 hover:bg-blue-500/10 transition-colors"
+        >
+          View profile
+        </Link>
         {isCurrentUser ? (
           <span className="text-xs text-gray-500 px-4 py-2">
             (You)
