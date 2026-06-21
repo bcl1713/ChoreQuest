@@ -7,7 +7,7 @@ ChoreQuest turns household responsibilities into a co-op RPG. Families create gu
 - **Recurring quest engine** – Templates generate daily/weekly quest instances with anti-dup safeguards.
 - **Real-time collaboration** – Live claiming, releasing, and reassignment flows for family quests.
 - **Robust auth & data layer** – Supabase Auth, PostgREST, Realtime, Storage, and Supavisor pooling.
-- **Automated bootstrap** – On first boot the app runs Prisma migrations, syncs Supabase policies, and seeds demo data (toggle via `ENABLE_DB_BOOTSTRAP`).
+- **Automated migrations** – On container startup the app runs checked-in Supabase SQL migrations before Next.js starts, with optional demo seeding toggled via `ENABLE_DB_BOOTSTRAP`.
 
 ## Tech Stack
 - **App**: Next.js 15 (React 19), TypeScript, Tailwind, Radix UI.
@@ -33,11 +33,11 @@ ChoreQuest turns household responsibilities into a co-op RPG. Families create gu
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role JWT | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
 | `JWT_SECRET` | JWT signing secret shared with Supabase stack | `your-super-secret-jwt-token-with-at-least-32-characters-long` |
 | `POSTGRES_PASSWORD` | Supabase Postgres superuser password | `your-super-secret-and-long-postgres-password` |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Prisma bootstrap credentials (point at Supabase Postgres) | `supabase-db`, `5553`, `postgres`, `postgres`, same password as above |
-| `PORT` | Host port for the Next.js container | `5555` |
+| `DIRECT_DB_HOST`, `DIRECT_DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Direct Postgres target for startup migrations from inside the app container | `supabase-db`, `5432`, `postgres`, `postgres`, same password as above |
+| `APP_HOST_BIND`, `PORT` | Optional host interface bind prefix and host port for the Next.js container | `10.10.50.2:`, `5555` |
 | `NEXTAUTH_URL` | Public URL for callbacks and cron | `https://app.example.com` |
 | `CRON_SECRET` | Auth token for scheduled quest jobs | `generate-a-long-random-string-here` |
-| `ENABLE_DB_BOOTSTRAP` | Runs migrations + seed on first boot | `true` |
+| `ENABLE_DB_BOOTSTRAP` | Runs seed data after migrations when explicitly enabled | `true` |
 | `SUPABASE_VOLUME_ROOT` | Host path where Supabase SQL/config assets live | `/path/to/supabase/volumes` |
 
 All environment templates (`.env`, `.env.example`, `.env.dev.example`, `.env.production`, `.env.production.example`, and `supabase-docker/.env.example`) use placeholder domains and secrets—replace them with the values from your own Supabase deployment before going live.
@@ -106,7 +106,7 @@ docker compose up -d
    ```bash
    cp .env.production.example .env.production
    ```
-   Ensure the Supabase values match the running Supabase stack.
+   Ensure the Supabase values match the running Supabase stack. `SUPABASE_INTERNAL_URL` is for server-side Supabase HTTP/API calls through Kong; startup migrations use direct `psql` traffic instead. For the bundled self-hosted stack, keep `DIRECT_DB_HOST=supabase-db` and `DIRECT_DB_PORT=5432` so the app container reaches the database container on the shared `supabase_default` network. Do not use the host-published Postgres port (`5553`) for this container-to-container migration path. If production should listen only on the trusted host interface, set `APP_HOST_BIND=10.10.50.2:` with the trailing colon instead of carrying an uncommitted compose-file edit.
 2. **Build & start the container**
    ```bash
    docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
@@ -128,7 +128,8 @@ docker compose up -d
 
 ## Operations Playbook
 - **Rotate secrets** – Update `supabase-docker/.env` and `.env.production`, regenerate anon/service keys tied to the new `JWT_SECRET`, then redeploy.
-- **Backups** – Run `pg_dump` against the Supabase Postgres service (`supabase-db:5553`) or configure Supabase WAL backups.
+- **Backups** – From the Docker host, run `pg_dump` against the host-published Supabase Postgres port (`localhost:5553`, or the bound host interface) or configure Supabase WAL backups. From containers on `supabase_default`, use the direct service address `supabase-db:5432`.
+- **Startup migrations** – The app container runs checked-in SQL migrations with `psql` before starting Next.js. A bad direct-DB target now fails startup rather than silently skipping migrations. If migrations must be handled externally for a deployment, set `SKIP_DB_MIGRATIONS=true` deliberately and document the external migration step.
 - **Monitoring** – Supabase Logflare is exposed on `5552`. Pin dashboards or forward logs to your observability stack.
 - **Image updates** – Pull the latest tags listed in `supabase-docker/docker-compose.yml` and rebuild the ChoreQuest app container when Next.js dependencies change.
 

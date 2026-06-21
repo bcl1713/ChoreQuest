@@ -18,7 +18,10 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: chorequest-app
     ports:
-      - "${PORT:-3000}:3000"
+      # Set APP_HOST_BIND to an address plus trailing colon (for example
+      # 10.10.50.2:) when production should bind the host port to one
+      # interface instead of all interfaces.
+      - "${APP_HOST_BIND:-}${PORT:-3000}:3000"
     environment:
       # Supabase Configuration (from external instance)
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
@@ -34,9 +37,11 @@ services:
       - HOST=0.0.0.0
       # Database bootstrap toggle
       - ENABLE_DB_BOOTSTRAP=${ENABLE_DB_BOOTSTRAP:-false}
-      # Database credentials for migrations (Option C only)
-      - DB_HOST=${DB_HOST:-supabase-db}
-      - DB_PORT=${DB_PORT:-5432}
+      # Direct Postgres credentials for startup migrations.
+      # This is separate from Supabase HTTP/API traffic and must use the
+      # database container's internal port on the shared Docker network.
+      - DB_HOST=${DIRECT_DB_HOST:-supabase-db}
+      - DB_PORT=${DIRECT_DB_PORT:-5432}
       - DB_NAME=${DB_NAME:-postgres}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD}

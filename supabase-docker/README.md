@@ -51,7 +51,7 @@ Services become healthy once Postgres finishes applying migrations (usually < 60
 | Kong Gateway / Supabase API | `5550` (HTTP), `5551` (HTTPS) | Reverse proxy to all Supabase services |
 | Supabase Studio | `5550/studio` (proxied via Kong) | Configure DNS/SSL via your reverse proxy |
 | Logflare (analytics) | `5552` | Useful for piping logs elsewhere |
-| Postgres | `5553` | Connect as `postgres` using `POSTGRES_PASSWORD` |
+| Postgres | `5553` host-published / `5432` on `supabase_default` | Use host port `5553` from the Docker host; use `supabase-db:5432` from sibling containers such as ChoreQuest startup migrations. |
 | Supavisor (transaction pool) | `5554` | Use for pooled client connections |
 
 When fronting the stack with Nginx/Traefik/Caddy, terminate TLS there and forward to `kong:8000` inside the Docker network.
@@ -68,7 +68,7 @@ When fronting the stack with Nginx/Traefik/Caddy, terminate TLS there and forwar
 
 - **Update images**: `docker compose pull && docker compose up -d`.
 - **Rotate secrets**: regenerate keys, update `.env`, and restart the affected services.
-- **Backups**: run `pg_dump` against `supabase-db:5553` or enable WAL archiving.
+- **Backups**: from the Docker host, run `pg_dump` against the published Postgres port (`localhost:5553`, or the bound host interface); from a container on `supabase_default`, use `supabase-db:5432`. Enable WAL archiving for stronger recovery guarantees.
 - **Logs**: tail `docker compose logs -f <service>` or forward Logflare events.
 
 ## 8. Troubleshooting

@@ -28,11 +28,18 @@ DB_NAME="${DB_NAME:-postgres}"
 DB_USER="${DB_USER:-postgres}"
 # DB_PASSWORD should be set via environment variable
 
+echo "✓ Direct Postgres migration target: ${DB_HOST}:${DB_PORT}/${DB_NAME} as ${DB_USER}"
+
 # Function to ensure migrations tracking table exists
 ensure_migrations_table() {
     echo "→ Ensuring migrations tracking table exists..."
 
-    PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" <<-EOSQL 2>/dev/null
+    if [ -z "$DB_PASSWORD" ]; then
+        echo "  ✗ DB_PASSWORD is not set; cannot run startup migrations"
+        return 1
+    fi
+
+    if ! PGPASSWORD="${DB_PASSWORD}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" <<-EOSQL 2>/dev/null
         CREATE SCHEMA IF NOT EXISTS supabase_migrations;
         CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (
             version TEXT PRIMARY KEY,
@@ -40,14 +47,13 @@ ensure_migrations_table() {
             applied_at TIMESTAMPTZ DEFAULT NOW()
         );
 EOSQL
-
-    if [ $? -eq 0 ]; then
-        echo "  ✓ Migrations tracking table ready"
-        return 0
-    else
-        echo "  ! Could not access database, skipping migrations"
+    then
+        echo "  ✗ Could not access direct Postgres at ${DB_HOST}:${DB_PORT}; refusing to skip startup migrations"
+        echo "  ✗ Supabase HTTP URLs are not used for psql migrations. Use the database container host and internal port when on Docker network."
         return 1
     fi
+
+    echo "  ✓ Migrations tracking table ready"
 }
 
 # Function to check if a migration has been applied
@@ -84,10 +90,16 @@ run_migrations() {
         return 0
     fi
 
+    SKIP_MIGRATIONS="${SKIP_DB_MIGRATIONS:-false}"
+    if [ "$SKIP_MIGRATIONS" = "true" ]; then
+        echo "! SKIP_DB_MIGRATIONS=true; startup migrations intentionally skipped"
+        return 0
+    fi
+
     # Ensure migrations tracking table exists
     if ! ensure_migrations_table; then
-        echo "! Unable to connect to database, skipping migrations"
-        return 0
+        echo "✗ Unable to connect to database; startup migrations did not run"
+        return 1
     fi
 
     # Run each migration file in order
