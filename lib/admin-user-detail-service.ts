@@ -152,6 +152,10 @@ function mapRecentQuest(quest: RawQuest): AdminUserRecentQuest {
   };
 }
 
+function isApprovedQuest(quest: RawQuest): boolean {
+  return quest.status === "APPROVED";
+}
+
 function mapCharacter(
   character: RawCharacter | null,
 ): AdminUserDetailCharacter | null {
@@ -250,6 +254,7 @@ export class AdminUserDetailService {
         "id, title, status, due_date, completed_at, approved_at, gold_reward, xp_reward",
       )
       .eq("family_id", requesterProfile.family_id)
+      .eq("status", "APPROVED")
       .or(questTargetFilter)
       .order("updated_at", { ascending: false })
       .limit(8);
@@ -263,7 +268,7 @@ export class AdminUserDetailService {
     }
 
     const summaryQuests = (questSummaryRows ?? []) as RawQuest[];
-    const recentQuests = (recentQuestRows ?? []) as RawQuest[];
+    const recentQuests = ((recentQuestRows ?? []) as RawQuest[]).filter(isApprovedQuest);
 
     return {
       user: {

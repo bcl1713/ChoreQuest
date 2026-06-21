@@ -66,8 +66,8 @@ function createSupabaseStub(results: Record<string, QueryResult | QueryResult[]>
 }
 
 describe("AdminUserDetailService", () => {
-  it("returns same-family profile, character stats, quest counts, and recent quests", async () => {
-    const { supabase } = createSupabaseStub({
+  it("returns same-family profile, character stats, quest counts, and bounded recent approved quests", async () => {
+    const { supabase, calls } = createSupabaseStub({
       user_profiles: {
         data: {
           id: "hero-1",
@@ -119,6 +119,7 @@ describe("AdminUserDetailService", () => {
             { id: "quest-6", title: "Old approved", status: "APPROVED", due_date: null, completed_at: null, approved_at: null, gold_reward: 3, xp_reward: 6 },
             { id: "quest-7", title: "Old approved 2", status: "APPROVED", due_date: null, completed_at: null, approved_at: null, gold_reward: 3, xp_reward: 6 },
             { id: "quest-8", title: "Old approved 3", status: "APPROVED", due_date: null, completed_at: null, approved_at: null, gold_reward: 3, xp_reward: 6 },
+            { id: "quest-9", title: "Older approved outside recent", status: "APPROVED", due_date: null, completed_at: null, approved_at: null, gold_reward: 3, xp_reward: 6 },
           ],
           error: null,
         },
@@ -153,11 +154,23 @@ describe("AdminUserDetailService", () => {
       missed: 1,
       total: 9,
     });
-    expect(detail.recentQuests).toHaveLength(8);
+    expect(detail.recentQuests).toHaveLength(5);
+    expect(detail.recentQuests.map((quest) => quest.status)).toEqual([
+      "APPROVED",
+      "APPROVED",
+      "APPROVED",
+      "APPROVED",
+      "APPROVED",
+    ]);
     expect(detail.recentQuests[0]).toEqual(
       expect.objectContaining({ title: "Unload dishwasher", status: "APPROVED" }),
     );
     expect(detail.goldLedgerNotice).toMatch(/separate audit slice/i);
+
+    const recentQuestCall = calls[2];
+    expect(recentQuestCall.table).toBe("quest_instances");
+    expect(recentQuestCall.operations).toContainEqual(["eq", ["status", "APPROVED"]]);
+    expect(recentQuestCall.operations).toContainEqual(["limit", [8]]);
   });
 
   it("hides cross-family users behind not found", async () => {

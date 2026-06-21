@@ -90,7 +90,7 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
       </section>
 
       <section className="rounded-lg border border-gray-700 bg-gray-800/50 p-6">
-        <h2 className="mb-4 text-xl font-semibold text-white">Recent Quests</h2>
+        <h2 className="mb-4 text-xl font-semibold text-white">Recent Approved Quests</h2>
         {recentQuests.length > 0 ? (
           <ul className="divide-y divide-gray-700">
             {recentQuests.map((quest) => (
