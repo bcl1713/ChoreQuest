@@ -38,38 +38,25 @@ describe("ProfileService - class changes and history", () => {
 
     it("should successfully change class", async () => {
       const updatedCharacter = { ...characterData, class: "MAGE" };
-      mockFrom.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: updatedCharacter,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      });
+      const mockRpc = supabase.rpc as jest.Mock;
+      mockRpc.mockResolvedValue({ data: [updatedCharacter], error: null });
+
       const result = await ProfileService.changeCharacterClass(
         "char-1",
         "MAGE",
       );
       expect(result.class).toBe("MAGE");
-      expect(mockFrom).toHaveBeenCalledWith("characters");
+      expect(mockRpc).toHaveBeenCalledWith("fn_change_character_class", {
+        p_character_id: "char-1",
+        p_new_class: "MAGE",
+      });
     });
 
     it("should throw on database error", async () => {
-      mockFrom.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: null,
-                error: { message: "Insufficient gold. Need 250, have 100" },
-              }),
-            }),
-          }),
-        }),
+      const mockRpc = supabase.rpc as jest.Mock;
+      mockRpc.mockResolvedValue({
+        data: null,
+        error: { message: "Insufficient gold. Need 250, have 100" },
       });
       await expect(
         ProfileService.changeCharacterClass("char-1", "MAGE"),
@@ -77,39 +64,19 @@ describe("ProfileService - class changes and history", () => {
     });
 
     it("should throw when no data returned", async () => {
-      mockFrom.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: null,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      });
+      const mockRpc = supabase.rpc as jest.Mock;
+      mockRpc.mockResolvedValue({ data: [], error: null });
       await expect(
         ProfileService.changeCharacterClass("char-1", "MAGE"),
       ).rejects.toThrow("Failed to retrieve updated character");
     });
 
-    it("should call from with characters table", async () => {
+    it("should not bypass the canonical class-change RPC with direct character updates", async () => {
       const updatedCharacter = { ...characterData, class: "MAGE" };
-      mockFrom.mockReturnValue({
-        update: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: updatedCharacter,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      });
+      const mockRpc = supabase.rpc as jest.Mock;
+      mockRpc.mockResolvedValue({ data: [updatedCharacter], error: null });
       await ProfileService.changeCharacterClass("char-1", "MAGE");
-      expect(mockFrom).toHaveBeenCalledWith("characters");
+      expect(mockFrom).not.toHaveBeenCalledWith("characters");
     });
   });
 

@@ -1,7 +1,4 @@
-// Tests for boss quest completion achievement progress integration (task 10.1)
-// Verifies updateProgress is called per participant and failures are isolated.
 const mockUpdateProgress = jest.fn().mockResolvedValue(undefined);
-
 jest.mock("@/lib/achievement-progress-service", () => ({
   AchievementProgressService: jest
     .fn()
@@ -11,8 +8,8 @@ jest.mock("@/lib/achievement-progress-service", () => ({
 const mockSupabase = {
   auth: { getUser: jest.fn() },
   from: jest.fn(),
+  rpc: jest.fn(),
 };
-
 jest.mock("@/lib/supabase-server", () => ({
   createServerSupabaseClient: jest.fn(() => mockSupabase),
   createServiceSupabaseClient: jest.fn(() => mockSupabase),
@@ -126,10 +123,6 @@ function setupMocks(
             eq: jest.fn().mockResolvedValue({ error: null }),
           }),
         };
-      case "transactions":
-        return {
-          insert: jest.fn().mockResolvedValue({ error: null }),
-        };
       default:
         throw new Error(`Unexpected table in boss test: ${table}`);
     }
@@ -139,6 +132,7 @@ function setupMocks(
 describe("Boss completion - achievement progress integration (task 10.1)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSupabase.rpc.mockResolvedValue({ data: [{ ok: true }], error: null });
   });
 
   it("calls updateProgress once per participant with BOSS_COMPLETED", async () => {
@@ -153,10 +147,18 @@ describe("Boss completion - achievement progress integration (task 10.1)", () =>
     const res = await POST(makeRequest(), params());
     expect(res.status).toBe(200);
 
-    // updateProgress should have been called twice (once per participant who has a character)
     expect(mockUpdateProgress).toHaveBeenCalledWith(expect.any(String), {
       type: "BOSS_COMPLETED",
     });
+    expect(mockSupabase.rpc).toHaveBeenCalledWith(
+      "fn_apply_boss_reward",
+      expect.objectContaining({
+        p_character_id: CHAR_ID_1,
+        p_user_id: USER_ID_1,
+        p_boss_battle_id: BOSS_ID,
+        p_participant_id: "part-0",
+      }),
+    );
   });
 
   it("does not fail boss completion when updateProgress throws for one participant", async () => {
@@ -175,7 +177,6 @@ describe("Boss completion - achievement progress integration (task 10.1)", () =>
 
     const res = await POST(makeRequest(), params());
 
-    // Boss completion still succeeds
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -186,6 +187,11 @@ describe("Boss completion - achievement progress integration (task 10.1)", () =>
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: "gm-user" } },
       error: null,
+    });
+
+    mockSupabase.rpc.mockResolvedValue({
+      data: null,
+      error: { message: "DB error" },
     });
 
     mockSupabase.from.mockImplementation((table: string) => {
@@ -258,16 +264,11 @@ describe("Boss completion - achievement progress integration (task 10.1)", () =>
                 }),
               }),
             }),
-            // Character reward write fails
             update: jest.fn().mockReturnValue({
               eq: jest
                 .fn()
                 .mockResolvedValue({ error: { message: "DB error" } }),
             }),
-          };
-        case "transactions":
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null }),
           };
         default:
           throw new Error(`Unexpected table in boss test: ${table}`);

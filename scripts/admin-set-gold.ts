@@ -62,38 +62,23 @@ async function setGold(userName: string, newAmount: number, reason: string) {
     return;
   }
 
-  // 3. Update Gold
-  const { error: updateError } = await supabase
-    .from('characters')
-    .update({ gold: newAmount })
-    .eq('id', character.id);
+  // 3. Update Gold and record canonical ledger entry in one RPC
+  const { error: adjustmentError } = await supabase.rpc(
+    'fn_record_admin_gold_adjustment',
+    {
+      p_character_id: character.id,
+      p_new_gold: newAmount,
+      p_actor_user_id: user.id,
+      p_reason: reason,
+    },
+  );
 
-  if (updateError) {
-    console.error('Failed to update gold:', updateError.message);
+  if (adjustmentError) {
+    console.error('Failed to update gold:', adjustmentError.message);
     process.exit(1);
   }
 
-  console.log('✅ Gold updated successfully.');
-
-  // 4. Log Transaction
-  // We try to log this to the transactions table for audit purposes
-  const { error: txError } = await supabase
-    .from('transactions')
-    .insert({
-      user_id: user.id,
-      type: 'BONUS_AWARD', // Closest fit for admin adjustment
-      description: `Admin Adjustment: ${reason}`,
-      gold_change: diff,
-      xp_change: 0,
-      gems_change: 0,
-      honor_change: 0
-    });
-
-  if (txError) {
-    console.error('⚠️ Gold updated, but failed to create transaction log:', txError.message);
-  } else {
-    console.log('✅ Transaction log created.');
-  }
+  console.log('✅ Gold updated and canonical ledger entry created.');
 }
 
 // Read args

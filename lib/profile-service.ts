@@ -5,7 +5,7 @@
  */
 
 import { supabase } from "@/lib/supabase";
-import { Character, CharacterClass } from "@/lib/types/database";
+import { Character } from "@/lib/types/database";
 
 export interface ChangeHistoryEntry {
   id: string;
@@ -163,27 +163,22 @@ export class ProfileService {
     characterId: string,
     newClass: string,
   ): Promise<Character> {
-    // TODO: Use RPC function to ensure atomic transaction when fn_change_character_class exists
-    // All database operations (character update, transaction insert, history insert)
-    // succeed together or fail together - no partial updates possible
-
-    // For now, update character class directly
-    const { data, error } = await supabase
-      .from("characters")
-      .update({ class: newClass as CharacterClass })
-      .eq("id", characterId)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("fn_change_character_class", {
+      p_character_id: characterId,
+      p_new_class: newClass,
+    });
 
     if (error) {
       throw new Error(error.message);
     }
 
-    if (!data) {
+    const updatedCharacter = Array.isArray(data) ? data[0] : data;
+
+    if (!updatedCharacter) {
       throw new Error("Failed to retrieve updated character");
     }
 
-    return data as Character;
+    return updatedCharacter as Character;
   }
 
   /**
