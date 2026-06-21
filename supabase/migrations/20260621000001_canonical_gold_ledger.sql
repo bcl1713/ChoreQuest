@@ -392,6 +392,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+DROP FUNCTION IF EXISTS fn_change_character_class(UUID, TEXT);
+
 CREATE OR REPLACE FUNCTION fn_change_character_class(
   p_character_id UUID,
   p_new_class TEXT

@@ -35,6 +35,7 @@ describe("canonical gold ledger migration", () => {
     expect(migration).toMatch(/reason TEXT/);
     expect(migration).toMatch(/metadata JSONB NOT NULL DEFAULT '\{\}'::jsonb/);
     expect(migration).toContain("honest forward truth");
+    expect(migration).toContain("DROP FUNCTION IF EXISTS fn_change_character_class(UUID, TEXT)");
   });
 
   it("records exactly one canonical ledger row from each day-1 gold mutation helper", () => {
