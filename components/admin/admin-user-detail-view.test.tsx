@@ -67,6 +67,7 @@ describe("AdminUserDetailView", () => {
     expect(within(snapshot).getByText("4 Approved")).toBeInTheDocument();
     expect(within(snapshot).getByText("1 Missed/Expired")).toBeInTheDocument();
 
+    expect(screen.getByRole("heading", { name: "Recent Approved Quests" })).toBeInTheDocument();
     expect(screen.getByText("Unload dishwasher")).toBeInTheDocument();
     expect(screen.getByText(/Full ledger and audit history/)).toBeInTheDocument();
   });
