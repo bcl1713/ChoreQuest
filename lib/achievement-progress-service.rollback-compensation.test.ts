@@ -57,10 +57,13 @@ describe("AchievementProgressService - rollback compensation", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    // Fix P1: stats rollback uses direct UPDATE (xp: 100-60=40, gold: 0-0=0)
-    expect(write.statsUpdate).toHaveBeenCalledWith({ xp: 40, gold: 0 });
+    // Ledgered achievement rewards are forward-truth once the RPC succeeds;
+    // rollback must not create an unledgered direct gold compensation.
+    expect(write.statsUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ gold: expect.any(Number) }),
+    );
   });
-  it("reverts stats and level when cascade upsert fails", async () => {
+  it("preserves stats and level when cascade upsert fails after a ledgered award", async () => {
     const questAch = {
       id: "ach-quest",
       name: "Quest Master",
@@ -138,13 +141,13 @@ describe("AchievementProgressService - rollback compensation", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    // Fix P1: level rollback still uses direct UPDATE with prevLevel=1
-    expect(write.statsUpdate).toHaveBeenCalledWith({ level: 1 });
-    // Fix P1: stats rollback uses direct UPDATE (xp: 100-60=40, gold: 0-0=0)
-    expect(write.statsUpdate).toHaveBeenCalledWith({ xp: 40, gold: 0 });
+    expect(write.statsUpdate).toHaveBeenCalledWith({ level: 2 });
+    expect(write.statsUpdate).not.toHaveBeenCalledWith({ level: 1 });
+    expect(write.statsUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ gold: expect.any(Number) }),
+    );
   });
-
-  it("logs critical error if stats revert UPDATE fails", async () => {
+  it("logs canonical preservation when a failure happens after the award RPC", async () => {
     const write = makeWriteMocks({
       unlockedIds: [LEVEL_UP_ACHIEVEMENT.id],
       rpcReturn: LEVEL_UP_RPC_RETURN,
@@ -161,8 +164,7 @@ describe("AchievementProgressService - rollback compensation", () => {
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Critical: failed to revert stats after reward failure:",
-      expect.objectContaining({ message: "stats-revert-fail" }),
+      "Critical: achievement reward failure occurred after canonical ledger award; preserving awarded stats and unlock state without unledgered gold compensation",
     );
   });
 
@@ -268,15 +270,13 @@ describe("AchievementProgressService - rollback compensation", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
-    // P2 fix: brand-new cascade rows are deleted, not upserted with null
-    expect(write.upsert).toHaveBeenCalledTimes(2); // no 3rd upsert
-    expect(write.cascadeDelete).toHaveBeenCalled();
-    expect(write.cascadeDeleteIn).toHaveBeenCalledWith("achievement_id", [
-      xpEarnedAch.id,
-    ]);
+    // Ledgered award state is now preserved rather than partially compensated;
+    // cascade progress that already landed stays consistent with the awarded stats.
+    expect(write.upsert).toHaveBeenCalledTimes(2); // no revert upsert
+    expect(write.cascadeDelete).not.toHaveBeenCalled();
   });
 
-  it("detects revert failure when Supabase returns { error } not throw", async () => {
+  it("does not run unlock rollback after a ledgered award", async () => {
     const write = makeWriteMocks({
       unlockedIds: [LEVEL_UP_ACHIEVEMENT.id],
       rpcReturn: LEVEL_UP_RPC_RETURN,
@@ -292,9 +292,9 @@ describe("AchievementProgressService - rollback compensation", () => {
     });
     const svc = new AchievementProgressService(readClient as never);
     await svc.updateProgress(CHAR_ID, { type: "QUEST_APPROVED" });
+    expect(write.inForRevert).not.toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Critical: failed to revert unlock after reward failure:",
-      expect.objectContaining({ message: "RLS" }),
+      "Critical: achievement reward failure occurred after canonical ledger award; preserving awarded stats and unlock state without unledgered gold compensation",
     );
   });
 });

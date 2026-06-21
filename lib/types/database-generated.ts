@@ -562,6 +562,54 @@ export type Database = {
           },
         ];
       };
+      gold_ledger_entries: {
+        Row: {
+          id: string;
+          created_at: string;
+          character_id: string;
+          user_id: string;
+          gold_delta: number;
+          balance_before: number;
+          balance_after: number;
+          entry_type: Database["public"]["Enums"]["gold_ledger_entry_type"];
+          source_type: string;
+          source_id: string | null;
+          actor_user_id: string | null;
+          reason: string | null;
+          metadata: Json;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          character_id: string;
+          user_id: string;
+          gold_delta: number;
+          balance_before: number;
+          balance_after: number;
+          entry_type: Database["public"]["Enums"]["gold_ledger_entry_type"];
+          source_type: string;
+          source_id?: string | null;
+          actor_user_id?: string | null;
+          reason?: string | null;
+          metadata?: Json;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          character_id?: string;
+          user_id?: string;
+          gold_delta?: number;
+          balance_before?: number;
+          balance_after?: number;
+          entry_type?: Database["public"]["Enums"]["gold_ledger_entry_type"];
+          source_type?: string;
+          source_id?: string | null;
+          actor_user_id?: string | null;
+          reason?: string | null;
+          metadata?: Json;
+        };
+        Relationships: [];
+      };
       characters: {
         Row: {
           active_family_quest_id: string | null;
@@ -1281,22 +1329,37 @@ export type Database = {
           level: number | null;
         }[];
       };
+      fn_apply_boss_reward: {
+        Args: {
+          p_character_id: string;
+          p_user_id: string;
+          p_boss_battle_id: string;
+          p_participant_id: string;
+          p_gold: number;
+          p_xp: number;
+          p_honor: number;
+          p_status: string;
+          p_actor_user_id?: string | null;
+        };
+        Returns: {
+          xp: number;
+          gold: number;
+          honor_points: number;
+          level: number;
+        }[];
+      };
+      fn_record_admin_gold_adjustment: {
+        Args: {
+          p_character_id: string;
+          p_new_gold: number;
+          p_actor_user_id?: string | null;
+          p_reason: string;
+        };
+        Returns: Database["public"]["Tables"]["gold_ledger_entries"]["Row"];
+      };
       fn_change_character_class: {
         Args: { p_character_id: string; p_new_class: string };
-        Returns: {
-          id: string;
-          user_id: string;
-          name: string;
-          class: string;
-          level: number;
-          gold: number;
-          experience: number;
-          health: number;
-          max_health: number;
-          last_class_change_at: string;
-          created_at: string;
-          updated_at: string;
-        }[];
+        Returns: Database["public"]["Tables"]["characters"]["Row"][];
       };
     };
     Enums: {
@@ -1316,6 +1379,17 @@ export type Database = {
       quest_type: "INDIVIDUAL" | "FAMILY";
       recurrence_pattern: "DAILY" | "WEEKLY" | "CUSTOM";
       reward_type: "SCREEN_TIME" | "PRIVILEGE" | "PURCHASE" | "EXPERIENCE";
+      gold_ledger_entry_type:
+        | "QUEST_REWARD"
+        | "STORE_PURCHASE"
+        | "REWARD_REFUND"
+        | "BOSS_REWARD"
+        | "ACHIEVEMENT_BONUS"
+        | "ADMIN_ADJUSTMENT"
+        | "CLASS_CHANGE_COST"
+        | "OPENING_BALANCE"
+        | "MIGRATION"
+        | "CORRECTION";
       transaction_type:
         | "QUEST_REWARD"
         | "BOSS_VICTORY"

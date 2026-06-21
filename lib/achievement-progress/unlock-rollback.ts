@@ -34,53 +34,24 @@ export async function performRollback(
     prevLevel,
     appliedLevel,
     statsApplied,
-    capturedNewStats,
-    totalXp,
-    totalGold,
     lockedIds,
     cascadeRows,
     prevCascadeSnapshot,
   } = state;
 
-  // Revert stats first. If stats revert fails (concurrent write changed xp/gold),
-  // we intentionally keep the rewards AND the level — reverting only the level
-  // would leave the character with high XP/gold at a low level, which is
-  // inconsistent. We also leave unlocked_at set so the achievement cannot be
-  // re-triggered for a duplicate reward payout.
-  let statsReverted = true;
-  if (statsApplied && capturedNewStats) {
-    const { data: revertedRows, error: statsRevertErr } = await writeClient
-      .from("characters")
-      .update({
-        xp: capturedNewStats.xp - totalXp,
-        gold: capturedNewStats.gold - totalGold,
-      })
-      .eq("id", characterId)
-      .eq("xp", capturedNewStats.xp)
-      .eq("gold", capturedNewStats.gold)
-      .select("id");
-    if (statsRevertErr) {
-      statsReverted = false;
-      console.error(
-        "Critical: failed to revert stats after reward failure:",
-        statsRevertErr,
-      );
-    } else if (!revertedRows || revertedRows.length === 0) {
-      // PostgREST returns error: null even when zero rows matched the
-      // conditional UPDATE. A zero-row result means a concurrent write changed
-      // xp or gold, so the compensation was a no-op. Treat this as a failed
-      // rollback to avoid clearing unlocked_at (which would let the same
-      // achievement pay out again).
-      statsReverted = false;
-      console.error(
-        "Critical: stats revert matched zero rows (concurrent update); treating as failed rollback",
-      );
-    }
+  if (statsApplied) {
+    console.error(
+      "Critical: achievement reward failure occurred after canonical ledger award; preserving awarded stats and unlock state without unledgered gold compensation",
+    );
+    return;
   }
 
-  // Only revert level after stats are successfully reverted. If stats rollback
-  // was skipped (concurrent write), the character keeps rewards + level to stay
-  // consistent. The appliedLevel guard prevents clobbering a concurrent advance.
+  // If no canonical stats award has happened, rollback can still clean up
+  // ancillary level/unlock/cascade state without touching character gold.
+  const statsReverted = true;
+
+  // Revert level only on non-award rollback paths. The appliedLevel guard
+  // prevents clobbering a concurrent advance.
   if (
     statsReverted &&
     levelApplied &&

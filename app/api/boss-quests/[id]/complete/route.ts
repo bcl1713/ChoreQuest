@@ -11,7 +11,6 @@ import {
 } from "@/lib/supabase-server";
 import {
   applyClassBonusIfApproved,
-  buildCharacterRewardUpdate,
   buildDecisionMap,
   resolveParticipantDecision,
 } from "@/lib/boss-quest-rewards";
@@ -170,23 +169,27 @@ export async function POST(
         }
       }
 
-      if (character) {
-        const characterUpdate = buildCharacterRewardUpdate(character, {
-          gold: appliedDecision.gold,
-          xp: appliedDecision.xp,
-          honor: appliedDecision.honor,
-        });
+      if (character && participantRow?.id) {
+        const { error: rewardError } = await serviceSupabase.rpc(
+          "fn_apply_boss_reward",
+          {
+            p_character_id: character.id,
+            p_user_id: participantId,
+            p_boss_battle_id: bossQuestId,
+            p_participant_id: participantRow.id,
+            p_gold: appliedDecision.gold,
+            p_xp: appliedDecision.xp,
+            p_honor: appliedDecision.honor,
+            p_status: appliedDecision.status,
+            p_actor_user_id: requesterProfile.id,
+          },
+        );
 
-        const { error: characterUpdateError } = await serviceSupabase
-          .from("characters")
-          .update(characterUpdate)
-          .eq("id", character.id);
-
-        if (characterUpdateError) {
+        if (rewardError) {
           console.error(
-            "Failed to update boss quest rewards for character",
+            "Failed to apply canonical boss quest rewards for character",
             character.id,
-            characterUpdateError,
+            rewardError,
           );
           console.warn(
             "Skipping achievement progress update after boss completion because character rewards update failed:",
@@ -208,25 +211,6 @@ export async function POST(
             );
           }
         }
-      }
-
-      const { error: transactionError } = await serviceSupabase
-        .from("transactions")
-        .insert({
-          user_id: participantId,
-          type: "BOSS_VICTORY",
-          xp_change: appliedDecision.xp,
-          gold_change: appliedDecision.gold,
-          honor_change: appliedDecision.honor,
-          description: `Boss quest rewards (${appliedDecision.status})`,
-          related_id: bossQuestId,
-        });
-
-      if (transactionError) {
-        console.error(
-          "Failed to record boss quest transaction",
-          transactionError,
-        );
       }
     }
 
