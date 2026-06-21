@@ -113,4 +113,14 @@ describe("GuildMasterManager - rendering", () => {
       expect(demoteButtons.length).toBe(1);
     });
   });
+
+  it("links each roster member to a dedicated admin profile page", async () => {
+    renderGuildMasterManager();
+
+    await waitFor(() => {
+      const profileLinks = screen.getAllByRole("link", { name: /View profile/i });
+      expect(profileLinks).toHaveLength(3);
+      expect(profileLinks[1]).toHaveAttribute("href", "/admin/users/user-2");
+    });
+  });
 });
