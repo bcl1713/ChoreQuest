@@ -117,6 +117,10 @@ docker compose up -d
    docker compose --env-file .env.production -f docker-compose.prod.yml logs -f app
    curl -I https://app.example.com/api/health
    ```
+   Docker health probes `http://127.0.0.1:3000/api/health` from inside the
+   container. The app still listens on `0.0.0.0:3000`; the explicit IPv4
+   loopback avoids false unhealthy results on hosts/images where `localhost`
+   resolves to `::1` before IPv4.
 4. **Cron jobs**
    - Set `CRON_SECRET` in `.env.production`.
    - Configure your scheduler (e.g., systemd timer, GitHub Actions, managed cron) to hit:
